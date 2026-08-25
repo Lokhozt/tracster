@@ -91,6 +91,10 @@ export const linkRepresentationSchema = z.object({
   representationId: z.string().min(1),
 });
 
+export const linkChoreographySchema = z.object({
+  choreographyId: z.string().min(1),
+});
+
 export const eventSchema = z.object({
   title: z.string().trim().min(2).max(120),
   description: z.string().trim().max(2000).optional(),

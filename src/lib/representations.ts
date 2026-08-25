@@ -152,6 +152,36 @@ export async function getLinkableRepresentations(
   });
 }
 
+export async function getLinkableChoreographies(
+  userId: string,
+  representationId: string,
+) {
+  const globalAccess = await hasGlobalAccess(userId);
+
+  const linkedIds = await prisma.choreographyRepresentation.findMany({
+    where: { representationId },
+    select: { choreographyId: true },
+  });
+
+  const excludeIds = linkedIds.map((item) => item.choreographyId);
+
+  return prisma.choreography.findMany({
+    where: {
+      id: excludeIds.length > 0 ? { notIn: excludeIds } : undefined,
+      ...(globalAccess
+        ? {}
+        : {
+            OR: [
+              { createdById: userId },
+              { choreographers: { some: { userId } } },
+            ],
+          }),
+    },
+    select: { id: true, title: true },
+    orderBy: { title: "asc" },
+  });
+}
+
 export type SerializedRepresentation = {
   id: string;
   title: string | null;

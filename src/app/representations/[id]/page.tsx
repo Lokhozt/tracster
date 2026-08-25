@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
-import { EditRepresentationForm } from "@/components/RepresentationForms";
+import { EditRepresentationForm, RepresentationChoreographiesSection } from "@/components/RepresentationForms";
 import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -93,23 +93,14 @@ export default async function RepresentationDetailPage({ params }: PageProps) {
       )}
 
       <Card>
-        <h2 className="mb-4 text-lg font-semibold">Linked choreographies</h2>
-        {representation.choreographies.length === 0 ? (
-          <p className="text-sm text-stone-600">No choreographies linked yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {representation.choreographies.map((link) => (
-              <li key={link.choreographyId}>
-                <Link
-                  href={`/choreographies/${link.choreography.id}`}
-                  className="text-sm font-medium hover:text-stone-700"
-                >
-                  {link.choreography.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+        <RepresentationChoreographiesSection
+          representationId={id}
+          canEdit={canEdit}
+          choreographies={representation.choreographies.map((link) => ({
+            id: link.choreography.id,
+            title: link.choreography.title,
+          }))}
+        />
       </Card>
     </AppShell>
   );

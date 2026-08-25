@@ -710,3 +710,186 @@ export function RepresentationsSection({
     </section>
   );
 }
+
+type LinkableChoreography = { id: string; title: string };
+
+function LinkChoreographyForm({
+  representationId,
+  onSuccess,
+  onCancel,
+}: {
+  representationId: string;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [options, setOptions] = useState<LinkableChoreography[]>([]);
+  const [fetching, setFetching] = useState(true);
+  const [choreographyId, setChoreographyId] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadOptions() {
+      setFetching(true);
+      const response = await fetch(`/api/representations/${representationId}/choreographies`);
+      const data = await response.json();
+      if (!cancelled) {
+        if (response.ok) {
+          setOptions(data.choreographies ?? []);
+          setChoreographyId(data.choreographies?.[0]?.id ?? "");
+        } else {
+          setError(data.error ?? "Unable to load choreographies.");
+        }
+        setFetching(false);
+      }
+    }
+
+    void loadOptions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [representationId]);
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!choreographyId) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    const response = await fetch(`/api/representations/${representationId}/choreographies`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ choreographyId }),
+    });
+
+    const data = await response.json();
+    setLoading(false);
+
+    if (!response.ok) {
+      setError(data.error ?? "Unable to link choreography.");
+      return;
+    }
+
+    router.refresh();
+    onSuccess?.();
+  }
+
+  if (fetching) {
+    return <p className="text-sm text-stone-600">Loading choreographies...</p>;
+  }
+
+  if (options.length === 0) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-stone-600">
+          No other choreographies available to link.
+        </p>
+        {onCancel && (
+          <Button type="button" variant="secondary" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <div>
+        <Label htmlFor="link-choreography">Choreography</Label>
+        <select
+          id="link-choreography"
+          value={choreographyId}
+          onChange={(event) => setChoreographyId(event.target.value)}
+          className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"
+        >
+          {options.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.title}
+            </option>
+          ))}
+        </select>
+      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" disabled={loading || !choreographyId}>
+          {loading ? "Linking..." : "Link choreography"}
+        </Button>
+        {onCancel && (
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
+            Cancel
+          </Button>
+        )}
+      </div>
+    </form>
+  );
+}
+
+export function RepresentationChoreographiesSection({
+  representationId,
+  choreographies,
+  canEdit,
+}: {
+  representationId: string;
+  choreographies: { id: string; title: string }[];
+  canEdit: boolean;
+}) {
+  const [showLinkForm, setShowLinkForm] = useState(false);
+
+  return (
+    <section>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">Linked choreographies</h2>
+        {canEdit && !showLinkForm && (
+          <Button type="button" onClick={() => setShowLinkForm(true)}>
+            Link choreography
+          </Button>
+        )}
+      </div>
+
+      {canEdit && showLinkForm && (
+        <div className="mb-4 rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+          <LinkChoreographyForm
+            representationId={representationId}
+            onSuccess={() => setShowLinkForm(false)}
+            onCancel={() => setShowLinkForm(false)}
+          />
+        </div>
+      )}
+
+      {choreographies.length === 0 ? (
+        <p className="text-sm text-stone-600">No choreographies linked yet.</p>
+      ) : (
+        <ul className="space-y-2">
+          {choreographies.map((choreography) => (
+            <li
+              key={choreography.id}
+              className="flex items-center justify-between gap-2"
+            >
+              <Link
+                href={`/choreographies/${choreography.id}`}
+                className="text-sm font-medium hover:text-stone-700"
+              >
+                {choreography.title}
+              </Link>
+              {canEdit && (
+                <DeleteEventButton
+                  deleteUrl={`/api/representations/${representationId}/choreographies`}
+                  deleteBody={{ choreographyId: choreography.id }}
+                  confirmMessage={`Remove ${choreography.title} from this representation? The choreography itself will not be deleted.`}
+                />
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
