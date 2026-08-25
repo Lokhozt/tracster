@@ -7,6 +7,16 @@ import { hasGlobalAccess } from "@/lib/roles";
 
 const choreographyAccessFilter = (userId: string) => listedChoreographyWhere(userId);
 
+function involvedInChoreographyWhere(userId: string) {
+  return {
+    OR: [
+      { createdById: userId },
+      { choreographers: { some: { userId } } },
+      { members: { some: { userId } } },
+    ],
+  };
+}
+
 export type ScheduleEventType = "repetition" | "representation" | "event";
 
 export type SerializedScheduleEvent = {
@@ -33,7 +43,17 @@ export async function getUserScheduleEvents(userId: string) {
 
   const eventWhere = globalAccess ? undefined : listedEventWhere(userId);
 
-  const [repetitions, representationLinks, associationEvents] = await Promise.all([
+  const representationWhere = globalAccess
+    ? undefined
+    : {
+        choreographies: {
+          some: {
+            choreography: involvedInChoreographyWhere(userId),
+          },
+        },
+      };
+
+  const [repetitions, representations, associationEvents] = await Promise.all([
     prisma.repetitionEvent.findMany({
       where: choreographyWhere,
       include: {
@@ -62,22 +82,28 @@ export async function getUserScheduleEvents(userId: string) {
       },
       orderBy: { startsAt: "asc" },
     }),
-    prisma.choreographyRepresentation.findMany({
-      where: choreographyWhere,
+    prisma.representation.findMany({
+      where: representationWhere,
       include: {
-        choreography: {
+        choreographies: {
           select: {
-            id: true,
-            title: true,
-            members: {
-              where: { userId },
-              select: { userId: true },
+            choreography: {
+              select: {
+                createdById: true,
+                members: {
+                  where: { userId },
+                  select: { userId: true },
+                },
+                choreographers: {
+                  where: { userId },
+                  select: { userId: true },
+                },
+              },
             },
           },
         },
-        representation: true,
       },
-      orderBy: { representation: { startsAt: "asc" } },
+      orderBy: { startsAt: "asc" },
     }),
     prisma.event.findMany({
       where: eventWhere,
@@ -111,21 +137,31 @@ export async function getUserScheduleEvents(userId: string) {
       href: `/repetitions/${repetition.id}`,
       canEdit: await canEditChoreography(repetition.choreographyId, userId),
     })),
-    ...representationLinks.map(async (link) => ({
-      id: `${link.representationId}-${link.choreographyId}`,
-      type: "representation" as const,
-      title: link.representation.title,
-      startsAt: link.representation.startsAt.toISOString(),
-      endsAt: link.representation.endsAt?.toISOString() ?? null,
-      location: link.representation.location,
-      choreographyId: link.choreographyId,
-      choreographyTitle: link.choreography.title,
-      isMember: link.choreography.members.length > 0,
-      isParticipating: link.choreography.members.length > 0,
-      availabilityStatus: null,
-      href: `/representations/${link.representationId}`,
-      canEdit: await canEditRepresentation(link.representationId, userId),
-    })),
+    ...representations.map(async (representation) => {
+      const involved = representation.choreographies.some(({ choreography }) => {
+        return (
+          choreography.createdById === userId ||
+          choreography.choreographers.length > 0 ||
+          choreography.members.length > 0
+        );
+      });
+
+      return {
+        id: representation.id,
+        type: "representation" as const,
+        title: representation.title,
+        startsAt: representation.startsAt.toISOString(),
+        endsAt: representation.endsAt?.toISOString() ?? null,
+        location: representation.location,
+        choreographyId: null,
+        choreographyTitle: null,
+        isMember: involved,
+        isParticipating: involved,
+        availabilityStatus: null,
+        href: `/representations/${representation.id}`,
+        canEdit: await canEditRepresentation(representation.id, userId),
+      };
+    }),
     ...associationEvents.map(async (event) => ({
       id: event.id,
       type: "event" as const,

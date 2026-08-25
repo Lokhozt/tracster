@@ -26,10 +26,10 @@ type CalendarView = "month" | "week";
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 function eventCellLabel(event: SerializedScheduleEvent): string {
-  if (event.type === "event") {
-    return event.title ?? "Event";
+  if (event.type === "event" || event.type === "representation") {
+    return event.title ?? (event.type === "event" ? "Event" : "Representation");
   }
-  return event.choreographyTitle ?? "";
+  return event.choreographyTitle ?? event.title ?? "";
 }
 
 function eventCellTitle(event: SerializedScheduleEvent): string {
