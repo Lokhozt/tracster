@@ -1,4 +1,4 @@
-import { addDays, startOfWeek } from "date-fns";
+import { addDays, format, startOfWeek } from "date-fns";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { UnavailabilityCalendar } from "@/components/UnavailabilityCalendar";
@@ -25,7 +25,7 @@ export default async function UnavailabilityPage() {
       </p>
       <UnavailabilityCalendar
         initialTimeframes={timeframes.map(serializeUnavailability)}
-        initialWeekStart={weekStart.toISOString()}
+        initialWeekStart={format(weekStart, "yyyy-MM-dd")}
       />
     </AppShell>
   );

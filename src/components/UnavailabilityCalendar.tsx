@@ -4,9 +4,11 @@ import {
   addDays,
   addMinutes,
   addWeeks,
+  differenceInCalendarDays,
   differenceInMinutes,
   format,
   isToday,
+  parseISO,
   setHours,
   setMinutes,
   startOfDay,
@@ -69,6 +71,13 @@ function dateToSlot(date: Date): number {
   return Math.max(0, Math.min(SLOTS_PER_DAY - 1, Math.round(minutes / SLOT_MINUTES)));
 }
 
+// The end can fall on the next day (a block drawn to the bottom of the grid ends
+// at midnight), so measure it from the start day instead of its own clock time.
+function dateToEndSlot(start: Date, end: Date): number {
+  const minutes = differenceInMinutes(end, startOfDay(start)) - START_HOUR * 60;
+  return Math.max(1, Math.min(SLOTS_PER_DAY, Math.round(minutes / SLOT_MINUTES)));
+}
+
 function normalizeSlotRange(startSlot: number, endSlot: number): [number, number] {
   const start = Math.min(startSlot, endSlot);
   const end = Math.max(startSlot, endSlot);
@@ -91,9 +100,7 @@ function timeframeToSlots(timeframe: SerializedUnavailability, weekStart: Date):
 } | null {
   const start = new Date(timeframe.startsAt);
   const end = new Date(timeframe.endsAt);
-  const dayIndex = Math.floor(
-    (startOfDay(start).getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000),
-  );
+  const dayIndex = differenceInCalendarDays(start, weekStart);
 
   if (dayIndex < 0 || dayIndex > 6) {
     return null;
@@ -102,7 +109,7 @@ function timeframeToSlots(timeframe: SerializedUnavailability, weekStart: Date):
   return {
     dayIndex,
     startSlot: dateToSlot(start),
-    endSlot: dateToSlot(end),
+    endSlot: dateToEndSlot(start, end),
   };
 }
 
@@ -124,9 +131,13 @@ export function UnavailabilityCalendar({
   initialWeekStart,
 }: {
   initialTimeframes: SerializedUnavailability[];
+  // Calendar day (yyyy-MM-dd) rather than an instant: the grid is laid out in the
+  // viewer's timezone, which can differ from the server's.
   initialWeekStart: string;
 }) {
-  const [weekStart, setWeekStart] = useState(() => new Date(initialWeekStart));
+  const [weekStart, setWeekStart] = useState(() =>
+    startOfWeek(parseISO(initialWeekStart), { weekStartsOn: 1 }),
+  );
   const [timeframes, setTimeframes] = useState(initialTimeframes);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [notesDraft, setNotesDraft] = useState("");
