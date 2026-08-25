@@ -97,12 +97,21 @@ function normalizeSlotRange(startSlot: number, endSlot: number): [number, number
 }
 
 function blockStyle(startSlot: number, endSlot: number) {
-  const [start, end] = normalizeSlotRange(startSlot, endSlot - 1);
-  const normalizedEnd = end;
+  if (endSlot <= startSlot) {
+    return {
+      top: startSlot * SLOT_HEIGHT_PX,
+      height: 2,
+    };
+  }
+
   return {
-    top: start * SLOT_HEIGHT_PX,
-    height: Math.max(SLOT_HEIGHT_PX, (normalizedEnd - start) * SLOT_HEIGHT_PX),
+    top: startSlot * SLOT_HEIGHT_PX,
+    height: (endSlot - startSlot) * SLOT_HEIGHT_PX,
   };
+}
+
+function isZeroDuration(startsAt: Date, endsAt: Date) {
+  return endsAt.getTime() <= startsAt.getTime();
 }
 
 function timeframeToSlots(timeframe: SerializedUnavailability, weekStart: Date): {
@@ -162,6 +171,7 @@ export function UnavailabilityCalendar({
   const [pressing, setPressing] = useState(false);
   const timeframesRef = useRef(timeframes);
   timeframesRef.current = timeframes;
+  const scrollLocked = Boolean(selectedId || interaction);
 
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)),
@@ -224,9 +234,10 @@ export function UnavailabilityCalendar({
   }, []);
 
   // Touch gestures are ambiguous: the same swipe can mean "scroll the page" or
-  // "draw a block". Scrolling wins unless the finger stays put long enough.
+  // "draw a block". Scrolling wins unless the finger stays put long enough, or
+  // a period is already selected (scroll is locked).
   function beginInteraction(event: React.PointerEvent, start: () => void) {
-    if (event.pointerType !== "touch") {
+    if (event.pointerType !== "touch" || selectedId) {
       event.preventDefault();
       start();
       return;
@@ -278,12 +289,47 @@ export function UnavailabilityCalendar({
     };
   }, [cancelPendingPress]);
 
+  useEffect(() => {
+    if (!scrollLocked) {
+      return;
+    }
+
+    const html = document.documentElement;
+    const previousHtmlOverflow = html.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    html.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
+    function onTouchMove(event: TouchEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("[data-allow-scroll]")) {
+        return;
+      }
+      event.preventDefault();
+    }
+
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+
+    return () => {
+      html.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      document.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [scrollLocked]);
+
   async function persistTimeframe(
     id: string | null,
     startsAt: Date,
     endsAt: Date,
     notes?: string | null,
   ) {
+    if (isZeroDuration(startsAt, endsAt)) {
+      if (id) {
+        await removeTimeframe(id);
+      }
+      return null;
+    }
+
     setSaving(true);
     setError(null);
 
@@ -358,16 +404,14 @@ export function UnavailabilityCalendar({
     }
 
     if (active.type === "resize-start") {
-      const [startSlot] = normalizeSlotRange(active.currentSlot, active.endSlot - 1);
-      const startsAt = slotToDate(weekStart, active.dayIndex, startSlot);
+      const startsAt = slotToDate(weekStart, active.dayIndex, active.currentSlot);
       const endsAt = new Date(existing.endsAt);
       await persistTimeframe(active.id, startsAt, endsAt, existing.notes);
       return;
     }
 
-    const [, endSlot] = normalizeSlotRange(active.startSlot, active.currentSlot);
     const startsAt = new Date(existing.startsAt);
-    const endsAt = slotToDate(weekStart, active.dayIndex, endSlot);
+    const endsAt = slotToDate(weekStart, active.dayIndex, active.currentSlot + 1);
     await persistTimeframe(active.id, startsAt, endsAt, existing.notes);
   }
 
@@ -448,6 +492,26 @@ export function UnavailabilityCalendar({
     });
   }
 
+  async function removeTimeframe(id: string) {
+    setSaving(true);
+    setError(null);
+
+    const response = await fetch(`/api/unavailability/${id}`, {
+      method: "DELETE",
+    });
+
+    setSaving(false);
+
+    if (!response.ok) {
+      setError("Unable to delete unavailability.");
+      await loadTimeframes();
+      return;
+    }
+
+    setTimeframes((current) => current.filter((entry) => entry.id !== id));
+    setSelectedId((current) => (current === id ? null : current));
+  }
+
   async function deleteSelected() {
     if (!selectedId) {
       return;
@@ -457,22 +521,7 @@ export function UnavailabilityCalendar({
       return;
     }
 
-    setSaving(true);
-    setError(null);
-
-    const response = await fetch(`/api/unavailability/${selectedId}`, {
-      method: "DELETE",
-    });
-
-    setSaving(false);
-
-    if (!response.ok) {
-      setError("Unable to delete unavailability.");
-      return;
-    }
-
-    setTimeframes((current) => current.filter((entry) => entry.id !== selectedId));
-    setSelectedId(null);
+    await removeTimeframe(selectedId);
   }
 
   async function saveNotes() {
@@ -494,7 +543,11 @@ export function UnavailabilityCalendar({
     }
 
     if (interaction.type === "create") {
-      const style = blockStyle(interaction.anchorSlot, interaction.currentSlot + 1);
+      const [startSlot, endSlot] = normalizeSlotRange(
+        interaction.anchorSlot,
+        interaction.currentSlot,
+      );
+      const style = blockStyle(startSlot, endSlot);
       return [{ dayIndex: interaction.dayIndex, ...style, draft: true }];
     }
 
@@ -548,15 +601,16 @@ export function UnavailabilityCalendar({
   const periodLabel = `${format(weekDays[0], "d MMM")} – ${format(weekDays[6], "d MMM yyyy")}`;
 
   return (
-    <div className="space-y-4">
+    <div className={cn("space-y-4", selectedTimeframe && "pb-56 sm:pb-0")}>
       <Card>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold">Week view</h2>
             <p className="mt-1 text-sm text-stone-500">
               Click and drag on the grid to add periods. Drag blocks to move, or resize from the
-              edges. On a touch screen, press and hold to start drawing or dragging — a plain
-              swipe scrolls the page.
+              edges. On a touch screen, press and hold to start drawing — a plain swipe scrolls.
+              Tap a period to select it and lock scrolling so you can drag or resize. Tap empty
+              space to deselect. Collapse a period to nothing to remove it.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -596,7 +650,12 @@ export function UnavailabilityCalendar({
         )}
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
-        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <div
+          className={cn(
+            "-mx-4 px-4 sm:mx-0 sm:px-0",
+            scrollLocked ? "overflow-hidden" : "overflow-x-auto",
+          )}
+        >
           <div className="min-w-[640px] sm:min-w-[760px]">
             <div className="grid grid-cols-[56px_repeat(7,1fr)] border-b border-stone-200">
               <div />
@@ -654,8 +713,8 @@ export function UnavailabilityCalendar({
                       columnRefs.current[dayIndex] = element;
                     }}
                     className={cn(
-                      "relative touch-auto select-none border-l border-stone-200 bg-white [-webkit-touch-callout:none]",
-                      interaction && "touch-none",
+                      "relative select-none border-l border-stone-200 bg-white [-webkit-touch-callout:none]",
+                      scrollLocked ? "touch-none" : "touch-auto",
                     )}
                     style={{ height: GRID_HEIGHT_PX }}
                     onContextMenu={(event) => event.preventDefault()}
@@ -664,6 +723,10 @@ export function UnavailabilityCalendar({
                         return;
                       }
                       if ((event.target as HTMLElement).closest("[data-block]")) {
+                        return;
+                      }
+                      if (selectedId) {
+                        setSelectedId(null);
                         return;
                       }
                       const slot = pointerToSlot(event.clientY, dayIndex);
@@ -705,6 +768,8 @@ export function UnavailabilityCalendar({
                       if (isDragging) {
                         return null;
                       }
+
+                      const handleHeight = isSelected ? 16 : RESIZE_HANDLE_PX;
 
                       return (
                         <div
@@ -764,7 +829,7 @@ export function UnavailabilityCalendar({
                           <div
                             data-handle="start"
                             className="absolute inset-x-0 top-0 cursor-ns-resize bg-red-400/40"
-                            style={{ height: RESIZE_HANDLE_PX }}
+                            style={{ height: handleHeight }}
                           />
                           <div className="pointer-events-none px-2 py-1">
                             <p className="font-medium">
@@ -778,7 +843,7 @@ export function UnavailabilityCalendar({
                           <div
                             data-handle="end"
                             className="absolute inset-x-0 bottom-0 cursor-ns-resize bg-red-400/40"
-                            style={{ height: RESIZE_HANDLE_PX }}
+                            style={{ height: handleHeight }}
                           />
                         </div>
                       );
@@ -800,7 +865,10 @@ export function UnavailabilityCalendar({
       </Card>
 
       {selectedTimeframe && (
-        <Card>
+        <Card
+          data-allow-scroll
+          className="fixed inset-x-0 bottom-0 z-30 max-h-[40vh] overflow-y-auto rounded-none border-x-0 border-b-0 sm:static sm:max-h-none sm:overflow-visible sm:rounded-xl sm:border"
+        >
           <h3 className="mb-3 text-lg font-semibold">Selected period</h3>
           <p className="text-sm text-stone-600">
             {formatDateTime(new Date(selectedTimeframe.startsAt))} –{" "}
