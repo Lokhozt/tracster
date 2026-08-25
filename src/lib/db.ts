@@ -17,7 +17,7 @@ type PrismaGlobal = typeof globalThis & {
 const globalForPrisma = globalThis as PrismaGlobal;
 
 // Bump when the Prisma schema changes so dev HMR does not keep a stale client.
-const PRISMA_CLIENT_VERSION = "20260825234500_choreography_archive";
+const PRISMA_CLIENT_VERSION = "20260826000500_locations";
 
 function isStalePrismaClient(client: PrismaClient | undefined): boolean {
   if (!client) {
@@ -27,7 +27,9 @@ function isStalePrismaClient(client: PrismaClient | undefined): boolean {
   return (
     globalForPrisma.prismaClientVersion !== PRISMA_CLIENT_VERSION ||
     !("choreographyJoinRequest" in client) ||
-    client.choreographyJoinRequest === undefined
+    client.choreographyJoinRequest === undefined ||
+    !("location" in client) ||
+    client.location === undefined
   );
 }
 

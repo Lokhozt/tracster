@@ -1,6 +1,7 @@
 import { listedChoreographyWhere } from "@/lib/participation";
 import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { prisma } from "@/lib/db";
+import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
 import { hasGlobalAccess } from "@/lib/roles";
 
@@ -95,6 +96,7 @@ export async function getUserRepresentations(userId: string) {
           ],
         },
     include: {
+      ...listedLocationInclude,
       choreographies: {
         where: { choreography: visibleChoreographyWhere },
         include: {
@@ -120,7 +122,7 @@ export async function getLinkableRepresentations(
 
   const excludeIds = linkedIds.map((item) => item.representationId);
 
-  return prisma.representation.findMany({
+  const representations = await prisma.representation.findMany({
     where: {
       id: excludeIds.length > 0 ? { notIn: excludeIds } : undefined,
       ...(globalAccess
@@ -145,8 +147,17 @@ export async function getLinkableRepresentations(
       startsAt: true,
       endsAt: true,
       location: true,
+      listedLocation: { select: { name: true } },
     },
   });
+
+  return representations.map((representation) => ({
+    id: representation.id,
+    title: representation.title,
+    startsAt: representation.startsAt,
+    endsAt: representation.endsAt,
+    location: displayLocation(representation),
+  }));
 }
 
 export async function getLinkableChoreographies(
@@ -186,6 +197,7 @@ export type SerializedRepresentation = {
   startsAt: string;
   endsAt: string | null;
   location: string | null;
+  locationId: string | null;
   notes: string | null;
   choreographies: { id: string; title: string }[];
 };
@@ -198,7 +210,8 @@ export function serializeRepresentation(
     title: representation.title,
     startsAt: representation.startsAt.toISOString(),
     endsAt: representation.endsAt?.toISOString() ?? null,
-    location: representation.location,
+    location: displayLocation(representation),
+    locationId: representation.locationId,
     notes: representation.notes,
     choreographies: representation.choreographies.map((link) => ({
       id: link.choreography.id,

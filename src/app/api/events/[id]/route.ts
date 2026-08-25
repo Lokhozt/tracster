@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { eventSchema } from "@/lib/validations";
 import { canEditEvent, canViewEvent } from "@/lib/events";
+import { resolveLocationFromParsed } from "@/lib/locations";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -59,6 +60,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
+  const location = await resolveLocationFromParsed(parsed.data);
+  if ("error" in location) {
+    return jsonError(location.error);
+  }
+
   const updated = await prisma.event.update({
     where: { id },
     data: {
@@ -66,7 +72,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       description: parsed.data.description,
       startsAt: new Date(parsed.data.startsAt),
       endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
-      location: parsed.data.location,
+      locationId: location.locationId,
+      location: location.location,
       allowParticipantJoin: parsed.data.allowParticipantJoin ?? false,
       allowJoinRequests: parsed.data.allowJoinRequests ?? false,
       hideFromNonParticipants: parsed.data.hideFromNonParticipants ?? true,

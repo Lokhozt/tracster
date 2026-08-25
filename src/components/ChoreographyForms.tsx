@@ -8,6 +8,12 @@ import {
   RepetitionEventCard,
   type RepetitionListItem,
 } from "@/components/RepetitionEventCard";
+import {
+  emptyLocationSelection,
+  LocationPicker,
+  locationPayload,
+  selectionFromRecord,
+} from "@/components/LocationPicker";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { RepetitionAudienceSelect, type GroupOption } from "@/components/GroupForms";
 import { ParticipantConflictWarnings } from "@/components/ParticipantConflictWarnings";
@@ -26,6 +32,7 @@ export type RepetitionDetailItem = {
   startsAt: string;
   endsAt: string | null;
   location: string | null;
+  locationId: string | null;
   notes: string | null;
 };
 
@@ -183,6 +190,7 @@ export function CreateRepetitionForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [audience, setAudience] = useState("");
+  const [locationSelection, setLocationSelection] = useState(emptyLocationSelection);
   const [start, setStart] = useState<DateTimeParts>(defaultStartDateTime);
   const [end, setEnd] = useState<DateTimeParts>(() => addOneHour(defaultStartDateTime()));
 
@@ -226,7 +234,7 @@ export function CreateRepetitionForm({
         title: formData.get("title") || undefined,
         startsAt: startsAt.toISOString(),
         endsAt: endsAt?.toISOString(),
-        location: formData.get("location") || undefined,
+        ...locationPayload(locationSelection),
         notes: formData.get("notes") || undefined,
         groupId: audience || undefined,
       }),
@@ -243,6 +251,7 @@ export function CreateRepetitionForm({
     form.reset();
     resetScheduleFields();
     setAudience("");
+    setLocationSelection(emptyLocationSelection);
     router.refresh();
     onSuccess?.();
   }
@@ -269,10 +278,11 @@ export function CreateRepetitionForm({
           onChange={setEnd}
         />
       </div>
-      <div>
-        <Label htmlFor="location">Location</Label>
-        <Input id="location" name="location" placeholder="Studio A" />
-      </div>
+      <LocationPicker
+        id="location"
+        value={locationSelection}
+        onChange={setLocationSelection}
+      />
       <RepetitionAudienceSelect groups={groups} value={audience} onChange={setAudience} />
       <ParticipantConflictWarnings
         choreographyId={choreographyId}
@@ -300,7 +310,9 @@ export function EditRepetitionForm({ repetition }: { repetition: RepetitionDetai
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState(repetition.title ?? "");
-  const [location, setLocation] = useState(repetition.location ?? "");
+  const [locationSelection, setLocationSelection] = useState(() =>
+    selectionFromRecord(repetition),
+  );
   const [notes, setNotes] = useState(repetition.notes ?? "");
   const [start, setStart] = useState<DateTimeParts>(() =>
     dateToDateTimeParts(new Date(repetition.startsAt)),
@@ -343,7 +355,7 @@ export function EditRepetitionForm({ repetition }: { repetition: RepetitionDetai
         title: title || undefined,
         startsAt: startsAt.toISOString(),
         endsAt: endsAt?.toISOString(),
-        location: location || undefined,
+        ...locationPayload(locationSelection),
         notes: notes || undefined,
       }),
     });
@@ -386,15 +398,11 @@ export function EditRepetitionForm({ repetition }: { repetition: RepetitionDetai
           onChange={setEnd}
         />
       </div>
-      <div>
-        <Label htmlFor="edit-repetition-location">Location</Label>
-        <Input
-          id="edit-repetition-location"
-          value={location}
-          onChange={(event) => setLocation(event.target.value)}
-          placeholder="Studio A"
-        />
-      </div>
+      <LocationPicker
+        id="edit-repetition-location"
+        value={locationSelection}
+        onChange={setLocationSelection}
+      />
       <div>
         <Label htmlFor="edit-repetition-notes">Notes</Label>
         <Textarea

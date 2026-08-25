@@ -44,8 +44,14 @@ const usersNavItem: NavItem = {
   match: (pathname) => pathname.startsWith("/users"),
 };
 
-export function getNavItems(showUsersNav = false): NavItem[] {
-  return showUsersNav ? [...baseNavItems, usersNavItem] : baseNavItems;
+const settingsNavItem: NavItem = {
+  href: "/settings",
+  label: "Settings",
+  match: (pathname) => pathname.startsWith("/settings"),
+};
+
+export function getNavItems(showAdminNav = false): NavItem[] {
+  return showAdminNav ? [...baseNavItems, usersNavItem, settingsNavItem] : baseNavItems;
 }
 
 export function MainNav({ showUsersNav = false }: { showUsersNav?: boolean }) {

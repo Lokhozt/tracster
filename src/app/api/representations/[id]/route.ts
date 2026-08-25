@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { representationSchema } from "@/lib/validations";
+import { resolveLocationFromParsed } from "@/lib/locations";
 import {
   canEditRepresentation,
   canViewRepresentation,
@@ -60,13 +61,19 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
+  const location = await resolveLocationFromParsed(parsed.data);
+  if ("error" in location) {
+    return jsonError(location.error);
+  }
+
   const updated = await prisma.representation.update({
     where: { id },
     data: {
       title: parsed.data.title,
       startsAt: new Date(parsed.data.startsAt),
       endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
-      location: parsed.data.location,
+      locationId: location.locationId,
+      location: location.location,
       notes: parsed.data.notes,
     },
     include: {

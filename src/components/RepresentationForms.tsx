@@ -6,6 +6,13 @@ import { useRouter } from "next/navigation";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
 import { EditIconLink } from "@/components/EditIconLink";
+import {
+  emptyLocationSelection,
+  LocationPicker,
+  locationPayload,
+  selectionFromRecord,
+  type LocationSelection,
+} from "@/components/LocationPicker";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import {
   addOneHour,
@@ -22,6 +29,7 @@ export type RepresentationItem = {
   startsAt: string;
   endsAt: string | null;
   location: string | null;
+  locationId: string | null;
   notes: string | null;
 };
 
@@ -35,7 +43,7 @@ type LinkableRepresentation = {
 
 function RepresentationFields({
   title,
-  location,
+  locationSelection,
   notes,
   start,
   end,
@@ -50,14 +58,14 @@ function RepresentationFields({
   showNotes = false,
 }: {
   title: string;
-  location: string;
+  locationSelection: LocationSelection;
   notes: string;
   start: DateTimeParts;
   end: DateTimeParts;
   onStartChange: (value: DateTimeParts) => void;
   onEndChange: (value: DateTimeParts) => void;
   onTitleChange: (value: string) => void;
-  onLocationChange: (value: string) => void;
+  onLocationChange: (value: LocationSelection) => void;
   onNotesChange?: (value: string) => void;
   titleId: string;
   locationId: string;
@@ -91,15 +99,11 @@ function RepresentationFields({
           onChange={onEndChange}
         />
       </div>
-      <div>
-        <Label htmlFor={locationId}>Location</Label>
-        <Input
-          id={locationId}
-          value={location}
-          onChange={(event) => onLocationChange(event.target.value)}
-          placeholder="Main stage"
-        />
-      </div>
+      <LocationPicker
+        id={locationId}
+        value={locationSelection}
+        onChange={onLocationChange}
+      />
       {showNotes && notesId && onNotesChange && (
         <div>
           <Label htmlFor={notesId}>Notes</Label>
@@ -133,7 +137,7 @@ function validateSchedule(start: DateTimeParts, end: DateTimeParts): string | nu
 
 function buildRepresentationPayload(
   title: string,
-  location: string,
+  locationSelection: LocationSelection,
   notes: string,
   start: DateTimeParts,
   end: DateTimeParts,
@@ -146,7 +150,7 @@ function buildRepresentationPayload(
     title: title || undefined,
     startsAt: startsAt.toISOString(),
     endsAt: endsAt?.toISOString(),
-    location: location || undefined,
+    ...locationPayload(locationSelection),
     ...(includeNotes ? { notes: notes || undefined } : {}),
   };
 }
@@ -168,7 +172,7 @@ export function CreateRepresentationForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
-  const [location, setLocation] = useState("");
+  const [locationSelection, setLocationSelection] = useState(emptyLocationSelection);
   const [notes, setNotes] = useState("");
   const [selectedChoreographyIds, setSelectedChoreographyIds] = useState<string[]>(
     choreographyIds ?? [],
@@ -197,7 +201,7 @@ export function CreateRepresentationForm({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        ...buildRepresentationPayload(title, location, notes, start, end, true),
+        ...buildRepresentationPayload(title, locationSelection, notes, start, end, true),
         choreographyIds:
           selectedChoreographyIds.length > 0 ? selectedChoreographyIds : choreographyIds,
       }),
@@ -224,14 +228,14 @@ export function CreateRepresentationForm({
     <form onSubmit={handleSubmit} className="space-y-3">
       <RepresentationFields
         title={title}
-        location={location}
+        locationSelection={locationSelection}
         notes={notes}
         start={start}
         end={end}
         onStartChange={handleStartChange}
         onEndChange={setEnd}
         onTitleChange={setTitle}
-        onLocationChange={setLocation}
+        onLocationChange={setLocationSelection}
         onNotesChange={setNotes}
         titleId="representation-title"
         locationId="representation-location"
@@ -281,7 +285,9 @@ export function EditRepresentationForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState(representation.title ?? "");
-  const [location, setLocation] = useState(representation.location ?? "");
+  const [locationSelection, setLocationSelection] = useState(() =>
+    selectionFromRecord(representation),
+  );
   const [notes, setNotes] = useState(representation.notes ?? "");
   const [start, setStart] = useState<DateTimeParts>(() =>
     dateToDateTimeParts(new Date(representation.startsAt)),
@@ -313,7 +319,7 @@ export function EditRepresentationForm({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(
-        buildRepresentationPayload(title, location, notes, start, end, true),
+        buildRepresentationPayload(title, locationSelection, notes, start, end, true),
       ),
     });
 
@@ -334,14 +340,14 @@ export function EditRepresentationForm({
       <form onSubmit={handleSubmit} className="space-y-3">
         <RepresentationFields
           title={title}
-          location={location}
+          locationSelection={locationSelection}
           notes={notes}
           start={start}
           end={end}
           onStartChange={handleStartChange}
           onEndChange={setEnd}
           onTitleChange={setTitle}
-          onLocationChange={setLocation}
+          onLocationChange={setLocationSelection}
           onNotesChange={setNotes}
           titleId={`edit-title-${representation.id}`}
           locationId={`edit-location-${representation.id}`}
@@ -387,7 +393,7 @@ function CreateRepresentationForChoreographyForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
-  const [location, setLocation] = useState("");
+  const [locationSelection, setLocationSelection] = useState(emptyLocationSelection);
   const [start, setStart] = useState<DateTimeParts>(defaultStartDateTime);
   const [end, setEnd] = useState<DateTimeParts>(() => addOneHour(defaultStartDateTime()));
 
@@ -413,7 +419,7 @@ function CreateRepresentationForChoreographyForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         mode: "create",
-        ...buildRepresentationPayload(title, location, "", start, end),
+        ...buildRepresentationPayload(title, locationSelection, "", start, end),
       }),
     });
 
@@ -426,7 +432,7 @@ function CreateRepresentationForChoreographyForm({
     }
 
     setTitle("");
-    setLocation("");
+    setLocationSelection(emptyLocationSelection);
     const initialStart = defaultStartDateTime();
     setStart(initialStart);
     setEnd(addOneHour(initialStart));
@@ -438,14 +444,14 @@ function CreateRepresentationForChoreographyForm({
     <form onSubmit={handleSubmit} className="space-y-3">
       <RepresentationFields
         title={title}
-        location={location}
+        locationSelection={locationSelection}
         notes=""
         start={start}
         end={end}
         onStartChange={handleStartChange}
         onEndChange={setEnd}
         onTitleChange={setTitle}
-        onLocationChange={setLocation}
+        onLocationChange={setLocationSelection}
         titleId="choreography-representation-title"
         locationId="choreography-representation-location"
       />

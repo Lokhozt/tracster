@@ -23,6 +23,10 @@ export async function canManageUsers(userId: string): Promise<boolean> {
   return isAdmin(userId);
 }
 
+export async function canManageSettings(userId: string): Promise<boolean> {
+  return isAdmin(userId);
+}
+
 export async function hasGlobalAccess(userId: string): Promise<boolean> {
   return isAdmin(userId);
 }

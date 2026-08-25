@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { jsonError, unauthorized } from "@/lib/api";
 import { representationSchema } from "@/lib/validations";
+import { resolveLocationFromParsed } from "@/lib/locations";
 import { getUserRepresentations } from "@/lib/representations";
 
 export async function GET() {
@@ -28,12 +29,18 @@ export async function POST(request: NextRequest) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
+  const location = await resolveLocationFromParsed(parsed.data);
+  if ("error" in location) {
+    return jsonError(location.error);
+  }
+
   const representation = await prisma.representation.create({
     data: {
       title: parsed.data.title,
       startsAt: new Date(parsed.data.startsAt),
       endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
-      location: parsed.data.location,
+      locationId: location.locationId,
+      location: location.location,
       notes: parsed.data.notes,
       createdById: user.id,
       choreographies: parsed.data.choreographyIds?.length

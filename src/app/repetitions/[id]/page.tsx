@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/datetime";
 import { getRepetitionAudience, isRepetitionParticipant } from "@/lib/groups";
+import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import {
   canEditChoreography,
   canViewChoreography,
@@ -33,6 +34,7 @@ export default async function RepetitionDetailPage({ params }: PageProps) {
   const repetition = await prisma.repetitionEvent.findUnique({
     where: { id },
     include: {
+      ...listedLocationInclude,
       group: {
         select: {
           id: true,
@@ -101,7 +103,8 @@ export default async function RepetitionDetailPage({ params }: PageProps) {
               title: repetition.title,
               startsAt: repetition.startsAt.toISOString(),
               endsAt: repetition.endsAt?.toISOString() ?? null,
-              location: repetition.location,
+              location: displayLocation(repetition),
+              locationId: repetition.locationId,
               notes: repetition.notes,
             }}
           />
@@ -119,10 +122,10 @@ export default async function RepetitionDetailPage({ params }: PageProps) {
                 {formatDateTime(repetition.endsAt)}
               </p>
             )}
-            {repetition.location && (
+            {displayLocation(repetition) && (
               <p>
                 <span className="font-medium text-stone-900">Location:</span>{" "}
-                {repetition.location}
+                {displayLocation(repetition)}
               </p>
             )}
             {repetition.notes && (

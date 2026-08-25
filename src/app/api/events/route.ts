@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { jsonError, unauthorized } from "@/lib/api";
 import { eventSchema } from "@/lib/validations";
 import { getUserEvents } from "@/lib/events";
+import { resolveLocationFromParsed } from "@/lib/locations";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -28,13 +29,19 @@ export async function POST(request: NextRequest) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
+  const location = await resolveLocationFromParsed(parsed.data);
+  if ("error" in location) {
+    return jsonError(location.error);
+  }
+
   const event = await prisma.event.create({
     data: {
       title: parsed.data.title,
       description: parsed.data.description,
       startsAt: new Date(parsed.data.startsAt),
       endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
-      location: parsed.data.location,
+      locationId: location.locationId,
+      location: location.location,
       createdById: user.id,
       allowParticipantJoin: parsed.data.allowParticipantJoin ?? false,
       allowJoinRequests: parsed.data.allowJoinRequests ?? false,

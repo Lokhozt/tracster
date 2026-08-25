@@ -5,6 +5,7 @@ import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
 import { repetitionSchema } from "@/lib/validations";
 import { basicUserSelect } from "@/lib/users";
+import { resolveLocationFromParsed } from "@/lib/locations";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -73,13 +74,19 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
+  const location = await resolveLocationFromParsed(parsed.data);
+  if ("error" in location) {
+    return jsonError(location.error);
+  }
+
   const updated = await prisma.repetitionEvent.update({
     where: { id },
     data: {
       title: parsed.data.title,
       startsAt: new Date(parsed.data.startsAt),
       endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
-      location: parsed.data.location,
+      locationId: location.locationId,
+      location: location.location,
       notes: parsed.data.notes,
     },
   });

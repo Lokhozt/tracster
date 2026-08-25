@@ -9,6 +9,7 @@ import {
 import { canEditChoreography } from "@/lib/permissions";
 import { canEditRepresentation } from "@/lib/representations";
 import { getLinkableRepresentations } from "@/lib/representations";
+import { resolveLocationFromParsed } from "@/lib/locations";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -91,12 +92,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return Response.json({ representation: link.representation }, { status: 201 });
   }
 
+  const location = await resolveLocationFromParsed(parsed.data);
+  if ("error" in location) {
+    return jsonError(location.error);
+  }
+
   const representation = await prisma.representation.create({
     data: {
       title: parsed.data.title,
       startsAt: new Date(parsed.data.startsAt),
       endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
-      location: parsed.data.location,
+      locationId: location.locationId,
+      location: location.location,
       notes: parsed.data.notes,
       createdById: user.id,
       choreographies: {

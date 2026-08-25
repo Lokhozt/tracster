@@ -11,6 +11,7 @@ import {
   canEditRepresentation,
   canViewRepresentation,
 } from "@/lib/representations";
+import { displayLocation, listedLocationInclude } from "@/lib/locations";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -29,7 +30,8 @@ export default async function RepresentationDetailPage({ params }: PageProps) {
   const representation = await prisma.representation.findUnique({
     where: { id },
     include: {
-        choreographies: {
+      ...listedLocationInclude,
+      choreographies: {
           where: { choreography: { archivedAt: null } },
           include: {
           choreography: {
@@ -57,7 +59,8 @@ export default async function RepresentationDetailPage({ params }: PageProps) {
     title: representation.title,
     startsAt: representation.startsAt.toISOString(),
     endsAt: representation.endsAt?.toISOString() ?? null,
-    location: representation.location,
+    location: displayLocation(representation),
+    locationId: representation.locationId,
     notes: representation.notes,
   };
 
@@ -95,7 +98,7 @@ export default async function RepresentationDetailPage({ params }: PageProps) {
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-stone-500">Location</p>
             <p className="mt-1 text-sm font-medium text-stone-900">
-              {representation.location || "—"}
+              {displayLocation(representation) || "—"}
             </p>
           </div>
         </div>

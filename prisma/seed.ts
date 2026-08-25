@@ -86,6 +86,18 @@ async function main() {
     },
   });
 
+  const studioA = await prisma.location.upsert({
+    where: { name: "Studio A" },
+    update: {},
+    create: { name: "Studio A" },
+  });
+
+  const mainTheatre = await prisma.location.upsert({
+    where: { name: "Main theatre" },
+    update: {},
+    create: { name: "Main theatre" },
+  });
+
   const repetition = await prisma.repetitionEvent.upsert({
     where: { id: "seed-repetition-1" },
     update: {},
@@ -95,7 +107,7 @@ async function main() {
       title: "First rehearsal",
       startsAt: new Date("2026-07-01T18:30:00"),
       endsAt: new Date("2026-07-01T20:00:00"),
-      location: "Studio A",
+      locationId: studioA.id,
       createdById: alice.id,
     },
   });
@@ -123,7 +135,7 @@ async function main() {
       title: "June showcase",
       startsAt: new Date("2026-06-28T20:00:00"),
       endsAt: new Date("2026-06-28T22:00:00"),
-      location: "Main theatre",
+      locationId: mainTheatre.id,
       createdById: alice.id,
       choreographies: {
         create: { choreographyId: choreography.id },

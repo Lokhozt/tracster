@@ -6,6 +6,7 @@ import { getGroupForChoreography } from "@/lib/groups";
 import { canEditChoreography } from "@/lib/permissions";
 import { basicUserSelect } from "@/lib/users";
 import { repetitionSchema } from "@/lib/validations";
+import { resolveLocationFromParsed } from "@/lib/locations";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -39,6 +40,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
   }
 
+  const location = await resolveLocationFromParsed(parsed.data);
+  if ("error" in location) {
+    return jsonError(location.error);
+  }
+
   const repetition = await prisma.repetitionEvent.create({
     data: {
       choreographyId: id,
@@ -47,7 +53,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
       title: parsed.data.title,
       startsAt: new Date(parsed.data.startsAt),
       endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
-      location: parsed.data.location,
+      locationId: location.locationId,
+      location: location.location,
       notes: parsed.data.notes,
     },
     include: {

@@ -4,6 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
+import {
+  emptyLocationSelection,
+  LocationPicker,
+  locationPayload,
+  selectionFromRecord,
+  type LocationSelection,
+} from "@/components/LocationPicker";
 import { Button, Input, Label, Textarea } from "@/components/ui";
 import { ParticipationSettingsFields } from "@/components/ParticipationSettingsFields";
 import {
@@ -81,7 +88,9 @@ export function CreateEventForm({
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
+  const [locationSelection, setLocationSelection] = useState<LocationSelection>(
+    emptyLocationSelection,
+  );
   const [selectedParticipantIds, setSelectedParticipantIds] = useState<string[]>([]);
   const [participation, setParticipation] = useState<ParticipationSettings>(
     defaultParticipationSettings,
@@ -115,7 +124,7 @@ export function CreateEventForm({
       body: JSON.stringify({
         title,
         description: description || undefined,
-        location: location || undefined,
+        ...locationPayload(locationSelection),
         startsAt: startsAt.toISOString(),
         endsAt: endsAt?.toISOString(),
         participantIds:
@@ -159,15 +168,11 @@ export function CreateEventForm({
         onStartChange={handleStartChange}
         onEndChange={setEnd}
       />
-      <div>
-        <Label htmlFor="event-location">Location</Label>
-        <Input
-          id="event-location"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          placeholder="Community hall"
-        />
-      </div>
+      <LocationPicker
+        id="event-location"
+        value={locationSelection}
+        onChange={setLocationSelection}
+      />
       <div>
         <Label htmlFor="event-description">Description</Label>
         <Textarea
@@ -221,7 +226,9 @@ export function EditEventForm({ event }: { event: SerializedEvent }) {
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState(event.title);
   const [description, setDescription] = useState(event.description ?? "");
-  const [location, setLocation] = useState(event.location ?? "");
+  const [locationSelection, setLocationSelection] = useState<LocationSelection>(() =>
+    selectionFromRecord(event),
+  );
   const [participation, setParticipation] = useState<ParticipationSettings>({
     allowParticipantJoin: event.allowParticipantJoin,
     allowJoinRequests: event.allowJoinRequests,
@@ -262,7 +269,7 @@ export function EditEventForm({ event }: { event: SerializedEvent }) {
       body: JSON.stringify({
         title,
         description: description || undefined,
-        location: location || undefined,
+        ...locationPayload(locationSelection),
         startsAt: startsAt.toISOString(),
         endsAt: endsAt?.toISOString(),
         ...participation,
@@ -298,14 +305,11 @@ export function EditEventForm({ event }: { event: SerializedEvent }) {
           onStartChange={handleStartChange}
           onEndChange={setEnd}
         />
-        <div>
-          <Label htmlFor="edit-event-location">Location</Label>
-          <Input
-            id="edit-event-location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-          />
-        </div>
+        <LocationPicker
+          id="edit-event-location"
+          value={locationSelection}
+          onChange={setLocationSelection}
+        />
         <div>
           <Label htmlFor="edit-event-description">Description</Label>
           <Textarea

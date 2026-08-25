@@ -62,14 +62,35 @@ export const joinRequestDecisionSchema = z.object({
   action: z.enum(["accept", "decline"]),
 });
 
+const locationFieldsSchema = {
+  locationId: z.string().min(1).nullable().optional(),
+  location: z.string().trim().max(200).nullable().optional(),
+};
+
+function refineExclusiveLocation(
+  value: { locationId?: string | null; location?: string | null },
+  context: z.RefinementCtx,
+) {
+  if (value.locationId && value.location) {
+    context.addIssue({
+      code: "custom",
+      message: "Choose a listed location or a unique location, not both.",
+    });
+  }
+}
+
+export const locationSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+});
+
 export const repetitionSchema = z.object({
   title: z.string().trim().max(120).optional(),
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime().optional(),
-  location: z.string().trim().max(200).optional(),
+  ...locationFieldsSchema,
   notes: z.string().trim().max(1000).optional(),
   groupId: z.string().min(1).optional(),
-});
+}).superRefine(refineExclusiveLocation);
 
 export const repetitionConflictSchema = z.object({
   startsAt: z.string().datetime(),
@@ -100,10 +121,10 @@ export const representationSchema = z.object({
   title: z.string().trim().max(120).optional(),
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime().optional(),
-  location: z.string().trim().max(200).optional(),
+  ...locationFieldsSchema,
   notes: z.string().trim().max(1000).optional(),
   choreographyIds: z.array(z.string()).optional(),
-});
+}).superRefine(refineExclusiveLocation);
 
 export const linkRepresentationSchema = z.object({
   representationId: z.string().min(1),
@@ -118,7 +139,7 @@ export const eventSchema = z.object({
   description: z.string().trim().max(2000).optional(),
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime().optional(),
-  location: z.string().trim().max(200).optional(),
+  ...locationFieldsSchema,
   participantIds: z.array(z.string()).optional(),
   allowParticipantJoin: z.boolean().optional(),
   allowJoinRequests: z.boolean().optional(),
@@ -130,6 +151,7 @@ export const eventSchema = z.object({
       message: "Participants cannot both join freely and request to join.",
     });
   }
+  refineExclusiveLocation(value, context);
 });
 
 export const choreographyRepresentationSchema = z.discriminatedUnion("mode", [
@@ -138,9 +160,9 @@ export const choreographyRepresentationSchema = z.discriminatedUnion("mode", [
     title: z.string().trim().max(120).optional(),
     startsAt: z.string().datetime(),
     endsAt: z.string().datetime().optional(),
-    location: z.string().trim().max(200).optional(),
+    ...locationFieldsSchema,
     notes: z.string().trim().max(1000).optional(),
-  }),
+  }).superRefine(refineExclusiveLocation),
   z.object({
     mode: z.literal("link"),
     representationId: z.string().min(1),

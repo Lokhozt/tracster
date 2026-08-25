@@ -13,6 +13,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/datetime";
 import { canEditEvent, canViewEvent, serializeEvent } from "@/lib/events";
+import { listedLocationInclude } from "@/lib/locations";
 import { basicUserSelect, serializeBasicUser } from "@/lib/users";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -35,6 +36,7 @@ export default async function EventDetailPage({ params }: PageProps) {
     prisma.event.findUnique({
       where: { id },
       include: {
+        ...listedLocationInclude,
         participants: {
           include: {
             user: { select: basicUserSelect },

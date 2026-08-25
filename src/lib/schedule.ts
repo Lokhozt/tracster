@@ -2,6 +2,7 @@ import { listedChoreographyWhere, listedEventWhere } from "@/lib/participation";
 import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { prisma } from "@/lib/db";
 import { canEditEvent } from "@/lib/events";
+import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { canEditChoreography } from "@/lib/permissions";
 import { canEditRepresentation } from "@/lib/representations";
 import { hasGlobalAccess } from "@/lib/roles";
@@ -59,6 +60,7 @@ export async function getUserScheduleEvents(userId: string) {
     prisma.repetitionEvent.findMany({
       where: choreographyWhere,
       include: {
+        ...listedLocationInclude,
         choreography: {
           select: {
             id: true,
@@ -87,6 +89,7 @@ export async function getUserScheduleEvents(userId: string) {
     prisma.representation.findMany({
       where: representationWhere,
       include: {
+        ...listedLocationInclude,
         choreographies: {
           select: {
             choreography: {
@@ -110,6 +113,7 @@ export async function getUserScheduleEvents(userId: string) {
     prisma.event.findMany({
       where: eventWhere,
       include: {
+        ...listedLocationInclude,
         participants: {
           where: { userId },
           select: { userId: true },
@@ -126,7 +130,7 @@ export async function getUserScheduleEvents(userId: string) {
       title: repetition.title,
       startsAt: repetition.startsAt.toISOString(),
       endsAt: repetition.endsAt?.toISOString() ?? null,
-      location: repetition.location,
+      location: displayLocation(repetition),
       choreographyId: repetition.choreographyId,
       choreographyTitle: repetition.choreography.title,
       isMember: repetition.group
@@ -154,7 +158,7 @@ export async function getUserScheduleEvents(userId: string) {
         title: representation.title,
         startsAt: representation.startsAt.toISOString(),
         endsAt: representation.endsAt?.toISOString() ?? null,
-        location: representation.location,
+        location: displayLocation(representation),
         choreographyId: null,
         choreographyTitle: null,
         isMember: involved,
@@ -170,7 +174,7 @@ export async function getUserScheduleEvents(userId: string) {
       title: event.title,
       startsAt: event.startsAt.toISOString(),
       endsAt: event.endsAt?.toISOString() ?? null,
-      location: event.location,
+      location: displayLocation(event),
       choreographyId: null,
       choreographyTitle: null,
       isMember: event.participants.length > 0,

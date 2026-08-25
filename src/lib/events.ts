@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { canOpenListedOrJoinableEvent, listedEventWhere } from "@/lib/participation";
 import { hasGlobalAccess } from "@/lib/roles";
 
@@ -61,6 +62,7 @@ export async function getUserEvents(userId: string) {
   return prisma.event.findMany({
     where: globalAccess ? undefined : listedEventWhere(userId),
     include: {
+      ...listedLocationInclude,
       participants: {
         include: {
           user: { select: { id: true, firstName: true, lastName: true, email: true } },
@@ -79,6 +81,7 @@ export type SerializedEvent = {
   startsAt: string;
   endsAt: string | null;
   location: string | null;
+  locationId: string | null;
   allowParticipantJoin: boolean;
   allowJoinRequests: boolean;
   hideFromNonParticipants: boolean;
@@ -94,7 +97,8 @@ export function serializeEvent(
     description: event.description,
     startsAt: event.startsAt.toISOString(),
     endsAt: event.endsAt?.toISOString() ?? null,
-    location: event.location,
+    location: displayLocation(event),
+    locationId: event.locationId,
     allowParticipantJoin: event.allowParticipantJoin,
     allowJoinRequests: event.allowJoinRequests,
     hideFromNonParticipants: event.hideFromNonParticipants,

@@ -20,6 +20,7 @@ import { prisma } from "@/lib/db";
 import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
 import { isAdmin } from "@/lib/roles";
 import { getChoreographyGroups, serializeGroup } from "@/lib/groups";
+import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { basicUserSelect, formatUserName, serializeBasicUser } from "@/lib/users";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -57,6 +58,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
         repetitions: {
           orderBy: { startsAt: "asc" },
           include: {
+            ...listedLocationInclude,
             group: {
               select: {
                 id: true,
@@ -70,7 +72,9 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           },
         },
         representations: {
-          include: { representation: true },
+          include: {
+            representation: { include: listedLocationInclude },
+          },
           orderBy: { representation: { startsAt: "asc" } },
         },
       },
@@ -183,7 +187,8 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           title: link.representation.title,
           startsAt: link.representation.startsAt.toISOString(),
           endsAt: link.representation.endsAt?.toISOString() ?? null,
-          location: link.representation.location,
+          location: displayLocation(link.representation),
+          locationId: link.representation.locationId,
           notes: link.representation.notes,
         }))}
       />
@@ -212,7 +217,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
             title: repetition.title,
             startsAt: repetition.startsAt.toISOString(),
             endsAt: repetition.endsAt?.toISOString() ?? null,
-            location: repetition.location,
+            location: displayLocation(repetition),
             groupName: repetition.group?.name ?? null,
             availableNames: targetAvailabilities
               .filter((item) => item.status === "AVAILABLE")

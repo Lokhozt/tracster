@@ -130,6 +130,19 @@ model ChoreographyGroupMember {
   @@id([groupId, userId])
 }
 
+model Location {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  repetitions     RepetitionEvent[]
+  representations Representation[]
+  events          Event[]
+
+  @@unique([name])
+}
+
 model RepetitionEvent {
   id             String    @id @default(cuid())
   choreographyId String
@@ -137,16 +150,20 @@ model RepetitionEvent {
   title          String?
   startsAt       DateTime
   endsAt         DateTime?
+  locationId     String?
   location       String?
   notes          String?
   createdById    String
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  choreography   Choreography           @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
-  group          ChoreographyGroup?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  createdBy      User                   @relation("RepetitionCreator", fields: [createdById], references: [id])
-  availabilities AvailabilityResponse[]
+  choreography    Choreography           @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
+  group           ChoreographyGroup?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  listedLocation  Location?              @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  createdBy       User                   @relation("RepetitionCreator", fields: [createdById], references: [id])
+  availabilities  AvailabilityResponse[]
+
+  @@index([locationId])
 }
 
 enum AvailabilityStatus {
@@ -174,14 +191,18 @@ model Representation {
   title       String?
   startsAt    DateTime
   endsAt      DateTime?
+  locationId  String?
   location    String?
   notes       String?
   createdById String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  listedLocation Location?                    @relation(fields: [locationId], references: [id], onDelete: SetNull)
   createdBy      User                         @relation("RepresentationCreator", fields: [createdById], references: [id])
   choreographies ChoreographyRepresentation[]
+
+  @@index([locationId])
 }
 
 model ChoreographyRepresentation {
@@ -201,6 +222,7 @@ model Event {
   description             String?
   startsAt                DateTime
   endsAt                  DateTime?
+  locationId              String?
   location                String?
   createdById             String
   allowParticipantJoin    Boolean   @default(false)
@@ -209,9 +231,12 @@ model Event {
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
-  createdBy    User               @relation("EventCreator", fields: [createdById], references: [id])
-  participants EventParticipant[]
-  joinRequests EventJoinRequest[]
+  listedLocation Location?           @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  createdBy      User                @relation("EventCreator", fields: [createdById], references: [id])
+  participants   EventParticipant[]
+  joinRequests   EventJoinRequest[]
+
+  @@index([locationId])
 }
 
 model EventJoinRequest {
