@@ -562,7 +562,7 @@ function LinkRepresentationForm({
           id="link-representation"
           value={representationId}
           onChange={(event) => setRepresentationId(event.target.value)}
-          className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"
         >
           {options.map((option) => (
             <option key={option.id} value={option.id}>

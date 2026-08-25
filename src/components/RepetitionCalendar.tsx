@@ -67,8 +67,8 @@ function DayCell({
   return (
     <div
       className={cn(
-        "bg-white p-2",
-        tall ? "min-h-48" : "min-h-28",
+        "bg-white p-1.5 sm:p-2",
+        tall ? "min-h-36 sm:min-h-48" : "min-h-16 sm:min-h-28",
         muted && "bg-stone-50 text-stone-400",
       )}
     >
@@ -166,6 +166,13 @@ export function RepetitionCalendar({
   }
 
   const currentMonth = startOfMonth(focusDate);
+  const mobileDays = calendarDays.filter((day) => {
+    if (view === "week") {
+      return true;
+    }
+    const dayEvents = eventsByDay.get(format(day, "yyyy-MM-dd")) ?? [];
+    return dayEvents.length > 0 && isSameMonth(day, currentMonth);
+  });
 
   return (
     <Card className="mb-8">
@@ -227,16 +234,18 @@ export function RepetitionCalendar({
           <button
             type="button"
             onClick={goToPrevious}
-            className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
+            className="rounded-lg border border-stone-300 px-3 py-2.5 text-sm hover:bg-stone-100 sm:py-1.5"
             aria-label={view === "week" ? "Previous week" : "Previous month"}
           >
             ←
           </button>
-          <span className="min-w-40 text-center text-sm font-medium">{periodLabel}</span>
+          <span className="min-w-0 flex-1 text-center text-sm font-medium sm:min-w-40 sm:flex-none">
+            {periodLabel}
+          </span>
           <button
             type="button"
             onClick={goToNext}
-            className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
+            className="rounded-lg border border-stone-300 px-3 py-2.5 text-sm hover:bg-stone-100 sm:py-1.5"
             aria-label={view === "week" ? "Next week" : "Next month"}
           >
             →
@@ -244,30 +253,78 @@ export function RepetitionCalendar({
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200">
-        {weekdays.map((day) => (
-          <div
-            key={day}
-            className="bg-stone-100 px-2 py-2 text-center text-xs font-medium text-stone-600"
-          >
-            {day}
-          </div>
-        ))}
+      <div className="space-y-3 md:hidden">
+        {mobileDays.map((day) => {
+            const dayKey = format(day, "yyyy-MM-dd");
+            const dayEvents = eventsByDay.get(dayKey) ?? [];
 
-        {calendarDays.map((day) => {
-          const dayKey = format(day, "yyyy-MM-dd");
-          const dayEvents = eventsByDay.get(dayKey) ?? [];
+            return (
+              <div key={dayKey} className="rounded-lg border border-stone-200 bg-stone-50 p-3">
+                <p
+                  className={cn(
+                    "text-sm font-medium",
+                    isToday(day) && "text-stone-900",
+                  )}
+                >
+                  {format(day, "EEE d MMM")}
+                  {isToday(day) ? " · Today" : ""}
+                </p>
+                {dayEvents.length === 0 ? (
+                  <p className="mt-2 text-sm text-stone-500">No events</p>
+                ) : (
+                  <div className="mt-2 space-y-2">
+                    {dayEvents.map((event) => (
+                      <Link
+                        key={`${event.type}-${event.id}`}
+                        href={event.href}
+                        className={cn(
+                          "block rounded-lg px-3 py-2 text-sm",
+                          eventCellClassName(event.type),
+                        )}
+                      >
+                        <span className="font-medium">{formatTime(new Date(event.startsAt))}</span>
+                        {" · "}
+                        {eventCellLabel(event) || eventCellTitle(event)}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        {view === "month" && mobileDays.length === 0 && (
+            <p className="rounded-lg border border-stone-200 bg-stone-50 p-3 text-sm text-stone-500">
+              No events this month.
+            </p>
+          )}
+      </div>
 
-          return (
-            <DayCell
-              key={dayKey}
-              day={day}
-              events={dayEvents}
-              muted={view === "month" && !isSameMonth(day, currentMonth)}
-              tall={view === "week"}
-            />
-          );
-        })}
+      <div className="hidden overflow-x-auto md:block">
+        <div className="grid min-w-[640px] grid-cols-7 gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200">
+          {weekdays.map((day) => (
+            <div
+              key={day}
+              className="bg-stone-100 px-2 py-2 text-center text-xs font-medium text-stone-600"
+            >
+              {day}
+            </div>
+          ))}
+
+          {calendarDays.map((day) => {
+            const dayKey = format(day, "yyyy-MM-dd");
+            const dayEvents = eventsByDay.get(dayKey) ?? [];
+
+            return (
+              <DayCell
+                key={dayKey}
+                day={day}
+                events={dayEvents}
+                muted={view === "month" && !isSameMonth(day, currentMonth)}
+                tall={view === "week"}
+              />
+            );
+          })}
+        </div>
       </div>
     </Card>
   );

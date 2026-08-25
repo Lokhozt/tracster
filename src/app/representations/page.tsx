@@ -28,7 +28,7 @@ export default async function RepresentationsPage() {
 
   return (
     <AppShell title="Representations">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-stone-600">
           {globalAccess
             ? "All representations in the association."
@@ -36,7 +36,7 @@ export default async function RepresentationsPage() {
         </p>
         <Link
           href="/representations/new"
-          className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
         >
           New representation
         </Link>

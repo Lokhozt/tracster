@@ -288,7 +288,7 @@ export function UnavailabilityCalendar({
 
     const activeInteraction = interaction;
 
-    function onMouseMove(event: MouseEvent) {
+    function onMouseMove(event: PointerEvent) {
       const slot = pointerToSlot(event.clientY, activeInteraction.dayIndex);
       if (slot === null) {
         return;
@@ -307,12 +307,12 @@ export function UnavailabilityCalendar({
       await handleInteractionEnd(activeInteraction);
     }
 
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("pointermove", onMouseMove);
+    window.addEventListener("pointerup", onMouseUp);
 
     return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("pointermove", onMouseMove);
+      window.removeEventListener("pointerup", onMouseUp);
     };
   }, [interaction, weekStart]);
 
@@ -451,7 +451,7 @@ export function UnavailabilityCalendar({
             <h2 className="text-lg font-semibold">Week view</h2>
             <p className="mt-1 text-sm text-stone-500">
               Click and drag on the grid to add periods. Drag blocks to move, or resize from the
-              edges.
+              edges. On a phone, swipe sideways to see the full week.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -463,7 +463,9 @@ export function UnavailabilityCalendar({
             >
               ←
             </button>
-            <span className="min-w-44 text-center text-sm font-medium">{periodLabel}</span>
+            <span className="min-w-0 flex-1 text-center text-sm font-medium sm:min-w-44 sm:flex-none">
+              {periodLabel}
+            </span>
             <button
               type="button"
               onClick={() => setWeekStart((date) => addWeeks(date, 1))}
@@ -489,8 +491,8 @@ export function UnavailabilityCalendar({
         )}
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
-        <div className="overflow-x-auto">
-          <div className="min-w-[760px]">
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <div className="min-w-[640px] sm:min-w-[760px]">
             <div className="grid grid-cols-[56px_repeat(7,1fr)] border-b border-stone-200">
               <div />
               {weekDays.map((day) => (
@@ -546,15 +548,16 @@ export function UnavailabilityCalendar({
                     ref={(element) => {
                       columnRefs.current[dayIndex] = element;
                     }}
-                    className="relative border-l border-stone-200 bg-white"
+                    className="relative touch-none border-l border-stone-200 bg-white"
                     style={{ height: GRID_HEIGHT_PX }}
-                    onMouseDown={(event) => {
+                    onPointerDown={(event) => {
                       if (event.button !== 0 || interaction) {
                         return;
                       }
                       if ((event.target as HTMLElement).closest("[data-block]")) {
                         return;
                       }
+                      event.preventDefault();
                       const slot = pointerToSlot(event.clientY, dayIndex);
                       if (slot !== null) {
                         startCreate(dayIndex, slot);
@@ -603,11 +606,12 @@ export function UnavailabilityCalendar({
                             isSelected && "ring-2 ring-red-500",
                           )}
                           style={style}
-                          onMouseDown={(event) => {
+                          onPointerDown={(event) => {
                             event.stopPropagation();
                             if (event.button !== 0) {
                               return;
                             }
+                            event.preventDefault();
                             const target = event.target as HTMLElement;
                             if (target.dataset.handle === "start") {
                               setSelectedId(entry.id);

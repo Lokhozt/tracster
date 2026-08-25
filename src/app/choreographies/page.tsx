@@ -53,7 +53,7 @@ export default async function ChoreographiesPage() {
 
   return (
     <AppShell title="Choreographies">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-stone-600">
           {globalAccess
             ? "All choreographies in the association."
@@ -61,7 +61,7 @@ export default async function ChoreographiesPage() {
         </p>
         <Link
           href="/choreographies/new"
-          className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
         >
           New choreography
         </Link>
@@ -79,7 +79,7 @@ export default async function ChoreographiesPage() {
             return (
             <Link key={choreography.id} href={`/choreographies/${choreography.id}`}>
               <Card className="transition hover:border-stone-400">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <h2 className="flex items-center gap-2 text-lg font-semibold">
                       {isChoreographer && <ChoreographerBadge />}
@@ -93,7 +93,7 @@ export default async function ChoreographiesPage() {
                       {formatDateTime(choreography.updatedAt)}
                     </p>
                   </div>
-                  <div className="text-right text-sm text-stone-600">
+                  <div className="shrink-0 text-sm text-stone-600 sm:text-right">
                     <p>{choreography._count.members} participants</p>
                     <p>{choreography._count.repetitions} repetitions</p>
                   </div>

@@ -79,7 +79,7 @@ export function AssignMemberForm({
           id="member"
           value={userId}
           onChange={(event) => setUserId(event.target.value)}
-          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"
         >
           <option value="">Select a user</option>
           {availableUsers.map((user) => (
@@ -149,7 +149,7 @@ export function AssignChoreographerForm({
           id="choreographer"
           value={userId}
           onChange={(event) => setUserId(event.target.value)}
-          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"
         >
           <option value="">Select a user</option>
           {availableUsers.map((user) => (

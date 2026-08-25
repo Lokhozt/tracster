@@ -15,7 +15,7 @@ export function LogoutButton() {
     <button
       type="button"
       onClick={handleLogout}
-      className="text-stone-600 hover:text-stone-900"
+      className="min-h-11 px-2 text-stone-600 hover:text-stone-900"
     >
       Sign out
     </button>

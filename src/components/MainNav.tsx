@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-type NavItem = {
+export type NavItem = {
   href: string;
   label: string;
   match: (pathname: string) => boolean;
@@ -44,12 +44,16 @@ const usersNavItem: NavItem = {
   match: (pathname) => pathname.startsWith("/users"),
 };
 
+export function getNavItems(showUsersNav = false): NavItem[] {
+  return showUsersNav ? [...baseNavItems, usersNavItem] : baseNavItems;
+}
+
 export function MainNav({ showUsersNav = false }: { showUsersNav?: boolean }) {
   const pathname = usePathname();
-  const navItems = showUsersNav ? [...baseNavItems, usersNavItem] : baseNavItems;
+  const navItems = getNavItems(showUsersNav);
 
   return (
-    <nav className="flex gap-1 text-sm">
+    <nav className="flex flex-wrap gap-1 text-sm">
       {navItems.map((item) => {
         const isActive = item.match(pathname);
 

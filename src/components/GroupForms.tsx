@@ -381,7 +381,7 @@ export function RepetitionAudienceSelect({
         id="repetition-audience"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm"
+        className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"
       >
         <option value="">All participants</option>
         {groups.map((group) => (

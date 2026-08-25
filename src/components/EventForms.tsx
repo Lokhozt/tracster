@@ -399,7 +399,7 @@ export function AssignEventParticipantForm({
           id="event-participant"
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
-          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"
         >
           <option value="">Select a user</option>
           {availableUsers.map((user) => (

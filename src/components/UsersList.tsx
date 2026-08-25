@@ -108,7 +108,7 @@ export function UsersList({ users }: { users: AdminUser[] }) {
                       <p className="mt-1 text-sm text-stone-500">{entry.phone}</p>
                     )}
                   </div>
-                  <div className="text-right text-sm text-stone-500">
+                  <div className="text-sm text-stone-500 sm:text-right">
                     <p>Born {formatDateOfBirth(entry.dateOfBirth)}</p>
                     <p className="mt-1">Updated {formatDateTime(new Date(entry.updatedAt))}</p>
                   </div>

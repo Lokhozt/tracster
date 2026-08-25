@@ -37,7 +37,7 @@ export function DateTime24Input({
           value={value.hour}
           onChange={(event) => updateField("hour", event.target.value)}
           aria-label={`${label} hour`}
-          className="w-20"
+          className="w-20 min-h-11"
         >
           {HOURS_24.map((hour) => (
             <option key={hour} value={hour}>
@@ -54,7 +54,7 @@ export function DateTime24Input({
           value={value.minute}
           onChange={(event) => updateField("minute", event.target.value)}
           aria-label={`${label} minute`}
-          className="w-20"
+          className="w-20 min-h-11"
         >
           {MINUTES.map((minute) => (
             <option key={minute} value={minute}>

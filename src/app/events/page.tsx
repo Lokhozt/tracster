@@ -27,7 +27,7 @@ export default async function EventsPage() {
 
   return (
     <AppShell title="Events">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-stone-600">
           {globalAccess
             ? "All association events."
@@ -35,7 +35,7 @@ export default async function EventsPage() {
         </p>
         <Link
           href="/events/new"
-          className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
         >
           New event
         </Link>
