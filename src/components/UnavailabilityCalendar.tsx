@@ -28,6 +28,11 @@ const SLOT_HEIGHT_PX = 24;
 const SLOTS_PER_DAY = ((END_HOUR - START_HOUR) * 60) / SLOT_MINUTES;
 const GRID_HEIGHT_PX = SLOTS_PER_DAY * SLOT_HEIGHT_PX;
 const RESIZE_HANDLE_PX = 6;
+const LONG_PRESS_MS = 400;
+// Long enough that a tap or the start of a swipe never shows the hint.
+const LONG_PRESS_HINT_MS = 180;
+// A finger is never perfectly still; anything beyond this is a scroll, not a press.
+const LONG_PRESS_TOLERANCE_PX = 10;
 
 type Interaction =
   | {
@@ -58,6 +63,13 @@ type Interaction =
       startSlot: number;
       currentSlot: number;
     };
+
+type PendingPress = {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  timeouts: number[];
+};
 
 function slotToDate(weekStart: Date, dayIndex: number, slotIndex: number): Date {
   const day = addDays(weekStart, dayIndex);
@@ -146,6 +158,8 @@ export function UnavailabilityCalendar({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const columnRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const pendingPressRef = useRef<PendingPress | null>(null);
+  const [pressing, setPressing] = useState(false);
   const timeframesRef = useRef(timeframes);
   timeframesRef.current = timeframes;
 
@@ -198,6 +212,71 @@ export function UnavailabilityCalendar({
     const slot = Math.floor(y / SLOT_HEIGHT_PX);
     return Math.max(0, Math.min(SLOTS_PER_DAY - 1, slot));
   }
+
+  const cancelPendingPress = useCallback(() => {
+    const pending = pendingPressRef.current;
+    if (!pending) {
+      return;
+    }
+    pending.timeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    pendingPressRef.current = null;
+    setPressing(false);
+  }, []);
+
+  // Touch gestures are ambiguous: the same swipe can mean "scroll the page" or
+  // "draw a block". Scrolling wins unless the finger stays put long enough.
+  function beginInteraction(event: React.PointerEvent, start: () => void) {
+    if (event.pointerType !== "touch") {
+      event.preventDefault();
+      start();
+      return;
+    }
+
+    cancelPendingPress();
+    const { pointerId, clientX, clientY } = event;
+    const hintTimeoutId = window.setTimeout(() => setPressing(true), LONG_PRESS_HINT_MS);
+    const activateTimeoutId = window.setTimeout(() => {
+      pendingPressRef.current = null;
+      setPressing(false);
+      navigator.vibrate?.(15);
+      start();
+    }, LONG_PRESS_MS);
+
+    pendingPressRef.current = {
+      pointerId,
+      startX: clientX,
+      startY: clientY,
+      timeouts: [hintTimeoutId, activateTimeoutId],
+    };
+  }
+
+  useEffect(() => {
+    function onPointerMove(event: PointerEvent) {
+      const pending = pendingPressRef.current;
+      if (!pending || pending.pointerId !== event.pointerId) {
+        return;
+      }
+      if (
+        Math.abs(event.clientX - pending.startX) > LONG_PRESS_TOLERANCE_PX ||
+        Math.abs(event.clientY - pending.startY) > LONG_PRESS_TOLERANCE_PX
+      ) {
+        cancelPendingPress();
+      }
+    }
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", cancelPendingPress);
+    window.addEventListener("pointercancel", cancelPendingPress);
+    window.addEventListener("scroll", cancelPendingPress, true);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", cancelPendingPress);
+      window.removeEventListener("pointercancel", cancelPendingPress);
+      window.removeEventListener("scroll", cancelPendingPress, true);
+      cancelPendingPress();
+    };
+  }, [cancelPendingPress]);
 
   async function persistTimeframe(
     id: string | null,
@@ -318,12 +397,26 @@ export function UnavailabilityCalendar({
       await handleInteractionEnd(activeInteraction);
     }
 
+    function onPointerCancel() {
+      setInteraction(null);
+    }
+
+    // The column keeps `touch-action: auto` so the page scrolls normally, so the
+    // drag itself has to stop the browser from scrolling underneath it.
+    function onTouchMove(event: TouchEvent) {
+      event.preventDefault();
+    }
+
     window.addEventListener("pointermove", onMouseMove);
     window.addEventListener("pointerup", onMouseUp);
+    window.addEventListener("pointercancel", onPointerCancel);
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
 
     return () => {
       window.removeEventListener("pointermove", onMouseMove);
       window.removeEventListener("pointerup", onMouseUp);
+      window.removeEventListener("pointercancel", onPointerCancel);
+      document.removeEventListener("touchmove", onTouchMove);
     };
   }, [interaction, weekStart]);
 
@@ -462,7 +555,8 @@ export function UnavailabilityCalendar({
             <h2 className="text-lg font-semibold">Week view</h2>
             <p className="mt-1 text-sm text-stone-500">
               Click and drag on the grid to add periods. Drag blocks to move, or resize from the
-              edges. On a phone, swipe sideways to see the full week.
+              edges. On a touch screen, press and hold to start drawing or dragging — a plain
+              swipe scrolls the page.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -559,8 +653,12 @@ export function UnavailabilityCalendar({
                     ref={(element) => {
                       columnRefs.current[dayIndex] = element;
                     }}
-                    className="relative touch-none border-l border-stone-200 bg-white"
+                    className={cn(
+                      "relative touch-auto select-none border-l border-stone-200 bg-white [-webkit-touch-callout:none]",
+                      interaction && "touch-none",
+                    )}
                     style={{ height: GRID_HEIGHT_PX }}
+                    onContextMenu={(event) => event.preventDefault()}
                     onPointerDown={(event) => {
                       if (event.button !== 0 || interaction) {
                         return;
@@ -568,11 +666,11 @@ export function UnavailabilityCalendar({
                       if ((event.target as HTMLElement).closest("[data-block]")) {
                         return;
                       }
-                      event.preventDefault();
                       const slot = pointerToSlot(event.clientY, dayIndex);
-                      if (slot !== null) {
-                        startCreate(dayIndex, slot);
+                      if (slot === null) {
+                        return;
                       }
+                      beginInteraction(event, () => startCreate(dayIndex, slot));
                     }}
                   >
                     {Array.from({ length: SLOTS_PER_DAY }, (_, slotIndex) => (
@@ -619,43 +717,47 @@ export function UnavailabilityCalendar({
                           style={style}
                           onPointerDown={(event) => {
                             event.stopPropagation();
-                            if (event.button !== 0) {
+                            if (event.button !== 0 || interaction) {
                               return;
                             }
-                            event.preventDefault();
+                            setSelectedId(entry.id);
                             const target = event.target as HTMLElement;
                             if (target.dataset.handle === "start") {
-                              setSelectedId(entry.id);
-                              setInteraction({
-                                type: "resize-start",
-                                id: entry.id,
-                                dayIndex,
-                                endSlot: position.endSlot,
-                                currentSlot: position.startSlot,
-                              });
+                              beginInteraction(event, () =>
+                                setInteraction({
+                                  type: "resize-start",
+                                  id: entry.id,
+                                  dayIndex,
+                                  endSlot: position.endSlot,
+                                  currentSlot: position.startSlot,
+                                }),
+                              );
                               return;
                             }
                             if (target.dataset.handle === "end") {
-                              setSelectedId(entry.id);
-                              setInteraction({
-                                type: "resize-end",
-                                id: entry.id,
-                                dayIndex,
-                                startSlot: position.startSlot,
-                                currentSlot: position.endSlot,
-                              });
+                              beginInteraction(event, () =>
+                                setInteraction({
+                                  type: "resize-end",
+                                  id: entry.id,
+                                  dayIndex,
+                                  startSlot: position.startSlot,
+                                  currentSlot: position.endSlot,
+                                }),
+                              );
                               return;
                             }
                             const slot = pointerToSlot(event.clientY, dayIndex);
                             if (slot === null) {
                               return;
                             }
-                            startMove(
-                              entry.id,
-                              dayIndex,
-                              slot,
-                              position.startSlot,
-                              durationSlots,
+                            beginInteraction(event, () =>
+                              startMove(
+                                entry.id,
+                                dayIndex,
+                                slot,
+                                position.startSlot,
+                                durationSlots,
+                              ),
                             );
                           }}
                         >
@@ -729,6 +831,15 @@ export function UnavailabilityCalendar({
             </Button>
           </div>
         </Card>
+      )}
+
+      {pressing && (
+        <p
+          aria-hidden
+          className="pointer-events-none fixed inset-x-0 bottom-6 z-50 mx-auto w-fit rounded-full bg-stone-900/90 px-4 py-2 text-sm text-white"
+        >
+          Hold to draw…
+        </p>
       )}
     </div>
   );
