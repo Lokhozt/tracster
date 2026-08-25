@@ -60,11 +60,14 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
             <Card key={representation.id} className="transition hover:border-stone-400">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium uppercase tracking-wide text-amber-800">
+                    Representation
+                  </p>
                   <Link
                     href={`/representations/${representation.id}`}
                     className="hover:underline"
                   >
-                    <h2 className="text-lg font-semibold">
+                    <h2 className="mt-1 text-lg font-semibold">
                       {representation.title ?? "Representation"}
                     </h2>
                   </Link>
@@ -77,30 +80,35 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
                     <p className="mt-1 text-sm text-stone-500">{representation.location}</p>
                   )}
                 </div>
-                <div className="flex items-start gap-3 text-sm text-stone-600">
-                  {representation.choreographies.length > 0 ? (
-                    <p>
-                      {representation.choreographies.length}{" "}
-                      {representation.choreographies.length === 1
-                        ? "choreography"
-                        : "choreographies"}
-                    </p>
-                  ) : (
-                    <p>No choreographies linked</p>
-                  )}
-                  {canEdit && (
-                    <EditIconLink
-                      href={`/representations/${representation.id}`}
-                      label="Edit representation"
-                    />
-                  )}
-                </div>
+                {canEdit && (
+                  <EditIconLink
+                    href={`/representations/${representation.id}`}
+                    label="Edit representation"
+                  />
+                )}
               </div>
-              {representation.choreographies.length > 0 && (
-                <p className="mt-3 text-xs text-stone-500">
-                  {representation.choreographies.map((link) => link.title).join(" · ")}
+
+              <div className="mt-4 border-t border-stone-100 pt-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                  Choreographies
                 </p>
-              )}
+                {representation.choreographies.length === 0 ? (
+                  <p className="mt-2 text-sm text-stone-500">No choreographies linked</p>
+                ) : (
+                  <ul className="mt-2 flex flex-wrap gap-2">
+                    {representation.choreographies.map((choreography) => (
+                      <li key={choreography.id}>
+                        <Link
+                          href={`/choreographies/${choreography.id}`}
+                          className="inline-flex rounded-full bg-stone-100 px-3 py-1.5 text-sm font-medium text-stone-800 transition hover:bg-stone-200"
+                        >
+                          {choreography.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </Card>
           ))}
         </div>

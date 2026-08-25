@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
 import { EditIconLink } from "@/components/EditIconLink";
-import { Button, Input, Label, Textarea } from "@/components/ui";
+import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import {
   addOneHour,
   dateTimePartsToDate,
@@ -838,15 +838,26 @@ export function RepresentationChoreographiesSection({
   canEdit,
 }: {
   representationId: string;
-  choreographies: { id: string; title: string }[];
+  choreographies: {
+    id: string;
+    title: string;
+    description: string | null;
+    memberCount: number;
+    repetitionCount: number;
+  }[];
   canEdit: boolean;
 }) {
   const [showLinkForm, setShowLinkForm] = useState(false);
 
   return (
-    <section>
+    <section className="mt-2">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">Linked choreographies</h2>
+        <div>
+          <h2 className="text-xl font-semibold">Linked choreographies</h2>
+          <p className="mt-1 text-sm text-stone-500">
+            Pieces performed in this representation.
+          </p>
+        </div>
         {canEdit && !showLinkForm && (
           <Button type="button" onClick={() => setShowLinkForm(true)}>
             Link choreography
@@ -855,40 +866,56 @@ export function RepresentationChoreographiesSection({
       </div>
 
       {canEdit && showLinkForm && (
-        <div className="mb-4 rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+        <Card className="mb-4">
           <LinkChoreographyForm
             representationId={representationId}
             onSuccess={() => setShowLinkForm(false)}
             onCancel={() => setShowLinkForm(false)}
           />
-        </div>
+        </Card>
       )}
 
       {choreographies.length === 0 ? (
-        <p className="text-sm text-stone-600">No choreographies linked yet.</p>
+        <Card>
+          <p className="text-stone-600">No choreographies linked yet.</p>
+        </Card>
       ) : (
-        <ul className="space-y-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           {choreographies.map((choreography) => (
-            <li
-              key={choreography.id}
-              className="flex items-center justify-between gap-2"
-            >
-              <Link
-                href={`/choreographies/${choreography.id}`}
-                className="text-sm font-medium hover:text-stone-700"
-              >
-                {choreography.title}
-              </Link>
-              {canEdit && (
-                <DeleteEventButton
-                  deleteUrl={`/api/representations/${representationId}/choreographies`}
-                  deleteBody={{ choreographyId: choreography.id }}
-                  confirmMessage={`Remove ${choreography.title} from this representation? The choreography itself will not be deleted.`}
-                />
+            <Card key={choreography.id} className="flex flex-col">
+              <div className="flex items-start justify-between gap-2">
+                <Link
+                  href={`/choreographies/${choreography.id}`}
+                  className="min-w-0 hover:underline"
+                >
+                  <h3 className="text-lg font-semibold">{choreography.title}</h3>
+                </Link>
+                {canEdit && (
+                  <DeleteEventButton
+                    deleteUrl={`/api/representations/${representationId}/choreographies`}
+                    deleteBody={{ choreographyId: choreography.id }}
+                    confirmMessage={`Remove ${choreography.title} from this representation? The choreography itself will not be deleted.`}
+                  />
+                )}
+              </div>
+              {choreography.description && (
+                <p className="mt-2 line-clamp-3 text-sm text-stone-600">
+                  {choreography.description}
+                </p>
               )}
-            </li>
+              <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                <span className="rounded-full bg-stone-100 px-2.5 py-1 font-medium text-stone-700">
+                  {choreography.memberCount}{" "}
+                  {choreography.memberCount === 1 ? "participant" : "participants"}
+                </span>
+                <span className="rounded-full bg-stone-100 px-2.5 py-1 font-medium text-stone-700">
+                  {choreography.repetitionCount}{" "}
+                  {choreography.repetitionCount === 1 ? "repetition" : "repetitions"}
+                </span>
+              </div>
+            </Card>
           ))}
-        </ul>
+        </div>
       )}
     </section>
   );
