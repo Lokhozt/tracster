@@ -3,14 +3,17 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
+  addDays,
   addMonths,
   addWeeks,
   eachDayOfInterval,
   endOfMonth,
   endOfWeek,
   format,
+  isSameDay,
   isSameMonth,
   isToday,
+  startOfDay,
   startOfMonth,
   startOfWeek,
   subMonths,
@@ -32,6 +35,53 @@ function eventCellLabel(event: SerializedScheduleEvent): string {
   return event.choreographyTitle ?? event.title ?? "";
 }
 
+function eventCoveredDays(event: SerializedScheduleEvent): Date[] {
+  const start = new Date(event.startsAt);
+  const first = startOfDay(start);
+
+  if (!event.endsAt) {
+    return [first];
+  }
+
+  const end = new Date(event.endsAt);
+  let last = startOfDay(end);
+
+  // An end at exactly midnight belongs to the previous calendar day.
+  if (end.getTime() === last.getTime() && last.getTime() > first.getTime()) {
+    last = addDays(last, -1);
+  }
+
+  if (last < first) {
+    return [first];
+  }
+
+  return eachDayOfInterval({ start: first, end: last });
+}
+
+function eventTimeLabel(event: SerializedScheduleEvent, day: Date): string {
+  const start = new Date(event.startsAt);
+  const end = event.endsAt ? new Date(event.endsAt) : null;
+  const firstDay = startOfDay(start);
+  const lastDay = end ? startOfDay(end) : firstDay;
+  const endsAtMidnight = Boolean(end && end.getTime() === lastDay.getTime());
+  const displayLastDay = endsAtMidnight && lastDay > firstDay ? addDays(lastDay, -1) : lastDay;
+  const spansDays = displayLastDay > firstDay;
+
+  if (!spansDays) {
+    return formatTime(start);
+  }
+
+  if (isSameDay(day, start)) {
+    return `${formatTime(start)} →`;
+  }
+
+  if (end && isSameDay(day, displayLastDay) && !endsAtMidnight) {
+    return `→ ${formatTime(end)}`;
+  }
+
+  return "All day";
+}
+
 function eventCellTitle(event: SerializedScheduleEvent): string {
   const typeLabel =
     event.type === "representation"
@@ -40,7 +90,11 @@ function eventCellTitle(event: SerializedScheduleEvent): string {
         ? "Event"
         : "Repetition";
   const name = eventCellLabel(event);
-  return `${typeLabel}${name ? ` – ${name}` : ""} – ${formatTime(new Date(event.startsAt))}`;
+  const start = new Date(event.startsAt);
+  const range = event.endsAt
+    ? `${formatTime(start)} – ${formatTime(new Date(event.endsAt))}`
+    : formatTime(start);
+  return `${typeLabel}${name ? ` – ${name}` : ""} – ${range}`;
 }
 
 function eventCellClassName(type: SerializedScheduleEvent["type"]): string {
@@ -92,7 +146,7 @@ function DayCell({
             )}
             title={eventCellTitle(event)}
           >
-            <span className="font-medium">{formatTime(new Date(event.startsAt))}</span>{" "}
+            <span className="font-medium">{eventTimeLabel(event, day)}</span>{" "}
             {eventCellLabel(event)}
           </Link>
         ))}
@@ -113,10 +167,12 @@ export function RepetitionCalendar({
     const map = new Map<string, SerializedScheduleEvent[]>();
 
     for (const event of events) {
-      const dayKey = format(new Date(event.startsAt), "yyyy-MM-dd");
-      const existing = map.get(dayKey) ?? [];
-      existing.push(event);
-      map.set(dayKey, existing);
+      for (const day of eventCoveredDays(event)) {
+        const dayKey = format(day, "yyyy-MM-dd");
+        const existing = map.get(dayKey) ?? [];
+        existing.push(event);
+        map.set(dayKey, existing);
+      }
     }
 
     for (const dayEvents of map.values()) {
@@ -282,7 +338,7 @@ export function RepetitionCalendar({
                           eventCellClassName(event.type),
                         )}
                       >
-                        <span className="font-medium">{formatTime(new Date(event.startsAt))}</span>
+                        <span className="font-medium">{eventTimeLabel(event, day)}</span>
                         {" · "}
                         {eventCellLabel(event) || eventCellTitle(event)}
                       </Link>
