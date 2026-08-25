@@ -52,6 +52,12 @@ export const repetitionSchema = z.object({
   groupId: z.string().min(1).optional(),
 });
 
+export const repetitionConflictSchema = z.object({
+  startsAt: z.string().datetime(),
+  endsAt: z.string().datetime().optional(),
+  groupId: z.string().min(1).optional(),
+});
+
 export const groupSchema = z.object({
   name: z.string().trim().min(1).max(80),
   memberIds: z.array(z.string().min(1)).min(1),

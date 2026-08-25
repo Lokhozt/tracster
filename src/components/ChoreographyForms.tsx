@@ -10,6 +10,7 @@ import {
 } from "@/components/RepetitionEventCard";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { RepetitionAudienceSelect, type GroupOption } from "@/components/GroupForms";
+import { ParticipantConflictWarnings } from "@/components/ParticipantConflictWarnings";
 import { matchesSearch } from "@/lib/search";
 import {
   addOneHour,
@@ -273,6 +274,12 @@ export function CreateRepetitionForm({
         <Input id="location" name="location" placeholder="Studio A" />
       </div>
       <RepetitionAudienceSelect groups={groups} value={audience} onChange={setAudience} />
+      <ParticipantConflictWarnings
+        choreographyId={choreographyId}
+        startsAt={dateTimePartsToDate(start)}
+        endsAt={dateTimePartsToDate(end)}
+        groupId={audience}
+      />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" disabled={loading}>
