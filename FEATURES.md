@@ -7,6 +7,5 @@
 
 
 # TODO
-- Enter unavailability
 - Export/Sync to google calendar
 - Repetitions scheduling tools

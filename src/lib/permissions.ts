@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { canOpenListedOrJoinableChoreography } from "@/lib/participation";
 import { hasGlobalAccess } from "@/lib/roles";
 
 export async function isChoreographer(
@@ -59,21 +60,20 @@ export async function canViewChoreography(
 
   const choreography = await prisma.choreography.findUnique({
     where: { id: choreographyId },
-    select: { createdById: true },
+    select: {
+      createdById: true,
+      allowParticipantJoin: true,
+      allowJoinRequests: true,
+      hideFromNonParticipants: true,
+      choreographers: { select: { userId: true } },
+      members: { select: { userId: true } },
+      joinRequests: { select: { userId: true } },
+    },
   });
 
   if (!choreography) {
     return false;
   }
 
-  if (choreography.createdById === userId) {
-    return true;
-  }
-
-  const [choreographer, member] = await Promise.all([
-    isChoreographer(choreographyId, userId),
-    isChoreographyMember(choreographyId, userId),
-  ]);
-
-  return choreographer || member;
+  return canOpenListedOrJoinableChoreography(choreography, userId);
 }

@@ -7,7 +7,10 @@ import {
   ParticipantsList,
   RepetitionsSection,
 } from "@/components/ChoreographyForms";
+import { EditChoreographyForm } from "@/components/CreateChoreographyForm";
 import { GroupsSection } from "@/components/GroupForms";
+import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
+import { JoinRequestsList } from "@/components/JoinRequestsList";
 import { RepresentationsSection } from "@/components/RepresentationForms";
 import { ChoreographerBadge } from "@/components/CrownIcon";
 import { Card } from "@/components/ui";
@@ -44,6 +47,10 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
         members: {
           include: { user: { select: basicUserSelect } },
         },
+        joinRequests: {
+          include: { user: { select: basicUserSelect } },
+          orderBy: { requestedAt: "asc" },
+        },
         repetitions: {
           orderBy: { startsAt: "asc" },
           include: {
@@ -78,6 +85,11 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  const isMember = choreography.members.some((member) => member.userId === user.id);
+  const hasPendingRequest = choreography.joinRequests.some(
+    (request) => request.userId === user.id,
+  );
+
   return (
     <AppShell
       title={
@@ -87,14 +99,35 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
         </>
       }
     >
-      <div className="mb-6 space-y-2">
+      <div className="mb-6 space-y-3">
         {choreography.description && (
           <p className="text-stone-600">{choreography.description}</p>
         )}
         <p className="text-sm text-stone-500">
           Created by {formatUserName(choreography.createdBy)}
         </p>
+        <JoinAsParticipantControls
+          joinUrl={`/api/choreographies/${id}/join`}
+          requestUrl={`/api/choreographies/${id}/join-requests`}
+          allowJoin={choreography.allowParticipantJoin}
+          allowRequest={choreography.allowJoinRequests}
+          isParticipant={isMember}
+          hasPendingRequest={hasPendingRequest}
+        />
       </div>
+
+      {canEdit && (choreography.allowJoinRequests || choreography.joinRequests.length > 0) && (
+        <div className="mb-6">
+          <JoinRequestsList
+            reviewUrl={`/api/choreographies/${id}/join-requests`}
+            requests={choreography.joinRequests.map((request) => ({
+              id: request.user.id,
+              name: formatUserName(request.user),
+              email: request.user.email,
+            }))}
+          />
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -187,6 +220,22 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           };
         })}
       />
+
+      {canEdit && (
+        <Card className="mt-8">
+          <h2 className="mb-4 text-lg font-semibold">Edit choreography</h2>
+          <EditChoreographyForm
+            choreography={{
+              id: choreography.id,
+              title: choreography.title,
+              description: choreography.description,
+              allowParticipantJoin: choreography.allowParticipantJoin,
+              allowJoinRequests: choreography.allowJoinRequests,
+              hideFromNonParticipants: choreography.hideFromNonParticipants,
+            }}
+          />
+        </Card>
+      )}
     </AppShell>
   );
 }

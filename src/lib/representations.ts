@@ -1,14 +1,9 @@
+import { listedChoreographyWhere } from "@/lib/participation";
 import { prisma } from "@/lib/db";
 import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
 import { hasGlobalAccess } from "@/lib/roles";
 
-const choreographyAccessFilter = (userId: string) => ({
-  OR: [
-    { createdById: userId },
-    { choreographers: { some: { userId } } },
-    { members: { some: { userId } } },
-  ],
-});
+const choreographyAccessFilter = (userId: string) => listedChoreographyWhere(userId);
 
 export async function canViewRepresentation(
   representationId: string,

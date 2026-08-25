@@ -37,10 +37,25 @@ export const loginSchema = z.object({
 export const choreographySchema = z.object({
   title: z.string().trim().min(2).max(120),
   description: z.string().trim().max(1000).optional(),
+  allowParticipantJoin: z.boolean().optional(),
+  allowJoinRequests: z.boolean().optional(),
+  hideFromNonParticipants: z.boolean().optional(),
+}).superRefine((value, context) => {
+  if (value.allowParticipantJoin && value.allowJoinRequests) {
+    context.addIssue({
+      code: "custom",
+      message: "Participants cannot both join freely and request to join.",
+    });
+  }
 });
 
 export const assignUserSchema = z.object({
   userId: z.string().min(1),
+});
+
+export const joinRequestDecisionSchema = z.object({
+  userId: z.string().min(1),
+  action: z.enum(["accept", "decline"]),
 });
 
 export const repetitionSchema = z.object({
@@ -102,6 +117,16 @@ export const eventSchema = z.object({
   endsAt: z.string().datetime().optional(),
   location: z.string().trim().max(200).optional(),
   participantIds: z.array(z.string()).optional(),
+  allowParticipantJoin: z.boolean().optional(),
+  allowJoinRequests: z.boolean().optional(),
+  hideFromNonParticipants: z.boolean().optional(),
+}).superRefine((value, context) => {
+  if (value.allowParticipantJoin && value.allowJoinRequests) {
+    context.addIssue({
+      code: "custom",
+      message: "Participants cannot both join freely and request to join.",
+    });
+  }
 });
 
 export const choreographyRepresentationSchema = z.discriminatedUnion("mode", [

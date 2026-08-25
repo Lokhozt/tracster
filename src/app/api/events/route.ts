@@ -36,6 +36,9 @@ export async function POST(request: NextRequest) {
       endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
       location: parsed.data.location,
       createdById: user.id,
+      allowParticipantJoin: parsed.data.allowParticipantJoin ?? false,
+      allowJoinRequests: parsed.data.allowJoinRequests ?? false,
+      hideFromNonParticipants: parsed.data.hideFromNonParticipants ?? true,
       participants: parsed.data.participantIds?.length
         ? {
             create: parsed.data.participantIds.map((userId) => ({ userId })),

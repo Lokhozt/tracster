@@ -53,6 +53,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
     include: { user: { select: basicUserSelect } },
   });
 
+  await prisma.eventJoinRequest.deleteMany({
+    where: {
+      eventId: id,
+      userId: parsed.data.userId,
+    },
+  });
+
   return Response.json({ participant }, { status: 201 });
 }
 

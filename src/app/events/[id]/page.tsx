@@ -6,6 +6,8 @@ import {
   EditEventForm,
   EventParticipantsList,
 } from "@/components/EventForms";
+import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
+import { JoinRequestsList } from "@/components/JoinRequestsList";
 import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -39,6 +41,12 @@ export default async function EventDetailPage({ params }: PageProps) {
           },
           orderBy: { user: { lastName: "asc" } },
         },
+        joinRequests: {
+          include: {
+            user: { select: basicUserSelect },
+          },
+          orderBy: { requestedAt: "asc" },
+        },
       },
     }),
     canEdit
@@ -56,6 +64,12 @@ export default async function EventDetailPage({ params }: PageProps) {
   }
 
   const event = serializeEvent(eventRecord);
+  const isParticipant = eventRecord.participants.some(
+    (participant) => participant.userId === user.id,
+  );
+  const hasPendingRequest = eventRecord.joinRequests.some(
+    (request) => request.userId === user.id,
+  );
 
   return (
     <AppShell title={event.title}>
@@ -65,38 +79,55 @@ export default async function EventDetailPage({ params }: PageProps) {
         </Link>
       </div>
 
-      {canEdit ? (
-        <Card className="mb-6">
-          <h2 className="mb-4 text-lg font-semibold">Edit event</h2>
-          <EditEventForm event={event} />
-        </Card>
-      ) : (
-        <Card className="mb-6">
-          <div className="grid gap-2 text-sm text-stone-600">
+      <div className="mb-6">
+        <JoinAsParticipantControls
+          joinUrl={`/api/events/${id}/join`}
+          requestUrl={`/api/events/${id}/join-requests`}
+          allowJoin={eventRecord.allowParticipantJoin}
+          allowRequest={eventRecord.allowJoinRequests}
+          isParticipant={isParticipant}
+          hasPendingRequest={hasPendingRequest}
+        />
+      </div>
+
+      <Card className="mb-6">
+        <div className="grid gap-2 text-sm text-stone-600">
+          <p>
+            <span className="font-medium text-stone-900">Start:</span>{" "}
+            {formatDateTime(new Date(event.startsAt))}
+          </p>
+          {event.endsAt && (
             <p>
-              <span className="font-medium text-stone-900">Start:</span>{" "}
-              {formatDateTime(new Date(event.startsAt))}
+              <span className="font-medium text-stone-900">End:</span>{" "}
+              {formatDateTime(new Date(event.endsAt))}
             </p>
-            {event.endsAt && (
-              <p>
-                <span className="font-medium text-stone-900">End:</span>{" "}
-                {formatDateTime(new Date(event.endsAt))}
-              </p>
-            )}
-            {event.location && (
-              <p>
-                <span className="font-medium text-stone-900">Location:</span>{" "}
-                {event.location}
-              </p>
-            )}
-            {event.description && (
-              <p>
-                <span className="font-medium text-stone-900">Description:</span>{" "}
-                {event.description}
-              </p>
-            )}
-          </div>
-        </Card>
+          )}
+          {event.location && (
+            <p>
+              <span className="font-medium text-stone-900">Location:</span>{" "}
+              {event.location}
+            </p>
+          )}
+          {event.description && (
+            <p>
+              <span className="font-medium text-stone-900">Description:</span>{" "}
+              {event.description}
+            </p>
+          )}
+        </div>
+      </Card>
+
+      {canEdit && (eventRecord.allowJoinRequests || eventRecord.joinRequests.length > 0) && (
+        <div className="mb-6">
+          <JoinRequestsList
+            reviewUrl={`/api/events/${id}/join-requests`}
+            requests={eventRecord.joinRequests.map((request) => ({
+              id: request.user.id,
+              name: serializeBasicUser(request.user).name,
+              email: request.user.email,
+            }))}
+          />
+        </div>
       )}
 
       <Card>
@@ -116,6 +147,13 @@ export default async function EventDetailPage({ params }: PageProps) {
           </div>
         )}
       </Card>
+
+      {canEdit && (
+        <Card className="mt-8">
+          <h2 className="mb-4 text-lg font-semibold">Edit event</h2>
+          <EditEventForm event={event} />
+        </Card>
+      )}
     </AppShell>
   );
 }

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { canOpenListedOrJoinableEvent, listedEventWhere } from "@/lib/participation";
 import { hasGlobalAccess } from "@/lib/roles";
 
 export async function isEventParticipant(
@@ -20,18 +21,21 @@ export async function canViewEvent(eventId: string, userId: string): Promise<boo
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },
-    select: { createdById: true },
+    select: {
+      createdById: true,
+      allowParticipantJoin: true,
+      allowJoinRequests: true,
+      hideFromNonParticipants: true,
+      participants: { select: { userId: true } },
+      joinRequests: { select: { userId: true } },
+    },
   });
 
   if (!event) {
     return false;
   }
 
-  if (event.createdById === userId) {
-    return true;
-  }
-
-  return isEventParticipant(eventId, userId);
+  return canOpenListedOrJoinableEvent(event, userId);
 }
 
 export async function canEditEvent(eventId: string, userId: string): Promise<boolean> {
@@ -55,14 +59,7 @@ export async function getUserEvents(userId: string) {
   const globalAccess = await hasGlobalAccess(userId);
 
   return prisma.event.findMany({
-    where: globalAccess
-      ? undefined
-      : {
-          OR: [
-            { createdById: userId },
-            { participants: { some: { userId } } },
-          ],
-        },
+    where: globalAccess ? undefined : listedEventWhere(userId),
     include: {
       participants: {
         include: {
@@ -82,6 +79,9 @@ export type SerializedEvent = {
   startsAt: string;
   endsAt: string | null;
   location: string | null;
+  allowParticipantJoin: boolean;
+  allowJoinRequests: boolean;
+  hideFromNonParticipants: boolean;
   participants: { id: string; name: string; email: string }[];
 };
 
@@ -95,6 +95,9 @@ export function serializeEvent(
     startsAt: event.startsAt.toISOString(),
     endsAt: event.endsAt?.toISOString() ?? null,
     location: event.location,
+    allowParticipantJoin: event.allowParticipantJoin,
+    allowJoinRequests: event.allowJoinRequests,
+    hideFromNonParticipants: event.hideFromNonParticipants,
     participants: event.participants.map(({ user }) => ({
       id: user.id,
       name: `${user.firstName} ${user.lastName}`.trim(),

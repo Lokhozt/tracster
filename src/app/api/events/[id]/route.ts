@@ -67,6 +67,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       startsAt: new Date(parsed.data.startsAt),
       endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
       location: parsed.data.location,
+      allowParticipantJoin: parsed.data.allowParticipantJoin ?? false,
+      allowJoinRequests: parsed.data.allowJoinRequests ?? false,
+      hideFromNonParticipants: parsed.data.hideFromNonParticipants ?? true,
     },
     include: {
       participants: {

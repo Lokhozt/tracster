@@ -5,6 +5,7 @@ import { useState } from "react";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
 import { Button, Input, Label, Textarea } from "@/components/ui";
+import { ParticipationSettingsFields } from "@/components/ParticipationSettingsFields";
 import {
   addOneHour,
   dateTimePartsToDate,
@@ -13,6 +14,10 @@ import {
   type DateTimeParts,
 } from "@/lib/datetime";
 import type { SerializedEvent } from "@/lib/events";
+import {
+  defaultParticipationSettings,
+  type ParticipationSettings,
+} from "@/lib/participation";
 
 type UserOption = { id: string; name: string; email: string };
 
@@ -78,6 +83,9 @@ export function CreateEventForm({
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [selectedParticipantIds, setSelectedParticipantIds] = useState<string[]>([]);
+  const [participation, setParticipation] = useState<ParticipationSettings>(
+    defaultParticipationSettings,
+  );
   const [start, setStart] = useState<DateTimeParts>(defaultStartDateTime);
   const [end, setEnd] = useState<DateTimeParts>(() => addOneHour(defaultStartDateTime()));
 
@@ -112,6 +120,7 @@ export function CreateEventForm({
         endsAt: endsAt?.toISOString(),
         participantIds:
           selectedParticipantIds.length > 0 ? selectedParticipantIds : undefined,
+        ...participation,
       }),
     });
 
@@ -193,6 +202,11 @@ export function CreateEventForm({
           ))}
         </fieldset>
       )}
+      <ParticipationSettingsFields
+        idPrefix="create-event"
+        value={participation}
+        onChange={setParticipation}
+      />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading}>
         {loading ? "Creating..." : "Create event"}
@@ -208,6 +222,11 @@ export function EditEventForm({ event }: { event: SerializedEvent }) {
   const [title, setTitle] = useState(event.title);
   const [description, setDescription] = useState(event.description ?? "");
   const [location, setLocation] = useState(event.location ?? "");
+  const [participation, setParticipation] = useState<ParticipationSettings>({
+    allowParticipantJoin: event.allowParticipantJoin,
+    allowJoinRequests: event.allowJoinRequests,
+    hideFromNonParticipants: event.hideFromNonParticipants,
+  });
   const [start, setStart] = useState<DateTimeParts>(() =>
     dateToDateTimeParts(new Date(event.startsAt)),
   );
@@ -246,6 +265,7 @@ export function EditEventForm({ event }: { event: SerializedEvent }) {
         location: location || undefined,
         startsAt: startsAt.toISOString(),
         endsAt: endsAt?.toISOString(),
+        ...participation,
       }),
     });
 
@@ -295,6 +315,11 @@ export function EditEventForm({ event }: { event: SerializedEvent }) {
             rows={4}
           />
         </div>
+        <ParticipationSettingsFields
+          idPrefix="edit-event"
+          value={participation}
+          onChange={setParticipation}
+        />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <Button type="submit" disabled={loading}>
           {loading ? "Saving..." : "Save changes"}

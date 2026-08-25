@@ -36,6 +36,8 @@ model User {
   createdEvents              Event[]                     @relation("EventCreator")
   eventParticipants          EventParticipant[]
   unavailabilityTimeframes   UserUnavailability[]
+  choreographyJoinRequests   ChoreographyJoinRequest[]
+  eventJoinRequests          EventJoinRequest[]
 }
 
 model Session {
@@ -49,12 +51,15 @@ model Session {
 }
 
 model Choreography {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  createdById String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                       String   @id @default(cuid())
+  title                    String
+  description              String?
+  createdById              String
+  allowParticipantJoin     Boolean  @default(false)
+  allowJoinRequests        Boolean  @default(false)
+  hideFromNonParticipants  Boolean  @default(true)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   createdBy       User                         @relation("ChoreographyCreator", fields: [createdById], references: [id])
   choreographers  ChoreographyChoreographer[]
@@ -62,6 +67,7 @@ model Choreography {
   groups          ChoreographyGroup[]
   repetitions     RepetitionEvent[]
   representations ChoreographyRepresentation[]
+  joinRequests    ChoreographyJoinRequest[]
 }
 
 model ChoreographyChoreographer {
@@ -73,6 +79,18 @@ model ChoreographyChoreographer {
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([choreographyId, userId])
+}
+
+model ChoreographyJoinRequest {
+  choreographyId String
+  userId         String
+  requestedAt    DateTime @default(now())
+
+  choreography Choreography @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([choreographyId, userId])
+  @@index([choreographyId])
 }
 
 model ChoreographyMember {
@@ -177,18 +195,34 @@ model ChoreographyRepresentation {
 }
 
 model Event {
-  id          String    @id @default(cuid())
-  title       String
-  description String?
-  startsAt    DateTime
-  endsAt      DateTime?
-  location    String?
-  createdById String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                      String    @id @default(cuid())
+  title                   String
+  description             String?
+  startsAt                DateTime
+  endsAt                  DateTime?
+  location                String?
+  createdById             String
+  allowParticipantJoin    Boolean   @default(false)
+  allowJoinRequests       Boolean   @default(false)
+  hideFromNonParticipants Boolean   @default(true)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   createdBy    User               @relation("EventCreator", fields: [createdById], references: [id])
   participants EventParticipant[]
+  joinRequests EventJoinRequest[]
+}
+
+model EventJoinRequest {
+  eventId     String
+  userId      String
+  requestedAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, userId])
+  @@index([eventId])
 }
 
 model EventParticipant {

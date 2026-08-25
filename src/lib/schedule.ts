@@ -1,16 +1,11 @@
+import { listedChoreographyWhere, listedEventWhere } from "@/lib/participation";
 import { prisma } from "@/lib/db";
 import { canEditEvent } from "@/lib/events";
 import { canEditChoreography } from "@/lib/permissions";
 import { canEditRepresentation } from "@/lib/representations";
 import { hasGlobalAccess } from "@/lib/roles";
 
-const choreographyAccessFilter = (userId: string) => ({
-  OR: [
-    { createdById: userId },
-    { choreographers: { some: { userId } } },
-    { members: { some: { userId } } },
-  ],
-});
+const choreographyAccessFilter = (userId: string) => listedChoreographyWhere(userId);
 
 export type ScheduleEventType = "repetition" | "representation" | "event";
 
@@ -36,14 +31,7 @@ export async function getUserScheduleEvents(userId: string) {
     ? undefined
     : { choreography: choreographyAccessFilter(userId) };
 
-  const eventWhere = globalAccess
-    ? undefined
-    : {
-        OR: [
-          { createdById: userId },
-          { participants: { some: { userId } } },
-        ],
-      };
+  const eventWhere = globalAccess ? undefined : listedEventWhere(userId);
 
   const [repetitions, representationLinks, associationEvents] = await Promise.all([
     prisma.repetitionEvent.findMany({

@@ -49,6 +49,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
     include: { user: { select: basicUserSelect } },
   });
 
+  await prisma.choreographyJoinRequest.deleteMany({
+    where: {
+      choreographyId: id,
+      userId: parsed.data.userId,
+    },
+  });
+
   return Response.json({ member }, { status: 201 });
 }
 
