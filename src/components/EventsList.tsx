@@ -1,0 +1,134 @@
+"use client";
+
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { EditIconLink } from "@/components/EditIconLink";
+import { Card, Input, Label } from "@/components/ui";
+import { formatDateTime } from "@/lib/datetime";
+import { isPastDate, matchesSearch } from "@/lib/search";
+import type { SerializedEvent } from "@/lib/events";
+
+export type EventListItem = {
+  event: SerializedEvent;
+  canEdit: boolean;
+  isParticipating: boolean;
+};
+
+function matchesEventSearch(item: EventListItem, query: string): boolean {
+  const { event } = item;
+  return matchesSearch(
+    query,
+    event.title,
+    event.description,
+    event.location,
+    ...event.participants.map((participant) => participant.name),
+    ...event.participants.map((participant) => participant.email),
+  );
+}
+
+export function EventsList({ events }: { events: EventListItem[] }) {
+  const [search, setSearch] = useState("");
+  const [hideNonParticipating, setHideNonParticipating] = useState(false);
+  const [hidePast, setHidePast] = useState(false);
+
+  const filteredEvents = useMemo(() => {
+    return events.filter((item) => {
+      if (hideNonParticipating && !item.isParticipating) {
+        return false;
+      }
+      if (hidePast && isPastDate(item.event.startsAt)) {
+        return false;
+      }
+      return matchesEventSearch(item, search);
+    });
+  }, [events, search, hideNonParticipating, hidePast]);
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+        <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
+          <div>
+            <Label htmlFor="event-search">Search</Label>
+            <Input
+              id="event-search"
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Title, description, location, or participant…"
+              autoComplete="off"
+            />
+          </div>
+          <div className="flex flex-col justify-end gap-3 sm:min-w-56">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700">
+              <input
+                type="checkbox"
+                checked={hideNonParticipating}
+                onChange={(event) => setHideNonParticipating(event.target.checked)}
+                className="rounded border-stone-300"
+              />
+              Hide events I&apos;m not in
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700">
+              <input
+                type="checkbox"
+                checked={hidePast}
+                onChange={(event) => setHidePast(event.target.checked)}
+                className="rounded border-stone-300"
+              />
+              Hide past events
+            </label>
+          </div>
+        </div>
+        <p className="mt-3 text-sm text-stone-500">
+          {filteredEvents.length} of {events.length} events
+        </p>
+      </div>
+
+      {filteredEvents.length === 0 ? (
+        <Card>
+          <p className="text-stone-600">No events match your search or filters.</p>
+        </Card>
+      ) : (
+        <div className="grid gap-4">
+          {filteredEvents.map(({ event, canEdit, isParticipating }) => (
+            <Card key={event.id} className="transition hover:border-stone-400">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <Link href={`/events/${event.id}`} className="hover:underline">
+                    <h2 className="text-lg font-semibold">{event.title}</h2>
+                  </Link>
+                  <p className="mt-1 text-sm text-stone-600">
+                    {formatDateTime(new Date(event.startsAt))}
+                    {event.endsAt && ` – ${formatDateTime(new Date(event.endsAt))}`}
+                  </p>
+                  {event.location && (
+                    <p className="mt-1 text-sm text-stone-500">{event.location}</p>
+                  )}
+                  {event.description && (
+                    <p className="mt-2 line-clamp-2 text-sm text-stone-600">
+                      {event.description}
+                    </p>
+                  )}
+                  {!isParticipating && (
+                    <p className="mt-2 text-xs font-medium text-stone-500">
+                      Not participating
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-start gap-3 text-sm text-stone-600">
+                  <p>
+                    {event.participants.length}{" "}
+                    {event.participants.length === 1 ? "participant" : "participants"}
+                  </p>
+                  {canEdit && (
+                    <EditIconLink href={`/events/${event.id}`} label="Edit event" />
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

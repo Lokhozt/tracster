@@ -1,0 +1,71 @@
+import { NextRequest } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { jsonError, unauthorized } from "@/lib/api";
+import { choreographySchema } from "@/lib/validations";
+import { hasGlobalAccess } from "@/lib/roles";
+import { basicUserSelect } from "@/lib/users";
+
+export async function GET() {
+  const user = await getCurrentUser();
+  if (!user) {
+    return unauthorized();
+  }
+
+  const globalAccess = await hasGlobalAccess(user.id);
+
+  const choreographies = await prisma.choreography.findMany({
+    where: globalAccess
+      ? undefined
+      : {
+          OR: [
+            { createdById: user.id },
+            { choreographers: { some: { userId: user.id } } },
+            { members: { some: { userId: user.id } } },
+          ],
+        },
+    include: {
+      createdBy: { select: basicUserSelect },
+      _count: { select: { members: true, repetitions: true } },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  return Response.json({ choreographies });
+}
+
+export async function POST(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return unauthorized();
+  }
+
+  const body = await request.json();
+  const parsed = choreographySchema.safeParse(body);
+  if (!parsed.success) {
+    return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
+  }
+
+  const choreography = await prisma.choreography.create({
+    data: {
+      title: parsed.data.title,
+      description: parsed.data.description,
+      createdById: user.id,
+      choreographers: {
+        create: { userId: user.id },
+      },
+    },
+    include: {
+      createdBy: { select: basicUserSelect },
+      choreographers: {
+        include: { user: { select: basicUserSelect } },
+      },
+      members: {
+        include: { user: { select: basicUserSelect } },
+      },
+      repetitions: true,
+    },
+  });
+
+  return Response.json({ choreography }, { status: 201 });
+}

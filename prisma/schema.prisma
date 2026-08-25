@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  OWNER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  firstName    String
+  lastName     String
+  phone        String?
+  dateOfBirth  DateTime?
+  role         UserRole @default(USER)
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions                   Session[]
+  createdChoreographies      Choreography[]              @relation("ChoreographyCreator")
+  choreographyChoreographers ChoreographyChoreographer[]
+  choreographyMembers        ChoreographyMember[]
+  availabilityResponses      AvailabilityResponse[]
+  createdRepetitionEvents    RepetitionEvent[]           @relation("RepetitionCreator")
+  createdRepresentations     Representation[]            @relation("RepresentationCreator")
+  createdEvents              Event[]                     @relation("EventCreator")
+  eventParticipants          EventParticipant[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Choreography {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy       User                         @relation("ChoreographyCreator", fields: [createdById], references: [id])
+  choreographers  ChoreographyChoreographer[]
+  members         ChoreographyMember[]
+  repetitions     RepetitionEvent[]
+  representations ChoreographyRepresentation[]
+}
+
+model ChoreographyChoreographer {
+  choreographyId String
+  userId         String
+  assignedAt     DateTime @default(now())
+
+  choreography Choreography @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([choreographyId, userId])
+}
+
+model ChoreographyMember {
+  choreographyId String
+  userId         String
+  assignedAt     DateTime @default(now())
+
+  choreography Choreography @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([choreographyId, userId])
+}
+
+model RepetitionEvent {
+  id             String    @id @default(cuid())
+  choreographyId String
+  title          String?
+  startsAt       DateTime
+  endsAt         DateTime?
+  location       String?
+  notes          String?
+  createdById    String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  choreography   Choreography           @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
+  createdBy      User                   @relation("RepetitionCreator", fields: [createdById], references: [id])
+  availabilities AvailabilityResponse[]
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  UNAVAILABLE
+  MAYBE
+}
+
+model AvailabilityResponse {
+  id                String             @id @default(cuid())
+  repetitionEventId String
+  userId            String
+  status            AvailabilityStatus
+  respondedAt       DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  repetitionEvent RepetitionEvent @relation(fields: [repetitionEventId], references: [id], onDelete: Cascade)
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([repetitionEventId, userId])
+}
+
+model Representation {
+  id          String    @id @default(cuid())
+  title       String?
+  startsAt    DateTime
+  endsAt      DateTime?
+  location    String?
+  notes       String?
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  createdBy      User                         @relation("RepresentationCreator", fields: [createdById], references: [id])
+  choreographies ChoreographyRepresentation[]
+}
+
+model ChoreographyRepresentation {
+  choreographyId   String
+  representationId String
+  assignedAt       DateTime @default(now())
+
+  choreography   Choreography   @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
+  representation Representation @relation(fields: [representationId], references: [id], onDelete: Cascade)
+
+  @@id([choreographyId, representationId])
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  startsAt    DateTime
+  endsAt      DateTime?
+  location    String?
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  createdBy    User               @relation("EventCreator", fields: [createdById], references: [id])
+  participants EventParticipant[]
+}
+
+model EventParticipant {
+  eventId    String
+  userId     String
+  assignedAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, userId])
+}
