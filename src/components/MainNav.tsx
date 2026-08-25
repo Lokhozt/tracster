@@ -38,25 +38,20 @@ const baseNavItems: NavItem[] = [
   },
 ];
 
-const usersNavItem: NavItem = {
-  href: "/users",
-  label: "Users",
-  match: (pathname) => pathname.startsWith("/users"),
-};
-
 const settingsNavItem: NavItem = {
   href: "/settings",
   label: "Settings",
-  match: (pathname) => pathname.startsWith("/settings"),
+  match: (pathname) =>
+    pathname.startsWith("/settings") || pathname.startsWith("/users"),
 };
 
 export function getNavItems(showAdminNav = false): NavItem[] {
-  return showAdminNav ? [...baseNavItems, usersNavItem, settingsNavItem] : baseNavItems;
+  return showAdminNav ? [...baseNavItems, settingsNavItem] : baseNavItems;
 }
 
-export function MainNav({ showUsersNav = false }: { showUsersNav?: boolean }) {
+export function MainNav({ showAdminNav = false }: { showAdminNav?: boolean }) {
   const pathname = usePathname();
-  const navItems = getNavItems(showUsersNav);
+  const navItems = getNavItems(showAdminNav);
 
   return (
     <nav className="flex flex-wrap gap-1 text-sm">

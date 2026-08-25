@@ -7,6 +7,7 @@ import {
   getUserUnavailabilityInRange,
   serializeUnavailability,
 } from "@/lib/unavailability";
+import { getSiteSettings } from "@/lib/site-settings";
 
 export default async function UnavailabilityPage() {
   const user = await getCurrentUser();
@@ -16,7 +17,10 @@ export default async function UnavailabilityPage() {
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekEnd = addDays(weekStart, 7);
-  const timeframes = await getUserUnavailabilityInRange(user.id, weekStart, weekEnd);
+  const [timeframes, settings] = await Promise.all([
+    getUserUnavailabilityInRange(user.id, weekStart, weekEnd),
+    getSiteSettings(),
+  ]);
 
   return (
     <AppShell title="My unavailability">
@@ -26,6 +30,7 @@ export default async function UnavailabilityPage() {
       <UnavailabilityCalendar
         initialTimeframes={timeframes.map(serializeUnavailability)}
         initialWeekStart={format(weekStart, "yyyy-MM-dd")}
+        startOfDayHour={settings.startOfDayHour}
       />
     </AppShell>
   );

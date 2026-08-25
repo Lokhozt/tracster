@@ -23,8 +23,8 @@ export function HeaderBar({
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
-  const showUsersNav = user?.role === "ADMIN" || user?.role === "OWNER";
-  const navItems = user ? getNavItems(showUsersNav) : [];
+  const showAdminNav = user?.role === "ADMIN" || user?.role === "OWNER";
+  const navItems = user ? getNavItems(showAdminNav) : [];
 
   useEffect(() => {
     setMenuOpen(false);
@@ -59,7 +59,7 @@ export function HeaderBar({
 
         {user ? (
           <div className="hidden min-w-0 items-center justify-between gap-4 lg:flex lg:flex-1">
-            <MainNav showUsersNav={showUsersNav} />
+            <MainNav showAdminNav={showAdminNav} />
             <UserCluster user={user} />
           </div>
         ) : (

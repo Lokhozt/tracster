@@ -86,6 +86,17 @@ async function main() {
     },
   });
 
+  await prisma.siteSettings.upsert({
+    where: { id: "default" },
+    update: {},
+    create: {
+      id: "default",
+      allowUserCreateChoreographies: true,
+      allowUserCreateEvents: true,
+      startOfDayHour: 8,
+    },
+  });
+
   const studioA = await prisma.location.upsert({
     where: { name: "Studio A" },
     update: {},

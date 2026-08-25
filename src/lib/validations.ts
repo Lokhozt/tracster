@@ -83,6 +83,12 @@ export const locationSchema = z.object({
   name: z.string().trim().min(1).max(200),
 });
 
+export const siteSettingsSchema = z.object({
+  allowUserCreateChoreographies: z.boolean(),
+  allowUserCreateEvents: z.boolean(),
+  startOfDayHour: z.number().int().min(0).max(23),
+});
+
 export const repetitionSchema = z.object({
   title: z.string().trim().max(120).optional(),
   startsAt: z.string().datetime(),

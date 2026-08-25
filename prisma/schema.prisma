@@ -143,6 +143,14 @@ model Location {
   @@unique([name])
 }
 
+model SiteSettings {
+  id                            String   @id
+  allowUserCreateChoreographies Boolean  @default(true)
+  allowUserCreateEvents         Boolean  @default(true)
+  startOfDayHour                Int      @default(8)
+  updatedAt                     DateTime @updatedAt
+}
+
 model RepetitionEvent {
   id             String    @id @default(cuid())
   choreographyId String

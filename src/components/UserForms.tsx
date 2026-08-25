@@ -225,7 +225,7 @@ export function TransferOwnershipForm({
       return;
     }
 
-    router.push("/users");
+    router.push("/settings");
     router.refresh();
   }
 

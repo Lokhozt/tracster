@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { jsonError, unauthorized } from "@/lib/api";
+import { forbidden, jsonError, unauthorized } from "@/lib/api";
 import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { listedChoreographyWhere } from "@/lib/participation";
 import { choreographySchema } from "@/lib/validations";
 import { hasGlobalAccess } from "@/lib/roles";
+import { canCreateChoreography } from "@/lib/site-settings";
 import { basicUserSelect } from "@/lib/users";
 
 export async function GET() {
@@ -32,6 +33,10 @@ export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) {
     return unauthorized();
+  }
+
+  if (!(await canCreateChoreography(user.id))) {
+    return forbidden();
   }
 
   const body = await request.json();

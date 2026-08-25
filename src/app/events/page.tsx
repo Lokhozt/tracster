@@ -5,6 +5,7 @@ import { EventsList } from "@/components/EventsList";
 import { getCurrentUser } from "@/lib/auth";
 import { canEditEvent, getUserEvents, serializeEvent } from "@/lib/events";
 import { hasGlobalAccess } from "@/lib/roles";
+import { canCreateEvent } from "@/lib/site-settings";
 
 export default async function EventsPage() {
   const user = await getCurrentUser();
@@ -14,6 +15,7 @@ export default async function EventsPage() {
 
   const events = await getUserEvents(user.id);
   const globalAccess = await hasGlobalAccess(user.id);
+  const canCreate = await canCreateEvent(user.id);
 
   const eventItems = await Promise.all(
     events.map(async (entry) => ({
@@ -33,16 +35,20 @@ export default async function EventsPage() {
             ? "All association events."
             : "Events you created or participate in."}
         </p>
-        <Link
-          href="/events/new"
-          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
-        >
-          New event
-        </Link>
+        {canCreate && (
+          <Link
+            href="/events/new"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
+          >
+            New event
+          </Link>
+        )}
       </div>
 
       {eventItems.length === 0 ? (
-        <p className="text-stone-600">No events yet. Create your first one.</p>
+        <p className="text-stone-600">
+          {canCreate ? "No events yet. Create your first one." : "No events yet."}
+        </p>
       ) : (
         <EventsList events={eventItems} />
       )}

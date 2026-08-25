@@ -99,29 +99,31 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="max-w-xl">
-        <h2 className="mb-4 text-lg font-semibold">Add location</h2>
-        <form onSubmit={handleCreate} className="space-y-3">
-          <div>
-            <Label htmlFor="new-location-name">Name</Label>
-            <Input
-              id="new-location-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Studio 2"
-              required
-            />
-          </div>
-          {createError && <p className="text-sm text-red-600">{createError}</p>}
-          <Button type="submit" disabled={creating || !name.trim()}>
-            {creating ? "Adding..." : "Add location"}
-          </Button>
-        </form>
-      </Card>
+    <Card className="max-w-xl">
+      <h2 className="mb-1 text-lg font-semibold">Locations</h2>
+      <p className="mb-4 text-sm text-stone-500">
+        Listed locations can be reused on repetitions, representations, and events.
+        A unique location can still be entered when scheduling.
+      </p>
 
-      <Card>
-        <h2 className="mb-4 text-lg font-semibold">Listed locations</h2>
+      <form onSubmit={handleCreate} className="space-y-3">
+        <div>
+          <Label htmlFor="new-location-name">Name</Label>
+          <Input
+            id="new-location-name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Studio 2"
+            required
+          />
+        </div>
+        {createError && <p className="text-sm text-red-600">{createError}</p>}
+        <Button type="submit" disabled={creating || !name.trim()}>
+          {creating ? "Adding..." : "Add location"}
+        </Button>
+      </form>
+
+      <div className="mt-6 border-t border-stone-100 pt-4">
         {locations.length === 0 ? (
           <p className="text-sm text-stone-600">No locations yet.</p>
         ) : (
@@ -181,7 +183,7 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
           </ul>
         )}
         {rowError && <p className="mt-3 text-sm text-red-600">{rowError}</p>}
-      </Card>
-    </div>
+      </div>
+    </Card>
   );
 }

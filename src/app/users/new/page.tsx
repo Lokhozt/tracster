@@ -19,8 +19,8 @@ export default async function NewUserPage() {
   return (
     <AppShell title="New user">
       <div className="mb-6">
-        <Link href="/users" className="text-sm text-stone-600 hover:text-stone-900">
-          ← Back to users
+        <Link href="/settings" className="text-sm text-stone-600 hover:text-stone-900">
+          ← Back to settings
         </Link>
       </div>
 

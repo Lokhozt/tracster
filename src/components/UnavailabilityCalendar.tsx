@@ -22,11 +22,8 @@ import type { SerializedUnavailability } from "@/lib/unavailability";
 import { cn } from "@/lib/utils";
 
 const SLOT_MINUTES = 30;
-const START_HOUR = 6;
 const END_HOUR = 24;
 const SLOT_HEIGHT_PX = 24;
-const SLOTS_PER_DAY = ((END_HOUR - START_HOUR) * 60) / SLOT_MINUTES;
-const GRID_HEIGHT_PX = SLOTS_PER_DAY * SLOT_HEIGHT_PX;
 const RESIZE_HANDLE_PX = 6;
 const LONG_PRESS_MS = 400;
 // Long enough that a tap or the start of a swipe never shows the hint.
@@ -71,23 +68,41 @@ type PendingPress = {
   timeouts: number[];
 };
 
-function slotToDate(weekStart: Date, dayIndex: number, slotIndex: number): Date {
+type DayGrid = {
+  startHour: number;
+  slotsPerDay: number;
+};
+
+function dayGrid(startOfDayHour: number): DayGrid {
+  const startHour = Math.max(0, Math.min(23, startOfDayHour));
+  return {
+    startHour,
+    slotsPerDay: ((END_HOUR - startHour) * 60) / SLOT_MINUTES,
+  };
+}
+
+function slotToDate(
+  weekStart: Date,
+  dayIndex: number,
+  slotIndex: number,
+  grid: DayGrid,
+): Date {
   const day = addDays(weekStart, dayIndex);
   const base = startOfDay(day);
-  const totalMinutes = START_HOUR * 60 + slotIndex * SLOT_MINUTES;
+  const totalMinutes = grid.startHour * 60 + slotIndex * SLOT_MINUTES;
   return setMinutes(setHours(base, Math.floor(totalMinutes / 60)), totalMinutes % 60);
 }
 
-function dateToSlot(date: Date): number {
-  const minutes = date.getHours() * 60 + date.getMinutes() - START_HOUR * 60;
-  return Math.max(0, Math.min(SLOTS_PER_DAY - 1, Math.round(minutes / SLOT_MINUTES)));
+function dateToSlot(date: Date, grid: DayGrid): number {
+  const minutes = date.getHours() * 60 + date.getMinutes() - grid.startHour * 60;
+  return Math.max(0, Math.min(grid.slotsPerDay - 1, Math.round(minutes / SLOT_MINUTES)));
 }
 
 // The end can fall on the next day (a block drawn to the bottom of the grid ends
 // at midnight), so measure it from the start day instead of its own clock time.
-function dateToEndSlot(start: Date, end: Date): number {
-  const minutes = differenceInMinutes(end, startOfDay(start)) - START_HOUR * 60;
-  return Math.max(1, Math.min(SLOTS_PER_DAY, Math.round(minutes / SLOT_MINUTES)));
+function dateToEndSlot(start: Date, end: Date, grid: DayGrid): number {
+  const minutes = differenceInMinutes(end, startOfDay(start)) - grid.startHour * 60;
+  return Math.max(1, Math.min(grid.slotsPerDay, Math.round(minutes / SLOT_MINUTES)));
 }
 
 function normalizeSlotRange(startSlot: number, endSlot: number): [number, number] {
@@ -114,7 +129,11 @@ function isZeroDuration(startsAt: Date, endsAt: Date) {
   return endsAt.getTime() <= startsAt.getTime();
 }
 
-function timeframeToSlots(timeframe: SerializedUnavailability, weekStart: Date): {
+function timeframeToSlots(
+  timeframe: SerializedUnavailability,
+  weekStart: Date,
+  grid: DayGrid,
+): {
   dayIndex: number;
   startSlot: number;
   endSlot: number;
@@ -129,8 +148,8 @@ function timeframeToSlots(timeframe: SerializedUnavailability, weekStart: Date):
 
   return {
     dayIndex,
-    startSlot: dateToSlot(start),
-    endSlot: dateToEndSlot(start, end),
+    startSlot: dateToSlot(start, grid),
+    endSlot: dateToEndSlot(start, end, grid),
   };
 }
 
@@ -150,12 +169,16 @@ async function fetchTimeframes(from: Date, to: Date): Promise<SerializedUnavaila
 export function UnavailabilityCalendar({
   initialTimeframes,
   initialWeekStart,
+  startOfDayHour,
 }: {
   initialTimeframes: SerializedUnavailability[];
   // Calendar day (yyyy-MM-dd) rather than an instant: the grid is laid out in the
   // viewer's timezone, which can differ from the server's.
   initialWeekStart: string;
+  startOfDayHour: number;
 }) {
+  const grid = dayGrid(startOfDayHour);
+  const gridHeightPx = grid.slotsPerDay * SLOT_HEIGHT_PX;
   const [weekStart, setWeekStart] = useState(() =>
     startOfWeek(parseISO(initialWeekStart), { weekStartsOn: 1 }),
   );
@@ -213,7 +236,7 @@ export function UnavailabilityCalendar({
     const rect = column.getBoundingClientRect();
     const y = clientY - rect.top;
     const slot = Math.floor(y / SLOT_HEIGHT_PX);
-    return Math.max(0, Math.min(SLOTS_PER_DAY - 1, slot));
+    return Math.max(0, Math.min(grid.slotsPerDay - 1, slot));
   }
 
   const cancelPendingPress = useCallback(() => {
@@ -360,8 +383,8 @@ export function UnavailabilityCalendar({
   async function handleInteractionEnd(active: Interaction) {
     if (active.type === "create") {
       const [startSlot, endSlot] = normalizeSlotRange(active.anchorSlot, active.currentSlot);
-      const startsAt = slotToDate(weekStart, active.dayIndex, startSlot);
-      const endsAt = slotToDate(weekStart, active.dayIndex, endSlot);
+      const startsAt = slotToDate(weekStart, active.dayIndex, startSlot, grid);
+      const endsAt = slotToDate(weekStart, active.dayIndex, endSlot, grid);
       await persistTimeframe(null, startsAt, endsAt);
       return;
     }
@@ -374,9 +397,9 @@ export function UnavailabilityCalendar({
     if (active.type === "move") {
       const startSlot = Math.max(
         0,
-        Math.min(SLOTS_PER_DAY - active.durationSlots, active.currentSlot - active.grabOffsetSlots),
+        Math.min(grid.slotsPerDay - active.durationSlots, active.currentSlot - active.grabOffsetSlots),
       );
-      const existingPosition = timeframeToSlots(existing, weekStart);
+      const existingPosition = timeframeToSlots(existing, weekStart, grid);
       if (
         existingPosition &&
         existingPosition.dayIndex === active.dayIndex &&
@@ -384,21 +407,21 @@ export function UnavailabilityCalendar({
       ) {
         return;
       }
-      const startsAt = slotToDate(weekStart, active.dayIndex, startSlot);
+      const startsAt = slotToDate(weekStart, active.dayIndex, startSlot, grid);
       const endsAt = addMinutes(startsAt, active.durationSlots * SLOT_MINUTES);
       await persistTimeframe(active.id, startsAt, endsAt);
       return;
     }
 
     if (active.type === "resize-start") {
-      const startsAt = slotToDate(weekStart, active.dayIndex, active.currentSlot);
+      const startsAt = slotToDate(weekStart, active.dayIndex, active.currentSlot, grid);
       const endsAt = new Date(existing.endsAt);
       await persistTimeframe(active.id, startsAt, endsAt);
       return;
     }
 
     const startsAt = new Date(existing.startsAt);
-    const endsAt = slotToDate(weekStart, active.dayIndex, active.currentSlot + 1);
+    const endsAt = slotToDate(weekStart, active.dayIndex, active.currentSlot + 1, grid);
     await persistTimeframe(active.id, startsAt, endsAt);
   }
 
@@ -530,7 +553,7 @@ export function UnavailabilityCalendar({
       return [];
     }
 
-    const position = timeframeToSlots(existing, weekStart);
+    const position = timeframeToSlots(existing, weekStart, grid);
     if (!position) {
       return [];
     }
@@ -539,7 +562,7 @@ export function UnavailabilityCalendar({
       const startSlot = Math.max(
         0,
         Math.min(
-          SLOTS_PER_DAY - interaction.durationSlots,
+          grid.slotsPerDay - interaction.durationSlots,
           interaction.currentSlot - interaction.grabOffsetSlots,
         ),
       );
@@ -570,7 +593,7 @@ export function UnavailabilityCalendar({
         draft: true,
       },
     ];
-  }, [interaction, timeframes, weekStart]);
+  }, [interaction, timeframes, weekStart, grid]);
 
   const periodLabel = `${format(weekDays[0], "d MMM")} – ${format(weekDays[6], "d MMM yyyy")}`;
 
@@ -651,8 +674,8 @@ export function UnavailabilityCalendar({
             </div>
 
             <div className="grid grid-cols-[56px_repeat(7,1fr)]">
-              <div className="relative" style={{ height: GRID_HEIGHT_PX }}>
-                {Array.from({ length: SLOTS_PER_DAY }, (_, slotIndex) =>
+              <div className="relative" style={{ height: gridHeightPx }}>
+                {Array.from({ length: grid.slotsPerDay }, (_, slotIndex) =>
                   slotIndex % 2 === 0 ? (
                     <div
                       key={slotIndex}
@@ -660,7 +683,7 @@ export function UnavailabilityCalendar({
                       style={{ top: slotIndex * SLOT_HEIGHT_PX }}
                     >
                       {format(
-                        slotToDate(weekStart, 0, slotIndex),
+                        slotToDate(weekStart, 0, slotIndex, grid),
                         "HH:mm",
                       )}
                     </div>
@@ -670,7 +693,7 @@ export function UnavailabilityCalendar({
 
               {weekDays.map((day, dayIndex) => {
                 const dayBlocks = timeframes
-                  .map((entry) => ({ entry, position: timeframeToSlots(entry, weekStart) }))
+                  .map((entry) => ({ entry, position: timeframeToSlots(entry, weekStart, grid) }))
                   .filter(
                     (item): item is {
                       entry: SerializedUnavailability;
@@ -690,7 +713,7 @@ export function UnavailabilityCalendar({
                       "relative select-none border-l border-stone-200 bg-white [-webkit-touch-callout:none]",
                       scrollLocked ? "touch-none" : "touch-auto",
                     )}
-                    style={{ height: GRID_HEIGHT_PX }}
+                    style={{ height: gridHeightPx }}
                     onContextMenu={(event) => event.preventDefault()}
                     onPointerDown={(event) => {
                       if (event.button !== 0 || interaction) {
@@ -710,7 +733,7 @@ export function UnavailabilityCalendar({
                       beginInteraction(event, () => startCreate(dayIndex, slot));
                     }}
                   >
-                    {Array.from({ length: SLOTS_PER_DAY }, (_, slotIndex) => (
+                    {Array.from({ length: grid.slotsPerDay }, (_, slotIndex) => (
                       <div
                         key={slotIndex}
                         className={cn(

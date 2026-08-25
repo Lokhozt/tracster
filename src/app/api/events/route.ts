@@ -1,10 +1,11 @@
 import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { jsonError, unauthorized } from "@/lib/api";
+import { forbidden, jsonError, unauthorized } from "@/lib/api";
 import { eventSchema } from "@/lib/validations";
 import { getUserEvents } from "@/lib/events";
 import { resolveLocationFromParsed } from "@/lib/locations";
+import { canCreateEvent } from "@/lib/site-settings";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -21,6 +22,10 @@ export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) {
     return unauthorized();
+  }
+
+  if (!(await canCreateEvent(user.id))) {
+    return forbidden();
   }
 
   const body = await request.json();

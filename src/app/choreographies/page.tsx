@@ -9,6 +9,7 @@ import { formatDateTime } from "@/lib/datetime";
 import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { listedChoreographyWhere } from "@/lib/participation";
 import { hasGlobalAccess } from "@/lib/roles";
+import { canCreateChoreography } from "@/lib/site-settings";
 import { basicUserSelect, formatUserName } from "@/lib/users";
 
 function isUserChoreographer(
@@ -31,6 +32,7 @@ export default async function ChoreographiesPage() {
   }
 
   const globalAccess = await hasGlobalAccess(user.id);
+  const canCreate = await canCreateChoreography(user.id);
 
   const choreographies = await prisma.choreography.findMany({
     where: globalAccess ? visibleChoreographyWhere : listedChoreographyWhere(user.id),
@@ -53,17 +55,21 @@ export default async function ChoreographiesPage() {
             ? "All choreographies in the association."
             : "Manage choreographies you created, choreograph, or participate in."}
         </p>
-        <Link
-          href="/choreographies/new"
-          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
-        >
-          New choreography
-        </Link>
+        {canCreate && (
+          <Link
+            href="/choreographies/new"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
+          >
+            New choreography
+          </Link>
+        )}
       </div>
 
       {choreographies.length === 0 ? (
         <Card>
-          <p className="text-stone-600">No choreographies yet. Create your first one.</p>
+          <p className="text-stone-600">
+            {canCreate ? "No choreographies yet. Create your first one." : "No choreographies yet."}
+          </p>
         </Card>
       ) : (
         <div className="grid gap-4">
