@@ -57,6 +57,17 @@ export const groupSchema = z.object({
   memberIds: z.array(z.string().min(1)).min(1),
 });
 
+export const unavailabilitySchema = z.object({
+  startsAt: z.string().datetime(),
+  endsAt: z.string().datetime(),
+  notes: z.string().trim().max(500).optional(),
+});
+
+export const unavailabilityRangeSchema = z.object({
+  from: z.string().datetime(),
+  to: z.string().datetime(),
+});
+
 export const availabilitySchema = z.object({
   status: z.enum(["AVAILABLE", "UNAVAILABLE", "MAYBE"]),
 });

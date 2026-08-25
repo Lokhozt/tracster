@@ -35,6 +35,7 @@ model User {
   createdRepresentations     Representation[]            @relation("RepresentationCreator")
   createdEvents              Event[]                     @relation("EventCreator")
   eventParticipants          EventParticipant[]
+  unavailabilityTimeframes   UserUnavailability[]
 }
 
 model Session {
@@ -199,4 +200,18 @@ model EventParticipant {
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([eventId, userId])
+}
+
+model UserUnavailability {
+  id        String   @id @default(cuid())
+  userId    String
+  startsAt  DateTime
+  endsAt    DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startsAt])
 }

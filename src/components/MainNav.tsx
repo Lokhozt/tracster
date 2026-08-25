@@ -31,6 +31,11 @@ const baseNavItems: NavItem[] = [
     label: "Events",
     match: (pathname) => pathname.startsWith("/events"),
   },
+  {
+    href: "/unavailability",
+    label: "Unavailability",
+    match: (pathname) => pathname.startsWith("/unavailability"),
+  },
 ];
 
 const usersNavItem: NavItem = {
