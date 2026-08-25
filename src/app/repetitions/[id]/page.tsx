@@ -7,10 +7,10 @@ import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/datetime";
+import { getRepetitionAudience, isRepetitionParticipant } from "@/lib/groups";
 import {
   canEditChoreography,
   canViewChoreography,
-  isChoreographyMember,
 } from "@/lib/permissions";
 import { basicUserSelect, formatUserName } from "@/lib/users";
 
@@ -33,6 +33,13 @@ export default async function RepetitionDetailPage({ params }: PageProps) {
   const repetition = await prisma.repetitionEvent.findUnique({
     where: { id },
     include: {
+      group: {
+        select: {
+          id: true,
+          name: true,
+          members: { select: { userId: true } },
+        },
+      },
       choreography: {
         include: {
           members: {
@@ -54,12 +61,16 @@ export default async function RepetitionDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const [canEdit, isMember] = await Promise.all([
+  const [canEdit, isParticipant, audience] = await Promise.all([
     canEditChoreography(repetition.choreographyId, user.id),
-    isChoreographyMember(repetition.choreographyId, user.id),
+    isRepetitionParticipant(repetition, user.id),
+    getRepetitionAudience(repetition),
   ]);
 
   const myResponse = repetition.availabilities.find((item) => item.userId === user.id);
+  const targetMembers = repetition.choreography.members.filter((member) =>
+    audience.memberIds.includes(member.userId),
+  );
 
   return (
     <AppShell title={repetition.title ?? "Repetition"}>
@@ -75,6 +86,10 @@ export default async function RepetitionDetailPage({ params }: PageProps) {
       <Card className="mb-6">
         <p className="text-sm text-stone-500">Choreography</p>
         <p className="font-medium">{repetition.choreography.title}</p>
+        <p className="mt-3 text-sm text-stone-500">Participants</p>
+        <p className="font-medium">
+          {audience.groupName ?? "All participants"}
+        </p>
       </Card>
 
       {canEdit ? (
@@ -119,7 +134,7 @@ export default async function RepetitionDetailPage({ params }: PageProps) {
         </Card>
       )}
 
-      {isMember && (
+      {isParticipant && (
         <Card className="mb-6">
           <h2 className="mb-3 text-lg font-semibold">Your availability</h2>
           <AvailabilityButtons
@@ -133,7 +148,7 @@ export default async function RepetitionDetailPage({ params }: PageProps) {
         <Card>
           <h2 className="mb-4 text-lg font-semibold">Participant availability</h2>
           <div className="space-y-3">
-            {repetition.choreography.members.map(({ user: member }) => {
+            {targetMembers.map(({ user: member }) => {
               const response = repetition.availabilities.find(
                 (item) => item.userId === member.id,
               );

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { assignUserSchema } from "@/lib/validations";
 import { canEditChoreography } from "@/lib/permissions";
+import { removeUserFromChoreographyGroups } from "@/lib/groups";
 import { basicUserSelect } from "@/lib/users";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -68,6 +69,8 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   if (!parsed.success) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
+
+  await removeUserFromChoreographyGroups(id, parsed.data.userId);
 
   await prisma.choreographyMember.deleteMany({
     where: {

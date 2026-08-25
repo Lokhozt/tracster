@@ -2,8 +2,8 @@ import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
+import { isRepetitionParticipant } from "@/lib/groups";
 import { availabilitySchema } from "@/lib/validations";
-import { isChoreographyMember } from "@/lib/permissions";
 import { basicUserSelect } from "@/lib/users";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -18,14 +18,22 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const repetition = await prisma.repetitionEvent.findUnique({
     where: { id },
-    select: { choreographyId: true },
+    select: {
+      choreographyId: true,
+      groupId: true,
+      group: {
+        select: {
+          members: { select: { userId: true } },
+        },
+      },
+    },
   });
 
   if (!repetition) {
     return notFound("Repetition");
   }
 
-  if (!(await isChoreographyMember(repetition.choreographyId, user.id))) {
+  if (!(await isRepetitionParticipant(repetition, user.id))) {
     return forbidden();
   }
 

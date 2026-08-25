@@ -49,6 +49,12 @@ export const repetitionSchema = z.object({
   endsAt: z.string().datetime().optional(),
   location: z.string().trim().max(200).optional(),
   notes: z.string().trim().max(1000).optional(),
+  groupId: z.string().min(1).optional(),
+});
+
+export const groupSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  memberIds: z.array(z.string().min(1)).min(1),
 });
 
 export const availabilitySchema = z.object({

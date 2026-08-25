@@ -29,6 +29,7 @@ model User {
   createdChoreographies      Choreography[]              @relation("ChoreographyCreator")
   choreographyChoreographers ChoreographyChoreographer[]
   choreographyMembers        ChoreographyMember[]
+  choreographyGroupMembers   ChoreographyGroupMember[]
   availabilityResponses      AvailabilityResponse[]
   createdRepetitionEvents    RepetitionEvent[]           @relation("RepetitionCreator")
   createdRepresentations     Representation[]            @relation("RepresentationCreator")
@@ -57,6 +58,7 @@ model Choreography {
   createdBy       User                         @relation("ChoreographyCreator", fields: [createdById], references: [id])
   choreographers  ChoreographyChoreographer[]
   members         ChoreographyMember[]
+  groups          ChoreographyGroup[]
   repetitions     RepetitionEvent[]
   representations ChoreographyRepresentation[]
 }
@@ -83,9 +85,35 @@ model ChoreographyMember {
   @@id([choreographyId, userId])
 }
 
+model ChoreographyGroup {
+  id             String   @id @default(cuid())
+  choreographyId String
+  name           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  choreography Choreography              @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
+  members      ChoreographyGroupMember[]
+  repetitions  RepetitionEvent[]
+
+  @@index([choreographyId])
+}
+
+model ChoreographyGroupMember {
+  groupId    String
+  userId     String
+  assignedAt DateTime @default(now())
+
+  group ChoreographyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+}
+
 model RepetitionEvent {
   id             String    @id @default(cuid())
   choreographyId String
+  groupId        String?
   title          String?
   startsAt       DateTime
   endsAt         DateTime?
@@ -96,6 +124,7 @@ model RepetitionEvent {
   updatedAt      DateTime  @updatedAt
 
   choreography   Choreography           @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
+  group          ChoreographyGroup?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
   createdBy      User                   @relation("RepetitionCreator", fields: [createdById], references: [id])
   availabilities AvailabilityResponse[]
 }

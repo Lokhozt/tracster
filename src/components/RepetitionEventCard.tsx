@@ -12,6 +12,7 @@ export type RepetitionListItem = {
   startsAt: string;
   endsAt: string | null;
   location: string | null;
+  groupName: string | null;
   availableNames: string[];
   unavailableNames: string[];
 };
@@ -34,6 +35,9 @@ export function RepetitionEventCard({
           </p>
           {repetition.location && (
             <p className="mt-1 text-sm text-stone-500">{repetition.location}</p>
+          )}
+          {repetition.groupName && (
+            <p className="mt-1 text-sm text-stone-500">Group: {repetition.groupName}</p>
           )}
         </div>
         <div className="flex items-center gap-1">

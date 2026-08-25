@@ -7,12 +7,14 @@ import {
   ParticipantsList,
   RepetitionsSection,
 } from "@/components/ChoreographyForms";
+import { GroupsSection } from "@/components/GroupForms";
 import { RepresentationsSection } from "@/components/RepresentationForms";
 import { ChoreographerBadge } from "@/components/CrownIcon";
 import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
+import { getChoreographyGroups, serializeGroup } from "@/lib/groups";
 import { basicUserSelect, formatUserName, serializeBasicUser } from "@/lib/users";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -31,7 +33,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
 
   const canEdit = await canEditChoreography(id, user.id);
 
-  const [choreography, users] = await Promise.all([
+  const [choreography, users, groups] = await Promise.all([
     prisma.choreography.findUnique({
       where: { id },
       include: {
@@ -45,6 +47,13 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
         repetitions: {
           orderBy: { startsAt: "asc" },
           include: {
+            group: {
+              select: {
+                id: true,
+                name: true,
+                members: { select: { userId: true } },
+              },
+            },
             availabilities: {
               include: { user: { select: basicUserSelect } },
             },
@@ -62,6 +71,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           select: basicUserSelect,
         }).then((items) => items.map(serializeBasicUser))
       : Promise.resolve([]),
+    getChoreographyGroups(id),
   ]);
 
   if (!choreography) {
@@ -122,6 +132,13 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
         </Card>
       </div>
 
+      <GroupsSection
+        choreographyId={id}
+        canEdit={canEdit}
+        groups={groups.map(serializeGroup)}
+        members={choreography.members.map(({ user }) => serializeBasicUser(user))}
+      />
+
       <RepresentationsSection
         choreographyId={id}
         canEdit={canEdit}
@@ -138,19 +155,37 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
       <RepetitionsSection
         choreographyId={id}
         canEdit={canEdit}
-        repetitions={choreography.repetitions.map((repetition) => ({
-          id: repetition.id,
-          title: repetition.title,
-          startsAt: repetition.startsAt.toISOString(),
-          endsAt: repetition.endsAt?.toISOString() ?? null,
-          location: repetition.location,
-          availableNames: repetition.availabilities
-            .filter((item) => item.status === "AVAILABLE")
-            .map((item) => formatUserName(item.user)),
-          unavailableNames: repetition.availabilities
-            .filter((item) => item.status === "UNAVAILABLE")
-            .map((item) => formatUserName(item.user)),
+        groups={groups.map((group) => ({
+          id: group.id,
+          name: group.name,
+          memberCount: group.members.length,
         }))}
+        repetitions={choreography.repetitions.map((repetition) => {
+          const targetUserIds = new Set(
+            repetition.group
+              ? repetition.group.members.map((member) => member.userId)
+              : choreography.members.map(({ userId }) => userId),
+          );
+
+          const targetAvailabilities = repetition.availabilities.filter((item) =>
+            targetUserIds.has(item.userId),
+          );
+
+          return {
+            id: repetition.id,
+            title: repetition.title,
+            startsAt: repetition.startsAt.toISOString(),
+            endsAt: repetition.endsAt?.toISOString() ?? null,
+            location: repetition.location,
+            groupName: repetition.group?.name ?? null,
+            availableNames: targetAvailabilities
+              .filter((item) => item.status === "AVAILABLE")
+              .map((item) => formatUserName(item.user)),
+            unavailableNames: targetAvailabilities
+              .filter((item) => item.status === "UNAVAILABLE")
+              .map((item) => formatUserName(item.user)),
+          };
+        })}
       />
     </AppShell>
   );

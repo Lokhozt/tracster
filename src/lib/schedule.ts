@@ -59,6 +59,14 @@ export async function getUserScheduleEvents(userId: string) {
             },
           },
         },
+        group: {
+          select: {
+            members: {
+              where: { userId },
+              select: { userId: true },
+            },
+          },
+        },
         availabilities: {
           where: { userId },
           select: { status: true },
@@ -105,8 +113,12 @@ export async function getUserScheduleEvents(userId: string) {
       location: repetition.location,
       choreographyId: repetition.choreographyId,
       choreographyTitle: repetition.choreography.title,
-      isMember: repetition.choreography.members.length > 0,
-      isParticipating: repetition.choreography.members.length > 0,
+      isMember: repetition.group
+        ? repetition.group.members.length > 0
+        : repetition.choreography.members.length > 0,
+      isParticipating: repetition.group
+        ? repetition.group.members.length > 0
+        : repetition.choreography.members.length > 0,
       availabilityStatus: repetition.availabilities[0]?.status ?? null,
       href: `/repetitions/${repetition.id}`,
       canEdit: await canEditChoreography(repetition.choreographyId, userId),

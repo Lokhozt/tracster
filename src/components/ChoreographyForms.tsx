@@ -9,6 +9,7 @@ import {
   type RepetitionListItem,
 } from "@/components/RepetitionEventCard";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
+import { RepetitionAudienceSelect, type GroupOption } from "@/components/GroupForms";
 import { matchesSearch } from "@/lib/search";
 import {
   addOneHour,
@@ -168,16 +169,19 @@ export function AssignChoreographerForm({
 
 export function CreateRepetitionForm({
   choreographyId,
+  groups = [],
   onSuccess,
   onCancel,
 }: {
   choreographyId: string;
+  groups?: GroupOption[];
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [audience, setAudience] = useState("");
   const [start, setStart] = useState<DateTimeParts>(defaultStartDateTime);
   const [end, setEnd] = useState<DateTimeParts>(() => addOneHour(defaultStartDateTime()));
 
@@ -223,6 +227,7 @@ export function CreateRepetitionForm({
         endsAt: endsAt?.toISOString(),
         location: formData.get("location") || undefined,
         notes: formData.get("notes") || undefined,
+        groupId: audience || undefined,
       }),
     });
 
@@ -236,6 +241,7 @@ export function CreateRepetitionForm({
 
     form.reset();
     resetScheduleFields();
+    setAudience("");
     router.refresh();
     onSuccess?.();
   }
@@ -266,6 +272,7 @@ export function CreateRepetitionForm({
         <Label htmlFor="location">Location</Label>
         <Input id="location" name="location" placeholder="Studio A" />
       </div>
+      <RepetitionAudienceSelect groups={groups} value={audience} onChange={setAudience} />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" disabled={loading}>
@@ -401,10 +408,12 @@ export function EditRepetitionForm({ repetition }: { repetition: RepetitionDetai
 export function RepetitionsSection({
   choreographyId,
   canEdit,
+  groups = [],
   repetitions,
 }: {
   choreographyId: string;
   canEdit: boolean;
+  groups?: GroupOption[];
   repetitions: RepetitionListItem[];
 }) {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -416,6 +425,7 @@ export function RepetitionsSection({
         search,
         repetition.title,
         repetition.location,
+        repetition.groupName,
         ...repetition.availableNames,
         ...repetition.unavailableNames,
       ),
@@ -456,6 +466,7 @@ export function RepetitionsSection({
           <h3 className="mb-4 font-medium">Schedule a repetition</h3>
           <CreateRepetitionForm
             choreographyId={choreographyId}
+            groups={groups}
             onSuccess={() => setShowAddForm(false)}
             onCancel={() => setShowAddForm(false)}
           />
