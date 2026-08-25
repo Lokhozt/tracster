@@ -41,7 +41,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     data: {
       startsAt,
       endsAt,
-      notes: parsed.data.notes,
     },
   });
 

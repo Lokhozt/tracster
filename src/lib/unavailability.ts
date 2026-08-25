@@ -4,7 +4,6 @@ export type SerializedUnavailability = {
   id: string;
   startsAt: string;
   endsAt: string;
-  notes: string | null;
 };
 
 export function serializeUnavailability(
@@ -12,14 +11,12 @@ export function serializeUnavailability(
     id: string;
     startsAt: Date;
     endsAt: Date;
-    notes: string | null;
   },
 ): SerializedUnavailability {
   return {
     id: entry.id,
     startsAt: entry.startsAt.toISOString(),
     endsAt: entry.endsAt.toISOString(),
-    notes: entry.notes,
   };
 }
 

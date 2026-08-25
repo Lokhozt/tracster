@@ -16,7 +16,7 @@ import {
   subWeeks,
 } from "date-fns";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Card, Label, Textarea } from "@/components/ui";
+import { Button, Card } from "@/components/ui";
 import { formatDateTime, formatTime } from "@/lib/datetime";
 import type { SerializedUnavailability } from "@/lib/unavailability";
 import { cn } from "@/lib/utils";
@@ -161,7 +161,6 @@ export function UnavailabilityCalendar({
   );
   const [timeframes, setTimeframes] = useState(initialTimeframes);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [notesDraft, setNotesDraft] = useState("");
   const [interaction, setInteraction] = useState<Interaction | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -204,12 +203,6 @@ export function UnavailabilityCalendar({
   useEffect(() => {
     void loadTimeframes();
   }, [loadTimeframes]);
-
-  useEffect(() => {
-    if (selectedTimeframe) {
-      setNotesDraft(selectedTimeframe.notes ?? "");
-    }
-  }, [selectedTimeframe]);
 
   function pointerToSlot(clientY: number, dayIndex: number): number | null {
     const column = columnRefs.current[dayIndex];
@@ -317,12 +310,7 @@ export function UnavailabilityCalendar({
     };
   }, [scrollLocked]);
 
-  async function persistTimeframe(
-    id: string | null,
-    startsAt: Date,
-    endsAt: Date,
-    notes?: string | null,
-  ) {
+  async function persistTimeframe(id: string | null, startsAt: Date, endsAt: Date) {
     if (isZeroDuration(startsAt, endsAt)) {
       if (id) {
         await removeTimeframe(id);
@@ -336,7 +324,6 @@ export function UnavailabilityCalendar({
     const payload = {
       startsAt: startsAt.toISOString(),
       endsAt: endsAt.toISOString(),
-      notes: notes ?? undefined,
     };
 
     const response = await fetch(
@@ -399,20 +386,20 @@ export function UnavailabilityCalendar({
       }
       const startsAt = slotToDate(weekStart, active.dayIndex, startSlot);
       const endsAt = addMinutes(startsAt, active.durationSlots * SLOT_MINUTES);
-      await persistTimeframe(active.id, startsAt, endsAt, existing.notes);
+      await persistTimeframe(active.id, startsAt, endsAt);
       return;
     }
 
     if (active.type === "resize-start") {
       const startsAt = slotToDate(weekStart, active.dayIndex, active.currentSlot);
       const endsAt = new Date(existing.endsAt);
-      await persistTimeframe(active.id, startsAt, endsAt, existing.notes);
+      await persistTimeframe(active.id, startsAt, endsAt);
       return;
     }
 
     const startsAt = new Date(existing.startsAt);
     const endsAt = slotToDate(weekStart, active.dayIndex, active.currentSlot + 1);
-    await persistTimeframe(active.id, startsAt, endsAt, existing.notes);
+    await persistTimeframe(active.id, startsAt, endsAt);
   }
 
   useEffect(() => {
@@ -524,19 +511,6 @@ export function UnavailabilityCalendar({
     await removeTimeframe(selectedId);
   }
 
-  async function saveNotes() {
-    if (!selectedTimeframe) {
-      return;
-    }
-
-    await persistTimeframe(
-      selectedTimeframe.id,
-      new Date(selectedTimeframe.startsAt),
-      new Date(selectedTimeframe.endsAt),
-      notesDraft.trim() || null,
-    );
-  }
-
   const draftBlocks = useMemo(() => {
     if (!interaction) {
       return [];
@@ -601,7 +575,7 @@ export function UnavailabilityCalendar({
   const periodLabel = `${format(weekDays[0], "d MMM")} – ${format(weekDays[6], "d MMM yyyy")}`;
 
   return (
-    <div className={cn("space-y-4", selectedTimeframe && "pb-56 sm:pb-0")}>
+    <div className={cn("space-y-4", selectedTimeframe && "pb-24 sm:pb-0")}>
       <Card>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -836,9 +810,6 @@ export function UnavailabilityCalendar({
                               {formatTime(new Date(entry.startsAt))} –{" "}
                               {formatTime(new Date(entry.endsAt))}
                             </p>
-                            {entry.notes && (
-                              <p className="mt-0.5 line-clamp-2 opacity-80">{entry.notes}</p>
-                            )}
                           </div>
                           <div
                             data-handle="end"
@@ -867,35 +838,23 @@ export function UnavailabilityCalendar({
       {selectedTimeframe && (
         <Card
           data-allow-scroll
-          className="fixed inset-x-0 bottom-0 z-30 max-h-[40vh] overflow-y-auto rounded-none border-x-0 border-b-0 sm:static sm:max-h-none sm:overflow-visible sm:rounded-xl sm:border"
+          className="fixed inset-x-0 bottom-0 z-30 rounded-none border-x-0 border-b-0 sm:static sm:rounded-xl sm:border"
         >
-          <h3 className="mb-3 text-lg font-semibold">Selected period</h3>
-          <p className="text-sm text-stone-600">
-            {formatDateTime(new Date(selectedTimeframe.startsAt))} –{" "}
-            {formatDateTime(new Date(selectedTimeframe.endsAt))}
-          </p>
-          <div className="mt-4">
-            <Label htmlFor="unavailability-notes">Notes (optional)</Label>
-            <Textarea
-              id="unavailability-notes"
-              value={notesDraft}
-              onChange={(event) => setNotesDraft(event.target.value)}
-              rows={3}
-              placeholder="Holiday, work, etc."
-              className="mt-1"
-            />
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button type="button" disabled={saving} onClick={() => void saveNotes()}>
-              {saving ? "Saving…" : "Save notes"}
-            </Button>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold sm:text-lg">Selected period</h3>
+              <p className="mt-1 text-sm text-stone-600">
+                {formatDateTime(new Date(selectedTimeframe.startsAt))} –{" "}
+                {formatDateTime(new Date(selectedTimeframe.endsAt))}
+              </p>
+            </div>
             <Button
               type="button"
               variant="secondary"
               disabled={saving}
               onClick={() => void deleteSelected()}
             >
-              Delete period
+              Delete
             </Button>
           </div>
         </Card>

@@ -65,7 +65,6 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       startsAt,
       endsAt,
-      notes: parsed.data.notes,
     },
   });
 

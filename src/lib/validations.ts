@@ -81,7 +81,6 @@ export const groupSchema = z.object({
 export const unavailabilitySchema = z.object({
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime(),
-  notes: z.string().trim().max(500).optional(),
 });
 
 export const unavailabilityRangeSchema = z.object({
