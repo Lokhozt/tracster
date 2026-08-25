@@ -11,12 +11,14 @@ import { EditChoreographyForm } from "@/components/CreateChoreographyForm";
 import { GroupsSection } from "@/components/GroupForms";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
 import { JoinRequestsList } from "@/components/JoinRequestsList";
+import { ChoreographyLifecycleActions } from "@/components/ChoreographyLifecycleActions";
 import { RepresentationsSection } from "@/components/RepresentationForms";
 import { ChoreographerBadge } from "@/components/CrownIcon";
 import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
+import { isAdmin } from "@/lib/roles";
 import { getChoreographyGroups, serializeGroup } from "@/lib/groups";
 import { basicUserSelect, formatUserName, serializeBasicUser } from "@/lib/users";
 
@@ -35,6 +37,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
   }
 
   const canEdit = await canEditChoreography(id, user.id);
+  const canManageLifecycle = await isAdmin(user.id);
 
   const [choreography, users, groups] = await Promise.all([
     prisma.choreography.findUnique({
@@ -81,7 +84,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
     getChoreographyGroups(id),
   ]);
 
-  if (!choreography) {
+  if (!choreography || choreography.archivedAt) {
     notFound();
   }
 
@@ -235,6 +238,27 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
             }}
           />
         </Card>
+      )}
+
+      {canManageLifecycle && (
+        <ChoreographyLifecycleActions
+          choreographyId={choreography.id}
+          title={choreography.title}
+          upcomingRepetitions={choreography.repetitions
+            .filter((repetition) => repetition.startsAt >= new Date())
+            .map((repetition) => ({
+              id: repetition.id,
+              title: repetition.title,
+              startsAt: repetition.startsAt.toISOString(),
+            }))}
+          upcomingRepresentations={choreography.representations
+            .filter((link) => link.representation.startsAt >= new Date())
+            .map((link) => ({
+              id: link.representation.id,
+              title: link.representation.title,
+              startsAt: link.representation.startsAt.toISOString(),
+            }))}
+        />
       )}
     </AppShell>
   );

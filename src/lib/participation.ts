@@ -24,6 +24,7 @@ export function normalizeParticipationSettings(
 
 export function listedChoreographyWhere(userId: string) {
   return {
+    archivedAt: null,
     OR: [
       { createdById: userId },
       { choreographers: { some: { userId } } },

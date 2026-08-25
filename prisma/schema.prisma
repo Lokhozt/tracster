@@ -58,6 +58,7 @@ model Choreography {
   allowParticipantJoin     Boolean  @default(false)
   allowJoinRequests        Boolean  @default(false)
   hideFromNonParticipants  Boolean  @default(true)
+  archivedAt               DateTime?
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 

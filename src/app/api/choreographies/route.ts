@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { jsonError, unauthorized } from "@/lib/api";
+import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { listedChoreographyWhere } from "@/lib/participation";
 import { choreographySchema } from "@/lib/validations";
 import { hasGlobalAccess } from "@/lib/roles";
@@ -16,7 +17,7 @@ export async function GET() {
   const globalAccess = await hasGlobalAccess(user.id);
 
   const choreographies = await prisma.choreography.findMany({
-    where: globalAccess ? undefined : listedChoreographyWhere(user.id),
+    where: globalAccess ? visibleChoreographyWhere : listedChoreographyWhere(user.id),
     include: {
       createdBy: { select: basicUserSelect },
       _count: { select: { members: true, repetitions: true } },

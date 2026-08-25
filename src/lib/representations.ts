@@ -1,4 +1,5 @@
 import { listedChoreographyWhere } from "@/lib/participation";
+import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { prisma } from "@/lib/db";
 import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
 import { hasGlobalAccess } from "@/lib/roles";
@@ -95,6 +96,7 @@ export async function getUserRepresentations(userId: string) {
         },
     include: {
       choreographies: {
+        where: { choreography: visibleChoreographyWhere },
         include: {
           choreography: { select: { id: true, title: true } },
         },
@@ -163,6 +165,7 @@ export async function getLinkableChoreographies(
   return prisma.choreography.findMany({
     where: {
       id: excludeIds.length > 0 ? { notIn: excludeIds } : undefined,
+      archivedAt: null,
       ...(globalAccess
         ? {}
         : {

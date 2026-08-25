@@ -1,10 +1,21 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
+import {
+  deleteChoreography,
+  getActiveChoreographyForAdmin,
+  getUpcomingChoreographyImpact,
+  serializeUpcomingImpact,
+} from "@/lib/choreographies";
+import {
+  formatChoreographyLifecycleWarning,
+  hasUpcomingImpact,
+} from "@/lib/choreography-lifecycle";
 import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
+import { isAdmin } from "@/lib/roles";
 import { basicUserSelect } from "@/lib/users";
-import { choreographySchema } from "@/lib/validations";
+import { choreographyLifecycleSchema, choreographySchema } from "@/lib/validations";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -81,4 +92,52 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   });
 
   return Response.json({ choreography });
+}
+
+export async function DELETE(request: NextRequest, context: RouteContext) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return unauthorized();
+  }
+
+  if (!(await isAdmin(user.id))) {
+    return forbidden();
+  }
+
+  const { id } = await context.params;
+  const choreography = await getActiveChoreographyForAdmin(id);
+  if (!choreography) {
+    return notFound("Choreography");
+  }
+
+  let confirmUpcoming = false;
+  try {
+    const body = await request.json();
+    const parsed = choreographyLifecycleSchema.safeParse(body);
+    if (!parsed.success) {
+      return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
+    }
+    confirmUpcoming = parsed.data.confirmUpcoming === true;
+  } catch {
+    confirmUpcoming = false;
+  }
+
+  const impact = await getUpcomingChoreographyImpact(id);
+  if (hasUpcomingImpact(impact) && !confirmUpcoming) {
+    return NextResponse.json(
+      {
+        error: formatChoreographyLifecycleWarning({
+          action: "delete",
+          title: choreography.title,
+          impact,
+        }),
+        requiresConfirmation: true,
+        upcoming: serializeUpcomingImpact(impact),
+      },
+      { status: 409 },
+    );
+  }
+
+  await deleteChoreography(id);
+  return Response.json({ ok: true });
 }

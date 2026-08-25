@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
     },
     include: {
       choreographies: {
+        where: { choreography: { archivedAt: null } },
         include: { choreography: { select: { id: true, title: true } } },
       },
     },

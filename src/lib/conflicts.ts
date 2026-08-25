@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { getGroupForChoreography } from "@/lib/groups";
 import { basicUserSelect, formatUserName } from "@/lib/users";
 
@@ -110,7 +111,10 @@ export async function findParticipantConflicts(options: {
       select: { user: { select: basicUserSelect } },
     }),
     prisma.repetitionEvent.findMany({
-      where: timeFilter,
+      where: {
+        ...timeFilter,
+        choreography: visibleChoreographyWhere,
+      },
       select: {
         startsAt: true,
         endsAt: true,
@@ -136,6 +140,7 @@ export async function findParticipantConflicts(options: {
         startsAt: true,
         endsAt: true,
         choreographies: {
+          where: { choreography: visibleChoreographyWhere },
           select: {
             choreography: {
               select: { members: { select: { userId: true } } },

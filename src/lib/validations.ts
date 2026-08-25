@@ -49,6 +49,10 @@ export const choreographySchema = z.object({
   }
 });
 
+export const choreographyLifecycleSchema = z.object({
+  confirmUpcoming: z.boolean().optional(),
+});
+
 export const assignUserSchema = z.object({
   userId: z.string().min(1),
 });

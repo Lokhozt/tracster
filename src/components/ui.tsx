@@ -5,7 +5,7 @@ export function Button({
   variant = "primary",
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost" | "danger";
 }) {
   return (
     <button
@@ -15,6 +15,7 @@ export function Button({
         variant === "secondary" &&
           "border border-stone-300 bg-white text-stone-900 hover:bg-stone-100",
         variant === "ghost" && "text-stone-600 hover:bg-stone-100 hover:text-stone-900",
+        variant === "danger" && "bg-red-700 text-white hover:bg-red-800",
         className,
       )}
       {...props}

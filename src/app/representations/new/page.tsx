@@ -14,6 +14,7 @@ export default async function NewRepresentationPage() {
 
   const choreographies = await prisma.choreography.findMany({
     where: {
+      archivedAt: null,
       OR: [
         { createdById: user.id },
         { choreographers: { some: { userId: user.id } } },

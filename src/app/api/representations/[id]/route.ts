@@ -15,6 +15,7 @@ async function getRepresentation(id: string) {
     where: { id },
     include: {
       choreographies: {
+        where: { choreography: { archivedAt: null } },
         include: { choreography: { select: { id: true, title: true } } },
       },
     },
@@ -70,6 +71,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     },
     include: {
       choreographies: {
+        where: { choreography: { archivedAt: null } },
         include: { choreography: { select: { id: true, title: true } } },
       },
     },

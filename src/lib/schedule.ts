@@ -1,4 +1,5 @@
 import { listedChoreographyWhere, listedEventWhere } from "@/lib/participation";
+import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { prisma } from "@/lib/db";
 import { canEditEvent } from "@/lib/events";
 import { canEditChoreography } from "@/lib/permissions";
@@ -9,6 +10,7 @@ const choreographyAccessFilter = (userId: string) => listedChoreographyWhere(use
 
 function involvedInChoreographyWhere(userId: string) {
   return {
+    archivedAt: null,
     OR: [
       { createdById: userId },
       { choreographers: { some: { userId } } },
@@ -37,9 +39,9 @@ export type SerializedScheduleEvent = {
 
 export async function getUserScheduleEvents(userId: string) {
   const globalAccess = await hasGlobalAccess(userId);
-  const choreographyWhere = globalAccess
-    ? undefined
-    : { choreography: choreographyAccessFilter(userId) };
+  const choreographyWhere = {
+    choreography: globalAccess ? visibleChoreographyWhere : choreographyAccessFilter(userId),
+  };
 
   const eventWhere = globalAccess ? undefined : listedEventWhere(userId);
 

@@ -30,17 +30,17 @@ export async function canEditChoreography(
   choreographyId: string,
   userId: string,
 ): Promise<boolean> {
-  if (await hasGlobalAccess(userId)) {
-    return true;
-  }
-
   const choreography = await prisma.choreography.findUnique({
     where: { id: choreographyId },
-    select: { createdById: true },
+    select: { createdById: true, archivedAt: true },
   });
 
-  if (!choreography) {
+  if (!choreography || choreography.archivedAt) {
     return false;
+  }
+
+  if (await hasGlobalAccess(userId)) {
+    return true;
   }
 
   if (choreography.createdById === userId) {
@@ -54,14 +54,11 @@ export async function canViewChoreography(
   choreographyId: string,
   userId: string,
 ): Promise<boolean> {
-  if (await hasGlobalAccess(userId)) {
-    return true;
-  }
-
   const choreography = await prisma.choreography.findUnique({
     where: { id: choreographyId },
     select: {
       createdById: true,
+      archivedAt: true,
       allowParticipantJoin: true,
       allowJoinRequests: true,
       hideFromNonParticipants: true,
@@ -71,8 +68,12 @@ export async function canViewChoreography(
     },
   });
 
-  if (!choreography) {
+  if (!choreography || choreography.archivedAt) {
     return false;
+  }
+
+  if (await hasGlobalAccess(userId)) {
+    return true;
   }
 
   return canOpenListedOrJoinableChoreography(choreography, userId);

@@ -6,6 +6,7 @@ import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/datetime";
+import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { listedChoreographyWhere } from "@/lib/participation";
 import { hasGlobalAccess } from "@/lib/roles";
 import { basicUserSelect, formatUserName } from "@/lib/users";
@@ -32,7 +33,7 @@ export default async function ChoreographiesPage() {
   const globalAccess = await hasGlobalAccess(user.id);
 
   const choreographies = await prisma.choreography.findMany({
-    where: globalAccess ? undefined : listedChoreographyWhere(user.id),
+    where: globalAccess ? visibleChoreographyWhere : listedChoreographyWhere(user.id),
     include: {
       createdBy: { select: basicUserSelect },
       choreographers: {

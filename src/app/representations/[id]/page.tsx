@@ -29,8 +29,9 @@ export default async function RepresentationDetailPage({ params }: PageProps) {
   const representation = await prisma.representation.findUnique({
     where: { id },
     include: {
-      choreographies: {
-        include: {
+        choreographies: {
+          where: { choreography: { archivedAt: null } },
+          include: {
           choreography: {
             select: {
               id: true,
