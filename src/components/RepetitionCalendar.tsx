@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import {
   addDays,
   addMonths,
@@ -16,17 +16,34 @@ import {
   startOfDay,
   startOfMonth,
   startOfWeek,
-  subMonths,
-  subWeeks,
 } from "date-fns";
 import { Card } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/datetime";
 import type { SerializedScheduleEvent } from "@/lib/schedule";
 
-type CalendarView = "month" | "week";
+type CalendarView = "month" | "week" | "threeDay";
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+const threeDaySpan = 3;
+
+// Matches the Tailwind `md` breakpoint used for the grid layout below.
+const smallScreenQuery = "(max-width: 767px)";
+
+function subscribeToSmallScreen(onChange: () => void) {
+  const query = window.matchMedia(smallScreenQuery);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+function useIsSmallScreen() {
+  return useSyncExternalStore(
+    subscribeToSmallScreen,
+    () => window.matchMedia(smallScreenQuery).matches,
+    () => false,
+  );
+}
 
 function eventCellLabel(event: SerializedScheduleEvent): string {
   if (event.type === "event" || event.type === "representation") {
@@ -112,11 +129,13 @@ function DayCell({
   events,
   muted = false,
   tall = false,
+  wrapLabels = false,
 }: {
   day: Date;
   events: SerializedScheduleEvent[];
   muted?: boolean;
   tall?: boolean;
+  wrapLabels?: boolean;
 }) {
   return (
     <div
@@ -141,7 +160,8 @@ function DayCell({
             key={`${event.type}-${event.id}`}
             href={event.href}
             className={cn(
-              "block truncate rounded px-1.5 py-0.5 text-xs hover:opacity-90",
+              "block rounded px-1.5 py-0.5 text-xs hover:opacity-90",
+              wrapLabels ? "break-words" : "truncate",
               eventCellClassName(event.type),
             )}
             title={eventCellTitle(event)}
@@ -160,8 +180,22 @@ export function RepetitionCalendar({
 }: {
   events: SerializedScheduleEvent[];
 }) {
-  const [view, setView] = useState<CalendarView>("month");
+  const isSmallScreen = useIsSmallScreen();
+  const [largeScreenView, setLargeScreenView] = useState<CalendarView>("month");
+  const [smallScreenView, setSmallScreenView] = useState<CalendarView>("threeDay");
   const [focusDate, setFocusDate] = useState(() => new Date());
+
+  const view = isSmallScreen ? smallScreenView : largeScreenView;
+  const setView = isSmallScreen ? setSmallScreenView : setLargeScreenView;
+  const viewOptions: Array<{ value: CalendarView; label: string }> = isSmallScreen
+    ? [
+        { value: "week", label: "Week" },
+        { value: "threeDay", label: "3 days" },
+      ]
+    : [
+        { value: "month", label: "Month" },
+        { value: "week", label: "Week" },
+      ];
 
   const eventsByDay = useMemo(() => {
     const map = new Map<string, SerializedScheduleEvent[]>();
@@ -185,6 +219,11 @@ export function RepetitionCalendar({
   }, [events]);
 
   const calendarDays = useMemo(() => {
+    if (view === "threeDay") {
+      const start = startOfDay(focusDate);
+      return eachDayOfInterval({ start, end: addDays(start, threeDaySpan - 1) });
+    }
+
     if (view === "week") {
       const weekStart = startOfWeek(focusDate, { weekStartsOn: 1 });
       const weekEnd = endOfWeek(focusDate, { weekStartsOn: 1 });
@@ -200,21 +239,27 @@ export function RepetitionCalendar({
   }, [focusDate, view]);
 
   const periodLabel = useMemo(() => {
-    if (view === "week") {
-      const weekStart = startOfWeek(focusDate, { weekStartsOn: 1 });
-      const weekEnd = endOfWeek(focusDate, { weekStartsOn: 1 });
-      return `${format(weekStart, "d MMM")} – ${format(weekEnd, "d MMM yyyy")}`;
+    if (view === "month") {
+      return format(startOfMonth(focusDate), "MMMM yyyy");
     }
 
-    return format(startOfMonth(focusDate), "MMMM yyyy");
-  }, [focusDate, view]);
+    const first = calendarDays[0];
+    const last = calendarDays[calendarDays.length - 1];
+    return `${format(first, "d MMM")} – ${format(last, "d MMM yyyy")}`;
+  }, [calendarDays, focusDate, view]);
 
-  function goToPrevious() {
-    setFocusDate((date) => (view === "week" ? subWeeks(date, 1) : subMonths(date, 1)));
-  }
+  const periodName = view === "threeDay" ? "3 days" : view === "week" ? "week" : "month";
 
-  function goToNext() {
-    setFocusDate((date) => (view === "week" ? addWeeks(date, 1) : addMonths(date, 1)));
+  function shiftFocus(direction: 1 | -1) {
+    setFocusDate((date) => {
+      if (view === "threeDay") {
+        return addDays(date, direction * threeDaySpan);
+      }
+      if (view === "week") {
+        return addWeeks(date, direction);
+      }
+      return addMonths(date, direction);
+    });
   }
 
   function goToToday() {
@@ -222,13 +267,6 @@ export function RepetitionCalendar({
   }
 
   const currentMonth = startOfMonth(focusDate);
-  const mobileDays = calendarDays.filter((day) => {
-    if (view === "week") {
-      return true;
-    }
-    const dayEvents = eventsByDay.get(format(day, "yyyy-MM-dd")) ?? [];
-    return dayEvents.length > 0 && isSameMonth(day, currentMonth);
-  });
 
   return (
     <Card className="mb-8">
@@ -253,30 +291,21 @@ export function RepetitionCalendar({
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex rounded-lg border border-stone-300 p-0.5">
-            <button
-              type="button"
-              onClick={() => setView("month")}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition",
-                view === "month"
-                  ? "bg-stone-900 text-white"
-                  : "text-stone-600 hover:bg-stone-100",
-              )}
-            >
-              Month
-            </button>
-            <button
-              type="button"
-              onClick={() => setView("week")}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition",
-                view === "week"
-                  ? "bg-stone-900 text-white"
-                  : "text-stone-600 hover:bg-stone-100",
-              )}
-            >
-              Week
-            </button>
+            {viewOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setView(option.value)}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm font-medium transition",
+                  view === option.value
+                    ? "bg-stone-900 text-white"
+                    : "text-stone-600 hover:bg-stone-100",
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
 
           <button
@@ -289,9 +318,9 @@ export function RepetitionCalendar({
 
           <button
             type="button"
-            onClick={goToPrevious}
+            onClick={() => shiftFocus(-1)}
             className="rounded-lg border border-stone-300 px-3 py-2.5 text-sm hover:bg-stone-100 sm:py-1.5"
-            aria-label={view === "week" ? "Previous week" : "Previous month"}
+            aria-label={`Previous ${periodName}`}
           >
             ←
           </button>
@@ -300,71 +329,42 @@ export function RepetitionCalendar({
           </span>
           <button
             type="button"
-            onClick={goToNext}
+            onClick={() => shiftFocus(1)}
             className="rounded-lg border border-stone-300 px-3 py-2.5 text-sm hover:bg-stone-100 sm:py-1.5"
-            aria-label={view === "week" ? "Next week" : "Next month"}
+            aria-label={`Next ${periodName}`}
           >
             →
           </button>
         </div>
       </div>
 
-      <div className="space-y-3 md:hidden">
-        {mobileDays.map((day) => {
-            const dayKey = format(day, "yyyy-MM-dd");
-            const dayEvents = eventsByDay.get(dayKey) ?? [];
-
-            return (
-              <div key={dayKey} className="rounded-lg border border-stone-200 bg-stone-50 p-3">
-                <p
+      <div className="overflow-x-auto">
+        <div
+          className={cn(
+            "grid gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200",
+            view === "threeDay" ? "grid-cols-3" : "min-w-[640px] grid-cols-7",
+          )}
+        >
+          {view === "threeDay"
+            ? calendarDays.map((day) => (
+                <div
+                  key={`header-${format(day, "yyyy-MM-dd")}`}
                   className={cn(
-                    "text-sm font-medium",
+                    "bg-stone-100 px-2 py-2 text-center text-xs font-medium text-stone-600",
                     isToday(day) && "text-stone-900",
                   )}
                 >
-                  {format(day, "EEE d MMM")}
-                  {isToday(day) ? " · Today" : ""}
-                </p>
-                {dayEvents.length === 0 ? (
-                  <p className="mt-2 text-sm text-stone-500">No events</p>
-                ) : (
-                  <div className="mt-2 space-y-2">
-                    {dayEvents.map((event) => (
-                      <Link
-                        key={`${event.type}-${event.id}`}
-                        href={event.href}
-                        className={cn(
-                          "block rounded-lg px-3 py-2 text-sm",
-                          eventCellClassName(event.type),
-                        )}
-                      >
-                        <span className="font-medium">{eventTimeLabel(event, day)}</span>
-                        {" · "}
-                        {eventCellLabel(event) || eventCellTitle(event)}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        {view === "month" && mobileDays.length === 0 && (
-            <p className="rounded-lg border border-stone-200 bg-stone-50 p-3 text-sm text-stone-500">
-              No events this month.
-            </p>
-          )}
-      </div>
-
-      <div className="hidden overflow-x-auto md:block">
-        <div className="grid min-w-[640px] grid-cols-7 gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200">
-          {weekdays.map((day) => (
-            <div
-              key={day}
-              className="bg-stone-100 px-2 py-2 text-center text-xs font-medium text-stone-600"
-            >
-              {day}
-            </div>
-          ))}
+                  {format(day, "EEE")}
+                </div>
+              ))
+            : weekdays.map((day) => (
+                <div
+                  key={day}
+                  className="bg-stone-100 px-2 py-2 text-center text-xs font-medium text-stone-600"
+                >
+                  {day}
+                </div>
+              ))}
 
           {calendarDays.map((day) => {
             const dayKey = format(day, "yyyy-MM-dd");
@@ -376,7 +376,8 @@ export function RepetitionCalendar({
                 day={day}
                 events={dayEvents}
                 muted={view === "month" && !isSameMonth(day, currentMonth)}
-                tall={view === "week"}
+                tall={view !== "month"}
+                wrapLabels={view === "threeDay"}
               />
             );
           })}
