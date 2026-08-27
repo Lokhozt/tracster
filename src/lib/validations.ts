@@ -169,6 +169,47 @@ export const eventSchema = z.object({
   refineExclusiveLocation(value, context);
 });
 
+const schedulingWindowSchema = z.object({
+  startsAt: z.string().datetime(),
+  endsAt: z.string().datetime(),
+});
+
+export const schedulingItemSchema = z.object({
+  id: z.string().min(1).max(80),
+  choreographyId: z.string().min(1),
+  groupId: z.string().min(1).nullable().optional(),
+  durationMinutes: z.number().int().min(15).max(12 * 60),
+  allowedLocationIds: z.array(z.string().min(1)).default([]),
+  allowedWindows: z.array(schedulingWindowSchema).default([]),
+});
+
+export const schedulingRequestSchema = z.object({
+  items: z.array(schedulingItemSchema).min(1).max(40),
+  days: z.array(z.string().date()).min(1).max(14),
+  locationIds: z.array(z.string().min(1)).min(1).max(20),
+  locationWindows: z.array(
+    z.object({
+      locationId: z.string().min(1),
+      day: z.string().date(),
+      startsAt: z.string().datetime(),
+      endsAt: z.string().datetime(),
+    }),
+  ).min(1),
+  restMinutes: z.number().int().min(0).max(180),
+});
+
+export const schedulingApplySchema = z.object({
+  placements: z.array(
+    z.object({
+      choreographyId: z.string().min(1),
+      groupId: z.string().min(1).nullable().optional(),
+      locationId: z.string().min(1),
+      startsAt: z.string().datetime(),
+      endsAt: z.string().datetime(),
+    }),
+  ).min(1).max(40),
+});
+
 export const choreographyRepresentationSchema = z.discriminatedUnion("mode", [
   z.object({
     mode: z.literal("create"),

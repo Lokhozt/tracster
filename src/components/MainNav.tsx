@@ -36,15 +36,22 @@ const baseNavItems: NavItem[] = [
   },
 ];
 
-const settingsNavItem: NavItem = {
-  href: "/settings",
-  label: "Settings",
-  match: (pathname) =>
-    pathname.startsWith("/settings") || pathname.startsWith("/users"),
-};
+const adminNavItems: NavItem[] = [
+  {
+    href: "/scheduling",
+    label: "Scheduling",
+    match: (pathname) => pathname.startsWith("/scheduling"),
+  },
+  {
+    href: "/settings",
+    label: "Settings",
+    match: (pathname) =>
+      pathname.startsWith("/settings") || pathname.startsWith("/users"),
+  },
+];
 
 export function getNavItems(showAdminNav = false): NavItem[] {
-  return showAdminNav ? [...baseNavItems, settingsNavItem] : baseNavItems;
+  return showAdminNav ? [...baseNavItems, ...adminNavItems] : baseNavItems;
 }
 
 export function MainNav({ showAdminNav = false }: { showAdminNav?: boolean }) {

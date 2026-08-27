@@ -35,14 +35,24 @@ export default async function EventsPage() {
             ? "All association events, including repetitions, representations, demonstrations, and competitions."
             : "Events you created, participate in, or that are linked to your choreographies."}
         </p>
-        {canCreate && (
-          <Link
-            href="/events/new"
-            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
-          >
-            New event
-          </Link>
-        )}
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {globalAccess && (
+            <Link
+              href="/scheduling"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium hover:bg-stone-100"
+            >
+              Schedule repetitions
+            </Link>
+          )}
+          {canCreate && (
+            <Link
+              href="/events/new"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
+            >
+              New event
+            </Link>
+          )}
+        </div>
       </div>
 
       {eventItems.length === 0 ? (
