@@ -1,3 +1,6 @@
+export const DEFAULT_LOCATION_START_HOUR = 9;
+export const DEFAULT_LOCATION_END_HOUR = 20;
+
 export type IsoDate = string;
 export type IsoDateTime = string;
 
@@ -10,7 +13,7 @@ export type SchedulingItemDraft = {
   allowedWindows: Array<{ startsAt: IsoDateTime; endsAt: IsoDateTime }>;
 };
 
-export type LocationDayWindow = {
+export type LocationUnavailability = {
   locationId: string;
   day: IsoDate;
   startsAt: IsoDateTime;
@@ -21,7 +24,7 @@ export type SchedulingRequest = {
   items: SchedulingItemDraft[];
   days: IsoDate[];
   locationIds: string[];
-  locationWindows: LocationDayWindow[];
+  locationUnavailabilities: LocationUnavailability[];
   restMinutes: number;
 };
 

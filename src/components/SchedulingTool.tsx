@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { DateTime24Input } from "@/components/DateTime24Input";
@@ -15,7 +15,7 @@ import {
 import { parseDayKey } from "@/lib/scheduling/intervals";
 import { nextWeekendDayKeys } from "@/lib/scheduling/weekend";
 import type {
-  LocationDayWindow,
+  LocationUnavailability,
   ScheduleCaveat,
   SchedulingCandidate,
   SchedulingItemDraft,
@@ -48,10 +48,10 @@ function newItemId() {
   return crypto.randomUUID();
 }
 
-function defaultWindow(day: string): { start: DateTimeParts; end: DateTimeParts } {
+function defaultUnavailabilityTimes(day: string): { start: DateTimeParts; end: DateTimeParts } {
   return {
-    start: { date: day, hour: "09", minute: "00" },
-    end: { date: day, hour: "20", minute: "00" },
+    start: { date: day, hour: "12", minute: "00" },
+    end: { date: day, hour: "14", minute: "00" },
   };
 }
 
@@ -83,7 +83,9 @@ export function SchedulingTool({
   const [days, setDays] = useState<string[]>(() => [...nextWeekendDayKeys()]);
   const [dayToAdd, setDayToAdd] = useState(todayDateInputValue());
   const [locationIds, setLocationIds] = useState<string[]>(() => locations.map((location) => location.id));
-  const [windowEdits, setWindowEdits] = useState<Record<string, { start: DateTimeParts; end: DateTimeParts }>>({});
+  const [locationUnavailabilities, setLocationUnavailabilities] = useState<
+    Array<LocationUnavailability & { id: string }>
+  >([]);
   const [restMinutes, setRestMinutes] = useState(10);
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -92,25 +94,6 @@ export function SchedulingTool({
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
 
   const selectedChoreography = choreographies.find((entry) => entry.id === selectedChoreographyId);
-
-  const locationWindows: LocationDayWindow[] = useMemo(() => {
-    const windows: LocationDayWindow[] = [];
-    for (const locationId of locationIds) {
-      for (const day of days) {
-        const key = `${locationId}:${day}`;
-        const parts = windowEdits[key] ?? defaultWindow(day);
-        const start = combineDateAndTime(parts.start.date, parts.start.hour, parts.start.minute);
-        const end = combineDateAndTime(parts.end.date, parts.end.hour, parts.end.minute);
-        windows.push({
-          locationId,
-          day,
-          startsAt: start.toISOString(),
-          endsAt: end.toISOString(),
-        });
-      }
-    }
-    return windows;
-  }, [days, locationIds, windowEdits]);
 
   function addItem() {
     if (!selectedChoreographyId) {
@@ -148,7 +131,14 @@ export function SchedulingTool({
       items,
       days,
       locationIds,
-      locationWindows,
+      locationUnavailabilities: locationUnavailabilities
+        .filter((entry) => locationIds.includes(entry.locationId) && days.includes(entry.day))
+        .map((entry) => ({
+          locationId: entry.locationId,
+          day: entry.day,
+          startsAt: entry.startsAt,
+          endsAt: entry.endsAt,
+        })),
       restMinutes,
     };
   }
@@ -377,7 +367,12 @@ export function SchedulingTool({
                   <button
                     type="button"
                     className="text-stone-500 hover:text-stone-800"
-                    onClick={() => setDays(days.filter((entry) => entry !== day))}
+                    onClick={() => {
+                      setDays(days.filter((entry) => entry !== day));
+                      setLocationUnavailabilities((current) =>
+                        current.filter((entry) => entry.day !== day),
+                      );
+                    }}
                     aria-label={`Remove ${day}`}
                   >
                     ×
@@ -431,45 +426,31 @@ export function SchedulingTool({
           </div>
 
           <div>
-            <p className="mb-2 text-sm font-medium text-stone-800">Location availability</p>
+            <p className="mb-2 text-sm font-medium text-stone-800">Location unavailability</p>
+            <p className="mb-3 text-sm text-stone-600">
+              Locations are available from 09:00 to 20:00 on the selected days. Add times when a
+              location cannot be used.
+            </p>
             <div className="space-y-4">
               {locationIds.map((locationId) => {
                 const location = locations.find((entry) => entry.id === locationId);
+                const entries = locationUnavailabilities.filter(
+                  (entry) => entry.locationId === locationId && days.includes(entry.day),
+                );
                 return (
-                  <div key={locationId} className="rounded-lg border border-stone-200 p-3">
-                    <p className="mb-2 text-sm font-semibold">{location?.name}</p>
-                    <div className="space-y-3">
-                      {days.map((day) => {
-                        const key = `${locationId}:${day}`;
-                        const parts = windowEdits[key] ?? defaultWindow(day);
-                        return (
-                          <div key={key} className="grid gap-2 sm:grid-cols-[8rem_1fr_1fr] sm:items-center">
-                            <p className="text-sm text-stone-600">{format(parseDayKey(day), "EEE d MMM")}</p>
-                            <TimeSelect
-                              label="Available from"
-                              value={parts.start}
-                              onChange={(start) =>
-                                setWindowEdits((current) => ({
-                                  ...current,
-                                  [key]: { start, end: parts.end },
-                                }))
-                              }
-                            />
-                            <TimeSelect
-                              label="Available until"
-                              value={parts.end}
-                              onChange={(end) =>
-                                setWindowEdits((current) => ({
-                                  ...current,
-                                  [key]: { start: parts.start, end },
-                                }))
-                              }
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+                  <LocationUnavailabilityCard
+                    key={locationId}
+                    name={location?.name ?? "Location"}
+                    locationId={locationId}
+                    days={days}
+                    entries={entries}
+                    onAdd={(entry) =>
+                      setLocationUnavailabilities((current) => [...current, { ...entry, id: newItemId() }])
+                    }
+                    onRemove={(id) =>
+                      setLocationUnavailabilities((current) => current.filter((entry) => entry.id !== id))
+                    }
+                  />
                 );
               })}
             </div>
@@ -591,6 +572,98 @@ function uniquePeople(caveats: ScheduleCaveat[]) {
     seen.add(key);
     return true;
   });
+}
+
+function LocationUnavailabilityCard({
+  name,
+  locationId,
+  days,
+  entries,
+  onAdd,
+  onRemove,
+}: {
+  name: string;
+  locationId: string;
+  days: string[];
+  entries: Array<LocationUnavailability & { id: string }>;
+  onAdd: (entry: LocationUnavailability) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [day, setDay] = useState(days[0] ?? "");
+  const [times, setTimes] = useState(() => defaultUnavailabilityTimes(days[0] ?? todayDateInputValue()));
+
+  function addEntry() {
+    const selectedDay = day || days[0];
+    if (!selectedDay) {
+      return;
+    }
+    const start = combineDateAndTime(selectedDay, times.start.hour, times.start.minute);
+    const end = combineDateAndTime(selectedDay, times.end.hour, times.end.minute);
+    if (end <= start) {
+      return;
+    }
+    onAdd({
+      locationId,
+      day: selectedDay,
+      startsAt: start.toISOString(),
+      endsAt: end.toISOString(),
+    });
+  }
+
+  return (
+    <div className="rounded-lg border border-stone-200 p-3">
+      <p className="mb-2 text-sm font-semibold">{name}</p>
+      {entries.length === 0 ? (
+        <p className="mb-3 text-sm text-stone-500">No unavailability added.</p>
+      ) : (
+        <ul className="mb-3 space-y-1 text-sm text-stone-700">
+          {entries.map((entry) => (
+            <li key={entry.id} className="flex items-center justify-between gap-2">
+              <span>
+                {format(parseDayKey(entry.day), "EEE d MMM")}{" "}
+                {format(new Date(entry.startsAt), "HH:mm")}→{format(new Date(entry.endsAt), "HH:mm")}
+              </span>
+              <Button type="button" variant="ghost" onClick={() => onRemove(entry.id)}>
+                Remove
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {days.length > 0 && (
+        <div className="grid gap-2 sm:grid-cols-[8rem_1fr_1fr_auto] sm:items-end">
+          <div>
+            <Label htmlFor={`unavail-day-${locationId}`}>Day</Label>
+            <Select
+              id={`unavail-day-${locationId}`}
+              className="w-full"
+              value={days.includes(day) ? day : days[0]}
+              onChange={(event) => setDay(event.target.value)}
+            >
+              {days.map((entry) => (
+                <option key={entry} value={entry}>
+                  {format(parseDayKey(entry), "EEE d MMM")}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <TimeSelect
+            label="Unavailable from"
+            value={times.start}
+            onChange={(start) => setTimes((current) => ({ ...current, start }))}
+          />
+          <TimeSelect
+            label="Unavailable until"
+            value={times.end}
+            onChange={(end) => setTimes((current) => ({ ...current, end }))}
+          />
+          <Button type="button" variant="secondary" onClick={addEntry}>
+            Add
+          </Button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function TimeSelect({

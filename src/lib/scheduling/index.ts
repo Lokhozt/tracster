@@ -2,7 +2,7 @@ export { generateScheduleCandidates } from "@/lib/scheduling/astar";
 export { buildSchedulingProblem } from "@/lib/scheduling/context";
 export { nextWeekendDayKeys } from "@/lib/scheduling/weekend";
 export type {
-  LocationDayWindow,
+  LocationUnavailability,
   ScheduleCaveat,
   SchedulePlacement,
   SchedulingCandidate,

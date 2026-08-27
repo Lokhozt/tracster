@@ -34,6 +34,7 @@ Don't consider participants / choreographer that are not available at all on the
 * Il a choreography starts before 9h: -1
 * Il a choreography starts before 10h: -1
 * If a choreography ends after 20h: -2
+* If a choreography overlap with 12h30-14h: -2
 
 The algorithm returns 3 candidates.
 

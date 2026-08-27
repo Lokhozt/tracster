@@ -30,10 +30,18 @@ const LUNCH_PENALTY = 20;
 const BEFORE_NINE_PENALTY = 1;
 const BEFORE_TEN_PENALTY = 1;
 const AFTER_TWENTY_PENALTY = 2;
+const MIDDAY_OVERLAP_PENALTY = 2;
 
 function lunchWindow(day: Date): IntervalMs {
   return {
     start: atLocalTime(day, 12).getTime(),
+    end: atLocalTime(day, 14).getTime(),
+  };
+}
+
+function middayBreakWindow(day: Date): IntervalMs {
+  return {
+    start: atLocalTime(day, 12, 30).getTime(),
     end: atLocalTime(day, 14).getTime(),
   };
 }
@@ -111,6 +119,10 @@ export function scoreSchedule(
     const endDate = new Date(placement.end);
     if (endDate.getHours() > 20 || (endDate.getHours() === 20 && endDate.getMinutes() > 0)) {
       score -= AFTER_TWENTY_PENALTY;
+    }
+
+    if (intervalsOverlap(interval, middayBreakWindow(new Date(placement.start)))) {
+      score -= MIDDAY_OVERLAP_PENALTY;
     }
 
     for (const choreographer of item.choreographers) {

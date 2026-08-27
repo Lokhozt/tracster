@@ -1,12 +1,17 @@
 import { prisma } from "@/lib/db";
 import { visibleChoreographyWhere } from "@/lib/choreographies";
-import { hasFreeTime } from "@/lib/scheduling/intervals";
+import { atLocalTime, hasFreeTime, parseDayKey, subtractIntervals } from "@/lib/scheduling/intervals";
 import type {
+  IntervalMs,
   ResolvedLocationWindow,
   ResolvedSchedulingItem,
   SchedulingPerson,
   SchedulingProblem,
   SchedulingRequest,
+} from "@/lib/scheduling/types";
+import {
+  DEFAULT_LOCATION_END_HOUR,
+  DEFAULT_LOCATION_START_HOUR,
 } from "@/lib/scheduling/types";
 import { basicUserSelect, formatUserName } from "@/lib/users";
 
@@ -77,36 +82,55 @@ export async function buildSchedulingProblem(
   const locationById = new Map(locations.map((entry) => [entry.id, entry]));
 
   const windows: ResolvedLocationWindow[] = [];
-  for (const window of request.locationWindows) {
-    if (!request.locationIds.includes(window.locationId)) {
-      continue;
-    }
-    if (!request.days.includes(window.day)) {
-      continue;
-    }
-    const start = new Date(window.startsAt).getTime();
-    const end = new Date(window.endsAt).getTime();
-    if (!(end > start)) {
-      return { error: "Each location availability must end after it starts." };
-    }
-    const location = locationById.get(window.locationId);
+  for (const locationId of request.locationIds) {
+    const location = locationById.get(locationId);
     if (!location) {
       continue;
     }
-    windows.push({
-      locationId: location.id,
-      locationName: location.name,
-      day: window.day,
-      start,
-      end,
-    });
+
+    for (const day of request.days) {
+      const dayDate = parseDayKey(day);
+      const dayWindow = {
+        start: atLocalTime(dayDate, DEFAULT_LOCATION_START_HOUR).getTime(),
+        end: atLocalTime(dayDate, DEFAULT_LOCATION_END_HOUR).getTime(),
+      };
+      const blocked: IntervalMs[] = [];
+      for (const entry of request.locationUnavailabilities ?? []) {
+        if (entry.locationId !== locationId || entry.day !== day) {
+          continue;
+        }
+        const start = new Date(entry.startsAt).getTime();
+        const end = new Date(entry.endsAt).getTime();
+        if (!(end > start)) {
+          return { error: "Each location unavailability must end after it starts." };
+        }
+        blocked.push({ start, end });
+      }
+
+      const freeSlots = subtractIntervals(dayWindow, blocked);
+      for (const slot of freeSlots) {
+        windows.push({
+          locationId: location.id,
+          locationName: location.name,
+          day,
+          start: slot.start,
+          end: slot.end,
+        });
+      }
+    }
   }
 
   if (windows.length === 0) {
-    return { error: "Set availability for at least one location on the selected days." };
+    return { error: "Locations are fully unavailable on the selected days." };
   }
 
-  const periodWindows = windows.map((window) => ({ start: window.start, end: window.end }));
+  const periodWindows = request.days.map((day) => {
+    const dayDate = parseDayKey(day);
+    return {
+      start: atLocalTime(dayDate, DEFAULT_LOCATION_START_HOUR).getTime(),
+      end: atLocalTime(dayDate, DEFAULT_LOCATION_END_HOUR).getTime(),
+    };
+  });
   const periodStart = Math.min(...periodWindows.map((window) => window.start));
   const periodEnd = Math.max(...periodWindows.map((window) => window.end));
 

@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   const candidates = generateScheduleCandidates(problem);
   if (candidates.length === 0) {
     return jsonError(
-      "No complete schedule could be generated. Add location time, shorten durations, or reduce the number of rehearsals.",
+      "No complete schedule could be generated. Shorten durations, reduce rehearsals, or free more location time.",
     );
   }
 
