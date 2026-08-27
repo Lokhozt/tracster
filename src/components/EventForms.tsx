@@ -367,6 +367,7 @@ export function CreateEventForm({
       {generic && (
         <ParticipationSettingsFields
           idPrefix="create-event"
+          variant="event"
           value={participation}
           onChange={setParticipation}
         />
@@ -562,6 +563,7 @@ export function EditEventForm({
         {generic && (
           <ParticipationSettingsFields
             idPrefix="edit-event"
+            variant="event"
             value={participation}
             onChange={setParticipation}
           />

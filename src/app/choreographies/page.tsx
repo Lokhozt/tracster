@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
-import { ChoreographerBadge } from "@/components/CrownIcon";
-import { Card } from "@/components/ui";
+import { ChoreographiesList } from "@/components/ChoreographiesList";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { formatDateTime } from "@/lib/datetime";
 import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { listedChoreographyWhere } from "@/lib/participation";
 import { hasGlobalAccess } from "@/lib/roles";
@@ -42,6 +40,10 @@ export default async function ChoreographiesPage() {
         where: { userId: user.id },
         select: { userId: true },
       },
+      members: {
+        where: { userId: user.id },
+        select: { userId: true },
+      },
       _count: { select: { members: true, repetitions: true } },
     },
     orderBy: { updatedAt: "desc" },
@@ -51,9 +53,7 @@ export default async function ChoreographiesPage() {
     <AppShell title="Choreographies">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-stone-600">
-          {globalAccess
-            ? "All choreographies in the association."
-            : "Manage choreographies you created, choreograph, or participate in."}
+          By default this list shows choreographies you created, choreograph, or participate in.
         </p>
         {canCreate && (
           <Link
@@ -65,45 +65,25 @@ export default async function ChoreographiesPage() {
         )}
       </div>
 
-      {choreographies.length === 0 ? (
-        <Card>
-          <p className="text-stone-600">
-            {canCreate ? "No choreographies yet. Create your first one." : "No choreographies yet."}
-          </p>
-        </Card>
-      ) : (
-        <div className="grid gap-4">
-          {choreographies.map((choreography) => {
-            const isChoreographer = isUserChoreographer(choreography, user.id);
-
-            return (
-            <Link key={choreography.id} href={`/choreographies/${choreography.id}`}>
-              <Card className="transition hover:border-stone-400">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <h2 className="flex items-center gap-2 text-lg font-semibold">
-                      {isChoreographer && <ChoreographerBadge />}
-                      <span>{choreography.title}</span>
-                    </h2>
-                    {choreography.description && (
-                      <p className="mt-1 text-sm text-stone-600">{choreography.description}</p>
-                    )}
-                    <p className="mt-3 text-xs text-stone-500">
-                      Created by {formatUserName(choreography.createdBy)} · Updated{" "}
-                      {formatDateTime(choreography.updatedAt)}
-                    </p>
-                  </div>
-                  <div className="shrink-0 text-sm text-stone-600 sm:text-right">
-                    <p>{choreography._count.members} participants</p>
-                    <p>{choreography._count.repetitions} repetitions</p>
-                  </div>
-                </div>
-              </Card>
-            </Link>
-            );
-          })}
-        </div>
-      )}
+      <ChoreographiesList
+        canCreate={canCreate}
+        choreographies={choreographies.map((choreography) => {
+          const isChoreographer = isUserChoreographer(choreography, user.id);
+          return {
+            id: choreography.id,
+            title: choreography.title,
+            description: choreography.description,
+            createdByName: formatUserName(choreography.createdBy),
+            updatedAt: choreography.updatedAt.toISOString(),
+            memberCount: choreography._count.members,
+            repetitionCount: choreography._count.repetitions,
+            isChoreographer,
+            isInvolved:
+              isChoreographer ||
+              choreography.members.some((member) => member.userId === user.id),
+          };
+        })}
+      />
     </AppShell>
   );
 }
