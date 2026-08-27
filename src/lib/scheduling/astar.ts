@@ -1,4 +1,9 @@
-import { mergeIntervals, snapUpToSlot, subtractIntervals } from "@/lib/scheduling/intervals";
+import {
+  mergeIntervals,
+  overlapsAny,
+  snapUpToSlot,
+  subtractIntervals,
+} from "@/lib/scheduling/intervals";
 import { scoreSchedule, type InternalPlacement } from "@/lib/scheduling/score";
 import type { IntervalMs, SchedulingCandidate, SchedulingProblem } from "@/lib/scheduling/types";
 
@@ -32,6 +37,11 @@ function itemOrder(problem: SchedulingProblem): number[] {
     });
 }
 
+/** Rest applies on both sides so an item placed earlier in time still keeps the gap. */
+function withRest(placement: InternalPlacement, restMs: number): IntervalMs {
+  return { start: placement.start - restMs, end: placement.end + restMs };
+}
+
 function locationOccupied(
   assigned: InternalPlacement[],
   locationId: string,
@@ -39,7 +49,31 @@ function locationOccupied(
 ): IntervalMs[] {
   const blocked = assigned
     .filter((placement) => placement.locationId === locationId)
-    .map((placement) => ({ start: placement.start, end: placement.end + restMs }));
+    .map((placement) => withRest(placement, restMs));
+  return mergeIntervals(blocked);
+}
+
+function participantOccupied(
+  problem: SchedulingProblem,
+  assigned: InternalPlacement[],
+  itemIndex: number,
+): IntervalMs[] {
+  const participantIds = new Set(
+    problem.items[itemIndex].participants.map((person) => person.id),
+  );
+
+  if (participantIds.size === 0) {
+    return [];
+  }
+
+  const blocked = assigned
+    .filter((placement) =>
+      problem.items[placement.itemIndex].participants.some((person) =>
+        participantIds.has(person.id),
+      ),
+    )
+    .map((placement) => withRest(placement, problem.restMs));
+
   return mergeIntervals(blocked);
 }
 
@@ -79,7 +113,9 @@ function successorPlacements(
 ): InternalPlacement[] {
   const item = problem.items[itemIndex];
   const allowed = new Set(item.allowedLocationIds ?? problem.windows.map((window) => window.locationId));
-  const placements: InternalPlacement[] = [];
+  const participantBlocked = participantOccupied(problem, assigned, itemIndex);
+  const rested: InternalPlacement[] = [];
+  const crowded: InternalPlacement[] = [];
 
   for (const window of problem.windows) {
     if (!allowed.has(window.locationId)) {
@@ -102,17 +138,19 @@ function successorPlacements(
 
     for (const free of searchSlots) {
       for (const start of possibleStarts(free, item.durationMs)) {
-        placements.push({
+        const placement = {
           itemIndex,
           locationId: window.locationId,
           start,
           end: start + item.durationMs,
-        });
+        };
+        const keepsRest = !overlapsAny({ start, end: placement.end }, participantBlocked);
+        (keepsRest ? rested : crowded).push(placement);
       }
     }
   }
 
-  return placements;
+  return rested.length > 0 ? rested : crowded;
 }
 
 function fingerprint(assigned: InternalPlacement[]): string {

@@ -27,8 +27,8 @@ const HOLE_PENALTY = 5;
 const CONSECUTIVE_BONUS = 2;
 const LONG_STREAK_PENALTY = 5;
 const LUNCH_PENALTY = 20;
-const BEFORE_NINE_PENALTY = 1;
-const BEFORE_TEN_PENALTY = 1;
+const BEFORE_NINE_PENALTY = 2;
+const BEFORE_TEN_PENALTY = 0;
 const AFTER_TWENTY_PENALTY = 2;
 const MIDDAY_OVERLAP_PENALTY = 2;
 const PARTICIPANT_LOCATION_OVERLAP_PENALTY = 10;
@@ -193,6 +193,7 @@ export function scoreSchedule(
 
     for (const [dayKey, daySessions] of byDay) {
       daySessions.sort((a, b) => a.start - b.start);
+      const breakWindow = middayBreakWindow(parseDayKey(dayKey));
       let streak = 1;
       let maxStreak = 1;
 
@@ -201,12 +202,19 @@ export function scoreSchedule(
         const current = daySessions[index];
         const gap = current.start - previous.end;
 
-        if (gap <= restMs) {
+        if (gap < 0) {
+          streak = 1;
+        } else if (gap <= restMs) {
           score += CONSECUTIVE_BONUS;
           streak += 1;
           maxStreak = Math.max(maxStreak, streak);
         } else {
-          score -= HOLE_PENALTY;
+          // Freeing the protected midday break is intended, not an idle hole.
+          const isMiddayBreak =
+            previous.end <= breakWindow.start && current.start >= breakWindow.end;
+          if (!isMiddayBreak) {
+            score -= HOLE_PENALTY;
+          }
           streak = 1;
         }
       }
