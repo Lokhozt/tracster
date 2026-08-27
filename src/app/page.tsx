@@ -4,16 +4,26 @@ import { RepetitionCalendar } from "@/components/RepetitionCalendar";
 import { UpcomingEventsList } from "@/components/UpcomingEventsList";
 import { getCurrentUser } from "@/lib/auth";
 import { getUpcomingScheduleEvents, getUserScheduleEvents } from "@/lib/schedule";
+import { formatBirthdayGreeting, getUsersWithBirthdayToday } from "@/lib/users";
 
 export default async function HomePage() {
   const user = await getCurrentUser();
 
   if (user) {
-    const events = await getUserScheduleEvents(user.id);
+    const [events, birthdayUsers] = await Promise.all([
+      getUserScheduleEvents(user.id),
+      getUsersWithBirthdayToday(),
+    ]);
     const upcoming = getUpcomingScheduleEvents(events);
+    const birthdayGreeting = formatBirthdayGreeting(birthdayUsers);
 
     return (
       <AppShell title="Schedule">
+        {birthdayGreeting && (
+          <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950">
+            {birthdayGreeting}
+          </p>
+        )}
         <RepetitionCalendar events={events} />
         <UpcomingEventsList events={upcoming} />
       </AppShell>
