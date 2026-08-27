@@ -11,7 +11,11 @@ import {
   filterUpcomingScheduleEvents,
   type UpcomingEventRange,
 } from "@/lib/schedule-filters";
-import type { SerializedScheduleEvent } from "@/lib/schedule";
+import {
+  isRepetitionScheduleEvent,
+  scheduleEventLabel,
+  type SerializedScheduleEvent,
+} from "@/lib/schedule-filters";
 
 type AvailabilityStatus = "AVAILABLE" | "UNAVAILABLE";
 
@@ -21,25 +25,23 @@ const statusLabels = {
   MAYBE: "Maybe",
 } as const;
 
-const eventTypeLabels = {
-  repetition: "Repetition",
-  representation: "Representation",
-  event: "Event",
-} as const;
+function eventKindClassName(kind: SerializedScheduleEvent["typeKind"]) {
+  if (kind === "REPRESENTATION") {
+    return "bg-amber-100 text-amber-900";
+  }
+  if (kind === "COMPETITION") {
+    return "bg-violet-100 text-violet-900";
+  }
+  if (kind === "REPETITION") {
+    return "bg-stone-100 text-stone-700";
+  }
+  return "bg-sky-100 text-sky-900";
+}
 
-function EventTypeBadge({ type }: { type: SerializedScheduleEvent["type"] }) {
+function EventTypeBadge({ event }: { event: SerializedScheduleEvent }) {
   return (
-    <span
-      className={cn(
-        "rounded-full px-2.5 py-1 text-xs font-medium",
-        type === "repetition"
-          ? "bg-stone-100 text-stone-700"
-          : type === "representation"
-            ? "bg-amber-100 text-amber-900"
-            : "bg-sky-100 text-sky-900",
-      )}
-    >
-      {eventTypeLabels[type]}
+    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", eventKindClassName(event.typeKind))}>
+      {event.typeName}
     </span>
   );
 }
@@ -87,7 +89,7 @@ function AvailabilityQuickReply({
     setLoading(status);
     setError(null);
 
-    const response = await fetch(`/api/repetitions/${repetitionId}/availability`, {
+    const response = await fetch(`/api/events/${repetitionId}/availability`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
@@ -130,17 +132,7 @@ function AvailabilityQuickReply({
 }
 
 function defaultEventTitle(event: SerializedScheduleEvent) {
-  if (event.title) {
-    return event.title;
-  }
-
-  if (event.type === "representation") {
-    return "Representation";
-  }
-  if (event.type === "event") {
-    return "Event";
-  }
-  return "Repetition";
+  return scheduleEventLabel(event);
 }
 
 const rangeOptions: Array<{ value: UpcomingEventRange; label: string }> = [
@@ -213,7 +205,7 @@ export function UpcomingEventsList({
       ) : (
         <div className="space-y-3">
           {filteredEvents.map((event) => (
-            <Card key={`${event.type}-${event.id}`}>
+            <Card key={event.id}>
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -222,7 +214,7 @@ export function UpcomingEventsList({
                         {event.choreographyTitle}
                       </p>
                     )}
-                    <EventTypeBadge type={event.type} />
+                    <EventTypeBadge event={event} />
                   </div>
                   <Link href={event.href} className="text-base font-semibold hover:underline">
                     {defaultEventTitle(event)}
@@ -237,19 +229,19 @@ export function UpcomingEventsList({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  {event.type === "repetition" && event.isMember && (
+                  {isRepetitionScheduleEvent(event) && event.isMember && (
                     <AvailabilityBadge status={event.availabilityStatus} />
                   )}
                   {event.canEdit && (
                     <EditIconLink
                       href={event.href}
-                      label={`Edit ${eventTypeLabels[event.type].toLowerCase()}`}
+                      label={`Edit ${event.typeName.toLowerCase()}`}
                     />
                   )}
                 </div>
               </div>
 
-              {event.type === "repetition" && event.isMember && (
+              {isRepetitionScheduleEvent(event) && event.isMember && (
                 <div className="mt-4 border-t border-stone-100 pt-4">
                   <AvailabilityQuickReply
                     repetitionId={event.id}

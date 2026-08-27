@@ -16,7 +16,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
 
-  const repetition = await prisma.event.findUnique({
+  const event = await prisma.event.findUnique({
     where: { id },
     select: {
       choreographyId: true,
@@ -30,11 +30,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
     },
   });
 
-  if (!repetition || repetition.type.kind !== "REPETITION") {
+  if (!event || event.type.kind !== "REPETITION") {
     return notFound("Repetition");
   }
 
-  if (!(await isRepetitionParticipant(repetition, user.id))) {
+  if (!(await isRepetitionParticipant(event, user.id))) {
     return forbidden();
   }
 

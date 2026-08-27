@@ -9,20 +9,19 @@ import {
   type RepetitionListItem,
 } from "@/components/RepetitionEventCard";
 import {
-  emptyLocationSelection,
   LocationPicker,
   locationPayload,
   selectionFromRecord,
 } from "@/components/LocationPicker";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
-import { RepetitionAudienceSelect, type GroupOption } from "@/components/GroupForms";
-import { ParticipantConflictWarnings } from "@/components/ParticipantConflictWarnings";
+import { type GroupOption } from "@/components/GroupForms";
+import { CreateEventForm } from "@/components/EventForms";
 import { matchesSearch } from "@/lib/search";
+import type { SerializedEventType } from "@/lib/event-type-helpers";
 import {
   addOneHour,
   dateTimePartsToDate,
   dateToDateTimeParts,
-  defaultStartDateTime,
   type DateTimeParts,
 } from "@/lib/datetime";
 
@@ -178,130 +177,40 @@ export function AssignChoreographerForm({
 export function CreateRepetitionForm({
   choreographyId,
   groups = [],
+  eventTypes,
   onSuccess,
   onCancel,
 }: {
   choreographyId: string;
   groups?: GroupOption[];
+  eventTypes: SerializedEventType[];
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [audience, setAudience] = useState("");
-  const [locationSelection, setLocationSelection] = useState(emptyLocationSelection);
-  const [start, setStart] = useState<DateTimeParts>(defaultStartDateTime);
-  const [end, setEnd] = useState<DateTimeParts>(() => addOneHour(defaultStartDateTime()));
+  const repetitionType = eventTypes.find((type) => type.kind === "REPETITION");
 
-  function handleStartChange(nextStart: DateTimeParts) {
-    setStart(nextStart);
-    setEnd(addOneHour(nextStart));
-  }
-
-  function resetScheduleFields() {
-    const initialStart = defaultStartDateTime();
-    setStart(initialStart);
-    setEnd(addOneHour(initialStart));
-  }
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    setLoading(true);
-    setError(null);
-
-    const formData = new FormData(form);
-    const startsAt = dateTimePartsToDate(start);
-    const endsAt = dateTimePartsToDate(end);
-
-    if (!startsAt) {
-      setError("Start date and time are required.");
-      setLoading(false);
-      return;
-    }
-
-    if (endsAt && endsAt <= startsAt) {
-      setError("End time must be after start time.");
-      setLoading(false);
-      return;
-    }
-
-    const response = await fetch(`/api/choreographies/${choreographyId}/repetitions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: formData.get("title") || undefined,
-        startsAt: startsAt.toISOString(),
-        endsAt: endsAt?.toISOString(),
-        ...locationPayload(locationSelection),
-        notes: formData.get("notes") || undefined,
-        groupId: audience || undefined,
-      }),
-    });
-
-    const data = await response.json();
-    setLoading(false);
-
-    if (!response.ok) {
-      setError(data.error ?? "Unable to create repetition.");
-      return;
-    }
-
-    form.reset();
-    resetScheduleFields();
-    setAudience("");
-    setLocationSelection(emptyLocationSelection);
-    router.refresh();
-    onSuccess?.();
+  if (!repetitionType) {
+    return <p className="text-sm text-stone-600">Repetition type is not configured.</p>;
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <div>
-        <Label htmlFor="title">Title</Label>
-        <Input id="title" name="title" placeholder="Rehearsal" />
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <DateTime24Input
-          name="startsAt"
-          label="Start"
-          required
-          value={start}
-          onChange={handleStartChange}
-        />
-        <DateTime24Input
-          name="endsAt"
-          label="End"
-          required
-          value={end}
-          onChange={setEnd}
-        />
-      </div>
-      <LocationPicker
-        id="location"
-        value={locationSelection}
-        onChange={setLocationSelection}
+    <div className="space-y-3">
+      <CreateEventForm
+        eventTypes={eventTypes}
+        defaultTypeId={repetitionType.id}
+        lockType
+        defaultChoreographyId={choreographyId}
+        lockChoreography
+        groups={groups}
+        choreographyOptions={[{ id: choreographyId, title: "This choreography" }]}
+        onSuccess={() => onSuccess?.()}
       />
-      <RepetitionAudienceSelect groups={groups} value={audience} onChange={setAudience} />
-      <ParticipantConflictWarnings
-        choreographyId={choreographyId}
-        startsAt={dateTimePartsToDate(start)}
-        endsAt={dateTimePartsToDate(end)}
-        groupId={audience}
-      />
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={loading}>
-          {loading ? "Scheduling..." : "Schedule repetition"}
+      {onCancel && (
+        <Button type="button" variant="secondary" onClick={onCancel}>
+          Cancel
         </Button>
-        {onCancel && (
-          <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
-            Cancel
-          </Button>
-        )}
-      </div>
-    </form>
+      )}
+    </div>
   );
 }
 
@@ -425,11 +334,13 @@ export function RepetitionsSection({
   canEdit,
   groups = [],
   repetitions,
+  eventTypes,
 }: {
   choreographyId: string;
   canEdit: boolean;
   groups?: GroupOption[];
   repetitions: RepetitionListItem[];
+  eventTypes: SerializedEventType[];
 }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [search, setSearch] = useState("");
@@ -482,6 +393,7 @@ export function RepetitionsSection({
           <CreateRepetitionForm
             choreographyId={choreographyId}
             groups={groups}
+            eventTypes={eventTypes}
             onSuccess={() => setShowAddForm(false)}
             onCancel={() => setShowAddForm(false)}
           />

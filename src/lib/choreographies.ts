@@ -30,26 +30,30 @@ export async function getUpcomingChoreographyImpact(
   now = new Date(),
 ): Promise<UpcomingChoreographyImpact> {
   const [repetitions, links] = await Promise.all([
-    prisma.repetitionEvent.findMany({
-      where: { choreographyId, startsAt: { gte: now } },
+    prisma.event.findMany({
+      where: {
+        choreographyId,
+        type: { kind: "REPETITION" },
+        startsAt: { gte: now },
+      },
       select: { id: true, title: true, startsAt: true },
       orderBy: { startsAt: "asc" },
     }),
-    prisma.choreographyRepresentation.findMany({
+    prisma.eventChoreography.findMany({
       where: {
         choreographyId,
-        representation: { startsAt: { gte: now } },
+        event: { startsAt: { gte: now } },
       },
       select: {
-        representation: { select: { id: true, title: true, startsAt: true } },
+        event: { select: { id: true, title: true, startsAt: true } },
       },
-      orderBy: { representation: { startsAt: "asc" } },
+      orderBy: { event: { startsAt: "asc" } },
     }),
   ]);
 
   return {
     repetitions,
-    representations: links.map((link) => link.representation),
+    representations: links.map((link) => link.event),
   };
 }
 
@@ -57,13 +61,17 @@ export async function archiveChoreography(choreographyId: string) {
   const now = new Date();
 
   await prisma.$transaction([
-    prisma.repetitionEvent.deleteMany({
-      where: { choreographyId, startsAt: { gte: now } },
-    }),
-    prisma.choreographyRepresentation.deleteMany({
+    prisma.event.deleteMany({
       where: {
         choreographyId,
-        representation: { startsAt: { gte: now } },
+        type: { kind: "REPETITION" },
+        startsAt: { gte: now },
+      },
+    }),
+    prisma.eventChoreography.deleteMany({
+      where: {
+        choreographyId,
+        event: { startsAt: { gte: now } },
       },
     }),
     prisma.choreography.update({
@@ -77,13 +85,17 @@ export async function deleteChoreography(choreographyId: string) {
   const now = new Date();
 
   await prisma.$transaction([
-    prisma.repetitionEvent.deleteMany({
-      where: { choreographyId, startsAt: { gte: now } },
-    }),
-    prisma.choreographyRepresentation.deleteMany({
+    prisma.event.deleteMany({
       where: {
         choreographyId,
-        representation: { startsAt: { gte: now } },
+        type: { kind: "REPETITION" },
+        startsAt: { gte: now },
+      },
+    }),
+    prisma.eventChoreography.deleteMany({
+      where: {
+        choreographyId,
+        event: { startsAt: { gte: now } },
       },
     }),
     prisma.choreography.delete({ where: { id: choreographyId } }),

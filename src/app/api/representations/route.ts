@@ -5,6 +5,10 @@ import { jsonError, unauthorized } from "@/lib/api";
 import { representationSchema } from "@/lib/validations";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { getUserRepresentations } from "@/lib/representations";
+import { getEventTypeByKind } from "@/lib/event-types";
+import { canCreateEvent } from "@/lib/site-settings";
+import { forbidden } from "@/lib/api";
+import { canCreateEventOfType } from "@/lib/events";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -29,14 +33,32 @@ export async function POST(request: NextRequest) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
+  const eventType = await getEventTypeByKind("REPRESENTATION");
+  if (!eventType) {
+    return jsonError("Representation event type is not configured.");
+  }
+
+  const canCreateGeneric = await canCreateEvent(user.id);
+  if (
+    !(await canCreateEventOfType({
+      userId: user.id,
+      kind: "REPRESENTATION",
+      choreographyIds: parsed.data.choreographyIds,
+      canCreateGeneric,
+    }))
+  ) {
+    return forbidden();
+  }
+
   const location = await resolveLocationFromParsed(parsed.data);
   if ("error" in location) {
     return jsonError(location.error);
   }
 
-  const representation = await prisma.representation.create({
+  const representation = await prisma.event.create({
     data: {
-      title: parsed.data.title,
+      typeId: eventType.id,
+      title: parsed.data.title ?? "",
       startsAt: new Date(parsed.data.startsAt),
       endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
       locationId: location.locationId,
@@ -59,5 +81,5 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  return Response.json({ representation }, { status: 201 });
+  return Response.json({ representation, event: representation }, { status: 201 });
 }

@@ -19,8 +19,13 @@ function matchesEventSearch(item: EventListItem, query: string): boolean {
   return matchesSearch(
     query,
     event.title,
+    event.displayTitle,
+    event.type.name,
     event.description,
+    event.notes,
     event.location,
+    event.choreographyTitle,
+    ...event.choreographies.map((choreography) => choreography.title),
     ...event.participants.map((participant) => participant.name),
     ...event.participants.map((participant) => participant.email),
   );
@@ -94,8 +99,11 @@ export function EventsList({ events }: { events: EventListItem[] }) {
             <Card key={event.id} className="transition hover:border-stone-400">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                    {event.type.name}
+                  </p>
                   <Link href={`/events/${event.id}`} className="hover:underline">
-                    <h2 className="text-lg font-semibold">{event.title}</h2>
+                    <h2 className="mt-1 text-lg font-semibold">{event.displayTitle}</h2>
                   </Link>
                   <p className="mt-1 text-sm text-stone-600">
                     {formatDateTime(new Date(event.startsAt))}

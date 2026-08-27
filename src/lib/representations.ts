@@ -2,101 +2,48 @@ import { listedChoreographyWhere } from "@/lib/participation";
 import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { prisma } from "@/lib/db";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
-import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
+import { canEditEvent, canViewEvent } from "@/lib/events";
+import { canEditChoreography } from "@/lib/permissions";
 import { hasGlobalAccess } from "@/lib/roles";
 
 const choreographyAccessFilter = (userId: string) => listedChoreographyWhere(userId);
 
-export async function canViewRepresentation(
-  representationId: string,
-  userId: string,
-): Promise<boolean> {
-  if (await hasGlobalAccess(userId)) {
-    return true;
-  }
+const representationTypeWhere = {
+  type: { kind: "REPRESENTATION" as const },
+};
 
-  const representation = await prisma.representation.findUnique({
-    where: { id: representationId },
-    select: {
-      createdById: true,
-      choreographies: {
-        select: { choreographyId: true },
-      },
-    },
-  });
-
-  if (!representation) {
-    return false;
-  }
-
-  if (representation.createdById === userId) {
-    return true;
-  }
-
-  for (const link of representation.choreographies) {
-    if (await canViewChoreography(link.choreographyId, userId)) {
-      return true;
-    }
-  }
-
-  return false;
+export async function canViewRepresentation(eventId: string, userId: string) {
+  return canViewEvent(eventId, userId);
 }
 
-export async function canEditRepresentation(
-  representationId: string,
-  userId: string,
-): Promise<boolean> {
-  if (await hasGlobalAccess(userId)) {
-    return true;
-  }
-
-  const representation = await prisma.representation.findUnique({
-    where: { id: representationId },
-    select: {
-      createdById: true,
-      choreographies: {
-        select: { choreographyId: true },
-      },
-    },
-  });
-
-  if (!representation) {
-    return false;
-  }
-
-  if (representation.createdById === userId) {
-    return true;
-  }
-
-  for (const link of representation.choreographies) {
-    if (await canEditChoreography(link.choreographyId, userId)) {
-      return true;
-    }
-  }
-
-  return false;
+export async function canEditRepresentation(eventId: string, userId: string) {
+  return canEditEvent(eventId, userId);
 }
 
 export async function getUserRepresentations(userId: string) {
   const globalAccess = await hasGlobalAccess(userId);
 
-  return prisma.representation.findMany({
-    where: globalAccess
-      ? undefined
-      : {
-          OR: [
-            { createdById: userId },
-            {
-              choreographies: {
-                some: {
-                  choreography: choreographyAccessFilter(userId),
+  return prisma.event.findMany({
+    where: {
+      ...representationTypeWhere,
+      ...(globalAccess
+        ? {}
+        : {
+            OR: [
+              { createdById: userId },
+              {
+                choreographies: {
+                  some: {
+                    choreography: choreographyAccessFilter(userId),
+                  },
                 },
               },
-            },
-          ],
-        },
+            ],
+          }),
+    },
     include: {
       ...listedLocationInclude,
+      type: { select: { id: true, name: true, kind: true } },
       choreographies: {
         where: { choreography: visibleChoreographyWhere },
         include: {
@@ -115,15 +62,16 @@ export async function getLinkableRepresentations(
 ) {
   const globalAccess = await hasGlobalAccess(userId);
 
-  const linkedIds = await prisma.choreographyRepresentation.findMany({
+  const linkedIds = await prisma.eventChoreography.findMany({
     where: { choreographyId },
-    select: { representationId: true },
+    select: { eventId: true },
   });
 
-  const excludeIds = linkedIds.map((item) => item.representationId);
+  const excludeIds = linkedIds.map((item) => item.eventId);
 
-  const representations = await prisma.representation.findMany({
+  const representations = await prisma.event.findMany({
     where: {
+      ...representationTypeWhere,
       id: excludeIds.length > 0 ? { notIn: excludeIds } : undefined,
       ...(globalAccess
         ? {}
@@ -160,14 +108,11 @@ export async function getLinkableRepresentations(
   }));
 }
 
-export async function getLinkableChoreographies(
-  userId: string,
-  representationId: string,
-) {
+export async function getLinkableChoreographies(userId: string, eventId: string) {
   const globalAccess = await hasGlobalAccess(userId);
 
-  const linkedIds = await prisma.choreographyRepresentation.findMany({
-    where: { representationId },
+  const linkedIds = await prisma.eventChoreography.findMany({
+    where: { eventId },
     select: { choreographyId: true },
   });
 
@@ -207,7 +152,7 @@ export function serializeRepresentation(
 ): SerializedRepresentation {
   return {
     id: representation.id,
-    title: representation.title,
+    title: representation.title || null,
     startsAt: representation.startsAt.toISOString(),
     endsAt: representation.endsAt?.toISOString() ?? null,
     location: displayLocation(representation),
@@ -219,3 +164,18 @@ export function serializeRepresentation(
     })),
   };
 }
+
+export async function assertRepresentationEvent(eventId: string) {
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    select: { id: true, type: { select: { kind: true } } },
+  });
+
+  if (!event || event.type.kind !== "REPRESENTATION") {
+    return null;
+  }
+
+  return event;
+}
+
+export { canEditChoreography };

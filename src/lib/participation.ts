@@ -42,6 +42,14 @@ export function listedEventWhere(userId: string) {
       { participants: { some: { userId } } },
       { joinRequests: { some: { userId } } },
       { hideFromNonParticipants: false },
+      { choreography: listedChoreographyWhere(userId) },
+      {
+        choreographies: {
+          some: {
+            choreography: listedChoreographyWhere(userId),
+          },
+        },
+      },
     ],
   };
 }

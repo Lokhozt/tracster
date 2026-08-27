@@ -7,6 +7,7 @@ import { canEditChoreography } from "@/lib/permissions";
 import { basicUserSelect } from "@/lib/users";
 import { repetitionSchema } from "@/lib/validations";
 import { resolveLocationFromParsed } from "@/lib/locations";
+import { getEventTypeByKind } from "@/lib/event-types";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -45,12 +46,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return jsonError(location.error);
   }
 
-  const repetition = await prisma.repetitionEvent.create({
+  const eventType = await getEventTypeByKind("REPETITION");
+  if (!eventType) {
+    return jsonError("Repetition event type is not configured.");
+  }
+
+  const repetition = await prisma.event.create({
     data: {
+      typeId: eventType.id,
       choreographyId: id,
       groupId: parsed.data.groupId ?? null,
       createdById: user.id,
-      title: parsed.data.title,
+      title: parsed.data.title ?? "",
       startsAt: new Date(parsed.data.startsAt),
       endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
       locationId: location.locationId,
@@ -65,5 +72,5 @@ export async function POST(request: NextRequest, context: RouteContext) {
     },
   });
 
-  return Response.json({ repetition }, { status: 201 });
+  return Response.json({ repetition, event: repetition }, { status: 201 });
 }

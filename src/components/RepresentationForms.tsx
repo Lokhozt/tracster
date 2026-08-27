@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
+import type { SerializedEventType } from "@/lib/event-type-helpers";
 import { EditIconLink } from "@/components/EditIconLink";
 import {
   emptyLocationSelection,
@@ -372,7 +373,7 @@ export function EditRepresentationForm({
         <DeleteEventButton
           deleteUrl={`/api/representations/${representation.id}`}
           confirmMessage="Delete this representation? It will be removed from all choreographies."
-          redirectTo="/representations"
+          redirectTo="/events"
           className="inline-block"
         />
       </div>
@@ -382,14 +383,17 @@ export function EditRepresentationForm({
 
 function CreateRepresentationForChoreographyForm({
   choreographyId,
+  eventTypes,
   onSuccess,
   onCancel,
 }: {
   choreographyId: string;
+  eventTypes: SerializedEventType[];
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
   const router = useRouter();
+  const representationType = eventTypes.find((type) => type.kind === "REPRESENTATION");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -442,6 +446,19 @@ function CreateRepresentationForChoreographyForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      <div>
+        <Label htmlFor="choreography-representation-type">Type</Label>
+        <select
+          id="choreography-representation-type"
+          disabled
+          value={representationType?.id ?? ""}
+          className="mt-1 w-full rounded-lg border border-stone-300 bg-stone-50 px-3 py-2 text-base sm:text-sm"
+        >
+          <option value={representationType?.id ?? ""}>
+            {representationType?.name ?? "Representation"}
+          </option>
+        </select>
+      </div>
       <RepresentationFields
         title={title}
         locationSelection={locationSelection}
@@ -607,7 +624,7 @@ function RepresentationCard({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Link
-            href={`/representations/${representation.id}`}
+            href={`/events/${representation.id}`}
             className="font-semibold hover:text-stone-700"
           >
             {representation.title ?? "Representation"}
@@ -624,7 +641,7 @@ function RepresentationCard({
         {canEdit && (
           <div className="flex items-center gap-1">
             <EditIconLink
-              href={`/representations/${representation.id}`}
+              href={`/events/${representation.id}`}
               label="Edit representation"
             />
             <DeleteEventButton
@@ -643,10 +660,12 @@ export function RepresentationsSection({
   choreographyId,
   representations,
   canEdit,
+  eventTypes,
 }: {
   choreographyId: string;
   representations: RepresentationItem[];
   canEdit: boolean;
+  eventTypes: SerializedEventType[];
 }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [addMode, setAddMode] = useState<"create" | "link">("create");
@@ -684,6 +703,7 @@ export function RepresentationsSection({
           {addMode === "create" ? (
             <CreateRepresentationForChoreographyForm
               choreographyId={choreographyId}
+              eventTypes={eventTypes}
               onSuccess={() => setShowAddForm(false)}
               onCancel={() => setShowAddForm(false)}
             />

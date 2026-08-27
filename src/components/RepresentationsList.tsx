@@ -64,7 +64,7 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
                     Representation
                   </p>
                   <Link
-                    href={`/representations/${representation.id}`}
+                    href={`/events/${representation.id}`}
                     className="hover:underline"
                   >
                     <h2 className="mt-1 text-lg font-semibold">
@@ -82,7 +82,7 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
                 </div>
                 {canEdit && (
                   <EditIconLink
-                    href={`/representations/${representation.id}`}
+                    href={`/events/${representation.id}`}
                     label="Edit representation"
                   />
                 )}

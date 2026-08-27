@@ -49,6 +49,11 @@ export async function GET(_request: NextRequest, context: RouteContext) {
           },
         },
       },
+      eventLinks: {
+        include: {
+          event: true,
+        },
+      },
     },
   });
 

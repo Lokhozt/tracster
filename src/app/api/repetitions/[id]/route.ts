@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
-import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
+import { canEditEvent, canViewEvent } from "@/lib/events";
 import { repetitionSchema } from "@/lib/validations";
 import { basicUserSelect } from "@/lib/users";
 import { resolveLocationFromParsed } from "@/lib/locations";
@@ -10,9 +10,9 @@ import { resolveLocationFromParsed } from "@/lib/locations";
 type RouteContext = { params: Promise<{ id: string }> };
 
 async function getRepetition(id: string) {
-  return prisma.repetitionEvent.findUnique({
+  return prisma.event.findUnique({
     where: { id },
-    select: { id: true, choreographyId: true },
+    select: { id: true, choreographyId: true, type: { select: { kind: true } } },
   });
 }
 
@@ -24,9 +24,10 @@ export async function GET(_request: Request, context: RouteContext) {
 
   const { id } = await context.params;
 
-  const repetition = await prisma.repetitionEvent.findUnique({
+  const repetition = await prisma.event.findUnique({
     where: { id },
     include: {
+      type: { select: { kind: true } },
       choreography: {
         include: {
           members: {
@@ -40,15 +41,15 @@ export async function GET(_request: Request, context: RouteContext) {
     },
   });
 
-  if (!repetition) {
+  if (!repetition || repetition.type.kind !== "REPETITION") {
     return notFound("Repetition");
   }
 
-  if (!(await canViewChoreography(repetition.choreographyId, user.id))) {
+  if (!(await canViewEvent(id, user.id))) {
     return forbidden();
   }
 
-  return Response.json({ repetition });
+  return Response.json({ repetition, event: repetition });
 }
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
@@ -60,11 +61,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   const { id } = await context.params;
   const repetition = await getRepetition(id);
 
-  if (!repetition) {
+  if (!repetition || repetition.type.kind !== "REPETITION") {
     return notFound("Repetition");
   }
 
-  if (!(await canEditChoreography(repetition.choreographyId, user.id))) {
+  if (!(await canEditEvent(id, user.id))) {
     return forbidden();
   }
 
@@ -79,10 +80,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return jsonError(location.error);
   }
 
-  const updated = await prisma.repetitionEvent.update({
+  const updated = await prisma.event.update({
     where: { id },
     data: {
-      title: parsed.data.title,
+      title: parsed.data.title ?? "",
       startsAt: new Date(parsed.data.startsAt),
       endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
       locationId: location.locationId,
@@ -91,7 +92,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     },
   });
 
-  return Response.json({ repetition: updated });
+  return Response.json({ repetition: updated, event: updated });
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
@@ -103,15 +104,15 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   const repetition = await getRepetition(id);
 
-  if (!repetition) {
+  if (!repetition || repetition.type.kind !== "REPETITION") {
     return notFound("Repetition");
   }
 
-  if (!(await canEditChoreography(repetition.choreographyId, user.id))) {
+  if (!(await canEditEvent(id, user.id))) {
     return forbidden();
   }
 
-  await prisma.repetitionEvent.delete({ where: { id } });
+  await prisma.event.delete({ where: { id } });
 
   return Response.json({ ok: true });
 }

@@ -20,7 +20,10 @@ import {
 import { Card } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/datetime";
-import type { SerializedScheduleEvent } from "@/lib/schedule";
+import {
+  scheduleEventLabel,
+  type SerializedScheduleEvent,
+} from "@/lib/schedule-filters";
 
 type CalendarView = "month" | "week" | "threeDay";
 
@@ -46,10 +49,10 @@ function useIsSmallScreen() {
 }
 
 function eventCellLabel(event: SerializedScheduleEvent): string {
-  if (event.type === "event" || event.type === "representation") {
-    return event.title ?? (event.type === "event" ? "Event" : "Representation");
+  if (event.typeKind === "REPETITION") {
+    return event.choreographyTitle ?? scheduleEventLabel(event);
   }
-  return event.choreographyTitle ?? event.title ?? "";
+  return scheduleEventLabel(event);
 }
 
 function eventCoveredDays(event: SerializedScheduleEvent): Date[] {
@@ -100,12 +103,7 @@ function eventTimeLabel(event: SerializedScheduleEvent, day: Date): string {
 }
 
 function eventCellTitle(event: SerializedScheduleEvent): string {
-  const typeLabel =
-    event.type === "representation"
-      ? "Representation"
-      : event.type === "event"
-        ? "Event"
-        : "Repetition";
+  const typeLabel = event.typeName;
   const name = eventCellLabel(event);
   const start = new Date(event.startsAt);
   const range = event.endsAt
@@ -114,11 +112,14 @@ function eventCellTitle(event: SerializedScheduleEvent): string {
   return `${typeLabel}${name ? ` – ${name}` : ""} – ${range}`;
 }
 
-function eventCellClassName(type: SerializedScheduleEvent["type"]): string {
-  if (type === "representation") {
+function eventCellClassName(kind: SerializedScheduleEvent["typeKind"]): string {
+  if (kind === "REPRESENTATION") {
     return "bg-amber-100 text-amber-900 hover:bg-amber-200";
   }
-  if (type === "event") {
+  if (kind === "COMPETITION") {
+    return "bg-violet-100 text-violet-900 hover:bg-violet-200";
+  }
+  if (kind === "EVENT" || kind === null) {
     return "bg-sky-100 text-sky-900 hover:bg-sky-200";
   }
   return "bg-stone-100 text-stone-800 hover:bg-stone-200";
@@ -157,12 +158,12 @@ function DayCell({
       <div className="space-y-1">
         {events.map((event) => (
           <Link
-            key={`${event.type}-${event.id}`}
+            key={event.id}
             href={event.href}
             className={cn(
               "block rounded px-1.5 py-0.5 text-xs hover:opacity-90",
               wrapLabels ? "break-words" : "truncate",
-              eventCellClassName(event.type),
+              eventCellClassName(event.typeKind),
             )}
             title={eventCellTitle(event)}
           >
@@ -285,6 +286,10 @@ export function RepetitionCalendar({
             <span className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded bg-sky-200" />
               Event
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded bg-violet-200" />
+              Competition
             </span>
           </div>
         </div>

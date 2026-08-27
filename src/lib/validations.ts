@@ -140,13 +140,22 @@ export const linkChoreographySchema = z.object({
   choreographyId: z.string().min(1),
 });
 
+export const eventTypeSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+});
+
 export const eventSchema = z.object({
-  title: z.string().trim().min(2).max(120),
+  typeId: z.string().min(1),
+  title: z.string().trim().max(120).optional(),
   description: z.string().trim().max(2000).optional(),
+  notes: z.string().trim().max(1000).optional(),
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime().optional(),
   ...locationFieldsSchema,
   participantIds: z.array(z.string()).optional(),
+  choreographyId: z.string().min(1).nullable().optional(),
+  choreographyIds: z.array(z.string()).optional(),
+  groupId: z.string().min(1).nullable().optional(),
   allowParticipantJoin: z.boolean().optional(),
   allowJoinRequests: z.boolean().optional(),
   hideFromNonParticipants: z.boolean().optional(),

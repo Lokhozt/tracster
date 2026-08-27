@@ -20,6 +20,7 @@ import { prisma } from "@/lib/db";
 import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
 import { isAdmin } from "@/lib/roles";
 import { getChoreographyGroups, serializeGroup } from "@/lib/groups";
+import { getEventTypes } from "@/lib/event-types";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { basicUserSelect, formatUserName, serializeBasicUser } from "@/lib/users";
 
@@ -40,7 +41,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
   const canEdit = await canEditChoreography(id, user.id);
   const canManageLifecycle = await isAdmin(user.id);
 
-  const [choreography, users, groups] = await Promise.all([
+  const [choreography, users, groups, eventTypes] = await Promise.all([
     prisma.choreography.findUnique({
       where: { id },
       include: {
@@ -56,6 +57,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           orderBy: { requestedAt: "asc" },
         },
         repetitions: {
+          where: { type: { kind: "REPETITION" } },
           orderBy: { startsAt: "asc" },
           include: {
             ...listedLocationInclude,
@@ -71,11 +73,12 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
             },
           },
         },
-        representations: {
+        eventLinks: {
+          where: { event: { type: { kind: "REPRESENTATION" } } },
           include: {
-            representation: { include: listedLocationInclude },
+            event: { include: listedLocationInclude },
           },
-          orderBy: { representation: { startsAt: "asc" } },
+          orderBy: { event: { startsAt: "asc" } },
         },
       },
     }),
@@ -86,6 +89,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
         }).then((items) => items.map(serializeBasicUser))
       : Promise.resolve([]),
     getChoreographyGroups(id),
+    getEventTypes(),
   ]);
 
   if (!choreography || choreography.archivedAt) {
@@ -182,14 +186,15 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
       <RepresentationsSection
         choreographyId={id}
         canEdit={canEdit}
-        representations={choreography.representations.map((link) => ({
-          id: link.representation.id,
-          title: link.representation.title,
-          startsAt: link.representation.startsAt.toISOString(),
-          endsAt: link.representation.endsAt?.toISOString() ?? null,
-          location: displayLocation(link.representation),
-          locationId: link.representation.locationId,
-          notes: link.representation.notes,
+        eventTypes={eventTypes}
+        representations={choreography.eventLinks.map((link) => ({
+          id: link.event.id,
+          title: link.event.title || null,
+          startsAt: link.event.startsAt.toISOString(),
+          endsAt: link.event.endsAt?.toISOString() ?? null,
+          location: displayLocation(link.event),
+          locationId: link.event.locationId,
+          notes: link.event.notes,
         }))}
       />
 
@@ -201,6 +206,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           name: group.name,
           memberCount: group.members.length,
         }))}
+        eventTypes={eventTypes}
         repetitions={choreography.repetitions.map((repetition) => {
           const targetUserIds = new Set(
             repetition.group
@@ -256,12 +262,12 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
               title: repetition.title,
               startsAt: repetition.startsAt.toISOString(),
             }))}
-          upcomingRepresentations={choreography.representations
-            .filter((link) => link.representation.startsAt >= new Date())
+          upcomingRepresentations={choreography.eventLinks
+            .filter((link) => link.event.startsAt >= new Date())
             .map((link) => ({
-              id: link.representation.id,
-              title: link.representation.title,
-              startsAt: link.representation.startsAt.toISOString(),
+              id: link.event.id,
+              title: link.event.title || null,
+              startsAt: link.event.startsAt.toISOString(),
             }))}
         />
       )}

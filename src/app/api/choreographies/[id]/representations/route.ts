@@ -7,9 +7,10 @@ import {
   linkRepresentationSchema,
 } from "@/lib/validations";
 import { canEditChoreography } from "@/lib/permissions";
-import { canEditRepresentation } from "@/lib/representations";
+import { canEditEvent } from "@/lib/events";
 import { getLinkableRepresentations } from "@/lib/representations";
 import { resolveLocationFromParsed } from "@/lib/locations";
+import { getEventTypeByKind } from "@/lib/event-types";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -54,32 +55,33 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   if (parsed.data.mode === "link") {
-    const representation = await prisma.representation.findUnique({
+    const representation = await prisma.event.findUnique({
       where: { id: parsed.data.representationId },
+      select: { id: true, type: { select: { kind: true } } },
     });
 
-    if (!representation) {
+    if (!representation || representation.type.kind !== "REPRESENTATION") {
       return notFound("Representation");
     }
 
-    if (!(await canEditRepresentation(parsed.data.representationId, user.id))) {
+    if (!(await canEditEvent(parsed.data.representationId, user.id))) {
       return forbidden();
     }
 
-    const link = await prisma.choreographyRepresentation.upsert({
+    const link = await prisma.eventChoreography.upsert({
       where: {
-        choreographyId_representationId: {
+        eventId_choreographyId: {
           choreographyId: id,
-          representationId: parsed.data.representationId,
+          eventId: parsed.data.representationId,
         },
       },
       update: {},
       create: {
         choreographyId: id,
-        representationId: parsed.data.representationId,
+        eventId: parsed.data.representationId,
       },
       include: {
-        representation: {
+        event: {
           include: {
             choreographies: {
               include: { choreography: { select: { id: true, title: true } } },
@@ -89,7 +91,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
       },
     });
 
-    return Response.json({ representation: link.representation }, { status: 201 });
+    return Response.json(
+      { representation: link.event, event: link.event },
+      { status: 201 },
+    );
   }
 
   const location = await resolveLocationFromParsed(parsed.data);
@@ -97,9 +102,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return jsonError(location.error);
   }
 
-  const representation = await prisma.representation.create({
+  const eventType = await getEventTypeByKind("REPRESENTATION");
+  if (!eventType) {
+    return jsonError("Representation event type is not configured.");
+  }
+
+  const representation = await prisma.event.create({
     data: {
-      title: parsed.data.title,
+      typeId: eventType.id,
+      title: parsed.data.title ?? "",
       startsAt: new Date(parsed.data.startsAt),
       endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
       locationId: location.locationId,
@@ -117,7 +128,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     },
   });
 
-  return Response.json({ representation }, { status: 201 });
+  return Response.json({ representation, event: representation }, { status: 201 });
 }
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
@@ -138,10 +149,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
-  await prisma.choreographyRepresentation.deleteMany({
+  await prisma.eventChoreography.deleteMany({
     where: {
       choreographyId: id,
-      representationId: parsed.data.representationId,
+      eventId: parsed.data.representationId,
     },
   });
 

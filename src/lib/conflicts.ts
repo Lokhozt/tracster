@@ -101,7 +101,7 @@ export async function findParticipantConflicts(options: {
   const timeFilter = overlappingTimeFilter(rangeStart, rangeEnd);
   const audienceFilter = { in: audience };
 
-  const [unavailability, repetitions, events, representations] = await Promise.all([
+  const [unavailability, events] = await Promise.all([
     prisma.userUnavailability.findMany({
       where: {
         userId: audienceFilter,
@@ -110,35 +110,26 @@ export async function findParticipantConflicts(options: {
       },
       select: { user: { select: basicUserSelect } },
     }),
-    prisma.repetitionEvent.findMany({
+    prisma.event.findMany({
       where: {
         ...timeFilter,
-        choreography: visibleChoreographyWhere,
+        OR: [
+          { type: { kind: { not: "REPETITION" } } },
+          { choreography: visibleChoreographyWhere },
+          { choreographyId: null },
+        ],
       },
       select: {
         startsAt: true,
         endsAt: true,
-        groupId: true,
         choreographyId: true,
+        groupId: true,
+        type: { select: { kind: true } },
         group: { select: { members: { select: { userId: true } } } },
         choreography: {
           select: { members: { select: { userId: true } } },
         },
-      },
-    }),
-    prisma.event.findMany({
-      where: timeFilter,
-      select: {
-        startsAt: true,
-        endsAt: true,
         participants: { select: { userId: true } },
-      },
-    }),
-    prisma.representation.findMany({
-      where: timeFilter,
-      select: {
-        startsAt: true,
-        endsAt: true,
         choreographies: {
           where: { choreography: visibleChoreographyWhere },
           select: {
@@ -153,29 +144,6 @@ export async function findParticipantConflicts(options: {
 
   const engagedIds = new Set<string>();
 
-  for (const repetition of repetitions) {
-    if (
-      !intervalsOverlap(
-        rangeStart,
-        rangeEnd,
-        repetition.startsAt,
-        resolveIntervalEnd(repetition.startsAt, repetition.endsAt),
-      )
-    ) {
-      continue;
-    }
-
-    const memberIds = repetition.group
-      ? repetition.group.members.map((member) => member.userId)
-      : repetition.choreography.members.map((member) => member.userId);
-
-    for (const userId of memberIds) {
-      if (audience.includes(userId)) {
-        engagedIds.add(userId);
-      }
-    }
-  }
-
   for (const event of events) {
     if (
       !intervalsOverlap(
@@ -188,30 +156,33 @@ export async function findParticipantConflicts(options: {
       continue;
     }
 
-    for (const participant of event.participants) {
-      if (audience.includes(participant.userId)) {
-        engagedIds.add(participant.userId);
-      }
-    }
-  }
+    if (event.type.kind === "REPETITION") {
+      const memberIds = event.group
+        ? event.group.members.map((member) => member.userId)
+        : (event.choreography?.members.map((member) => member.userId) ?? []);
 
-  for (const representation of representations) {
-    if (
-      !intervalsOverlap(
-        rangeStart,
-        rangeEnd,
-        representation.startsAt,
-        resolveIntervalEnd(representation.startsAt, representation.endsAt),
-      )
-    ) {
+      for (const userId of memberIds) {
+        if (audience.includes(userId)) {
+          engagedIds.add(userId);
+        }
+      }
       continue;
     }
 
-    for (const link of representation.choreographies) {
-      for (const member of link.choreography.members) {
-        if (audience.includes(member.userId)) {
-          engagedIds.add(member.userId);
+    if (event.type.kind === "REPRESENTATION") {
+      for (const link of event.choreographies) {
+        for (const member of link.choreography.members) {
+          if (audience.includes(member.userId)) {
+            engagedIds.add(member.userId);
+          }
         }
+      }
+      continue;
+    }
+
+    for (const participant of event.participants) {
+      if (audience.includes(participant.userId)) {
+        engagedIds.add(participant.userId);
       }
     }
   }

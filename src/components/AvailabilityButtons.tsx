@@ -27,7 +27,7 @@ export function AvailabilityButtons({
     setLoading(status);
     setError(null);
 
-    const response = await fetch(`/api/repetitions/${repetitionId}/availability`, {
+    const response = await fetch(`/api/events/${repetitionId}/availability`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),

@@ -109,11 +109,57 @@ async function main() {
     create: { name: "Main theatre" },
   });
 
-  const repetition = await prisma.repetitionEvent.upsert({
+  await prisma.eventType.upsert({
+    where: { id: "event-type-event" },
+    update: { kind: "EVENT", immutable: true, sortOrder: 0 },
+    create: {
+      id: "event-type-event",
+      name: "Event",
+      kind: "EVENT",
+      immutable: true,
+      sortOrder: 0,
+    },
+  });
+  await prisma.eventType.upsert({
+    where: { id: "event-type-repetition" },
+    update: { kind: "REPETITION", immutable: true, sortOrder: 1 },
+    create: {
+      id: "event-type-repetition",
+      name: "Repetition",
+      kind: "REPETITION",
+      immutable: true,
+      sortOrder: 1,
+    },
+  });
+  await prisma.eventType.upsert({
+    where: { id: "event-type-representation" },
+    update: { kind: "REPRESENTATION", immutable: true, sortOrder: 2 },
+    create: {
+      id: "event-type-representation",
+      name: "Representation",
+      kind: "REPRESENTATION",
+      immutable: true,
+      sortOrder: 2,
+    },
+  });
+  await prisma.eventType.upsert({
+    where: { id: "event-type-competition" },
+    update: { kind: "COMPETITION", immutable: true, sortOrder: 3 },
+    create: {
+      id: "event-type-competition",
+      name: "Competition",
+      kind: "COMPETITION",
+      immutable: true,
+      sortOrder: 3,
+    },
+  });
+
+  const repetition = await prisma.event.upsert({
     where: { id: "seed-repetition-1" },
     update: {},
     create: {
       id: "seed-repetition-1",
+      typeId: "event-type-repetition",
       choreographyId: choreography.id,
       title: "First rehearsal",
       startsAt: new Date("2026-07-01T18:30:00"),
@@ -125,24 +171,25 @@ async function main() {
 
   await prisma.availabilityResponse.upsert({
     where: {
-      repetitionEventId_userId: {
-        repetitionEventId: repetition.id,
+      eventId_userId: {
+        eventId: repetition.id,
         userId: claire.id,
       },
     },
     update: { status: "AVAILABLE" },
     create: {
-      repetitionEventId: repetition.id,
+      eventId: repetition.id,
       userId: claire.id,
       status: "AVAILABLE",
     },
   });
 
-  await prisma.representation.upsert({
+  await prisma.event.upsert({
     where: { id: "seed-representation-1" },
     update: {},
     create: {
       id: "seed-representation-1",
+      typeId: "event-type-representation",
       title: "June showcase",
       startsAt: new Date("2026-06-28T20:00:00"),
       endsAt: new Date("2026-06-28T22:00:00"),
@@ -159,6 +206,7 @@ async function main() {
     update: {},
     create: {
       id: "seed-event-1",
+      typeId: "event-type-event",
       title: "Association picnic",
       description: "End-of-season gathering for all members and families.",
       startsAt: new Date("2026-07-15T12:00:00"),

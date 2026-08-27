@@ -31,8 +31,6 @@ model User {
   choreographyMembers        ChoreographyMember[]
   choreographyGroupMembers   ChoreographyGroupMember[]
   availabilityResponses      AvailabilityResponse[]
-  createdRepetitionEvents    RepetitionEvent[]           @relation("RepetitionCreator")
-  createdRepresentations     Representation[]            @relation("RepresentationCreator")
   createdEvents              Event[]                     @relation("EventCreator")
   eventParticipants          EventParticipant[]
   unavailabilityTimeframes   UserUnavailability[]
@@ -66,8 +64,8 @@ model Choreography {
   choreographers  ChoreographyChoreographer[]
   members         ChoreographyMember[]
   groups          ChoreographyGroup[]
-  repetitions     RepetitionEvent[]
-  representations ChoreographyRepresentation[]
+  repetitions     Event[]                    @relation("EventRepetitionChoreography")
+  eventLinks      EventChoreography[]
   joinRequests    ChoreographyJoinRequest[]
 }
 
@@ -114,7 +112,7 @@ model ChoreographyGroup {
 
   choreography Choreography              @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
   members      ChoreographyGroupMember[]
-  repetitions  RepetitionEvent[]
+  repetitions  Event[]
 
   @@index([choreographyId])
 }
@@ -136,9 +134,7 @@ model Location {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  repetitions     RepetitionEvent[]
-  representations Representation[]
-  events          Event[]
+  events Event[]
 
   @@unique([name])
 }
@@ -151,27 +147,70 @@ model SiteSettings {
   updatedAt                     DateTime @updatedAt
 }
 
-model RepetitionEvent {
-  id             String    @id @default(cuid())
-  choreographyId String
-  groupId        String?
-  title          String?
-  startsAt       DateTime
-  endsAt         DateTime?
-  locationId     String?
-  location       String?
-  notes          String?
-  createdById    String
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+enum EventKind {
+  EVENT
+  REPETITION
+  REPRESENTATION
+  COMPETITION
+}
 
-  choreography    Choreography           @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
-  group           ChoreographyGroup?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  listedLocation  Location?              @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  createdBy       User                   @relation("RepetitionCreator", fields: [createdById], references: [id])
-  availabilities  AvailabilityResponse[]
+model EventType {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  kind       EventKind? @unique
+  immutable  Boolean    @default(false)
+  sortOrder  Int        @default(0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
+  events Event[]
+}
+
+model Event {
+  id                      String    @id @default(cuid())
+  typeId                  String
+  title                   String    @default("")
+  description             String?
+  notes                   String?
+  startsAt                DateTime
+  endsAt                  DateTime?
+  locationId              String?
+  location                String?
+  createdById             String
+  allowParticipantJoin    Boolean   @default(false)
+  allowJoinRequests       Boolean   @default(false)
+  hideFromNonParticipants Boolean   @default(true)
+  choreographyId          String?
+  groupId                 String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  type           EventType              @relation(fields: [typeId], references: [id])
+  listedLocation Location?              @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  createdBy      User                   @relation("EventCreator", fields: [createdById], references: [id])
+  choreography   Choreography?          @relation("EventRepetitionChoreography", fields: [choreographyId], references: [id], onDelete: Cascade)
+  group          ChoreographyGroup?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  choreographies EventChoreography[]
+  participants   EventParticipant[]
+  joinRequests   EventJoinRequest[]
+  availabilities AvailabilityResponse[]
+
+  @@index([typeId])
   @@index([locationId])
+  @@index([choreographyId])
+  @@index([groupId])
+}
+
+model EventChoreography {
+  eventId        String
+  choreographyId String
+  assignedAt     DateTime @default(now())
+
+  event        Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  choreography Choreography @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, choreographyId])
+  @@index([choreographyId])
 }
 
 enum AvailabilityStatus {
@@ -181,70 +220,17 @@ enum AvailabilityStatus {
 }
 
 model AvailabilityResponse {
-  id                String             @id @default(cuid())
-  repetitionEventId String
-  userId            String
-  status            AvailabilityStatus
-  respondedAt       DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  id          String             @id @default(cuid())
+  eventId     String
+  userId      String
+  status      AvailabilityStatus
+  respondedAt DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 
-  repetitionEvent RepetitionEvent @relation(fields: [repetitionEventId], references: [id], onDelete: Cascade)
-  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([repetitionEventId, userId])
-}
-
-model Representation {
-  id          String    @id @default(cuid())
-  title       String?
-  startsAt    DateTime
-  endsAt      DateTime?
-  locationId  String?
-  location    String?
-  notes       String?
-  createdById String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  listedLocation Location?                    @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  createdBy      User                         @relation("RepresentationCreator", fields: [createdById], references: [id])
-  choreographies ChoreographyRepresentation[]
-
-  @@index([locationId])
-}
-
-model ChoreographyRepresentation {
-  choreographyId   String
-  representationId String
-  assignedAt       DateTime @default(now())
-
-  choreography   Choreography   @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
-  representation Representation @relation(fields: [representationId], references: [id], onDelete: Cascade)
-
-  @@id([choreographyId, representationId])
-}
-
-model Event {
-  id                      String    @id @default(cuid())
-  title                   String
-  description             String?
-  startsAt                DateTime
-  endsAt                  DateTime?
-  locationId              String?
-  location                String?
-  createdById             String
-  allowParticipantJoin    Boolean   @default(false)
-  allowJoinRequests       Boolean   @default(false)
-  hideFromNonParticipants Boolean   @default(true)
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
-
-  listedLocation Location?           @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  createdBy      User                @relation("EventCreator", fields: [createdById], references: [id])
-  participants   EventParticipant[]
-  joinRequests   EventJoinRequest[]
-
-  @@index([locationId])
+  @@unique([eventId, userId])
 }
 
 model EventJoinRequest {

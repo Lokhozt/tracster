@@ -1,8 +1,40 @@
 import { addMonths, addWeeks } from "date-fns";
-// Type-only: keeps this module free of the Prisma client so clients can import it.
-import type { SerializedScheduleEvent } from "@/lib/schedule";
+import { defaultEventTitle, isGenericEventKind, type EventKind } from "@/lib/event-type-helpers";
+
+export type SerializedScheduleEvent = {
+  id: string;
+  typeId: string;
+  typeName: string;
+  typeKind: EventKind | null;
+  title: string | null;
+  startsAt: string;
+  endsAt: string | null;
+  location: string | null;
+  choreographyId: string | null;
+  choreographyTitle: string | null;
+  isMember: boolean;
+  isParticipating: boolean;
+  availabilityStatus: "AVAILABLE" | "UNAVAILABLE" | "MAYBE" | null;
+  href: string;
+  canEdit: boolean;
+};
 
 export type UpcomingEventRange = "all" | "week" | "month";
+
+export function scheduleEventLabel(event: SerializedScheduleEvent) {
+  return defaultEventTitle(
+    { name: event.typeName, kind: event.typeKind },
+    event.title,
+  );
+}
+
+export function isRepetitionScheduleEvent(event: SerializedScheduleEvent) {
+  return event.typeKind === "REPETITION";
+}
+
+export function isGenericScheduleEvent(event: SerializedScheduleEvent) {
+  return isGenericEventKind(event.typeKind);
+}
 
 export function filterUpcomingScheduleEvents(
   events: SerializedScheduleEvent[],

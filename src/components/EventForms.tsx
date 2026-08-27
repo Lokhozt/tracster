@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
 import {
@@ -11,7 +11,9 @@ import {
   selectionFromRecord,
   type LocationSelection,
 } from "@/components/LocationPicker";
-import { Button, Input, Label, Textarea } from "@/components/ui";
+import { ParticipantConflictWarnings } from "@/components/ParticipantConflictWarnings";
+import { RepetitionAudienceSelect, type GroupOption } from "@/components/GroupForms";
+import { Button, Input, Label, Select, Textarea } from "@/components/ui";
 import { ParticipationSettingsFields } from "@/components/ParticipationSettingsFields";
 import {
   addOneHour,
@@ -20,6 +22,10 @@ import {
   defaultStartDateTime,
   type DateTimeParts,
 } from "@/lib/datetime";
+import {
+  isGenericEventKind,
+  type SerializedEventType,
+} from "@/lib/event-type-helpers";
 import type { SerializedEvent } from "@/lib/events";
 import {
   defaultParticipationSettings,
@@ -74,29 +80,87 @@ function EventScheduleFields({
   );
 }
 
+type ChoreographyOption = { id: string; title: string };
+
+function selectedEventType(eventTypes: SerializedEventType[], typeId: string) {
+  return eventTypes.find((type) => type.id === typeId) ?? eventTypes[0];
+}
+
 export function CreateEventForm({
+  eventTypes,
   participantOptions,
+  choreographyOptions,
+  groups = [],
+  defaultTypeId,
+  lockType = false,
+  defaultChoreographyId,
+  lockChoreography = false,
   onSuccess,
   redirectBasePath,
 }: {
+  eventTypes: SerializedEventType[];
   participantOptions?: UserOption[];
+  choreographyOptions?: ChoreographyOption[];
+  groups?: GroupOption[];
+  defaultTypeId?: string;
+  lockType?: boolean;
+  defaultChoreographyId?: string;
+  lockChoreography?: boolean;
   onSuccess?: (eventId: string) => void;
   redirectBasePath?: string;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [typeId, setTypeId] = useState(defaultTypeId ?? eventTypes[0]?.id ?? "");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [notes, setNotes] = useState("");
   const [locationSelection, setLocationSelection] = useState<LocationSelection>(
     emptyLocationSelection,
   );
   const [selectedParticipantIds, setSelectedParticipantIds] = useState<string[]>([]);
+  const [choreographyId, setChoreographyId] = useState(defaultChoreographyId ?? "");
+  const [selectedChoreographyIds, setSelectedChoreographyIds] = useState<string[]>(
+    defaultChoreographyId ? [defaultChoreographyId] : [],
+  );
+  const [audience, setAudience] = useState("");
+  const [fetchedGroups, setFetchedGroups] = useState<GroupOption[]>([]);
   const [participation, setParticipation] = useState<ParticipationSettings>(
     defaultParticipationSettings,
   );
   const [start, setStart] = useState<DateTimeParts>(defaultStartDateTime);
   const [end, setEnd] = useState<DateTimeParts>(() => addOneHour(defaultStartDateTime()));
+
+  const eventType = selectedEventType(eventTypes, typeId);
+  const generic = isGenericEventKind(eventType?.kind ?? null);
+  const groupOptions = groups.length > 0 ? groups : fetchedGroups;
+
+  useEffect(() => {
+    if (eventType?.kind !== "REPETITION" || !choreographyId || groups.length > 0) {
+      return;
+    }
+
+    let cancelled = false;
+    async function loadGroups() {
+      const response = await fetch(`/api/choreographies/${choreographyId}/groups`);
+      const data = await response.json();
+      if (!cancelled && response.ok) {
+        setFetchedGroups(
+          (data.groups ?? []).map((group: { id: string; name: string; members: unknown[] }) => ({
+            id: group.id,
+            name: group.name,
+            memberCount: group.members.length,
+          })),
+        );
+      }
+    }
+
+    void loadGroups();
+    return () => {
+      cancelled = true;
+    };
+  }, [choreographyId, eventType?.kind, groups.length]);
 
   function handleStartChange(nextStart: DateTimeParts) {
     setStart(nextStart);
@@ -122,14 +186,23 @@ export function CreateEventForm({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        title,
-        description: description || undefined,
+        typeId,
+        title: title || undefined,
+        description: generic ? description || undefined : undefined,
+        notes: generic ? undefined : notes || undefined,
         ...locationPayload(locationSelection),
         startsAt: startsAt.toISOString(),
         endsAt: endsAt?.toISOString(),
         participantIds:
-          selectedParticipantIds.length > 0 ? selectedParticipantIds : undefined,
-        ...participation,
+          generic && selectedParticipantIds.length > 0
+            ? selectedParticipantIds
+            : undefined,
+        choreographyId:
+          eventType?.kind === "REPETITION" ? choreographyId || null : null,
+        choreographyIds:
+          eventType?.kind === "REPRESENTATION" ? selectedChoreographyIds : undefined,
+        groupId: eventType?.kind === "REPETITION" ? audience || undefined : undefined,
+        ...(generic ? participation : {}),
       }),
     });
 
@@ -153,13 +226,29 @@ export function CreateEventForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
+        <Label htmlFor="event-type">Type</Label>
+        <Select
+          id="event-type"
+          className="mt-1 block w-full"
+          value={typeId}
+          disabled={lockType}
+          onChange={(event) => setTypeId(event.target.value)}
+        >
+          {eventTypes.map((type) => (
+            <option key={type.id} value={type.id}>
+              {type.name}
+            </option>
+          ))}
+        </Select>
+      </div>
+      <div>
         <Label htmlFor="event-title">Title</Label>
         <Input
           id="event-title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          required
-          placeholder="Annual general meeting"
+          required={generic}
+          placeholder={eventType?.name ?? "Event"}
         />
       </div>
       <EventScheduleFields
@@ -173,17 +262,81 @@ export function CreateEventForm({
         value={locationSelection}
         onChange={setLocationSelection}
       />
+      {eventType?.kind === "REPETITION" && choreographyOptions && (
+        <div>
+          <Label htmlFor="event-choreography">Choreography</Label>
+          <Select
+            id="event-choreography"
+            className="mt-1 block w-full"
+            value={choreographyId}
+            disabled={lockChoreography}
+            onChange={(event) => {
+              setChoreographyId(event.target.value);
+              setAudience("");
+            }}
+          >
+            <option value="">None</option>
+            {choreographyOptions.map((choreography) => (
+              <option key={choreography.id} value={choreography.id}>
+                {choreography.title}
+              </option>
+            ))}
+          </Select>
+        </div>
+      )}
+      {eventType?.kind === "REPETITION" && choreographyId && (
+        <>
+          <RepetitionAudienceSelect
+            groups={groupOptions}
+            value={audience}
+            onChange={setAudience}
+          />
+          <ParticipantConflictWarnings
+            choreographyId={choreographyId}
+            startsAt={dateTimePartsToDate(start)}
+            endsAt={dateTimePartsToDate(end)}
+            groupId={audience}
+          />
+        </>
+      )}
+      {eventType?.kind === "REPRESENTATION" && choreographyOptions && choreographyOptions.length > 0 && (
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium text-stone-700">
+            Link to choreographies (optional)
+          </legend>
+          {choreographyOptions.map((choreography) => (
+            <label key={choreography.id} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={selectedChoreographyIds.includes(choreography.id)}
+                disabled={lockChoreography && choreography.id === defaultChoreographyId}
+                onChange={(event) => {
+                  setSelectedChoreographyIds((current) =>
+                    event.target.checked
+                      ? [...current, choreography.id]
+                      : current.filter((id) => id !== choreography.id),
+                  );
+                }}
+                className="rounded border-stone-300"
+              />
+              {choreography.title}
+            </label>
+          ))}
+        </fieldset>
+      )}
       <div>
-        <Label htmlFor="event-description">Description</Label>
+        <Label htmlFor="event-description">{generic ? "Description" : "Notes"}</Label>
         <Textarea
           id="event-description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          value={generic ? description : notes}
+          onChange={(e) =>
+            generic ? setDescription(e.target.value) : setNotes(e.target.value)
+          }
           rows={4}
-          placeholder="Optional details about this event"
+          placeholder={generic ? "Optional details about this event" : "Optional notes"}
         />
       </div>
-      {participantOptions && participantOptions.length > 0 && (
+      {generic && participantOptions && participantOptions.length > 0 && (
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium text-stone-700">
             Participants (optional)
@@ -207,27 +360,43 @@ export function CreateEventForm({
           ))}
         </fieldset>
       )}
-      <ParticipationSettingsFields
-        idPrefix="create-event"
-        value={participation}
-        onChange={setParticipation}
-      />
+      {generic && (
+        <ParticipationSettingsFields
+          idPrefix="create-event"
+          value={participation}
+          onChange={setParticipation}
+        />
+      )}
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading}>
+      <Button type="submit" disabled={loading || !typeId}>
         {loading ? "Creating..." : "Create event"}
       </Button>
     </form>
   );
 }
 
-export function EditEventForm({ event }: { event: SerializedEvent }) {
+export function EditEventForm({
+  event,
+  eventTypes,
+  choreographyOptions,
+}: {
+  event: SerializedEvent;
+  eventTypes: SerializedEventType[];
+  choreographyOptions?: ChoreographyOption[];
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [typeId, setTypeId] = useState(event.type.id);
   const [title, setTitle] = useState(event.title);
   const [description, setDescription] = useState(event.description ?? "");
+  const [notes, setNotes] = useState(event.notes ?? "");
   const [locationSelection, setLocationSelection] = useState<LocationSelection>(() =>
     selectionFromRecord(event),
+  );
+  const [choreographyId, setChoreographyId] = useState(event.choreographyId ?? "");
+  const [selectedChoreographyIds, setSelectedChoreographyIds] = useState(
+    event.choreographies.map((item) => item.id),
   );
   const [participation, setParticipation] = useState<ParticipationSettings>({
     allowParticipantJoin: event.allowParticipantJoin,
@@ -242,6 +411,9 @@ export function EditEventForm({ event }: { event: SerializedEvent }) {
       ? dateToDateTimeParts(new Date(event.endsAt))
       : addOneHour(dateToDateTimeParts(new Date(event.startsAt))),
   );
+
+  const eventType = selectedEventType(eventTypes, typeId);
+  const generic = isGenericEventKind(eventType?.kind ?? null);
 
   function handleStartChange(nextStart: DateTimeParts) {
     setStart(nextStart);
@@ -267,12 +439,17 @@ export function EditEventForm({ event }: { event: SerializedEvent }) {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        title,
-        description: description || undefined,
+        typeId,
+        title: title || undefined,
+        description: generic ? description || undefined : undefined,
+        notes: generic ? undefined : notes || undefined,
         ...locationPayload(locationSelection),
         startsAt: startsAt.toISOString(),
         endsAt: endsAt?.toISOString(),
-        ...participation,
+        choreographyId: eventType?.kind === "REPETITION" ? choreographyId || null : null,
+        choreographyIds:
+          eventType?.kind === "REPRESENTATION" ? selectedChoreographyIds : undefined,
+        ...(generic ? participation : {}),
       }),
     });
 
@@ -291,12 +468,27 @@ export function EditEventForm({ event }: { event: SerializedEvent }) {
     <div className="space-y-4">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
+          <Label htmlFor="edit-event-type">Type</Label>
+          <Select
+            id="edit-event-type"
+            className="mt-1 block w-full"
+            value={typeId}
+            onChange={(formEvent) => setTypeId(formEvent.target.value)}
+          >
+            {eventTypes.map((type) => (
+              <option key={type.id} value={type.id}>
+                {type.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div>
           <Label htmlFor="edit-event-title">Title</Label>
           <Input
             id="edit-event-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            required
+            required={generic}
           />
         </div>
         <EventScheduleFields
@@ -310,20 +502,66 @@ export function EditEventForm({ event }: { event: SerializedEvent }) {
           value={locationSelection}
           onChange={setLocationSelection}
         />
+        {eventType?.kind === "REPETITION" && choreographyOptions && (
+          <div>
+            <Label htmlFor="edit-event-choreography">Choreography</Label>
+            <Select
+              id="edit-event-choreography"
+              className="mt-1 block w-full"
+              value={choreographyId}
+              onChange={(formEvent) => setChoreographyId(formEvent.target.value)}
+            >
+              <option value="">None</option>
+              {choreographyOptions.map((choreography) => (
+                <option key={choreography.id} value={choreography.id}>
+                  {choreography.title}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
+        {eventType?.kind === "REPRESENTATION" && choreographyOptions && (
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium text-stone-700">
+              Linked choreographies
+            </legend>
+            {choreographyOptions.map((choreography) => (
+              <label key={choreography.id} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={selectedChoreographyIds.includes(choreography.id)}
+                  onChange={(formEvent) => {
+                    setSelectedChoreographyIds((current) =>
+                      formEvent.target.checked
+                        ? [...current, choreography.id]
+                        : current.filter((id) => id !== choreography.id),
+                    );
+                  }}
+                  className="rounded border-stone-300"
+                />
+                {choreography.title}
+              </label>
+            ))}
+          </fieldset>
+        )}
         <div>
-          <Label htmlFor="edit-event-description">Description</Label>
+          <Label htmlFor="edit-event-description">{generic ? "Description" : "Notes"}</Label>
           <Textarea
             id="edit-event-description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={generic ? description : notes}
+            onChange={(e) =>
+              generic ? setDescription(e.target.value) : setNotes(e.target.value)
+            }
             rows={4}
           />
         </div>
-        <ParticipationSettingsFields
-          idPrefix="edit-event"
-          value={participation}
-          onChange={setParticipation}
-        />
+        {generic && (
+          <ParticipationSettingsFields
+            idPrefix="edit-event"
+            value={participation}
+            onChange={setParticipation}
+          />
+        )}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <Button type="submit" disabled={loading}>
           {loading ? "Saving..." : "Save changes"}

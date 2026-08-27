@@ -22,14 +22,12 @@ const baseNavItems: NavItem[] = [
     match: (pathname) => pathname.startsWith("/choreographies"),
   },
   {
-    href: "/representations",
-    label: "Representations",
-    match: (pathname) => pathname.startsWith("/representations"),
-  },
-  {
     href: "/events",
     label: "Events",
-    match: (pathname) => pathname.startsWith("/events"),
+    match: (pathname) =>
+      pathname.startsWith("/events") ||
+      pathname.startsWith("/representations") ||
+      pathname.startsWith("/repetitions"),
   },
   {
     href: "/unavailability",

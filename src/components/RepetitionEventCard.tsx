@@ -42,16 +42,16 @@ export function RepetitionEventCard({
         </div>
         <div className="flex items-center gap-1">
           <Link
-            href={`/repetitions/${repetition.id}`}
+            href={`/events/${repetition.id}`}
             className="text-sm font-medium text-stone-900 hover:underline"
           >
             View details
           </Link>
           {canEdit && (
             <>
-              <EditIconLink href={`/repetitions/${repetition.id}`} label="Edit repetition" />
+              <EditIconLink href={`/events/${repetition.id}`} label="Edit repetition" />
               <DeleteEventButton
-                deleteUrl={`/api/repetitions/${repetition.id}`}
+                deleteUrl={`/api/events/${repetition.id}`}
                 confirmMessage="Delete this repetition? This cannot be undone."
               />
             </>

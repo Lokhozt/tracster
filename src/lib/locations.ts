@@ -77,18 +77,8 @@ export async function resolveLocationAssignment(
 }
 
 export async function snapshotLocationUsage(locationId: string, name: string) {
-  await prisma.$transaction([
-    prisma.repetitionEvent.updateMany({
-      where: { locationId },
-      data: { location: name, locationId: null },
-    }),
-    prisma.representation.updateMany({
-      where: { locationId },
-      data: { location: name, locationId: null },
-    }),
-    prisma.event.updateMany({
-      where: { locationId },
-      data: { location: name, locationId: null },
-    }),
-  ]);
+  await prisma.event.updateMany({
+    where: { locationId },
+    data: { location: name, locationId: null },
+  });
 }

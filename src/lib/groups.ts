@@ -79,7 +79,7 @@ export type RepetitionAudience = {
 
 export async function getRepetitionAudience(
   repetition: {
-    choreographyId: string;
+    choreographyId: string | null;
     groupId: string | null;
     group?: {
       name?: string;
@@ -95,7 +95,7 @@ export async function getRepetitionAudience(
     };
   }
 
-  if (repetition.groupId) {
+  if (repetition.groupId && repetition.choreographyId) {
     const group = await prisma.choreographyGroup.findFirst({
       where: { id: repetition.groupId, choreographyId: repetition.choreographyId },
       include: { members: { select: { userId: true } } },
@@ -108,6 +108,14 @@ export async function getRepetitionAudience(
         memberIds: group.members.map((member) => member.userId),
       };
     }
+  }
+
+  if (!repetition.choreographyId) {
+    return {
+      groupId: null,
+      groupName: null,
+      memberIds: [],
+    };
   }
 
   const members = await prisma.choreographyMember.findMany({
@@ -124,7 +132,7 @@ export async function getRepetitionAudience(
 
 export async function isRepetitionParticipant(
   repetition: {
-    choreographyId: string;
+    choreographyId: string | null;
     groupId: string | null;
     group?: {
       name?: string;

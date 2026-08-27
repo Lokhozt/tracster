@@ -4,9 +4,10 @@ import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { canEditChoreography } from "@/lib/permissions";
 import {
-  canEditRepresentation,
+  assertRepresentationEvent,
   getLinkableChoreographies,
 } from "@/lib/representations";
+import { canEditEvent } from "@/lib/events";
 import { linkChoreographySchema } from "@/lib/validations";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -19,8 +20,12 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
 
-  if (!(await canEditRepresentation(id, user.id))) {
+  if (!(await canEditEvent(id, user.id))) {
     return forbidden();
+  }
+
+  if (!(await assertRepresentationEvent(id))) {
+    return notFound("Representation");
   }
 
   const choreographies = await getLinkableChoreographies(user.id, id);
@@ -36,15 +41,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
 
-  if (!(await canEditRepresentation(id, user.id))) {
+  if (!(await canEditEvent(id, user.id))) {
     return forbidden();
   }
 
-  const representation = await prisma.representation.findUnique({
-    where: { id },
-    select: { id: true },
-  });
-  if (!representation) {
+  if (!(await assertRepresentationEvent(id))) {
     return notFound("Representation");
   }
 
@@ -66,17 +67,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return forbidden();
   }
 
-  const link = await prisma.choreographyRepresentation.upsert({
+  const link = await prisma.eventChoreography.upsert({
     where: {
-      choreographyId_representationId: {
+      eventId_choreographyId: {
         choreographyId: parsed.data.choreographyId,
-        representationId: id,
+        eventId: id,
       },
     },
     update: {},
     create: {
       choreographyId: parsed.data.choreographyId,
-      representationId: id,
+      eventId: id,
     },
     include: {
       choreography: { select: { id: true, title: true } },
@@ -94,7 +95,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
 
-  if (!(await canEditRepresentation(id, user.id))) {
+  if (!(await canEditEvent(id, user.id))) {
     return forbidden();
   }
 
@@ -104,9 +105,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
-  await prisma.choreographyRepresentation.deleteMany({
+  await prisma.eventChoreography.deleteMany({
     where: {
-      representationId: id,
+      eventId: id,
       choreographyId: parsed.data.choreographyId,
     },
   });
