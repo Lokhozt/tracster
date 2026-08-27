@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { visibleChoreographyWhere } from "@/lib/choreographies";
+import { eventKindAllowsChoreographyLinks } from "@/lib/event-type-helpers";
 import { getGroupForChoreography } from "@/lib/groups";
 import { basicUserSelect, formatUserName } from "@/lib/users";
 
@@ -169,7 +170,7 @@ export async function findParticipantConflicts(options: {
       continue;
     }
 
-    if (event.type.kind === "REPRESENTATION") {
+    if (eventKindAllowsChoreographyLinks(event.type.kind)) {
       for (const link of event.choreographies) {
         for (const member of link.choreography.members) {
           if (audience.includes(member.userId)) {
@@ -177,7 +178,9 @@ export async function findParticipantConflicts(options: {
           }
         }
       }
-      continue;
+      if (event.type.kind === "REPRESENTATION") {
+        continue;
+      }
     }
 
     for (const participant of event.participants) {

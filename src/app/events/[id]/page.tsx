@@ -15,7 +15,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/datetime";
 import { canEditEvent, canViewEvent, serializeEvent } from "@/lib/events";
-import { getEventTypes, isGenericEventKind } from "@/lib/event-types";
+import { getEventTypes, eventKindAllowsChoreographyLinks, isGenericEventKind } from "@/lib/event-types";
 import { getRepetitionAudience, isRepetitionParticipant } from "@/lib/groups";
 import { listedLocationInclude } from "@/lib/locations";
 import { canEditChoreography } from "@/lib/permissions";
@@ -233,7 +233,6 @@ export default async function EventDetailPage({ params }: PageProps) {
             requests={eventRecord.joinRequests.map((request) => ({
               id: request.user.id,
               name: serializeBasicUser(request.user).name,
-              email: request.user.email,
             }))}
           />
         </div>
@@ -267,7 +266,6 @@ export default async function EventDetailPage({ params }: PageProps) {
                   >
                     <div>
                       <p className="font-medium">{formatUserName(member)}</p>
-                      <p className="text-sm text-stone-500">{member.email}</p>
                     </div>
                     <p
                       className={`text-sm font-medium ${
@@ -284,11 +282,16 @@ export default async function EventDetailPage({ params }: PageProps) {
         </Card>
       )}
 
-      {event.type.kind === "REPRESENTATION" && (
+      {eventKindAllowsChoreographyLinks(event.type.kind) && (
         <div className="mb-6">
           <RepresentationChoreographiesSection
             representationId={id}
             canEdit={canEdit}
+            description={
+              event.type.kind === "DEMONSTRATION"
+                ? "Pieces shown in this demonstration."
+                : "Pieces performed in this representation."
+            }
             choreographies={eventRecord.choreographies.map((link) => ({
               id: link.choreography.id,
               title: link.choreography.title,

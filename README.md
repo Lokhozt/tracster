@@ -15,6 +15,7 @@ Tracster is a web application for dance and performance associations to plan reh
 - **Choreographies** — create pieces, assign choreographers and participants, and optionally split participants into **groups**.
 - **Repetitions** — schedule rehearsals for a whole choreography or a specific group.
 - **Representations** — schedule performances and attach choreographies to them (shown on the schedule).
+- **Demonstrations** — schedule showcases linked to choreographies, with their own participant lists.
 - **Events** — general association events with their own participant lists.
 - **Availability** — participants mark each repetition as available, unavailable, or maybe.
 - **Unavailability** — members record personal timeframes they cannot attend; the calendar selection is date-accurate.
@@ -28,7 +29,7 @@ Tracster is a web application for dance and performance associations to plan reh
 3. They can let others **join** or **request to join**, and choose whether the piece is hidden from non-participants.
 4. A choreographer schedules a **repetition** (date, time, optional location and group). Conflict warnings appear if the audience is already booked or unavailable.
 5. Assigned participants respond with **availability** (available, unavailable, maybe) and can maintain a personal **unavailability** calendar.
-6. Choreographers (or admins) schedule **representations** and attach choreographies, and can also create standalone **events**.
+6. Choreographers (or admins) schedule **representations** and **demonstrations** and attach choreographies, and can also create standalone **events**.
 7. The home **schedule** shows repetitions, representations, and events the user is involved in.
 
 ## Getting started
@@ -123,6 +124,7 @@ prisma/
 | GET / POST / DELETE | `/api/representations/:id/choreographies` | Attach or detach choreographies |
 | GET / POST | `/api/events` | List / create events |
 | GET / PATCH / DELETE | `/api/events/:id` | Event details / update / delete |
+| GET / POST / DELETE | `/api/events/:id/choreographies` | Attach or detach choreographies (representations and demonstrations) |
 | POST / DELETE | `/api/events/:id/participants` | Assign or remove participants |
 | POST | `/api/events/:id/join` | Join event |
 | POST / PATCH / DELETE | `/api/events/:id/join-requests` | Request, accept, or withdraw join |
@@ -140,9 +142,8 @@ prisma/
 - **RepetitionEvent** — a scheduled rehearsal
 - **AvailabilityResponse** — participant response per repetition
 - **UserUnavailability** — personal unavailable timeframes
-- **Representation** — a performance date
-- **ChoreographyRepresentation** — choreographies on a representation
-- **Event** / **EventParticipant** / **EventJoinRequest** — association events and attendance
+- **EventType** — includes immutable kinds: Event, Repetition, Representation, Competition, Demonstration
+- **Event** / **EventChoreography** / **EventParticipant** / **EventJoinRequest** — scheduled items, linked pieces, and attendance
 
 ## Next steps
 

@@ -760,7 +760,7 @@ function LinkChoreographyForm({
 
     async function loadOptions() {
       setFetching(true);
-      const response = await fetch(`/api/representations/${representationId}/choreographies`);
+      const response = await fetch(`/api/events/${representationId}/choreographies`);
       const data = await response.json();
       if (!cancelled) {
         if (response.ok) {
@@ -789,7 +789,7 @@ function LinkChoreographyForm({
     setLoading(true);
     setError(null);
 
-    const response = await fetch(`/api/representations/${representationId}/choreographies`, {
+    const response = await fetch(`/api/events/${representationId}/choreographies`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ choreographyId }),
@@ -862,6 +862,7 @@ export function RepresentationChoreographiesSection({
   representationId,
   choreographies,
   canEdit,
+  description = "Pieces performed in this representation.",
 }: {
   representationId: string;
   choreographies: {
@@ -872,6 +873,7 @@ export function RepresentationChoreographiesSection({
     repetitionCount: number;
   }[];
   canEdit: boolean;
+  description?: string;
 }) {
   const [showLinkForm, setShowLinkForm] = useState(false);
 
@@ -881,7 +883,7 @@ export function RepresentationChoreographiesSection({
         <div>
           <h2 className="text-xl font-semibold">Linked choreographies</h2>
           <p className="mt-1 text-sm text-stone-500">
-            Pieces performed in this representation.
+            {description}
           </p>
         </div>
         {canEdit && !showLinkForm && (
@@ -918,7 +920,7 @@ export function RepresentationChoreographiesSection({
                 </Link>
                 {canEdit && (
                   <DeleteEventButton
-                    deleteUrl={`/api/representations/${representationId}/choreographies`}
+                    deleteUrl={`/api/events/${representationId}/choreographies`}
                     deleteBody={{ choreographyId: choreography.id }}
                     confirmMessage={`Remove ${choreography.title} from this representation? The choreography itself will not be deleted.`}
                   />

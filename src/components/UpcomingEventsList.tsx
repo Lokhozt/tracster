@@ -32,6 +32,9 @@ function eventKindClassName(kind: SerializedScheduleEvent["typeKind"]) {
   if (kind === "COMPETITION") {
     return "bg-violet-100 text-violet-900";
   }
+  if (kind === "DEMONSTRATION") {
+    return "bg-teal-100 text-teal-900";
+  }
   if (kind === "REPETITION") {
     return "bg-stone-100 text-stone-700";
   }

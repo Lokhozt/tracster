@@ -152,6 +152,7 @@ enum EventKind {
   REPETITION
   REPRESENTATION
   COMPETITION
+  DEMONSTRATION
 }
 
 model EventType {

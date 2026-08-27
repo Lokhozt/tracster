@@ -1,6 +1,7 @@
 import { listedEventWhere } from "@/lib/participation";
 import { prisma } from "@/lib/db";
 import { canEditEvent } from "@/lib/events";
+import { eventKindAllowsChoreographyLinks } from "@/lib/event-type-helpers";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { hasGlobalAccess } from "@/lib/roles";
 import type { SerializedScheduleEvent } from "@/lib/schedule-filters";
@@ -80,7 +81,7 @@ export async function getUserScheduleEvents(userId: string) {
         event.createdById === userId ||
         event.participants.length > 0 ||
         (kind === "REPETITION" && repetitionMember) ||
-        (kind === "REPRESENTATION" && involvedInLinkedChoreography);
+        (eventKindAllowsChoreographyLinks(kind) && involvedInLinkedChoreography);
 
       return {
         id: event.id,
@@ -96,7 +97,7 @@ export async function getUserScheduleEvents(userId: string) {
         isMember:
           kind === "REPETITION"
             ? repetitionMember
-            : kind === "REPRESENTATION"
+            : eventKindAllowsChoreographyLinks(kind)
               ? involvedInLinkedChoreography
               : event.participants.length > 0,
         isParticipating,

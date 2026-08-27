@@ -7,7 +7,7 @@ import { Button, Card } from "@/components/ui";
 export type JoinRequestItem = {
   id: string;
   name: string;
-  email: string;
+  email?: string;
 };
 
 export function JoinRequestsList({
@@ -55,7 +55,9 @@ export function JoinRequestsList({
             >
               <div>
                 <p className="font-medium">{request.name}</p>
-                <p className="text-sm text-stone-500">{request.email}</p>
+                {request.email && (
+                  <p className="text-sm text-stone-500">{request.email}</p>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button

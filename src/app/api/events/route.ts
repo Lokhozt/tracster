@@ -9,6 +9,7 @@ import {
   validateEventTypeFields,
 } from "@/lib/events";
 import { getEventType } from "@/lib/event-types";
+import { eventKindAllowsChoreographyLinks, isGenericEventKind } from "@/lib/event-type-helpers";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { canCreateEvent } from "@/lib/site-settings";
 
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
     return jsonError(location.error);
   }
 
-  const isGeneric = eventType.kind !== "REPETITION" && eventType.kind !== "REPRESENTATION";
+  const isGeneric = isGenericEventKind(eventType.kind);
   const event = await prisma.event.create({
     data: {
       typeId: eventType.id,
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
             }
           : undefined,
       choreographies:
-        eventType.kind === "REPRESENTATION" && parsed.data.choreographyIds?.length
+        eventKindAllowsChoreographyLinks(eventType.kind) && parsed.data.choreographyIds?.length
           ? {
               create: parsed.data.choreographyIds.map((choreographyId) => ({
                 choreographyId,

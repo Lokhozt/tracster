@@ -4,11 +4,11 @@ import { CreateEventForm } from "@/components/EventForms";
 import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { getEventTypeByKind, getEventTypes } from "@/lib/event-types";
+import { getEventTypeByKind, getEventTypes, eventKindSkipsGenericCreatePermission } from "@/lib/event-types";
 import { canCreateEvent } from "@/lib/site-settings";
 import { basicUserSelect, serializeBasicUser } from "@/lib/users";
 import { canEditChoreography } from "@/lib/permissions";
-import type { EventKind } from "@/generated/prisma/client";
+import type { EventKind } from "@/lib/event-type-helpers";
 
 type PageProps = {
   searchParams: Promise<{ type?: string; choreographyId?: string }>;
@@ -19,6 +19,7 @@ const kindAliases: Record<string, EventKind> = {
   repetition: "REPETITION",
   representation: "REPRESENTATION",
   competition: "COMPETITION",
+  demonstration: "DEMONSTRATION",
 };
 
 export default async function NewEventPage({ searchParams }: PageProps) {
@@ -34,7 +35,7 @@ export default async function NewEventPage({ searchParams }: PageProps) {
     (params.type ? eventTypes.find((type) => type.id === params.type) : undefined) ??
     (requestedKind ? await getEventTypeByKind(requestedKind) : undefined);
 
-  const needsGenericCreate = requestedType?.kind !== "REPETITION" && requestedType?.kind !== "REPRESENTATION";
+  const needsGenericCreate = !eventKindSkipsGenericCreatePermission(requestedType?.kind ?? null);
   if (needsGenericCreate && !(await canCreateEvent(user.id))) {
     redirect("/events");
   }

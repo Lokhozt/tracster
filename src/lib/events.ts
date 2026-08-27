@@ -6,6 +6,7 @@ import { hasGlobalAccess } from "@/lib/roles";
 import {
   defaultEventTitle,
   isGenericEventKind,
+  eventKindAllowsChoreographyLinks,
   type SerializedEventType,
   serializeEventType,
 } from "@/lib/event-type-helpers";
@@ -92,7 +93,7 @@ export async function canViewEvent(eventId: string, userId: string): Promise<boo
     return canViewChoreography(event.choreographyId, userId);
   }
 
-  if (kind === "REPRESENTATION") {
+  if (eventKindAllowsChoreographyLinks(kind)) {
     for (const link of event.choreographies) {
       if (await canViewChoreography(link.choreographyId, userId)) {
         return true;
@@ -122,7 +123,7 @@ export async function canEditEvent(eventId: string, userId: string): Promise<boo
     return canEditChoreography(event.choreographyId, userId);
   }
 
-  if (event.type.kind === "REPRESENTATION") {
+  if (eventKindAllowsChoreographyLinks(event.type.kind)) {
     for (const link of event.choreographies) {
       if (await canEditChoreography(link.choreographyId, userId)) {
         return true;
@@ -230,7 +231,7 @@ export async function canCreateEventOfType(options: {
     return canEditChoreography(options.choreographyId, options.userId);
   }
 
-  if (options.kind === "REPRESENTATION") {
+  if (eventKindAllowsChoreographyLinks(options.kind)) {
     const ids = options.choreographyIds ?? [];
     if (ids.length === 0) {
       return options.canCreateGeneric;
@@ -278,8 +279,8 @@ export async function validateEventTypeFields(options: {
     return "Only repetition events can be attached to a single choreography.";
   }
 
-  if (options.type.kind !== "REPRESENTATION" && (options.choreographyIds?.length ?? 0) > 0) {
-    return "Only representation events can be attached to multiple choreographies.";
+  if (!eventKindAllowsChoreographyLinks(options.type.kind) && (options.choreographyIds?.length ?? 0) > 0) {
+    return "Only representation and demonstration events can be attached to choreographies.";
   }
 
   return null;

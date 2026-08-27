@@ -153,6 +153,17 @@ async function main() {
       sortOrder: 3,
     },
   });
+  await prisma.eventType.upsert({
+    where: { id: "event-type-demonstration" },
+    update: { kind: "DEMONSTRATION", immutable: true, sortOrder: 4 },
+    create: {
+      id: "event-type-demonstration",
+      name: "Demonstration",
+      kind: "DEMONSTRATION",
+      immutable: true,
+      sortOrder: 4,
+    },
+  });
 
   const repetition = await prisma.event.upsert({
     where: { id: "seed-repetition-1" },

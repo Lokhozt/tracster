@@ -10,6 +10,8 @@ export {
   BUILTIN_EVENT_TYPE_IDS,
   BUILTIN_EVENT_TYPES,
   defaultEventTitle,
+  eventKindAllowsChoreographyLinks,
+  eventKindSkipsGenericCreatePermission,
   isGenericEventKind,
   serializeEventType,
   type SerializedEventType,

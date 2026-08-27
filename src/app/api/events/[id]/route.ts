@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { eventSchema } from "@/lib/validations";
 import { canEditEvent, canViewEvent, validateEventTypeFields } from "@/lib/events";
-import { getEventType, isGenericEventKind } from "@/lib/event-types";
+import { getEventType, eventKindAllowsChoreographyLinks, isGenericEventKind } from "@/lib/event-types";
 import { resolveLocationFromParsed } from "@/lib/locations";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -114,7 +114,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         choreographyId: eventType.kind === "REPETITION" ? parsed.data.choreographyId ?? null : null,
         groupId: eventType.kind === "REPETITION" ? parsed.data.groupId ?? null : null,
         choreographies:
-          eventType.kind === "REPRESENTATION" && parsed.data.choreographyIds?.length
+          eventKindAllowsChoreographyLinks(eventType.kind) && parsed.data.choreographyIds?.length
             ? {
                 create: parsed.data.choreographyIds.map((choreographyId) => ({
                   choreographyId,

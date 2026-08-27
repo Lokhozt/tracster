@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
+import { EditIconLink } from "@/components/EditIconLink";
 import {
   emptyLocationSelection,
   LocationPicker,
@@ -20,9 +22,11 @@ import {
   dateTimePartsToDate,
   dateToDateTimeParts,
   defaultStartDateTime,
+  formatDateTime,
   type DateTimeParts,
 } from "@/lib/datetime";
 import {
+  eventKindAllowsChoreographyLinks,
   isGenericEventKind,
   type SerializedEventType,
 } from "@/lib/event-type-helpers";
@@ -134,6 +138,7 @@ export function CreateEventForm({
 
   const eventType = selectedEventType(eventTypes, typeId);
   const generic = isGenericEventKind(eventType?.kind ?? null);
+  const allowsChoreographyLinks = eventKindAllowsChoreographyLinks(eventType?.kind ?? null);
   const groupOptions = groups.length > 0 ? groups : fetchedGroups;
 
   useEffect(() => {
@@ -199,8 +204,7 @@ export function CreateEventForm({
             : undefined,
         choreographyId:
           eventType?.kind === "REPETITION" ? choreographyId || null : null,
-        choreographyIds:
-          eventType?.kind === "REPRESENTATION" ? selectedChoreographyIds : undefined,
+        choreographyIds: allowsChoreographyLinks ? selectedChoreographyIds : undefined,
         groupId: eventType?.kind === "REPETITION" ? audience || undefined : undefined,
         ...(generic ? participation : {}),
       }),
@@ -299,7 +303,7 @@ export function CreateEventForm({
           />
         </>
       )}
-      {eventType?.kind === "REPRESENTATION" && choreographyOptions && choreographyOptions.length > 0 && (
+      {allowsChoreographyLinks && choreographyOptions && choreographyOptions.length > 0 && (
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium text-stone-700">
             Link to choreographies (optional)
@@ -355,7 +359,7 @@ export function CreateEventForm({
                 }}
                 className="rounded border-stone-300"
               />
-              {user.name} ({user.email})
+              {user.name}
             </label>
           ))}
         </fieldset>
@@ -414,6 +418,7 @@ export function EditEventForm({
 
   const eventType = selectedEventType(eventTypes, typeId);
   const generic = isGenericEventKind(eventType?.kind ?? null);
+  const allowsChoreographyLinks = eventKindAllowsChoreographyLinks(eventType?.kind ?? null);
 
   function handleStartChange(nextStart: DateTimeParts) {
     setStart(nextStart);
@@ -447,8 +452,7 @@ export function EditEventForm({
         startsAt: startsAt.toISOString(),
         endsAt: endsAt?.toISOString(),
         choreographyId: eventType?.kind === "REPETITION" ? choreographyId || null : null,
-        choreographyIds:
-          eventType?.kind === "REPRESENTATION" ? selectedChoreographyIds : undefined,
+        choreographyIds: allowsChoreographyLinks ? selectedChoreographyIds : undefined,
         ...(generic ? participation : {}),
       }),
     });
@@ -520,7 +524,7 @@ export function EditEventForm({
             </Select>
           </div>
         )}
-        {eventType?.kind === "REPRESENTATION" && choreographyOptions && (
+        {allowsChoreographyLinks && choreographyOptions && (
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium text-stone-700">
               Linked choreographies
@@ -601,7 +605,6 @@ export function EventParticipantsList({
           >
             <div>
               <p className="font-medium">{participant.name}</p>
-              <p className="text-sm text-stone-500">{participant.email}</p>
             </div>
             {canEdit && (
               <DeleteEventButton
@@ -671,7 +674,7 @@ export function AssignEventParticipantForm({
           <option value="">Select a user</option>
           {availableUsers.map((user) => (
             <option key={user.id} value={user.id}>
-              {user.name} ({user.email})
+              {user.name}
             </option>
           ))}
         </select>
@@ -681,5 +684,113 @@ export function AssignEventParticipantForm({
         {loading ? "Adding..." : "Add participant"}
       </Button>
     </form>
+  );
+}
+
+export type DemonstrationItem = {
+  id: string;
+  title: string | null;
+  startsAt: string;
+  endsAt: string | null;
+  location: string | null;
+};
+
+export function DemonstrationsSection({
+  choreographyId,
+  choreographyTitle,
+  demonstrations,
+  canEdit,
+  eventTypes,
+  participantOptions,
+}: {
+  choreographyId: string;
+  choreographyTitle: string;
+  demonstrations: DemonstrationItem[];
+  canEdit: boolean;
+  eventTypes: SerializedEventType[];
+  participantOptions: UserOption[];
+}) {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const demonstrationType = eventTypes.find((type) => type.kind === "DEMONSTRATION");
+
+  return (
+    <section className="mt-8">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold">Demonstrations</h2>
+        {canEdit && !showAddForm && demonstrationType && (
+          <Button type="button" onClick={() => setShowAddForm(true)}>
+            Add a demonstration
+          </Button>
+        )}
+      </div>
+
+      {canEdit && showAddForm && demonstrationType && (
+        <div className="mb-6 rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+          <CreateEventForm
+            eventTypes={eventTypes}
+            participantOptions={participantOptions}
+            choreographyOptions={[{ id: choreographyId, title: choreographyTitle }]}
+            defaultTypeId={demonstrationType.id}
+            lockType
+            defaultChoreographyId={choreographyId}
+            lockChoreography
+            onSuccess={() => setShowAddForm(false)}
+            redirectBasePath="/events"
+          />
+          <div className="mt-3">
+            <Button type="button" variant="secondary" onClick={() => setShowAddForm(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {demonstrations.length === 0 ? (
+        <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+          <p className="text-stone-600">No demonstrations linked yet.</p>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {demonstrations.map((demonstration) => (
+            <div
+              key={demonstration.id}
+              className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <Link
+                    href={`/events/${demonstration.id}`}
+                    className="font-semibold hover:text-stone-700"
+                  >
+                    {demonstration.title || "Demonstration"}
+                  </Link>
+                  <p className="mt-1 text-sm text-stone-600">
+                    {formatDateTime(new Date(demonstration.startsAt))}
+                    {demonstration.endsAt &&
+                      ` – ${formatDateTime(new Date(demonstration.endsAt))}`}
+                  </p>
+                  {demonstration.location && (
+                    <p className="mt-1 text-sm text-stone-500">{demonstration.location}</p>
+                  )}
+                </div>
+                {canEdit && (
+                  <div className="flex items-center gap-1">
+                    <EditIconLink
+                      href={`/events/${demonstration.id}`}
+                      label="Edit demonstration"
+                    />
+                    <DeleteEventButton
+                      deleteUrl={`/api/events/${demonstration.id}/choreographies`}
+                      deleteBody={{ choreographyId }}
+                      confirmMessage="Remove this demonstration from the choreography? The demonstration itself will not be deleted."
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
