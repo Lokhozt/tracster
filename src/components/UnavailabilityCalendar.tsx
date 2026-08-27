@@ -333,6 +333,27 @@ export function UnavailabilityCalendar({
     };
   }, [scrollLocked]);
 
+  async function markDayUnavailable(dayIndex: number) {
+    if (saving || interaction) {
+      return;
+    }
+
+    const startsAt = startOfDay(addDays(weekStart, dayIndex));
+    const endsAt = addDays(startsAt, 1);
+    const covering = timeframesRef.current.find((entry) => {
+      const start = new Date(entry.startsAt).getTime();
+      const end = new Date(entry.endsAt).getTime();
+      return start <= startsAt.getTime() && end >= endsAt.getTime();
+    });
+
+    if (covering) {
+      setSelectedId(covering.id);
+      return;
+    }
+
+    await persistTimeframe(null, startsAt, endsAt);
+  }
+
   async function persistTimeframe(id: string | null, startsAt: Date, endsAt: Date) {
     if (isZeroDuration(startsAt, endsAt)) {
       if (id) {
@@ -534,6 +555,35 @@ export function UnavailabilityCalendar({
     await removeTimeframe(selectedId);
   }
 
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.repeat || event.key !== "Delete") {
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (!selectedId || interaction || saving) {
+        return;
+      }
+
+      event.preventDefault();
+      void removeTimeframe(selectedId);
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedId, interaction, saving]);
+
   const draftBlocks = useMemo(() => {
     if (!interaction) {
       return [];
@@ -604,10 +654,11 @@ export function UnavailabilityCalendar({
           <div>
             <h2 className="text-lg font-semibold">Week view</h2>
             <p className="mt-1 text-sm text-stone-500">
-              Click and drag on the grid to add periods. Drag blocks to move, or resize from the
-              edges. On a touch screen, press and hold to start drawing — a plain swipe scrolls.
-              Tap a period to select it and lock scrolling so you can drag or resize. Tap empty
-              space to deselect. Collapse a period to nothing to remove it.
+              Click a date to mark the whole day unavailable. Click and drag on the grid to add
+              periods. Drag blocks to move, or resize from the edges. On a touch screen, press and
+              hold to start drawing — a plain swipe scrolls. Tap a period to select it and lock
+              scrolling so you can drag or resize. Press Delete to remove a selected period, or tap
+              empty space to deselect. Collapse a period to nothing to remove it.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -656,19 +707,27 @@ export function UnavailabilityCalendar({
           <div className="min-w-[640px] sm:min-w-[760px]">
             <div className="grid grid-cols-[56px_repeat(7,1fr)] border-b border-stone-200">
               <div />
-              {weekDays.map((day) => (
+              {weekDays.map((day, dayIndex) => (
                 <div
                   key={day.toISOString()}
-                  className="border-l border-stone-200 px-2 py-2 text-center text-sm font-medium"
+                  className="border-l border-stone-200 text-center text-sm font-medium"
                 >
-                  <span
-                    className={cn(
-                      isToday(day) &&
-                        "inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-stone-900 px-2 text-white",
-                    )}
+                  <button
+                    type="button"
+                    className="w-full px-2 py-2 hover:bg-stone-100"
+                    disabled={saving}
+                    aria-label={`Mark ${format(day, "EEEE d MMMM")} unavailable`}
+                    onClick={() => void markDayUnavailable(dayIndex)}
                   >
-                    {format(day, "EEE d")}
-                  </span>
+                    <span
+                      className={cn(
+                        isToday(day) &&
+                          "inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-stone-900 px-2 text-white",
+                      )}
+                    >
+                      {format(day, "EEE d")}
+                    </span>
+                  </button>
                 </div>
               ))}
             </div>
@@ -749,18 +808,15 @@ export function UnavailabilityCalendar({
 
                     {dayBlocks.map(({ entry, position }) => {
                       const style = blockStyle(position.startSlot, position.endSlot);
-                      const durationSlots = Math.max(
-                        1,
-                        Math.round(
-                          differenceInMinutes(
-                            new Date(entry.endsAt),
-                            new Date(entry.startsAt),
-                          ) / SLOT_MINUTES,
-                        ),
-                      );
+                      const durationSlots = Math.max(1, position.endSlot - position.startSlot);
                       const isSelected = selectedId === entry.id;
                       const isDragging =
                         interaction?.type !== "create" && interaction?.id === entry.id;
+                      const startsAt = new Date(entry.startsAt);
+                      const endsAt = new Date(entry.endsAt);
+                      const isFullDay =
+                        startsAt.getTime() === startOfDay(startsAt).getTime() &&
+                        endsAt.getTime() === addDays(startOfDay(startsAt), 1).getTime();
 
                       if (isDragging) {
                         return null;
@@ -830,8 +886,9 @@ export function UnavailabilityCalendar({
                           />
                           <div className="pointer-events-none px-2 py-1">
                             <p className="font-medium">
-                              {formatTime(new Date(entry.startsAt))} –{" "}
-                              {formatTime(new Date(entry.endsAt))}
+                              {isFullDay
+                                ? "All day"
+                                : `${formatTime(startsAt)} – ${formatTime(endsAt)}`}
                             </p>
                           </div>
                           <div

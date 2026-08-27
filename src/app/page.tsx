@@ -3,8 +3,22 @@ import { AppShell } from "@/components/AppShell";
 import { RepetitionCalendar } from "@/components/RepetitionCalendar";
 import { UpcomingEventsList } from "@/components/UpcomingEventsList";
 import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { getUpcomingScheduleEvents, getUserScheduleEvents } from "@/lib/schedule";
-import { formatBirthdayGreeting, getUsersWithBirthdayToday } from "@/lib/users";
+import { formatBirthdayGreeting, isBirthdayOnDate } from "@/lib/users";
+
+async function getUsersWithBirthdayToday(now = new Date()) {
+  const users = await prisma.user.findMany({
+    where: { dateOfBirth: { not: null } },
+    select: { firstName: true, lastName: true, dateOfBirth: true },
+    orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+  });
+
+  return users.filter(
+    (user): user is typeof user & { dateOfBirth: Date } =>
+      user.dateOfBirth !== null && isBirthdayOnDate(user.dateOfBirth, now),
+  );
+}
 
 export default async function HomePage() {
   const user = await getCurrentUser();

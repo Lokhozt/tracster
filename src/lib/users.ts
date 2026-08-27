@@ -1,5 +1,4 @@
 import type { UserRole } from "@/generated/prisma/client";
-import { prisma } from "@/lib/db";
 
 export type UserNameFields = {
   firstName: string;
@@ -23,19 +22,6 @@ export function formatBirthdayGreeting(users: UserNameFields[]): string | null {
   }
 
   return `Today, happy birthday to ${users.map(formatUserName).join(", ")}`;
-}
-
-export async function getUsersWithBirthdayToday(now = new Date()) {
-  const users = await prisma.user.findMany({
-    where: { dateOfBirth: { not: null } },
-    select: { firstName: true, lastName: true, dateOfBirth: true },
-    orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
-  });
-
-  return users.filter(
-    (user): user is typeof user & { dateOfBirth: Date } =>
-      user.dateOfBirth !== null && isBirthdayOnDate(user.dateOfBirth, now),
-  );
 }
 
 export const basicUserSelect = {
