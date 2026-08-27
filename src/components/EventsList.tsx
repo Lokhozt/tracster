@@ -34,19 +34,19 @@ function matchesEventSearch(item: EventListItem, query: string): boolean {
 export function EventsList({ events }: { events: EventListItem[] }) {
   const [search, setSearch] = useState("");
   const [hideNonParticipating, setHideNonParticipating] = useState(false);
-  const [hidePast, setHidePast] = useState(false);
+  const [showPast, setShowPast] = useState(false);
 
   const filteredEvents = useMemo(() => {
     return events.filter((item) => {
       if (hideNonParticipating && !item.isParticipating) {
         return false;
       }
-      if (hidePast && isPastDate(item.event.startsAt)) {
+      if (!showPast && isPastDate(item.event.startsAt)) {
         return false;
       }
       return matchesEventSearch(item, search);
     });
-  }, [events, search, hideNonParticipating, hidePast]);
+  }, [events, search, hideNonParticipating, showPast]);
 
   return (
     <div className="space-y-4">
@@ -76,11 +76,11 @@ export function EventsList({ events }: { events: EventListItem[] }) {
             <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700">
               <input
                 type="checkbox"
-                checked={hidePast}
-                onChange={(event) => setHidePast(event.target.checked)}
+                checked={showPast}
+                onChange={(event) => setShowPast(event.target.checked)}
                 className="rounded border-stone-300"
               />
-              Hide past events
+              Show past events
             </label>
           </div>
         </div>

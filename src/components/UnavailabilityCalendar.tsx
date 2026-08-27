@@ -179,9 +179,12 @@ export function UnavailabilityCalendar({
 }) {
   const grid = dayGrid(startOfDayHour);
   const gridHeightPx = grid.slotsPerDay * SLOT_HEIGHT_PX;
-  const [weekStart, setWeekStart] = useState(() =>
-    startOfWeek(parseISO(initialWeekStart), { weekStartsOn: 1 }),
+  // Earliest week the user can reach: unavailability is only useful going forward.
+  const firstWeekStart = useMemo(
+    () => startOfWeek(parseISO(initialWeekStart), { weekStartsOn: 1 }),
+    [initialWeekStart],
   );
+  const [weekStart, setWeekStart] = useState(firstWeekStart);
   const [timeframes, setTimeframes] = useState(initialTimeframes);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [interaction, setInteraction] = useState<Interaction | null>(null);
@@ -201,6 +204,25 @@ export function UnavailabilityCalendar({
   );
 
   const weekEnd = useMemo(() => addDays(weekStart, 7), [weekStart]);
+
+  const canGoBack = weekStart.getTime() > firstWeekStart.getTime();
+
+  const fullDayIndexes = useMemo(() => {
+    const covered = new Set<number>();
+    weekDays.forEach((day, dayIndex) => {
+      const dayStart = startOfDay(day).getTime();
+      const dayEnd = addDays(startOfDay(day), 1).getTime();
+      const isCovered = timeframes.some(
+        (entry) =>
+          new Date(entry.startsAt).getTime() <= dayStart &&
+          new Date(entry.endsAt).getTime() >= dayEnd,
+      );
+      if (isCovered) {
+        covered.add(dayIndex);
+      }
+    });
+    return covered;
+  }, [weekDays, timeframes]);
 
   const selectedTimeframe = useMemo(
     () => timeframes.find((entry) => entry.id === selectedId) ?? null,
@@ -333,7 +355,7 @@ export function UnavailabilityCalendar({
     };
   }, [scrollLocked]);
 
-  async function markDayUnavailable(dayIndex: number) {
+  async function toggleDayUnavailable(dayIndex: number) {
     if (saving || interaction) {
       return;
     }
@@ -347,7 +369,7 @@ export function UnavailabilityCalendar({
     });
 
     if (covering) {
-      setSelectedId(covering.id);
+      await removeTimeframe(covering.id);
       return;
     }
 
@@ -389,14 +411,19 @@ export function UnavailabilityCalendar({
     }
 
     const saved = data.timeframe as SerializedUnavailability;
-    setTimeframes((current) => {
-      if (id) {
-        return current.map((entry) => (entry.id === id ? saved : entry));
-      }
-      return [...current, saved].sort(
+    const deletedIds = new Set<string>(
+      Array.isArray(data.deletedIds) ? data.deletedIds : [],
+    );
+    setTimeframes((current) =>
+      [
+        ...current.filter(
+          (entry) => entry.id !== saved.id && !deletedIds.has(entry.id),
+        ),
+        saved,
+      ].sort(
         (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-      );
-    });
+      ),
+    );
     setSelectedId(saved.id);
     return saved;
   }
@@ -654,8 +681,8 @@ export function UnavailabilityCalendar({
           <div>
             <h2 className="text-lg font-semibold">Week view</h2>
             <p className="mt-1 text-sm text-stone-500">
-              Click a date to mark the whole day unavailable. Click and drag on the grid to add
-              periods. Drag blocks to move, or resize from the edges. On a touch screen, press and
+              Click a date to mark the whole day unavailable, and click it again to clear it. Click
+              and drag on the grid to add periods. Drag blocks to move, or resize from the edges. On a touch screen, press and
               hold to start drawing — a plain swipe scrolls. Tap a period to select it and lock
               scrolling so you can drag or resize. Press Delete to remove a selected period, or tap
               empty space to deselect. Collapse a period to nothing to remove it.
@@ -665,7 +692,8 @@ export function UnavailabilityCalendar({
             <button
               type="button"
               onClick={() => setWeekStart((date) => subWeeks(date, 1))}
-              className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
+              disabled={!canGoBack}
+              className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
               aria-label="Previous week"
             >
               ←
@@ -683,9 +711,12 @@ export function UnavailabilityCalendar({
             </button>
             <button
               type="button"
-              onClick={() =>
-                setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))
-              }
+              onClick={() => {
+                const current = startOfWeek(new Date(), { weekStartsOn: 1 });
+                setWeekStart(
+                  current.getTime() < firstWeekStart.getTime() ? firstWeekStart : current,
+                );
+              }}
               className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
             >
               Today
@@ -716,8 +747,12 @@ export function UnavailabilityCalendar({
                     type="button"
                     className="w-full px-2 py-2 hover:bg-stone-100"
                     disabled={saving}
-                    aria-label={`Mark ${format(day, "EEEE d MMMM")} unavailable`}
-                    onClick={() => void markDayUnavailable(dayIndex)}
+                    aria-label={
+                      fullDayIndexes.has(dayIndex)
+                        ? `Clear unavailability on ${format(day, "EEEE d MMMM")}`
+                        : `Mark ${format(day, "EEEE d MMMM")} unavailable`
+                    }
+                    onClick={() => void toggleDayUnavailable(dayIndex)}
                   >
                     <span
                       className={cn(

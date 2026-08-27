@@ -55,3 +55,69 @@ export function validateUnavailabilityRange(startsAt: Date, endsAt: Date): strin
 
   return null;
 }
+
+export async function saveMergedUnavailability(
+  userId: string,
+  startsAt: Date,
+  endsAt: Date,
+  existingId?: string,
+) {
+  return prisma.$transaction(async (tx) => {
+    let mergedStart = startsAt;
+    let mergedEnd = endsAt;
+    const absorbedIds = new Set<string>();
+
+    while (true) {
+      const excludedIds = existingId ? [existingId, ...absorbedIds] : [...absorbedIds];
+      const overlapping = await tx.userUnavailability.findMany({
+        where: {
+          userId,
+          ...(excludedIds.length > 0 ? { id: { notIn: excludedIds } } : {}),
+          startsAt: { lte: mergedEnd },
+          endsAt: { gte: mergedStart },
+        },
+      });
+
+      if (overlapping.length === 0) {
+        break;
+      }
+
+      for (const entry of overlapping) {
+        absorbedIds.add(entry.id);
+        if (entry.startsAt < mergedStart) {
+          mergedStart = entry.startsAt;
+        }
+        if (entry.endsAt > mergedEnd) {
+          mergedEnd = entry.endsAt;
+        }
+      }
+    }
+
+    const deletedIds = [...absorbedIds];
+    if (deletedIds.length > 0) {
+      await tx.userUnavailability.deleteMany({
+        where: { userId, id: { in: deletedIds } },
+      });
+    }
+
+    if (existingId) {
+      const entry = await tx.userUnavailability.update({
+        where: { id: existingId },
+        data: {
+          startsAt: mergedStart,
+          endsAt: mergedEnd,
+        },
+      });
+      return { entry, deletedIds };
+    }
+
+    const entry = await tx.userUnavailability.create({
+      data: {
+        userId,
+        startsAt: mergedStart,
+        endsAt: mergedEnd,
+      },
+    });
+    return { entry, deletedIds };
+  });
+}

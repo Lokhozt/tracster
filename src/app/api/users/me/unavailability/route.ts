@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import { jsonError, unauthorized } from "@/lib/api";
 import {
   getUserUnavailabilityInRange,
+  saveMergedUnavailability,
   serializeUnavailability,
   validateUnavailabilityRange,
 } from "@/lib/unavailability";
@@ -60,13 +60,10 @@ export async function POST(request: NextRequest) {
     return jsonError(rangeError);
   }
 
-  const entry = await prisma.userUnavailability.create({
-    data: {
-      userId: user.id,
-      startsAt,
-      endsAt,
-    },
-  });
+  const { entry, deletedIds } = await saveMergedUnavailability(user.id, startsAt, endsAt);
 
-  return Response.json({ timeframe: serializeUnavailability(entry) }, { status: 201 });
+  return Response.json(
+    { timeframe: serializeUnavailability(entry), deletedIds },
+    { status: 201 },
+  );
 }

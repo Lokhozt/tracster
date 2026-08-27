@@ -25,8 +25,8 @@ export default async function UnavailabilityPage() {
   return (
     <AppShell title="My unavailability">
       <p className="mb-6 text-stone-600">
-        Mark periods when you are not available. Click a date to mark the whole day, or use the
-        calendar to draw, move, and resize blocks.
+        Mark periods when you are not available. Click a date to mark the whole day, click it again
+        to clear it, or use the calendar to draw, move, and resize blocks.
       </p>
       <UnavailabilityCalendar
         initialTimeframes={timeframes.map(serializeUnavailability)}

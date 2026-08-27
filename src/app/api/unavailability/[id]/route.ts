@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import {
   getOwnedUnavailability,
+  saveMergedUnavailability,
   serializeUnavailability,
   validateUnavailabilityRange,
 } from "@/lib/unavailability";
@@ -36,15 +37,14 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return jsonError(rangeError);
   }
 
-  const entry = await prisma.userUnavailability.update({
-    where: { id },
-    data: {
-      startsAt,
-      endsAt,
-    },
-  });
+  const { entry, deletedIds } = await saveMergedUnavailability(
+    user.id,
+    startsAt,
+    endsAt,
+    id,
+  );
 
-  return Response.json({ timeframe: serializeUnavailability(entry) });
+  return Response.json({ timeframe: serializeUnavailability(entry), deletedIds });
 }
 
 export async function DELETE(_request: NextRequest, context: RouteContext) {
