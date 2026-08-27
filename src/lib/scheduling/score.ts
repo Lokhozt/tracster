@@ -31,6 +31,7 @@ const BEFORE_NINE_PENALTY = 1;
 const BEFORE_TEN_PENALTY = 1;
 const AFTER_TWENTY_PENALTY = 2;
 const MIDDAY_OVERLAP_PENALTY = 2;
+const PARTICIPANT_LOCATION_OVERLAP_PENALTY = 10;
 
 function lunchWindow(day: Date): IntervalMs {
   return {
@@ -86,6 +87,27 @@ function uniqueParticipants(items: ResolvedSchedulingItem[]): SchedulingPerson[]
     }
   }
   return [...byId.values()];
+}
+
+function hasOverlappingSessionsAtDifferentLocations(sessions: InternalPlacement[]): boolean {
+  for (let index = 0; index < sessions.length; index += 1) {
+    const current = sessions[index];
+    for (let otherIndex = index + 1; otherIndex < sessions.length; otherIndex += 1) {
+      const other = sessions[otherIndex];
+      if (current.locationId === other.locationId) {
+        continue;
+      }
+      if (
+        intervalsOverlap(
+          { start: current.start, end: current.end },
+          { start: other.start, end: other.end },
+        )
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 export function scoreSchedule(
@@ -158,6 +180,9 @@ export function scoreSchedule(
     }
 
     const sessions = participantSessions(placements, items, participant.id);
+    if (hasOverlappingSessionsAtDifferentLocations(sessions)) {
+      score -= PARTICIPANT_LOCATION_OVERLAP_PENALTY;
+    }
     const byDay = new Map<string, InternalPlacement[]>();
     for (const session of sessions) {
       const key = localDayKey(new Date(session.start));

@@ -20,7 +20,7 @@ The use can add constraints to each choreography / choreographies+group:
 - A choreography/choreographies+group can be limited to certain datetimes
 
 Step 4- Generation
-This is the backend work. The tool create a optimized schedule using the constraints. If affect choreography/choreographies+group to a location. Choreographies can be shedule on overlapping time if they are in different locations. To navigate the possibilities use an A* algorithm with the following weigth to calculate the score:
+This is the backend work. The tool create a optimized schedule using the constraints. If affect choreography/choreographies+group to a location. Choreographies can be shedule on overlapping time if they are in different locations. To navigate the possibilities use an A* algorithm with the following weigth to calculate the score that should me maximized:
 
 Don't consider participants / choreographer that are not available at all on the scheduling period.
 
@@ -35,6 +35,7 @@ Don't consider participants / choreographer that are not available at all on the
 * Il a choreography starts before 10h: -1
 * If a choreography ends after 20h: -2
 * If a choreography overlap with 12h30-14h: -2
+* If a participant in in two or more repetition that overlap in time (different location): -10
 
 The algorithm returns 3 candidates.
 
