@@ -164,6 +164,17 @@ async function main() {
       sortOrder: 4,
     },
   });
+  await prisma.eventType.upsert({
+    where: { id: "event-type-festival" },
+    update: { name: "Festival", kind: "FESTIVAL", immutable: true, sortOrder: 5 },
+    create: {
+      id: "event-type-festival",
+      name: "Festival",
+      kind: "FESTIVAL",
+      immutable: true,
+      sortOrder: 5,
+    },
+  });
 
   const rehearsal = await prisma.event.upsert({
     where: { id: "seed-rehearsal-1" },

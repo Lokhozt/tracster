@@ -32,7 +32,7 @@ export default async function EventsPage() {
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-stone-600">
           {globalAccess
-            ? "All association events, including rehearsals, representations, demonstrations, and competitions."
+            ? "All association events, including rehearsals, representations, demonstrations, competitions, and festivals."
             : "Events you created, participate in, or that are linked to your choreographies."}
         </p>
         <div className="flex shrink-0 flex-wrap gap-2">

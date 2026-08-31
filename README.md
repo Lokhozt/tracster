@@ -16,7 +16,8 @@ Tracster is a web application for dance and performance associations to plan reh
 - **Rehearsals** — schedule rehearsals for a whole choreography or a specific group.
 - **Representations** — schedule performances and attach choreographies to them (shown on the schedule).
 - **Demonstrations** — schedule showcases linked to choreographies, with their own participant lists.
-- **Competitions** — schedule competitions linked to choreographies, with their own participant lists.
+- **Competitions** — schedule competitions with their own participant lists.
+- **Festivals** — schedule festivals with their own participant lists, not linked to choreographies.
 - **Events** — general association events with their own participant lists.
 - **Availability** — participants mark each rehearsal as available, unavailable, or maybe.
 - **Unavailability** — members record personal timeframes they cannot attend; the calendar selection is date-accurate.
@@ -30,7 +31,7 @@ Tracster is a web application for dance and performance associations to plan reh
 3. They can let others **join** or **request to join**, and choose whether the piece is hidden from non-participants.
 4. A choreographer schedules a **rehearsal** (date, time, optional location and group). Conflict warnings appear if the audience is already booked or unavailable.
 5. Assigned participants respond with **availability** (available, unavailable, maybe) and can maintain a personal **unavailability** calendar.
-6. Choreographers (or admins) schedule **representations**, **demonstrations**, and **competitions** and attach choreographies, and can also create standalone **events**.
+6. Choreographers (or admins) schedule **representations** and **demonstrations** and attach choreographies, and can also create **competitions**, **festivals**, and standalone **events**.
 7. The home **schedule** shows rehearsals, representations, and events the user is involved in.
 
 ## Getting started
@@ -143,7 +144,7 @@ prisma/
 - **RehearsalEvent** — a scheduled rehearsal
 - **AvailabilityResponse** — participant response per rehearsal
 - **UserUnavailability** — personal unavailable timeframes
-- **EventType** — includes immutable kinds: Event, Rehearsal, Representation, Competition, Demonstration
+- **EventType** — includes immutable kinds: Event, Rehearsal, Representation, Competition, Demonstration, Festival
 - **Event** / **EventChoreography** / **EventParticipant** / **EventJoinRequest** — scheduled items, linked pieces, and attendance
 
 ## Next steps

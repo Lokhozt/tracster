@@ -17,7 +17,7 @@ type PrismaGlobal = typeof globalThis & {
 const globalForPrisma = globalThis as PrismaGlobal;
 
 // Bump when the Prisma schema changes so dev HMR does not keep a stale client.
-const PRISMA_CLIENT_VERSION = "20260827160000_event_kind_demonstration";
+const PRISMA_CLIENT_VERSION = "20260831180000_event_kind_festival";
 
 function isStalePrismaClient(client: PrismaClient | undefined): boolean {
   if (!client) {

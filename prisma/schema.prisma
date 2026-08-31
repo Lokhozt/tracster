@@ -153,6 +153,7 @@ enum EventKind {
   REPRESENTATION
   COMPETITION
   DEMONSTRATION
+  FESTIVAL
 }
 
 model EventType {

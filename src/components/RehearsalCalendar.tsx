@@ -126,6 +126,9 @@ function eventCellClassName(kind: SerializedScheduleEvent["typeKind"]): string {
   if (kind === "DEMONSTRATION") {
     return "bg-teal-100 text-teal-900 hover:bg-teal-200";
   }
+  if (kind === "FESTIVAL") {
+    return "bg-rose-100 text-rose-900 hover:bg-rose-200";
+  }
   if (kind === "EVENT" || kind === null) {
     return "bg-sky-100 text-sky-900 hover:bg-sky-200";
   }
@@ -297,6 +300,10 @@ export function RehearsalCalendar({
             <span className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded bg-violet-200" />
               Competition
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded bg-rose-200" />
+              Festival
             </span>
           </div>
         </div>

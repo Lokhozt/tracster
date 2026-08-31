@@ -7,7 +7,7 @@ import {
   ParticipantsList,
   RehearsalsSection,
 } from "@/components/ChoreographyForms";
-import { CompetitionsSection, DemonstrationsSection } from "@/components/EventForms";
+import { DemonstrationsSection } from "@/components/EventForms";
 import { EditChoreographyForm } from "@/components/CreateChoreographyForm";
 import { GroupsSection } from "@/components/GroupForms";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
@@ -76,7 +76,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
         },
         eventLinks: {
           where: {
-            event: { type: { kind: { in: ["REPRESENTATION", "DEMONSTRATION", "COMPETITION"] } } },
+            event: { type: { kind: { in: ["REPRESENTATION", "DEMONSTRATION"] } } },
           },
           include: {
             event: {
@@ -113,9 +113,6 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
   );
   const demonstrationLinks = choreography.eventLinks.filter(
     (link) => link.event.type.kind === "DEMONSTRATION",
-  );
-  const competitionLinks = choreography.eventLinks.filter(
-    (link) => link.event.type.kind === "COMPETITION",
   );
 
   return (
@@ -221,21 +218,6 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
         eventTypes={eventTypes}
         participantOptions={users}
         demonstrations={demonstrationLinks.map((link) => ({
-          id: link.event.id,
-          title: link.event.title || null,
-          startsAt: link.event.startsAt.toISOString(),
-          endsAt: link.event.endsAt?.toISOString() ?? null,
-          location: displayLocation(link.event),
-        }))}
-      />
-
-      <CompetitionsSection
-        choreographyId={id}
-        choreographyTitle={choreography.title}
-        canEdit={canEdit}
-        eventTypes={eventTypes}
-        participantOptions={users}
-        competitions={competitionLinks.map((link) => ({
           id: link.event.id,
           title: link.event.title || null,
           startsAt: link.event.startsAt.toISOString(),

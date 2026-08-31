@@ -87,7 +87,7 @@ export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventT
     <Card className="max-w-xl">
       <h2 className="mb-2 text-lg font-semibold">Event types</h2>
       <p className="mb-4 text-sm text-stone-500">
-        Built-in types (Event, Rehearsal, Representation, Competition, Demonstration) cannot be changed.
+        Built-in types (Event, Rehearsal, Representation, Competition, Demonstration, Festival) cannot be changed.
         You can add custom types for other association events.
       </p>
       <form onSubmit={handleCreate} className="mb-6 flex flex-wrap items-end gap-3">

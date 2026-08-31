@@ -290,9 +290,7 @@ export default async function EventDetailPage({ params }: PageProps) {
             description={
               event.type.kind === "DEMONSTRATION"
                 ? "Pieces shown in this demonstration."
-                : event.type.kind === "COMPETITION"
-                  ? "Pieces entered in this competition."
-                  : "Pieces performed in this representation."
+                : "Pieces performed in this representation."
             }
             choreographies={eventRecord.choreographies.map((link) => ({
               id: link.choreography.id,

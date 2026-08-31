@@ -3,7 +3,8 @@ export type EventKind =
   | "REHEARSAL"
   | "REPRESENTATION"
   | "COMPETITION"
-  | "DEMONSTRATION";
+  | "DEMONSTRATION"
+  | "FESTIVAL";
 
 export const BUILTIN_EVENT_TYPE_IDS = {
   EVENT: "event-type-event",
@@ -11,6 +12,7 @@ export const BUILTIN_EVENT_TYPE_IDS = {
   REPRESENTATION: "event-type-representation",
   COMPETITION: "event-type-competition",
   DEMONSTRATION: "event-type-demonstration",
+  FESTIVAL: "event-type-festival",
 } as const;
 
 export const BUILTIN_EVENT_TYPES = [
@@ -29,6 +31,7 @@ export const BUILTIN_EVENT_TYPES = [
     kind: "DEMONSTRATION" as const,
     sortOrder: 4,
   },
+  { id: BUILTIN_EVENT_TYPE_IDS.FESTIVAL, name: "Festival", kind: "FESTIVAL" as const, sortOrder: 5 },
 ] as const;
 
 export type SerializedEventType = {
@@ -54,7 +57,7 @@ export function isGenericEventKind(kind: EventKind | null): boolean {
 }
 
 export function eventKindAllowsChoreographyLinks(kind: EventKind | null): boolean {
-  return kind === "REPRESENTATION" || kind === "DEMONSTRATION" || kind === "COMPETITION";
+  return kind === "REPRESENTATION" || kind === "DEMONSTRATION";
 }
 
 export function eventKindSkipsGenericCreatePermission(kind: EventKind | null): boolean {

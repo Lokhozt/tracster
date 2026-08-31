@@ -280,7 +280,7 @@ export async function validateEventTypeFields(options: {
   }
 
   if (!eventKindAllowsChoreographyLinks(options.type.kind) && (options.choreographyIds?.length ?? 0) > 0) {
-    return "Only representation, demonstration, and competition events can be attached to choreographies.";
+    return "Only representation and demonstration events can be attached to choreographies.";
   }
 
   return null;

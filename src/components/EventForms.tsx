@@ -714,7 +714,7 @@ function LinkedEventKindSection({
   eventTypes,
   participantOptions,
 }: {
-  kind: "DEMONSTRATION" | "COMPETITION";
+  kind: "DEMONSTRATION";
   heading: string;
   addLabel: string;
   emptyLabel: string;
@@ -836,40 +836,6 @@ export function DemonstrationsSection({
       choreographyId={choreographyId}
       choreographyTitle={choreographyTitle}
       items={demonstrations}
-      canEdit={canEdit}
-      eventTypes={eventTypes}
-      participantOptions={participantOptions}
-    />
-  );
-}
-
-export function CompetitionsSection({
-  choreographyId,
-  choreographyTitle,
-  competitions,
-  canEdit,
-  eventTypes,
-  participantOptions,
-}: {
-  choreographyId: string;
-  choreographyTitle: string;
-  competitions: LinkedEventItem[];
-  canEdit: boolean;
-  eventTypes: SerializedEventType[];
-  participantOptions: UserOption[];
-}) {
-  return (
-    <LinkedEventKindSection
-      kind="COMPETITION"
-      heading="Competitions"
-      addLabel="Add a competition"
-      emptyLabel="No competitions linked yet."
-      fallbackTitle="Competition"
-      editLabel="Edit competition"
-      unlinkConfirm="Remove this competition from the choreography? The competition itself will not be deleted."
-      choreographyId={choreographyId}
-      choreographyTitle={choreographyTitle}
-      items={competitions}
       canEdit={canEdit}
       eventTypes={eventTypes}
       participantOptions={participantOptions}
