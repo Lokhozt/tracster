@@ -28,8 +28,8 @@ export function scheduleEventLabel(event: SerializedScheduleEvent) {
   );
 }
 
-export function isRepetitionScheduleEvent(event: SerializedScheduleEvent) {
-  return event.typeKind === "REPETITION";
+export function isRehearsalScheduleEvent(event: SerializedScheduleEvent) {
+  return event.typeKind === "REHEARSAL";
 }
 
 export function isGenericScheduleEvent(event: SerializedScheduleEvent) {

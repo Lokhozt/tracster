@@ -13,7 +13,7 @@ export type ChoreographyListItem = {
   createdByName: string;
   updatedAt: string;
   memberCount: number;
-  repetitionCount: number;
+  rehearsalCount: number;
   isChoreographer: boolean;
   isInvolved: boolean;
 };
@@ -83,7 +83,7 @@ export function ChoreographiesList({
                   </div>
                   <div className="shrink-0 text-sm text-stone-600 sm:text-right">
                     <p>{choreography.memberCount} participants</p>
-                    <p>{choreography.repetitionCount} repetitions</p>
+                    <p>{choreography.rehearsalCount} rehearsals</p>
                   </div>
                 </div>
               </Card>

@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
-import { isRepetitionParticipant } from "@/lib/groups";
+import { isRehearsalParticipant } from "@/lib/groups";
 import { availabilitySchema } from "@/lib/validations";
 import { basicUserSelect } from "@/lib/users";
 
@@ -30,11 +30,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
     },
   });
 
-  if (!event || event.type.kind !== "REPETITION") {
-    return notFound("Repetition");
+  if (!event || event.type.kind !== "REHEARSAL") {
+    return notFound("Rehearsal");
   }
 
-  if (!(await isRepetitionParticipant(event, user.id))) {
+  if (!(await isRehearsalParticipant(event, user.id))) {
     return forbidden();
   }
 

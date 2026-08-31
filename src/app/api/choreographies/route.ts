@@ -21,7 +21,7 @@ export async function GET() {
     where: globalAccess ? visibleChoreographyWhere : listedChoreographyWhere(user.id),
     include: {
       createdBy: { select: basicUserSelect },
-      _count: { select: { members: true, repetitions: true } },
+      _count: { select: { members: true, rehearsals: true } },
     },
     orderBy: { updatedAt: "desc" },
   });
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       members: {
         include: { user: { select: basicUserSelect } },
       },
-      repetitions: true,
+      rehearsals: true,
     },
   });
 

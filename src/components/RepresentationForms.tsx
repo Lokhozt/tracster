@@ -870,7 +870,7 @@ export function RepresentationChoreographiesSection({
     title: string;
     description: string | null;
     memberCount: number;
-    repetitionCount: number;
+    rehearsalCount: number;
   }[];
   canEdit: boolean;
   description?: string;
@@ -922,7 +922,7 @@ export function RepresentationChoreographiesSection({
                   <DeleteEventButton
                     deleteUrl={`/api/events/${representationId}/choreographies`}
                     deleteBody={{ choreographyId: choreography.id }}
-                    confirmMessage={`Remove ${choreography.title} from this representation? The choreography itself will not be deleted.`}
+                    confirmMessage={`Remove ${choreography.title} from this event? The choreography itself will not be deleted.`}
                   />
                 )}
               </div>
@@ -937,8 +937,8 @@ export function RepresentationChoreographiesSection({
                   {choreography.memberCount === 1 ? "participant" : "participants"}
                 </span>
                 <span className="rounded-full bg-stone-100 px-2.5 py-1 font-medium text-stone-700">
-                  {choreography.repetitionCount}{" "}
-                  {choreography.repetitionCount === 1 ? "repetition" : "repetitions"}
+                  {choreography.rehearsalCount}{" "}
+                  {choreography.rehearsalCount === 1 ? "rehearsal" : "rehearsals"}
                 </span>
               </div>
             </Card>

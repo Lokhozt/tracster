@@ -32,7 +32,7 @@ export default async function EventsPage() {
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-stone-600">
           {globalAccess
-            ? "All association events, including repetitions, representations, demonstrations, and competitions."
+            ? "All association events, including rehearsals, representations, demonstrations, and competitions."
             : "Events you created, participate in, or that are linked to your choreographies."}
         </p>
         <div className="flex shrink-0 flex-wrap gap-2">
@@ -41,7 +41,7 @@ export default async function EventsPage() {
               href="/scheduling"
               className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium hover:bg-stone-100"
             >
-              Schedule repetitions
+              Schedule rehearsals
             </Link>
           )}
           {canCreate && (

@@ -89,7 +89,7 @@ export const siteSettingsSchema = z.object({
   startOfDayHour: z.number().int().min(0).max(23),
 });
 
-export const repetitionSchema = z.object({
+export const rehearsalSchema = z.object({
   title: z.string().trim().max(120).optional(),
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime().optional(),
@@ -98,7 +98,7 @@ export const repetitionSchema = z.object({
   groupId: z.string().min(1).optional(),
 }).superRefine(refineExclusiveLocation);
 
-export const repetitionConflictSchema = z.object({
+export const rehearsalConflictSchema = z.object({
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime().optional(),
   groupId: z.string().min(1).optional(),

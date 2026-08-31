@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
 import {
-  RepetitionEventCard,
-  type RepetitionListItem,
-} from "@/components/RepetitionEventCard";
+  RehearsalEventCard,
+  type RehearsalListItem,
+} from "@/components/RehearsalEventCard";
 import {
   LocationPicker,
   locationPayload,
@@ -25,7 +25,7 @@ import {
   type DateTimeParts,
 } from "@/lib/datetime";
 
-export type RepetitionDetailItem = {
+export type RehearsalDetailItem = {
   id: string;
   title: string | null;
   startsAt: string;
@@ -91,7 +91,7 @@ export function AssignMemberForm({
           <option value="">Select a user</option>
           {availableUsers.map((user) => (
             <option key={user.id} value={user.id}>
-              {user.name} ({user.email})
+              {user.name}
             </option>
           ))}
         </select>
@@ -161,7 +161,7 @@ export function AssignChoreographerForm({
           <option value="">Select a user</option>
           {availableUsers.map((user) => (
             <option key={user.id} value={user.id}>
-              {user.name} ({user.email})
+              {user.name}
             </option>
           ))}
         </select>
@@ -174,7 +174,7 @@ export function AssignChoreographerForm({
   );
 }
 
-export function CreateRepetitionForm({
+export function CreateRehearsalForm({
   choreographyId,
   groups = [],
   eventTypes,
@@ -187,17 +187,17 @@ export function CreateRepetitionForm({
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
-  const repetitionType = eventTypes.find((type) => type.kind === "REPETITION");
+  const rehearsalType = eventTypes.find((type) => type.kind === "REHEARSAL");
 
-  if (!repetitionType) {
-    return <p className="text-sm text-stone-600">Repetition type is not configured.</p>;
+  if (!rehearsalType) {
+    return <p className="text-sm text-stone-600">Rehearsal type is not configured.</p>;
   }
 
   return (
     <div className="space-y-3">
       <CreateEventForm
         eventTypes={eventTypes}
-        defaultTypeId={repetitionType.id}
+        defaultTypeId={rehearsalType.id}
         lockType
         defaultChoreographyId={choreographyId}
         lockChoreography
@@ -214,22 +214,22 @@ export function CreateRepetitionForm({
   );
 }
 
-export function EditRepetitionForm({ repetition }: { repetition: RepetitionDetailItem }) {
+export function EditRehearsalForm({ rehearsal }: { rehearsal: RehearsalDetailItem }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [title, setTitle] = useState(repetition.title ?? "");
+  const [title, setTitle] = useState(rehearsal.title ?? "");
   const [locationSelection, setLocationSelection] = useState(() =>
-    selectionFromRecord(repetition),
+    selectionFromRecord(rehearsal),
   );
-  const [notes, setNotes] = useState(repetition.notes ?? "");
+  const [notes, setNotes] = useState(rehearsal.notes ?? "");
   const [start, setStart] = useState<DateTimeParts>(() =>
-    dateToDateTimeParts(new Date(repetition.startsAt)),
+    dateToDateTimeParts(new Date(rehearsal.startsAt)),
   );
   const [end, setEnd] = useState<DateTimeParts>(() =>
-    repetition.endsAt
-      ? dateToDateTimeParts(new Date(repetition.endsAt))
-      : addOneHour(dateToDateTimeParts(new Date(repetition.startsAt))),
+    rehearsal.endsAt
+      ? dateToDateTimeParts(new Date(rehearsal.endsAt))
+      : addOneHour(dateToDateTimeParts(new Date(rehearsal.startsAt))),
   );
 
   function handleStartChange(nextStart: DateTimeParts) {
@@ -257,7 +257,7 @@ export function EditRepetitionForm({ repetition }: { repetition: RepetitionDetai
       return;
     }
 
-    const response = await fetch(`/api/repetitions/${repetition.id}`, {
+    const response = await fetch(`/api/rehearsals/${rehearsal.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -273,7 +273,7 @@ export function EditRepetitionForm({ repetition }: { repetition: RepetitionDetai
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to update repetition.");
+      setError(data.error ?? "Unable to update rehearsal.");
       return;
     }
 
@@ -283,9 +283,9 @@ export function EditRepetitionForm({ repetition }: { repetition: RepetitionDetai
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <Label htmlFor="edit-repetition-title">Title</Label>
+        <Label htmlFor="edit-rehearsal-title">Title</Label>
         <Input
-          id="edit-repetition-title"
+          id="edit-rehearsal-title"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder="Rehearsal"
@@ -308,14 +308,14 @@ export function EditRepetitionForm({ repetition }: { repetition: RepetitionDetai
         />
       </div>
       <LocationPicker
-        id="edit-repetition-location"
+        id="edit-rehearsal-location"
         value={locationSelection}
         onChange={setLocationSelection}
       />
       <div>
-        <Label htmlFor="edit-repetition-notes">Notes</Label>
+        <Label htmlFor="edit-rehearsal-notes">Notes</Label>
         <Textarea
-          id="edit-repetition-notes"
+          id="edit-rehearsal-notes"
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           rows={3}
@@ -329,51 +329,51 @@ export function EditRepetitionForm({ repetition }: { repetition: RepetitionDetai
   );
 }
 
-export function RepetitionsSection({
+export function RehearsalsSection({
   choreographyId,
   canEdit,
   groups = [],
-  repetitions,
+  rehearsals,
   eventTypes,
 }: {
   choreographyId: string;
   canEdit: boolean;
   groups?: GroupOption[];
-  repetitions: RepetitionListItem[];
+  rehearsals: RehearsalListItem[];
   eventTypes: SerializedEventType[];
 }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [search, setSearch] = useState("");
 
-  const filteredRepetitions = useMemo(() => {
-    return repetitions.filter((repetition) =>
+  const filteredRehearsals = useMemo(() => {
+    return rehearsals.filter((rehearsal) =>
       matchesSearch(
         search,
-        repetition.title,
-        repetition.location,
-        repetition.groupName,
-        ...repetition.availableNames,
-        ...repetition.unavailableNames,
+        rehearsal.title,
+        rehearsal.location,
+        rehearsal.groupName,
+        ...rehearsal.availableNames,
+        ...rehearsal.unavailableNames,
       ),
     );
-  }, [repetitions, search]);
+  }, [rehearsals, search]);
 
   return (
     <section className="mt-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold">Repetitions</h2>
+        <h2 className="text-xl font-semibold">Rehearsals</h2>
         {canEdit && !showAddForm && (
           <Button type="button" onClick={() => setShowAddForm(true)}>
-            Schedule a repetition
+            Schedule a rehearsal
           </Button>
         )}
       </div>
 
-      {repetitions.length > 0 && (
+      {rehearsals.length > 0 && (
         <div className="mb-4 rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
-          <Label htmlFor="repetition-search">Search</Label>
+          <Label htmlFor="rehearsal-search">Search</Label>
           <Input
-            id="repetition-search"
+            id="rehearsal-search"
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -382,15 +382,15 @@ export function RepetitionsSection({
             className="mt-1"
           />
           <p className="mt-2 text-sm text-stone-500">
-            {filteredRepetitions.length} of {repetitions.length} repetitions
+            {filteredRehearsals.length} of {rehearsals.length} rehearsals
           </p>
         </div>
       )}
 
       {canEdit && showAddForm && (
         <Card className="mb-6">
-          <h3 className="mb-4 font-medium">Schedule a repetition</h3>
-          <CreateRepetitionForm
+          <h3 className="mb-4 font-medium">Schedule a rehearsal</h3>
+          <CreateRehearsalForm
             choreographyId={choreographyId}
             groups={groups}
             eventTypes={eventTypes}
@@ -400,21 +400,21 @@ export function RepetitionsSection({
         </Card>
       )}
 
-      {repetitions.length === 0 ? (
+      {rehearsals.length === 0 ? (
         <Card>
-          <p className="text-stone-600">No repetitions scheduled yet.</p>
+          <p className="text-stone-600">No rehearsals scheduled yet.</p>
         </Card>
-      ) : filteredRepetitions.length === 0 ? (
+      ) : filteredRehearsals.length === 0 ? (
         <Card>
-          <p className="text-stone-600">No repetitions match your search.</p>
+          <p className="text-stone-600">No rehearsals match your search.</p>
         </Card>
       ) : (
         <div className="grid gap-4">
-          {filteredRepetitions.map((repetition) => (
-            <RepetitionEventCard
-              key={repetition.id}
+          {filteredRehearsals.map((rehearsal) => (
+            <RehearsalEventCard
+              key={rehearsal.id}
               canEdit={canEdit}
-              repetition={repetition}
+              rehearsal={rehearsal}
             />
           ))}
         </div>
@@ -440,9 +440,7 @@ export function ParticipantsList({
     <ul className="mb-4 space-y-2 text-sm">
       {members.map((member) => (
         <li key={member.id} className="flex items-center justify-between gap-2">
-          <span>
-            {member.name} <span className="text-stone-500">({member.email})</span>
-          </span>
+          <span>{member.name}</span>
           {canEdit && (
             <DeleteEventButton
               deleteUrl={`/api/choreographies/${choreographyId}/members`}
@@ -471,10 +469,7 @@ export function ChoreographersList({
     <ul className="mb-4 space-y-2 text-sm">
       {choreographers.map((choreographer) => (
         <li key={choreographer.id} className="flex items-center justify-between gap-2">
-          <span>
-            {choreographer.name}{" "}
-            <span className="text-stone-500">({choreographer.email})</span>
-          </span>
+          <span>{choreographer.name}</span>
           {canRemove && (
             <DeleteEventButton
               deleteUrl={`/api/choreographies/${choreographyId}/choreographers`}

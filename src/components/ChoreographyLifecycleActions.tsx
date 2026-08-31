@@ -14,12 +14,12 @@ type UpcomingItem = {
 export function ChoreographyLifecycleActions({
   choreographyId,
   title,
-  upcomingRepetitions,
+  upcomingRehearsals,
   upcomingRepresentations,
 }: {
   choreographyId: string;
   title: string;
-  upcomingRepetitions: UpcomingItem[];
+  upcomingRehearsals: UpcomingItem[];
   upcomingRepresentations: UpcomingItem[];
 }) {
   const router = useRouter();
@@ -27,7 +27,7 @@ export function ChoreographyLifecycleActions({
   const [error, setError] = useState<string | null>(null);
 
   const impact = {
-    repetitions: upcomingRepetitions.map((item) => ({
+    rehearsals: upcomingRehearsals.map((item) => ({
       ...item,
       startsAt: new Date(item.startsAt),
     })),
@@ -74,7 +74,7 @@ export function ChoreographyLifecycleActions({
       <h2 className="mb-1 text-lg font-semibold text-red-950">Admin actions</h2>
       <p className="mb-4 text-sm text-red-800">
         Archiving hides this choreography. Deleting removes it permanently.
-        Upcoming repetitions are deleted and this piece is unlinked from upcoming
+        Upcoming rehearsals are deleted and this piece is unlinked from upcoming
         representations.
       </p>
       {error && <p className="mb-3 text-sm text-red-700">{error}</p>}

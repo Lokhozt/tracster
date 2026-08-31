@@ -23,6 +23,7 @@ export async function ensureEventTypes() {
       prisma.eventType.upsert({
         where: { id: type.id },
         update: {
+          name: type.name,
           kind: type.kind,
           immutable: true,
           sortOrder: type.sortOrder,

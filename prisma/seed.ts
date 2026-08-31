@@ -121,12 +121,12 @@ async function main() {
     },
   });
   await prisma.eventType.upsert({
-    where: { id: "event-type-repetition" },
-    update: { kind: "REPETITION", immutable: true, sortOrder: 1 },
+    where: { id: "event-type-rehearsal" },
+    update: { name: "Rehearsal", kind: "REHEARSAL", immutable: true, sortOrder: 1 },
     create: {
-      id: "event-type-repetition",
-      name: "Repetition",
-      kind: "REPETITION",
+      id: "event-type-rehearsal",
+      name: "Rehearsal",
+      kind: "REHEARSAL",
       immutable: true,
       sortOrder: 1,
     },
@@ -165,12 +165,12 @@ async function main() {
     },
   });
 
-  const repetition = await prisma.event.upsert({
-    where: { id: "seed-repetition-1" },
+  const rehearsal = await prisma.event.upsert({
+    where: { id: "seed-rehearsal-1" },
     update: {},
     create: {
-      id: "seed-repetition-1",
-      typeId: "event-type-repetition",
+      id: "seed-rehearsal-1",
+      typeId: "event-type-rehearsal",
       choreographyId: choreography.id,
       title: "First rehearsal",
       startsAt: new Date("2026-07-01T18:30:00"),
@@ -183,13 +183,13 @@ async function main() {
   await prisma.availabilityResponse.upsert({
     where: {
       eventId_userId: {
-        eventId: repetition.id,
+        eventId: rehearsal.id,
         userId: claire.id,
       },
     },
     update: { status: "AVAILABLE" },
     create: {
-      eventId: repetition.id,
+      eventId: rehearsal.id,
       userId: claire.id,
       status: "AVAILABLE",
     },

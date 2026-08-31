@@ -27,6 +27,7 @@ const baseNavItems: NavItem[] = [
     match: (pathname) =>
       pathname.startsWith("/events") ||
       pathname.startsWith("/representations") ||
+      pathname.startsWith("/rehearsals") ||
       pathname.startsWith("/repetitions"),
   },
   {

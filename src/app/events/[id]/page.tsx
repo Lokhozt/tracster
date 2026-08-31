@@ -16,7 +16,7 @@ import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/datetime";
 import { canEditEvent, canViewEvent, serializeEvent } from "@/lib/events";
 import { getEventTypes, eventKindAllowsChoreographyLinks, isGenericEventKind } from "@/lib/event-types";
-import { getRepetitionAudience, isRepetitionParticipant } from "@/lib/groups";
+import { getRehearsalAudience, isRehearsalParticipant } from "@/lib/groups";
 import { listedLocationInclude } from "@/lib/locations";
 import { canEditChoreography } from "@/lib/permissions";
 import { basicUserSelect, formatUserName, serializeBasicUser } from "@/lib/users";
@@ -68,7 +68,7 @@ export default async function EventDetailPage({ params }: PageProps) {
                 id: true,
                 title: true,
                 description: true,
-                _count: { select: { members: true, repetitions: true } },
+                _count: { select: { members: true, rehearsals: true } },
               },
             },
           },
@@ -123,19 +123,19 @@ export default async function EventDetailPage({ params }: PageProps) {
     (request) => request.userId === user.id,
   );
 
-  const repetitionAudience =
-    event.type.kind === "REPETITION"
-      ? await getRepetitionAudience(eventRecord)
+  const rehearsalAudience =
+    event.type.kind === "REHEARSAL"
+      ? await getRehearsalAudience(eventRecord)
       : null;
   const canRespondAvailability =
-    event.type.kind === "REPETITION" &&
-    (await isRepetitionParticipant(eventRecord, user.id));
+    event.type.kind === "REHEARSAL" &&
+    (await isRehearsalParticipant(eventRecord, user.id));
   const myResponse = eventRecord.availabilities.find((item) => item.userId === user.id);
 
-  const repetitionMembers =
-    event.type.kind === "REPETITION" && repetitionAudience && repetitionAudience.memberIds.length > 0
+  const rehearsalMembers =
+    event.type.kind === "REHEARSAL" && rehearsalAudience && rehearsalAudience.memberIds.length > 0
       ? await prisma.user.findMany({
-          where: { id: { in: repetitionAudience.memberIds } },
+          where: { id: { in: rehearsalAudience.memberIds } },
           select: basicUserSelect,
           orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
         })
@@ -150,11 +150,11 @@ export default async function EventDetailPage({ params }: PageProps) {
   ).filter((item) => item !== null);
 
   const backHref =
-    event.type.kind === "REPETITION" && event.choreographyId
+    event.type.kind === "REHEARSAL" && event.choreographyId
       ? `/choreographies/${event.choreographyId}`
       : "/events";
   const backLabel =
-    event.type.kind === "REPETITION" && event.choreographyTitle
+    event.type.kind === "REHEARSAL" && event.choreographyTitle
       ? `← Back to ${event.choreographyTitle}`
       : "← Back to events";
 
@@ -242,20 +242,20 @@ export default async function EventDetailPage({ params }: PageProps) {
         <Card className="mb-6">
           <h2 className="mb-3 text-lg font-semibold">Your availability</h2>
           <AvailabilityButtons
-            repetitionId={eventRecord.id}
+            rehearsalId={eventRecord.id}
             currentStatus={myResponse?.status}
           />
         </Card>
       )}
 
-      {event.type.kind === "REPETITION" && canEdit && (
+      {event.type.kind === "REHEARSAL" && canEdit && (
         <Card className="mb-6">
           <h2 className="mb-4 text-lg font-semibold">Participant availability</h2>
           <div className="space-y-3">
-            {repetitionMembers.length === 0 ? (
+            {rehearsalMembers.length === 0 ? (
               <p className="text-sm text-stone-600">No participants assigned yet.</p>
             ) : (
-              repetitionMembers.map((member) => {
+              rehearsalMembers.map((member) => {
                 const response = eventRecord.availabilities.find(
                   (item) => item.userId === member.id,
                 );
@@ -290,14 +290,16 @@ export default async function EventDetailPage({ params }: PageProps) {
             description={
               event.type.kind === "DEMONSTRATION"
                 ? "Pieces shown in this demonstration."
-                : "Pieces performed in this representation."
+                : event.type.kind === "COMPETITION"
+                  ? "Pieces entered in this competition."
+                  : "Pieces performed in this representation."
             }
             choreographies={eventRecord.choreographies.map((link) => ({
               id: link.choreography.id,
               title: link.choreography.title,
               description: link.choreography.description,
               memberCount: link.choreography._count.members,
-              repetitionCount: link.choreography._count.repetitions,
+              rehearsalCount: link.choreography._count.rehearsals,
             }))}
           />
         </div>

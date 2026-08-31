@@ -87,8 +87,8 @@ export async function POST(request: NextRequest) {
       hideFromNonParticipants: isGeneric
         ? (parsed.data.hideFromNonParticipants ?? true)
         : true,
-      choreographyId: eventType.kind === "REPETITION" ? parsed.data.choreographyId ?? null : null,
-      groupId: eventType.kind === "REPETITION" ? parsed.data.groupId ?? null : null,
+      choreographyId: eventType.kind === "REHEARSAL" ? parsed.data.choreographyId ?? null : null,
+      groupId: eventType.kind === "REHEARSAL" ? parsed.data.groupId ?? null : null,
       participants:
         isGeneric && parsed.data.participantIds?.length
           ? {

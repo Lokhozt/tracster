@@ -41,7 +41,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       members: {
         include: { user: { select: basicUserSelect } },
       },
-      repetitions: {
+      rehearsals: {
         orderBy: { startsAt: "asc" },
         include: {
           availabilities: {

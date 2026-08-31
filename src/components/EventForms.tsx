@@ -14,7 +14,7 @@ import {
   type LocationSelection,
 } from "@/components/LocationPicker";
 import { ParticipantConflictWarnings } from "@/components/ParticipantConflictWarnings";
-import { RepetitionAudienceSelect, type GroupOption } from "@/components/GroupForms";
+import { RehearsalAudienceSelect, type GroupOption } from "@/components/GroupForms";
 import { Button, Input, Label, Select, Textarea } from "@/components/ui";
 import { ParticipationSettingsFields } from "@/components/ParticipationSettingsFields";
 import {
@@ -142,7 +142,7 @@ export function CreateEventForm({
   const groupOptions = groups.length > 0 ? groups : fetchedGroups;
 
   useEffect(() => {
-    if (eventType?.kind !== "REPETITION" || !choreographyId || groups.length > 0) {
+    if (eventType?.kind !== "REHEARSAL" || !choreographyId || groups.length > 0) {
       return;
     }
 
@@ -203,9 +203,9 @@ export function CreateEventForm({
             ? selectedParticipantIds
             : undefined,
         choreographyId:
-          eventType?.kind === "REPETITION" ? choreographyId || null : null,
+          eventType?.kind === "REHEARSAL" ? choreographyId || null : null,
         choreographyIds: allowsChoreographyLinks ? selectedChoreographyIds : undefined,
-        groupId: eventType?.kind === "REPETITION" ? audience || undefined : undefined,
+        groupId: eventType?.kind === "REHEARSAL" ? audience || undefined : undefined,
         ...(generic ? participation : {}),
       }),
     });
@@ -266,7 +266,7 @@ export function CreateEventForm({
         value={locationSelection}
         onChange={setLocationSelection}
       />
-      {eventType?.kind === "REPETITION" && choreographyOptions && (
+      {eventType?.kind === "REHEARSAL" && choreographyOptions && (
         <div>
           <Label htmlFor="event-choreography">Choreography</Label>
           <Select
@@ -288,9 +288,9 @@ export function CreateEventForm({
           </Select>
         </div>
       )}
-      {eventType?.kind === "REPETITION" && choreographyId && (
+      {eventType?.kind === "REHEARSAL" && choreographyId && (
         <>
-          <RepetitionAudienceSelect
+          <RehearsalAudienceSelect
             groups={groupOptions}
             value={audience}
             onChange={setAudience}
@@ -452,7 +452,7 @@ export function EditEventForm({
         ...locationPayload(locationSelection),
         startsAt: startsAt.toISOString(),
         endsAt: endsAt?.toISOString(),
-        choreographyId: eventType?.kind === "REPETITION" ? choreographyId || null : null,
+        choreographyId: eventType?.kind === "REHEARSAL" ? choreographyId || null : null,
         choreographyIds: allowsChoreographyLinks ? selectedChoreographyIds : undefined,
         ...(generic ? participation : {}),
       }),
@@ -507,7 +507,7 @@ export function EditEventForm({
           value={locationSelection}
           onChange={setLocationSelection}
         />
-        {eventType?.kind === "REPETITION" && choreographyOptions && (
+        {eventType?.kind === "REHEARSAL" && choreographyOptions && (
           <div>
             <Label htmlFor="edit-event-choreography">Choreography</Label>
             <Select
@@ -689,7 +689,7 @@ export function AssignEventParticipantForm({
   );
 }
 
-export type DemonstrationItem = {
+export type LinkedEventItem = {
   id: string;
   title: string | null;
   startsAt: string;
@@ -697,42 +697,58 @@ export type DemonstrationItem = {
   location: string | null;
 };
 
-export function DemonstrationsSection({
+export type DemonstrationItem = LinkedEventItem;
+
+function LinkedEventKindSection({
+  kind,
+  heading,
+  addLabel,
+  emptyLabel,
+  fallbackTitle,
+  editLabel,
+  unlinkConfirm,
   choreographyId,
   choreographyTitle,
-  demonstrations,
+  items,
   canEdit,
   eventTypes,
   participantOptions,
 }: {
+  kind: "DEMONSTRATION" | "COMPETITION";
+  heading: string;
+  addLabel: string;
+  emptyLabel: string;
+  fallbackTitle: string;
+  editLabel: string;
+  unlinkConfirm: string;
   choreographyId: string;
   choreographyTitle: string;
-  demonstrations: DemonstrationItem[];
+  items: LinkedEventItem[];
   canEdit: boolean;
   eventTypes: SerializedEventType[];
   participantOptions: UserOption[];
 }) {
   const [showAddForm, setShowAddForm] = useState(false);
-  const demonstrationType = eventTypes.find((type) => type.kind === "DEMONSTRATION");
+  const eventType = eventTypes.find((type) => type.kind === kind);
 
   return (
     <section className="mt-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold">Demonstrations</h2>
-        {canEdit && !showAddForm && demonstrationType && (
+        <h2 className="text-xl font-semibold">{heading}</h2>
+        {canEdit && !showAddForm && eventType && (
           <Button type="button" onClick={() => setShowAddForm(true)}>
-            Add a demonstration
+            {addLabel}
           </Button>
         )}
       </div>
 
-      {canEdit && showAddForm && demonstrationType && (
+      {canEdit && showAddForm && eventType && (
         <div className="mb-6 rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
           <CreateEventForm
             eventTypes={eventTypes}
             participantOptions={participantOptions}
             choreographyOptions={[{ id: choreographyId, title: choreographyTitle }]}
-            defaultTypeId={demonstrationType.id}
+            defaultTypeId={eventType.id}
             lockType
             defaultChoreographyId={choreographyId}
             lockChoreography
@@ -747,44 +763,40 @@ export function DemonstrationsSection({
         </div>
       )}
 
-      {demonstrations.length === 0 ? (
+      {items.length === 0 ? (
         <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-          <p className="text-stone-600">No demonstrations linked yet.</p>
+          <p className="text-stone-600">{emptyLabel}</p>
         </div>
       ) : (
         <div className="grid gap-4">
-          {demonstrations.map((demonstration) => (
+          {items.map((item) => (
             <div
-              key={demonstration.id}
+              key={item.id}
               className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <Link
-                    href={`/events/${demonstration.id}`}
+                    href={`/events/${item.id}`}
                     className="font-semibold hover:text-stone-700"
                   >
-                    {demonstration.title || "Demonstration"}
+                    {item.title || fallbackTitle}
                   </Link>
                   <p className="mt-1 text-sm text-stone-600">
-                    {formatDateTime(new Date(demonstration.startsAt))}
-                    {demonstration.endsAt &&
-                      ` – ${formatDateTime(new Date(demonstration.endsAt))}`}
+                    {formatDateTime(new Date(item.startsAt))}
+                    {item.endsAt && ` – ${formatDateTime(new Date(item.endsAt))}`}
                   </p>
-                  {demonstration.location && (
-                    <p className="mt-1 text-sm text-stone-500">{demonstration.location}</p>
+                  {item.location && (
+                    <p className="mt-1 text-sm text-stone-500">{item.location}</p>
                   )}
                 </div>
                 {canEdit && (
                   <div className="flex items-center gap-1">
-                    <EditIconLink
-                      href={`/events/${demonstration.id}`}
-                      label="Edit demonstration"
-                    />
+                    <EditIconLink href={`/events/${item.id}`} label={editLabel} />
                     <DeleteEventButton
-                      deleteUrl={`/api/events/${demonstration.id}/choreographies`}
+                      deleteUrl={`/api/events/${item.id}/choreographies`}
                       deleteBody={{ choreographyId }}
-                      confirmMessage="Remove this demonstration from the choreography? The demonstration itself will not be deleted."
+                      confirmMessage={unlinkConfirm}
                     />
                   </div>
                 )}
@@ -794,5 +806,73 @@ export function DemonstrationsSection({
         </div>
       )}
     </section>
+  );
+}
+
+export function DemonstrationsSection({
+  choreographyId,
+  choreographyTitle,
+  demonstrations,
+  canEdit,
+  eventTypes,
+  participantOptions,
+}: {
+  choreographyId: string;
+  choreographyTitle: string;
+  demonstrations: LinkedEventItem[];
+  canEdit: boolean;
+  eventTypes: SerializedEventType[];
+  participantOptions: UserOption[];
+}) {
+  return (
+    <LinkedEventKindSection
+      kind="DEMONSTRATION"
+      heading="Demonstrations"
+      addLabel="Add a demonstration"
+      emptyLabel="No demonstrations linked yet."
+      fallbackTitle="Demonstration"
+      editLabel="Edit demonstration"
+      unlinkConfirm="Remove this demonstration from the choreography? The demonstration itself will not be deleted."
+      choreographyId={choreographyId}
+      choreographyTitle={choreographyTitle}
+      items={demonstrations}
+      canEdit={canEdit}
+      eventTypes={eventTypes}
+      participantOptions={participantOptions}
+    />
+  );
+}
+
+export function CompetitionsSection({
+  choreographyId,
+  choreographyTitle,
+  competitions,
+  canEdit,
+  eventTypes,
+  participantOptions,
+}: {
+  choreographyId: string;
+  choreographyTitle: string;
+  competitions: LinkedEventItem[];
+  canEdit: boolean;
+  eventTypes: SerializedEventType[];
+  participantOptions: UserOption[];
+}) {
+  return (
+    <LinkedEventKindSection
+      kind="COMPETITION"
+      heading="Competitions"
+      addLabel="Add a competition"
+      emptyLabel="No competitions linked yet."
+      fallbackTitle="Competition"
+      editLabel="Edit competition"
+      unlinkConfirm="Remove this competition from the choreography? The competition itself will not be deleted."
+      choreographyId={choreographyId}
+      choreographyTitle={choreographyTitle}
+      items={competitions}
+      canEdit={canEdit}
+      eventTypes={eventTypes}
+      participantOptions={participantOptions}
+    />
   );
 }

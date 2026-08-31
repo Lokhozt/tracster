@@ -111,8 +111,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         hideFromNonParticipants: isGeneric
           ? (parsed.data.hideFromNonParticipants ?? true)
           : true,
-        choreographyId: eventType.kind === "REPETITION" ? parsed.data.choreographyId ?? null : null,
-        groupId: eventType.kind === "REPETITION" ? parsed.data.groupId ?? null : null,
+        choreographyId: eventType.kind === "REHEARSAL" ? parsed.data.choreographyId ?? null : null,
+        groupId: eventType.kind === "REHEARSAL" ? parsed.data.groupId ?? null : null,
         choreographies:
           eventKindAllowsChoreographyLinks(eventType.kind) && parsed.data.choreographyIds?.length
             ? {

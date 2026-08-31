@@ -1,6 +1,6 @@
 The scheduling tool:
 
-The scheduling tool is a tool usable by admins to automatically create and organize repetitions.
+The scheduling tool is a tool usable by admins to automatically create and organize rehearsals.
 
 The tool is presented as a list of steps:
 
@@ -35,13 +35,13 @@ Don't consider participants / choreographer that are not available at all on the
 * Il a choreography starts before 10h: -1
 * If a choreography ends after 20h: -2
 * If a choreography overlap with 12h30-14h: -2
-* If a participant in in two or more repetition that overlap in time (different location): -10
+* If a participant in in two or more rehearsal that overlap in time (different location): -10
 
 The algorithm returns 3 candidates.
 
 Step 5- Choose a solution
 The user can look and select one the candidate.
-A candidate is graphically reprensented on a calendar with as many column per day as there are locations, with each repetition having its color and name, and start_time->end_time
+A candidate is graphically reprensented on a calendar with as many column per day as there are locations, with each rehearsal having its color and name, and start_time->end_time
 The caveat of each candidate are listed: Participants not available (ignore if the participant is not available at all during the period)
 
-At validation, each repetition is automatically created.
+At validation, each rehearsal is automatically created.

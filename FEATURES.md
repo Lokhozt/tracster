@@ -1,11 +1,11 @@
 # Core features
 - Users & role management
 - Choreography management
-- Repetition scheduling
+- Rehearsal scheduling
 - Representation management
 - Availability
+- Rehearsals scheduling tools
 
 
 # TODO
 - Export/Sync to google calendar
-- Repetitions scheduling tools

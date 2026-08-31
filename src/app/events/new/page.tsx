@@ -16,7 +16,8 @@ type PageProps = {
 
 const kindAliases: Record<string, EventKind> = {
   event: "EVENT",
-  repetition: "REPETITION",
+  rehearsal: "REHEARSAL",
+  repetition: "REHEARSAL",
   representation: "REPRESENTATION",
   competition: "COMPETITION",
   demonstration: "DEMONSTRATION",

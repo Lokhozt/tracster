@@ -7,12 +7,12 @@ export type UpcomingLinkedItem = {
 };
 
 export type UpcomingChoreographyImpact = {
-  repetitions: UpcomingLinkedItem[];
+  rehearsals: UpcomingLinkedItem[];
   representations: UpcomingLinkedItem[];
 };
 
 export function hasUpcomingImpact(impact: UpcomingChoreographyImpact) {
-  return impact.repetitions.length > 0 || impact.representations.length > 0;
+  return impact.rehearsals.length > 0 || impact.representations.length > 0;
 }
 
 function listUpcomingItems(items: UpcomingLinkedItem[], fallbackTitle: string) {
@@ -42,10 +42,10 @@ export function formatChoreographyLifecycleWarning(options: {
     "Upcoming linked events will be affected:",
   ];
 
-  if (impact.repetitions.length > 0) {
+  if (impact.rehearsals.length > 0) {
     sections.push(
       "",
-      `Upcoming repetitions will be deleted:\n${listUpcomingItems(impact.repetitions, "Repetition")}`,
+      `Upcoming rehearsals will be deleted:\n${listUpcomingItems(impact.rehearsals, "Rehearsal")}`,
     );
   }
 

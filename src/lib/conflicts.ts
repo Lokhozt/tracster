@@ -115,7 +115,7 @@ export async function findParticipantConflicts(options: {
       where: {
         ...timeFilter,
         OR: [
-          { type: { kind: { not: "REPETITION" } } },
+          { type: { kind: { not: "REHEARSAL" } } },
           { choreography: visibleChoreographyWhere },
           { choreographyId: null },
         ],
@@ -157,7 +157,7 @@ export async function findParticipantConflicts(options: {
       continue;
     }
 
-    if (event.type.kind === "REPETITION") {
+    if (event.type.kind === "REHEARSAL") {
       const memberIds = event.group
         ? event.group.members.map((member) => member.userId)
         : (event.choreography?.members.map((member) => member.userId) ?? []);

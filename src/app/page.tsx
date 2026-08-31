@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { RepetitionCalendar } from "@/components/RepetitionCalendar";
+import { RehearsalCalendar } from "@/components/RehearsalCalendar";
 import { UpcomingEventsList } from "@/components/UpcomingEventsList";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -38,7 +38,7 @@ export default async function HomePage() {
             {birthdayGreeting}
           </p>
         )}
-        <RepetitionCalendar events={events} />
+        <RehearsalCalendar events={events} />
         <UpcomingEventsList events={upcoming} />
       </AppShell>
     );
@@ -55,7 +55,7 @@ export default async function HomePage() {
         </h1>
         <p className="mb-8 text-base text-stone-600 sm:text-lg">
           Tracster helps associations organize rehearsals, assign participants, and
-          collect availability for each repetition.
+          collect availability for each rehearsal.
         </p>
         <div className="flex flex-col justify-center gap-3 sm:flex-row">
           <Link

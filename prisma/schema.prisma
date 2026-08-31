@@ -64,7 +64,7 @@ model Choreography {
   choreographers  ChoreographyChoreographer[]
   members         ChoreographyMember[]
   groups          ChoreographyGroup[]
-  repetitions     Event[]                    @relation("EventRepetitionChoreography")
+  rehearsals      Event[]                    @relation("EventRehearsalChoreography")
   eventLinks      EventChoreography[]
   joinRequests    ChoreographyJoinRequest[]
 }
@@ -112,7 +112,7 @@ model ChoreographyGroup {
 
   choreography Choreography              @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
   members      ChoreographyGroupMember[]
-  repetitions  Event[]
+  rehearsals   Event[]
 
   @@index([choreographyId])
 }
@@ -149,7 +149,7 @@ model SiteSettings {
 
 enum EventKind {
   EVENT
-  REPETITION
+  REHEARSAL
   REPRESENTATION
   COMPETITION
   DEMONSTRATION
@@ -189,7 +189,7 @@ model Event {
   type           EventType              @relation(fields: [typeId], references: [id])
   listedLocation Location?              @relation(fields: [locationId], references: [id], onDelete: SetNull)
   createdBy      User                   @relation("EventCreator", fields: [createdById], references: [id])
-  choreography   Choreography?          @relation("EventRepetitionChoreography", fields: [choreographyId], references: [id], onDelete: Cascade)
+  choreography   Choreography?          @relation("EventRehearsalChoreography", fields: [choreographyId], references: [id], onDelete: Cascade)
   group          ChoreographyGroup?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
   choreographies EventChoreography[]
   participants   EventParticipant[]

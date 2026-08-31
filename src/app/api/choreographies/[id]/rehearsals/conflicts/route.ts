@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { findParticipantConflicts } from "@/lib/conflicts";
 import { canEditChoreography } from "@/lib/permissions";
-import { repetitionConflictSchema } from "@/lib/validations";
+import { rehearsalConflictSchema } from "@/lib/validations";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   const body = await request.json();
-  const parsed = repetitionConflictSchema.safeParse(body);
+  const parsed = rehearsalConflictSchema.safeParse(body);
   if (!parsed.success) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }

@@ -25,16 +25,16 @@ export async function POST(request: NextRequest) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
-  const eventType = await getEventTypeByKind("REPETITION");
+  const eventType = await getEventTypeByKind("REHEARSAL");
   if (!eventType) {
-    return jsonError("Repetition event type is not configured.");
+    return jsonError("Rehearsal event type is not configured.");
   }
 
   for (const placement of parsed.data.placements) {
     const startsAt = new Date(placement.startsAt);
     const endsAt = new Date(placement.endsAt);
     if (endsAt <= startsAt) {
-      return jsonError("Each repetition must end after it starts.");
+      return jsonError("Each rehearsal must end after it starts.");
     }
 
     const choreography = await prisma.choreography.findFirst({
@@ -76,5 +76,5 @@ export async function POST(request: NextRequest) {
     ),
   );
 
-  return Response.json({ repetitions: created }, { status: 201 });
+  return Response.json({ rehearsals: created }, { status: 201 });
 }

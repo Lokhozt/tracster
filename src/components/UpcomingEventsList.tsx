@@ -12,7 +12,7 @@ import {
   type UpcomingEventRange,
 } from "@/lib/schedule-filters";
 import {
-  isRepetitionScheduleEvent,
+  isRehearsalScheduleEvent,
   scheduleEventLabel,
   type SerializedScheduleEvent,
 } from "@/lib/schedule-filters";
@@ -35,7 +35,7 @@ function eventKindClassName(kind: SerializedScheduleEvent["typeKind"]) {
   if (kind === "DEMONSTRATION") {
     return "bg-teal-100 text-teal-900";
   }
-  if (kind === "REPETITION") {
+  if (kind === "REHEARSAL") {
     return "bg-stone-100 text-stone-700";
   }
   return "bg-sky-100 text-sky-900";
@@ -78,10 +78,10 @@ function AvailabilityBadge({
 }
 
 function AvailabilityQuickReply({
-  repetitionId,
+  rehearsalId,
   currentStatus,
 }: {
-  repetitionId: string;
+  rehearsalId: string;
   currentStatus: SerializedScheduleEvent["availabilityStatus"];
 }) {
   const router = useRouter();
@@ -92,7 +92,7 @@ function AvailabilityQuickReply({
     setLoading(status);
     setError(null);
 
-    const response = await fetch(`/api/events/${repetitionId}/availability`, {
+    const response = await fetch(`/api/events/${rehearsalId}/availability`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
@@ -232,7 +232,7 @@ export function UpcomingEventsList({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  {isRepetitionScheduleEvent(event) && event.isMember && (
+                  {isRehearsalScheduleEvent(event) && event.isMember && (
                     <AvailabilityBadge status={event.availabilityStatus} />
                   )}
                   {event.canEdit && (
@@ -244,10 +244,10 @@ export function UpcomingEventsList({
                 </div>
               </div>
 
-              {isRepetitionScheduleEvent(event) && event.isMember && (
+              {isRehearsalScheduleEvent(event) && event.isMember && (
                 <div className="mt-4 border-t border-stone-100 pt-4">
                   <AvailabilityQuickReply
-                    repetitionId={event.id}
+                    rehearsalId={event.id}
                     currentStatus={event.availabilityStatus}
                   />
                 </div>

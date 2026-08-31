@@ -73,14 +73,14 @@ export async function getUserScheduleEvents(userId: string) {
           choreography.members.length > 0
         );
       });
-      const repetitionMember = event.group
+      const rehearsalMember = event.group
         ? event.group.members.length > 0
         : (event.choreography?.members.length ?? 0) > 0;
 
       const isParticipating =
         event.createdById === userId ||
         event.participants.length > 0 ||
-        (kind === "REPETITION" && repetitionMember) ||
+        (kind === "REHEARSAL" && rehearsalMember) ||
         (eventKindAllowsChoreographyLinks(kind) && involvedInLinkedChoreography);
 
       return {
@@ -95,14 +95,14 @@ export async function getUserScheduleEvents(userId: string) {
         choreographyId: event.choreographyId,
         choreographyTitle: event.choreography?.title ?? null,
         isMember:
-          kind === "REPETITION"
-            ? repetitionMember
+          kind === "REHEARSAL"
+            ? rehearsalMember
             : eventKindAllowsChoreographyLinks(kind)
               ? involvedInLinkedChoreography
               : event.participants.length > 0,
         isParticipating,
         availabilityStatus:
-          kind === "REPETITION" ? (event.availabilities[0]?.status ?? null) : null,
+          kind === "REHEARSAL" ? (event.availabilities[0]?.status ?? null) : null,
         href: `/events/${event.id}`,
         canEdit: await canEditEvent(event.id, userId),
       };

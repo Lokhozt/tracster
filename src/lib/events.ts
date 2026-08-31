@@ -86,7 +86,7 @@ export async function canViewEvent(eventId: string, userId: string): Promise<boo
 
   const kind = event.type.kind;
 
-  if (kind === "REPETITION") {
+  if (kind === "REHEARSAL") {
     if (!event.choreographyId) {
       return canOpenListedOrJoinableEvent(event, userId);
     }
@@ -119,7 +119,7 @@ export async function canEditEvent(eventId: string, userId: string): Promise<boo
     return true;
   }
 
-  if (event.type.kind === "REPETITION" && event.choreographyId) {
+  if (event.type.kind === "REHEARSAL" && event.choreographyId) {
     return canEditChoreography(event.choreographyId, userId);
   }
 
@@ -227,7 +227,7 @@ export async function canCreateEventOfType(options: {
   choreographyIds?: string[];
   canCreateGeneric: boolean;
 }): Promise<boolean> {
-  if (options.kind === "REPETITION" && options.choreographyId) {
+  if (options.kind === "REHEARSAL" && options.choreographyId) {
     return canEditChoreography(options.choreographyId, options.userId);
   }
 
@@ -259,13 +259,13 @@ export async function validateEventTypeFields(options: {
     return "Title must be at least 2 characters.";
   }
 
-  if (options.type.kind !== "REPETITION") {
+  if (options.type.kind !== "REHEARSAL") {
     if (options.groupId) {
-      return "Only repetition events can be assigned to a group.";
+      return "Only rehearsal events can be assigned to a group.";
     }
   }
 
-  if (options.type.kind === "REPETITION" && options.groupId) {
+  if (options.type.kind === "REHEARSAL" && options.groupId) {
     if (!options.choreographyId) {
       return "Attach a choreography before assigning a group.";
     }
@@ -275,12 +275,12 @@ export async function validateEventTypeFields(options: {
     }
   }
 
-  if (options.type.kind !== "REPETITION" && options.choreographyId) {
-    return "Only repetition events can be attached to a single choreography.";
+  if (options.type.kind !== "REHEARSAL" && options.choreographyId) {
+    return "Only rehearsal events can be attached to a single choreography.";
   }
 
   if (!eventKindAllowsChoreographyLinks(options.type.kind) && (options.choreographyIds?.length ?? 0) > 0) {
-    return "Only representation and demonstration events can be attached to choreographies.";
+    return "Only representation, demonstration, and competition events can be attached to choreographies.";
   }
 
   return null;

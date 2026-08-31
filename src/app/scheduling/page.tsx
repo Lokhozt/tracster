@@ -39,7 +39,7 @@ export default async function SchedulingPage() {
     <AppShell title="Scheduling">
       <p className="mb-6 text-stone-600">
         Build an optimized rehearsal weekend: pick pieces, days, and locations, then choose one of the
-        generated calendars. Confirming creates the repetitions.
+        generated calendars. Confirming creates the rehearsals.
       </p>
       <SchedulingTool
         choreographies={choreographies}

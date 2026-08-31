@@ -71,14 +71,14 @@ export async function getGroupForChoreography(
   });
 }
 
-export type RepetitionAudience = {
+export type RehearsalAudience = {
   groupId: string | null;
   groupName: string | null;
   memberIds: string[];
 };
 
-export async function getRepetitionAudience(
-  repetition: {
+export async function getRehearsalAudience(
+  rehearsal: {
     choreographyId: string | null;
     groupId: string | null;
     group?: {
@@ -86,18 +86,18 @@ export async function getRepetitionAudience(
       members: { userId: string }[];
     } | null;
   },
-): Promise<RepetitionAudience> {
-  if (repetition.group) {
+): Promise<RehearsalAudience> {
+  if (rehearsal.group) {
     return {
-      groupId: repetition.groupId,
-      groupName: repetition.group.name ?? null,
-      memberIds: repetition.group.members.map((member) => member.userId),
+      groupId: rehearsal.groupId,
+      groupName: rehearsal.group.name ?? null,
+      memberIds: rehearsal.group.members.map((member) => member.userId),
     };
   }
 
-  if (repetition.groupId && repetition.choreographyId) {
+  if (rehearsal.groupId && rehearsal.choreographyId) {
     const group = await prisma.choreographyGroup.findFirst({
-      where: { id: repetition.groupId, choreographyId: repetition.choreographyId },
+      where: { id: rehearsal.groupId, choreographyId: rehearsal.choreographyId },
       include: { members: { select: { userId: true } } },
     });
 
@@ -110,7 +110,7 @@ export async function getRepetitionAudience(
     }
   }
 
-  if (!repetition.choreographyId) {
+  if (!rehearsal.choreographyId) {
     return {
       groupId: null,
       groupName: null,
@@ -119,7 +119,7 @@ export async function getRepetitionAudience(
   }
 
   const members = await prisma.choreographyMember.findMany({
-    where: { choreographyId: repetition.choreographyId },
+    where: { choreographyId: rehearsal.choreographyId },
     select: { userId: true },
   });
 
@@ -130,8 +130,8 @@ export async function getRepetitionAudience(
   };
 }
 
-export async function isRepetitionParticipant(
-  repetition: {
+export async function isRehearsalParticipant(
+  rehearsal: {
     choreographyId: string | null;
     groupId: string | null;
     group?: {
@@ -141,7 +141,7 @@ export async function isRepetitionParticipant(
   },
   userId: string,
 ): Promise<boolean> {
-  const audience = await getRepetitionAudience(repetition);
+  const audience = await getRehearsalAudience(rehearsal);
   return audience.memberIds.includes(userId);
 }
 

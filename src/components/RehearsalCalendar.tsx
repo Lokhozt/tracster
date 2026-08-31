@@ -49,7 +49,7 @@ function useIsSmallScreen() {
 }
 
 function eventCellLabel(event: SerializedScheduleEvent): string {
-  if (event.typeKind === "REPETITION") {
+  if (event.typeKind === "REHEARSAL") {
     return event.choreographyTitle ?? scheduleEventLabel(event);
   }
   return scheduleEventLabel(event);
@@ -179,7 +179,7 @@ function DayCell({
   );
 }
 
-export function RepetitionCalendar({
+export function RehearsalCalendar({
   events,
 }: {
   events: SerializedScheduleEvent[];
@@ -280,7 +280,7 @@ export function RepetitionCalendar({
           <div className="mt-1 flex flex-wrap gap-3 text-xs text-stone-500">
             <span className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded bg-stone-200" />
-              Repetition
+              Rehearsal
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded bg-amber-200" />

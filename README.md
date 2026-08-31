@@ -13,13 +13,14 @@ Tracster is a web application for dance and performance associations to plan reh
 
 - **Users & roles** — `USER`, `ADMIN`, and `OWNER`. Admins and owners can manage members; only the owner can transfer ownership.
 - **Choreographies** — create pieces, assign choreographers and participants, and optionally split participants into **groups**.
-- **Repetitions** — schedule rehearsals for a whole choreography or a specific group.
+- **Rehearsals** — schedule rehearsals for a whole choreography or a specific group.
 - **Representations** — schedule performances and attach choreographies to them (shown on the schedule).
 - **Demonstrations** — schedule showcases linked to choreographies, with their own participant lists.
+- **Competitions** — schedule competitions linked to choreographies, with their own participant lists.
 - **Events** — general association events with their own participant lists.
-- **Availability** — participants mark each repetition as available, unavailable, or maybe.
+- **Availability** — participants mark each rehearsal as available, unavailable, or maybe.
 - **Unavailability** — members record personal timeframes they cannot attend; the calendar selection is date-accurate.
-- **Conflict warnings** — when scheduling a repetition, choreographers are warned if participants are already engaged or marked unavailable.
+- **Conflict warnings** — when scheduling a rehearsal, choreographers are warned if participants are already engaged or marked unavailable.
 - **Join & visibility** — choreographies and events can allow free join, join requests (accept/decline), and hiding from non-participants.
 
 ## Core workflow
@@ -27,10 +28,10 @@ Tracster is a web application for dance and performance associations to plan reh
 1. A user creates a **choreography** and becomes a choreographer on it.
 2. Choreographers add other choreographers, **assign participants**, and optionally create **groups**.
 3. They can let others **join** or **request to join**, and choose whether the piece is hidden from non-participants.
-4. A choreographer schedules a **repetition** (date, time, optional location and group). Conflict warnings appear if the audience is already booked or unavailable.
+4. A choreographer schedules a **rehearsal** (date, time, optional location and group). Conflict warnings appear if the audience is already booked or unavailable.
 5. Assigned participants respond with **availability** (available, unavailable, maybe) and can maintain a personal **unavailability** calendar.
-6. Choreographers (or admins) schedule **representations** and **demonstrations** and attach choreographies, and can also create standalone **events**.
-7. The home **schedule** shows repetitions, representations, and events the user is involved in.
+6. Choreographers (or admins) schedule **representations**, **demonstrations**, and **competitions** and attach choreographies, and can also create standalone **events**.
+7. The home **schedule** shows rehearsals, representations, and events the user is involved in.
 
 ## Getting started
 
@@ -115,10 +116,10 @@ prisma/
 | POST | `/api/choreographies/:id/join` | Join as participant |
 | POST / PATCH / DELETE | `/api/choreographies/:id/join-requests` | Request, accept, or withdraw join |
 | GET / POST / DELETE | `/api/choreographies/:id/representations` | Link choreographies to representations |
-| POST | `/api/choreographies/:id/repetitions` | Schedule repetition |
-| POST | `/api/choreographies/:id/repetitions/conflicts` | Preview participant conflicts |
-| GET / PATCH / DELETE | `/api/repetitions/:id` | Repetition details / update / delete |
-| POST | `/api/repetitions/:id/availability` | Submit availability |
+| POST | `/api/choreographies/:id/rehearsals` | Schedule rehearsal |
+| POST | `/api/choreographies/:id/rehearsals/conflicts` | Preview participant conflicts |
+| GET / PATCH / DELETE | `/api/rehearsals/:id` | Rehearsal details / update / delete |
+| POST | `/api/rehearsals/:id/availability` | Submit availability |
 | GET / POST | `/api/representations` | List / create representations |
 | GET / PATCH / DELETE | `/api/representations/:id` | Representation details / update / delete |
 | GET / POST / DELETE | `/api/representations/:id/choreographies` | Attach or detach choreographies |
@@ -138,11 +139,11 @@ prisma/
 - **ChoreographyChoreographer** — users who can edit and manage
 - **ChoreographyMember** — assigned participants
 - **ChoreographyJoinRequest** — pending join requests
-- **ChoreographyGroup** / **ChoreographyGroupMember** — subsets of participants; repetitions can target a group
-- **RepetitionEvent** — a scheduled rehearsal
-- **AvailabilityResponse** — participant response per repetition
+- **ChoreographyGroup** / **ChoreographyGroupMember** — subsets of participants; rehearsals can target a group
+- **RehearsalEvent** — a scheduled rehearsal
+- **AvailabilityResponse** — participant response per rehearsal
 - **UserUnavailability** — personal unavailable timeframes
-- **EventType** — includes immutable kinds: Event, Repetition, Representation, Competition, Demonstration
+- **EventType** — includes immutable kinds: Event, Rehearsal, Representation, Competition, Demonstration
 - **Event** / **EventChoreography** / **EventParticipant** / **EventJoinRequest** — scheduled items, linked pieces, and attendance
 
 ## Next steps
@@ -150,9 +151,9 @@ prisma/
 Possible future extensions:
 
 - Export / sync to Google Calendar
-- Stronger repetition scheduling tools
-- Email notifications for new repetitions
-- Recurring repetitions
+- Stronger rehearsal scheduling tools
+- Email notifications for new rehearsals
+- Recurring rehearsals
 - Mobile-friendly push reminders
 
 ## Scripts

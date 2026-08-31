@@ -13,10 +13,10 @@ const statusLabels: Record<AvailabilityStatus, string> = {
 };
 
 export function AvailabilityButtons({
-  repetitionId,
+  rehearsalId,
   currentStatus,
 }: {
-  repetitionId: string;
+  rehearsalId: string;
   currentStatus?: AvailabilityStatus;
 }) {
   const router = useRouter();
@@ -27,7 +27,7 @@ export function AvailabilityButtons({
     setLoading(status);
     setError(null);
 
-    const response = await fetch(`/api/events/${repetitionId}/availability`, {
+    const response = await fetch(`/api/events/${rehearsalId}/availability`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),

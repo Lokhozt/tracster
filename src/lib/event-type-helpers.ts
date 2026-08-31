@@ -1,13 +1,13 @@
 export type EventKind =
   | "EVENT"
-  | "REPETITION"
+  | "REHEARSAL"
   | "REPRESENTATION"
   | "COMPETITION"
   | "DEMONSTRATION";
 
 export const BUILTIN_EVENT_TYPE_IDS = {
   EVENT: "event-type-event",
-  REPETITION: "event-type-repetition",
+  REHEARSAL: "event-type-rehearsal",
   REPRESENTATION: "event-type-representation",
   COMPETITION: "event-type-competition",
   DEMONSTRATION: "event-type-demonstration",
@@ -15,7 +15,7 @@ export const BUILTIN_EVENT_TYPE_IDS = {
 
 export const BUILTIN_EVENT_TYPES = [
   { id: BUILTIN_EVENT_TYPE_IDS.EVENT, name: "Event", kind: "EVENT" as const, sortOrder: 0 },
-  { id: BUILTIN_EVENT_TYPE_IDS.REPETITION, name: "Repetition", kind: "REPETITION" as const, sortOrder: 1 },
+  { id: BUILTIN_EVENT_TYPE_IDS.REHEARSAL, name: "Rehearsal", kind: "REHEARSAL" as const, sortOrder: 1 },
   {
     id: BUILTIN_EVENT_TYPE_IDS.REPRESENTATION,
     name: "Representation",
@@ -50,15 +50,15 @@ export function serializeEventType(type: SerializedEventType): SerializedEventTy
 }
 
 export function isGenericEventKind(kind: EventKind | null): boolean {
-  return kind !== "REPETITION" && kind !== "REPRESENTATION";
+  return kind !== "REHEARSAL" && kind !== "REPRESENTATION";
 }
 
 export function eventKindAllowsChoreographyLinks(kind: EventKind | null): boolean {
-  return kind === "REPRESENTATION" || kind === "DEMONSTRATION";
+  return kind === "REPRESENTATION" || kind === "DEMONSTRATION" || kind === "COMPETITION";
 }
 
 export function eventKindSkipsGenericCreatePermission(kind: EventKind | null): boolean {
-  return kind === "REPETITION" || eventKindAllowsChoreographyLinks(kind);
+  return kind === "REHEARSAL" || eventKindAllowsChoreographyLinks(kind);
 }
 
 export function defaultEventTitle(

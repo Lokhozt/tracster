@@ -12,7 +12,7 @@ export async function getActiveChoreographyForAdmin(choreographyId: string) {
 
 export function serializeUpcomingImpact(impact: UpcomingChoreographyImpact) {
   return {
-    repetitions: impact.repetitions.map((item) => ({
+    rehearsals: impact.rehearsals.map((item) => ({
       id: item.id,
       title: item.title,
       startsAt: item.startsAt.toISOString(),
@@ -29,11 +29,11 @@ export async function getUpcomingChoreographyImpact(
   choreographyId: string,
   now = new Date(),
 ): Promise<UpcomingChoreographyImpact> {
-  const [repetitions, links] = await Promise.all([
+  const [rehearsals, links] = await Promise.all([
     prisma.event.findMany({
       where: {
         choreographyId,
-        type: { kind: "REPETITION" },
+        type: { kind: "REHEARSAL" },
         startsAt: { gte: now },
       },
       select: { id: true, title: true, startsAt: true },
@@ -52,7 +52,7 @@ export async function getUpcomingChoreographyImpact(
   ]);
 
   return {
-    repetitions,
+    rehearsals,
     representations: links.map((link) => link.event),
   };
 }
@@ -64,7 +64,7 @@ export async function archiveChoreography(choreographyId: string) {
     prisma.event.deleteMany({
       where: {
         choreographyId,
-        type: { kind: "REPETITION" },
+        type: { kind: "REHEARSAL" },
         startsAt: { gte: now },
       },
     }),
@@ -88,7 +88,7 @@ export async function deleteChoreography(choreographyId: string) {
     prisma.event.deleteMany({
       where: {
         choreographyId,
-        type: { kind: "REPETITION" },
+        type: { kind: "REHEARSAL" },
         startsAt: { gte: now },
       },
     }),

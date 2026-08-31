@@ -72,7 +72,7 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
   async function handleDelete(location: LocationRecord) {
     if (
       !window.confirm(
-        `Delete “${location.name}”? Existing repetitions and events will keep this as a unique location.`,
+        `Delete “${location.name}”? Existing rehearsals and events will keep this as a unique location.`,
       )
     ) {
       return;
@@ -102,7 +102,7 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
     <Card className="max-w-xl">
       <h2 className="mb-1 text-lg font-semibold">Locations</h2>
       <p className="mb-4 text-sm text-stone-500">
-        Listed locations can be reused on repetitions, representations, and events.
+        Listed locations can be reused on rehearsals, representations, and events.
         A unique location can still be entered when scheduling.
       </p>
 

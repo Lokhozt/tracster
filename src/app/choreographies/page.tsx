@@ -44,7 +44,7 @@ export default async function ChoreographiesPage() {
         where: { userId: user.id },
         select: { userId: true },
       },
-      _count: { select: { members: true, repetitions: true } },
+      _count: { select: { members: true, rehearsals: true } },
     },
     orderBy: { updatedAt: "desc" },
   });
@@ -76,7 +76,7 @@ export default async function ChoreographiesPage() {
             createdByName: formatUserName(choreography.createdBy),
             updatedAt: choreography.updatedAt.toISOString(),
             memberCount: choreography._count.members,
-            repetitionCount: choreography._count.repetitions,
+            rehearsalCount: choreography._count.rehearsals,
             isChoreographer,
             isInvolved:
               isChoreographer ||

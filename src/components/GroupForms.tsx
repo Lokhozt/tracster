@@ -42,10 +42,7 @@ function GroupMemberCheckboxes({
             onChange={() => toggleMember(member.id)}
             className="mt-0.5 rounded border-stone-300"
           />
-          <span>
-            <span className="font-medium text-stone-900">{member.name}</span>
-            <span className="block text-stone-500">{member.email}</span>
-          </span>
+          <span className="font-medium text-stone-900">{member.name}</span>
         </label>
       ))}
     </div>
@@ -231,7 +228,7 @@ function DeleteGroupButton({
   async function handleDelete() {
     if (
       !window.confirm(
-        "Delete this group? Existing repetitions linked to it will target all participants instead.",
+        "Delete this group? Existing rehearsals linked to it will target all participants instead.",
       )
     ) {
       return;
@@ -306,7 +303,7 @@ export function GroupsSection({
         <Card>
           <p className="text-stone-600">
             {canEdit
-              ? "No groups yet. Create groups to schedule repetitions for a subset of participants."
+              ? "No groups yet. Create groups to schedule rehearsals for a subset of participants."
               : "No groups defined for this choreography."}
           </p>
         </Card>
@@ -361,7 +358,7 @@ export type GroupOption = {
   memberCount: number;
 };
 
-export function RepetitionAudienceSelect({
+export function RehearsalAudienceSelect({
   groups,
   value,
   onChange,
@@ -376,9 +373,9 @@ export function RepetitionAudienceSelect({
 
   return (
     <div>
-      <Label htmlFor="repetition-audience">Participants</Label>
+      <Label htmlFor="rehearsal-audience">Participants</Label>
       <select
-        id="repetition-audience"
+        id="rehearsal-audience"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"

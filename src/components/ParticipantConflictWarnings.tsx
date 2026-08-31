@@ -30,7 +30,7 @@ export function ParticipantConflictWarnings({
     const timer = window.setTimeout(async () => {
       try {
         const response = await fetch(
-          `/api/choreographies/${choreographyId}/repetitions/conflicts`,
+          `/api/choreographies/${choreographyId}/rehearsals/conflicts`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

@@ -5,7 +5,7 @@ import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { getGroupForChoreography } from "@/lib/groups";
 import { canEditChoreography } from "@/lib/permissions";
 import { basicUserSelect } from "@/lib/users";
-import { repetitionSchema } from "@/lib/validations";
+import { rehearsalSchema } from "@/lib/validations";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { getEventTypeByKind } from "@/lib/event-types";
 
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   const body = await request.json();
-  const parsed = repetitionSchema.safeParse(body);
+  const parsed = rehearsalSchema.safeParse(body);
   if (!parsed.success) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
@@ -46,12 +46,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return jsonError(location.error);
   }
 
-  const eventType = await getEventTypeByKind("REPETITION");
+  const eventType = await getEventTypeByKind("REHEARSAL");
   if (!eventType) {
-    return jsonError("Repetition event type is not configured.");
+    return jsonError("Rehearsal event type is not configured.");
   }
 
-  const repetition = await prisma.event.create({
+  const rehearsal = await prisma.event.create({
     data: {
       typeId: eventType.id,
       choreographyId: id,
@@ -72,5 +72,5 @@ export async function POST(request: NextRequest, context: RouteContext) {
     },
   });
 
-  return Response.json({ repetition, event: repetition }, { status: 201 });
+  return Response.json({ rehearsal, event: rehearsal }, { status: 201 });
 }

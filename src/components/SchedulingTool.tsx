@@ -223,7 +223,7 @@ export function SchedulingTool({
     setApplying(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Could not create the repetitions.");
+      setError(data.error ?? "Could not create the rehearsals.");
       return;
     }
 
@@ -541,7 +541,7 @@ export function SchedulingTool({
             );
           })}
           <Button type="button" onClick={applySelected} disabled={applying || !selectedCandidateId}>
-            {applying ? "Creating repetitions…" : "Create repetitions"}
+            {applying ? "Creating rehearsals…" : "Create rehearsals"}
           </Button>
         </div>
       )}

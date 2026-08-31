@@ -6,7 +6,7 @@ import { EditIconLink } from "@/components/EditIconLink";
 import { Card } from "@/components/ui";
 import { formatDateTime } from "@/lib/datetime";
 
-export type RepetitionListItem = {
+export type RehearsalListItem = {
   id: string;
   title: string | null;
   startsAt: string;
@@ -17,42 +17,42 @@ export type RepetitionListItem = {
   unavailableNames: string[];
 };
 
-export function RepetitionEventCard({
-  repetition,
+export function RehearsalEventCard({
+  rehearsal,
   canEdit,
 }: {
-  repetition: RepetitionListItem;
+  rehearsal: RehearsalListItem;
   canEdit: boolean;
 }) {
   return (
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h3 className="font-semibold">{repetition.title ?? "Repetition"}</h3>
+          <h3 className="font-semibold">{rehearsal.title ?? "Rehearsal"}</h3>
           <p className="mt-1 text-sm text-stone-600">
-            {formatDateTime(new Date(repetition.startsAt))}
-            {repetition.endsAt && ` – ${formatDateTime(new Date(repetition.endsAt))}`}
+            {formatDateTime(new Date(rehearsal.startsAt))}
+            {rehearsal.endsAt && ` – ${formatDateTime(new Date(rehearsal.endsAt))}`}
           </p>
-          {repetition.location && (
-            <p className="mt-1 text-sm text-stone-500">{repetition.location}</p>
+          {rehearsal.location && (
+            <p className="mt-1 text-sm text-stone-500">{rehearsal.location}</p>
           )}
-          {repetition.groupName && (
-            <p className="mt-1 text-sm text-stone-500">Group: {repetition.groupName}</p>
+          {rehearsal.groupName && (
+            <p className="mt-1 text-sm text-stone-500">Group: {rehearsal.groupName}</p>
           )}
         </div>
         <div className="flex items-center gap-1">
           <Link
-            href={`/events/${repetition.id}`}
+            href={`/events/${rehearsal.id}`}
             className="text-sm font-medium text-stone-900 hover:underline"
           >
             View details
           </Link>
           {canEdit && (
             <>
-              <EditIconLink href={`/events/${repetition.id}`} label="Edit repetition" />
+              <EditIconLink href={`/events/${rehearsal.id}`} label="Edit rehearsal" />
               <DeleteEventButton
-                deleteUrl={`/api/events/${repetition.id}`}
-                confirmMessage="Delete this repetition? This cannot be undone."
+                deleteUrl={`/api/events/${rehearsal.id}`}
+                confirmMessage="Delete this rehearsal? This cannot be undone."
               />
             </>
           )}
@@ -62,18 +62,18 @@ export function RepetitionEventCard({
         <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
           <div>
             <p className="font-medium text-green-700">
-              Available ({repetition.availableNames.length})
+              Available ({rehearsal.availableNames.length})
             </p>
             <p className="text-stone-600">
-              {repetition.availableNames.join(", ") || "—"}
+              {rehearsal.availableNames.join(", ") || "—"}
             </p>
           </div>
           <div>
             <p className="font-medium text-red-700">
-              Unavailable ({repetition.unavailableNames.length})
+              Unavailable ({rehearsal.unavailableNames.length})
             </p>
             <p className="text-stone-600">
-              {repetition.unavailableNames.join(", ") || "—"}
+              {rehearsal.unavailableNames.join(", ") || "—"}
             </p>
           </div>
         </div>

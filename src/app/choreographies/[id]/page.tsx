@@ -5,9 +5,9 @@ import {
   AssignMemberForm,
   ChoreographersList,
   ParticipantsList,
-  RepetitionsSection,
+  RehearsalsSection,
 } from "@/components/ChoreographyForms";
-import { DemonstrationsSection } from "@/components/EventForms";
+import { CompetitionsSection, DemonstrationsSection } from "@/components/EventForms";
 import { EditChoreographyForm } from "@/components/CreateChoreographyForm";
 import { GroupsSection } from "@/components/GroupForms";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
@@ -57,8 +57,8 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           include: { user: { select: basicUserSelect } },
           orderBy: { requestedAt: "asc" },
         },
-        repetitions: {
-          where: { type: { kind: "REPETITION" } },
+        rehearsals: {
+          where: { type: { kind: "REHEARSAL" } },
           orderBy: { startsAt: "asc" },
           include: {
             ...listedLocationInclude,
@@ -75,7 +75,9 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           },
         },
         eventLinks: {
-          where: { event: { type: { kind: { in: ["REPRESENTATION", "DEMONSTRATION"] } } } },
+          where: {
+            event: { type: { kind: { in: ["REPRESENTATION", "DEMONSTRATION", "COMPETITION"] } } },
+          },
           include: {
             event: {
               include: {
@@ -112,6 +114,9 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
   const demonstrationLinks = choreography.eventLinks.filter(
     (link) => link.event.type.kind === "DEMONSTRATION",
   );
+  const competitionLinks = choreography.eventLinks.filter(
+    (link) => link.event.type.kind === "COMPETITION",
+  );
 
   return (
     <AppShell
@@ -146,7 +151,6 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
             requests={choreography.joinRequests.map((request) => ({
               id: request.user.id,
               name: formatUserName(request.user),
-              email: request.user.email,
             }))}
           />
         </div>
@@ -225,7 +229,22 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
         }))}
       />
 
-      <RepetitionsSection
+      <CompetitionsSection
+        choreographyId={id}
+        choreographyTitle={choreography.title}
+        canEdit={canEdit}
+        eventTypes={eventTypes}
+        participantOptions={users}
+        competitions={competitionLinks.map((link) => ({
+          id: link.event.id,
+          title: link.event.title || null,
+          startsAt: link.event.startsAt.toISOString(),
+          endsAt: link.event.endsAt?.toISOString() ?? null,
+          location: displayLocation(link.event),
+        }))}
+      />
+
+      <RehearsalsSection
         choreographyId={id}
         canEdit={canEdit}
         groups={groups.map((group) => ({
@@ -234,24 +253,24 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           memberCount: group.members.length,
         }))}
         eventTypes={eventTypes}
-        repetitions={choreography.repetitions.map((repetition) => {
+        rehearsals={choreography.rehearsals.map((rehearsal) => {
           const targetUserIds = new Set(
-            repetition.group
-              ? repetition.group.members.map((member) => member.userId)
+            rehearsal.group
+              ? rehearsal.group.members.map((member) => member.userId)
               : choreography.members.map(({ userId }) => userId),
           );
 
-          const targetAvailabilities = repetition.availabilities.filter((item) =>
+          const targetAvailabilities = rehearsal.availabilities.filter((item) =>
             targetUserIds.has(item.userId),
           );
 
           return {
-            id: repetition.id,
-            title: repetition.title,
-            startsAt: repetition.startsAt.toISOString(),
-            endsAt: repetition.endsAt?.toISOString() ?? null,
-            location: displayLocation(repetition),
-            groupName: repetition.group?.name ?? null,
+            id: rehearsal.id,
+            title: rehearsal.title,
+            startsAt: rehearsal.startsAt.toISOString(),
+            endsAt: rehearsal.endsAt?.toISOString() ?? null,
+            location: displayLocation(rehearsal),
+            groupName: rehearsal.group?.name ?? null,
             availableNames: targetAvailabilities
               .filter((item) => item.status === "AVAILABLE")
               .map((item) => formatUserName(item.user)),
@@ -282,12 +301,12 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
         <ChoreographyLifecycleActions
           choreographyId={choreography.id}
           title={choreography.title}
-          upcomingRepetitions={choreography.repetitions
-            .filter((repetition) => repetition.startsAt >= new Date())
-            .map((repetition) => ({
-              id: repetition.id,
-              title: repetition.title,
-              startsAt: repetition.startsAt.toISOString(),
+          upcomingRehearsals={choreography.rehearsals
+            .filter((rehearsal) => rehearsal.startsAt >= new Date())
+            .map((rehearsal) => ({
+              id: rehearsal.id,
+              title: rehearsal.title,
+              startsAt: rehearsal.startsAt.toISOString(),
             }))}
           upcomingRepresentations={choreography.eventLinks
             .filter((link) => link.event.startsAt >= new Date())
