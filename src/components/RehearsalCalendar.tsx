@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/datetime";
 import {
   scheduleEventLabel,
+  withParticipantTooltip,
   type SerializedScheduleEvent,
 } from "@/lib/schedule-filters";
 
@@ -109,7 +110,10 @@ function eventCellTitle(event: SerializedScheduleEvent): string {
   const range = event.endsAt
     ? `${formatTime(start)} – ${formatTime(new Date(event.endsAt))}`
     : formatTime(start);
-  return `${typeLabel}${name ? ` – ${name}` : ""} – ${range}`;
+  return withParticipantTooltip(
+    `${typeLabel}${name ? ` – ${name}` : ""} – ${range}`,
+    event.participantNames,
+  );
 }
 
 function eventCellClassName(kind: SerializedScheduleEvent["typeKind"]): string {

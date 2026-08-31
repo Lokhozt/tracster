@@ -38,6 +38,7 @@ export type SchedulePlacement = {
   locationName: string;
   startsAt: IsoDateTime;
   endsAt: IsoDateTime;
+  participantNames: string[];
 };
 
 export type ScheduleCaveat = {

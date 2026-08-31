@@ -5,8 +5,28 @@ import { eventKindAllowsChoreographyLinks } from "@/lib/event-type-helpers";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { hasGlobalAccess } from "@/lib/roles";
 import type { SerializedScheduleEvent } from "@/lib/schedule-filters";
+import { formatUserName, type UserNameFields } from "@/lib/users";
 
 export type { SerializedScheduleEvent } from "@/lib/schedule-filters";
+
+const scheduleUserSelect = {
+  id: true,
+  firstName: true,
+  lastName: true,
+} as const;
+
+function uniqueSortedNames(users: Array<{ id: string } & UserNameFields>) {
+  const seen = new Set<string>();
+  const names: string[] = [];
+  for (const user of users) {
+    if (seen.has(user.id)) {
+      continue;
+    }
+    seen.add(user.id);
+    names.push(formatUserName(user));
+  }
+  return names.sort((a, b) => a.localeCompare(b));
+}
 
 export async function getUserScheduleEvents(userId: string) {
   const globalAccess = await hasGlobalAccess(userId);
@@ -21,16 +41,20 @@ export async function getUserScheduleEvents(userId: string) {
           id: true,
           title: true,
           members: {
-            where: { userId },
-            select: { userId: true },
+            select: {
+              userId: true,
+              user: { select: scheduleUserSelect },
+            },
           },
         },
       },
       group: {
         select: {
           members: {
-            where: { userId },
-            select: { userId: true },
+            select: {
+              userId: true,
+              user: { select: scheduleUserSelect },
+            },
           },
         },
       },
@@ -40,8 +64,10 @@ export async function getUserScheduleEvents(userId: string) {
             select: {
               createdById: true,
               members: {
-                where: { userId },
-                select: { userId: true },
+                select: {
+                  userId: true,
+                  user: { select: scheduleUserSelect },
+                },
               },
               choreographers: {
                 where: { userId },
@@ -52,8 +78,10 @@ export async function getUserScheduleEvents(userId: string) {
         },
       },
       participants: {
-        where: { userId },
-        select: { userId: true },
+        select: {
+          userId: true,
+          user: { select: scheduleUserSelect },
+        },
       },
       availabilities: {
         where: { userId },
@@ -70,18 +98,34 @@ export async function getUserScheduleEvents(userId: string) {
         return (
           choreography.createdById === userId ||
           choreography.choreographers.length > 0 ||
-          choreography.members.length > 0
+          choreography.members.some((member) => member.userId === userId)
         );
       });
       const rehearsalMember = event.group
-        ? event.group.members.length > 0
-        : (event.choreography?.members.length ?? 0) > 0;
+        ? event.group.members.some((member) => member.userId === userId)
+        : (event.choreography?.members.some((member) => member.userId === userId) ?? false);
 
       const isParticipating =
         event.createdById === userId ||
-        event.participants.length > 0 ||
+        event.participants.some((participant) => participant.userId === userId) ||
         (kind === "REHEARSAL" && rehearsalMember) ||
         (eventKindAllowsChoreographyLinks(kind) && involvedInLinkedChoreography);
+
+      let participantNames: string[] = [];
+      if (kind === "REHEARSAL") {
+        participantNames = uniqueSortedNames(
+          (event.group ?? event.choreography)?.members.map((member) => member.user) ?? [],
+        );
+      } else {
+        participantNames = uniqueSortedNames([
+          ...event.participants.map((participant) => participant.user),
+          ...(eventKindAllowsChoreographyLinks(kind)
+            ? event.choreographies.flatMap((link) =>
+                link.choreography.members.map((member) => member.user),
+              )
+            : []),
+        ]);
+      }
 
       return {
         id: event.id,
@@ -94,12 +138,13 @@ export async function getUserScheduleEvents(userId: string) {
         location: displayLocation(event),
         choreographyId: event.choreographyId,
         choreographyTitle: event.choreography?.title ?? null,
+        participantNames,
         isMember:
           kind === "REHEARSAL"
             ? rehearsalMember
             : eventKindAllowsChoreographyLinks(kind)
               ? involvedInLinkedChoreography
-              : event.participants.length > 0,
+              : event.participants.some((participant) => participant.userId === userId),
         isParticipating,
         availabilityStatus:
           kind === "REHEARSAL" ? (event.availabilities[0]?.status ?? null) : null,

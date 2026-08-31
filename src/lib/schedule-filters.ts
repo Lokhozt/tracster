@@ -12,12 +12,20 @@ export type SerializedScheduleEvent = {
   location: string | null;
   choreographyId: string | null;
   choreographyTitle: string | null;
+  participantNames: string[];
   isMember: boolean;
   isParticipating: boolean;
   availabilityStatus: "AVAILABLE" | "UNAVAILABLE" | "MAYBE" | null;
   href: string;
   canEdit: boolean;
 };
+
+export function withParticipantTooltip(base: string, names: string[]) {
+  if (names.length === 0) {
+    return base;
+  }
+  return `${base}\nParticipants: ${names.join(", ")}`;
+}
 
 export type UpcomingEventRange = "all" | "week" | "month";
 

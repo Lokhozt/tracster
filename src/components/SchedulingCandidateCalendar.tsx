@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { formatTime } from "@/lib/datetime";
 import { parseDayKey } from "@/lib/scheduling/intervals";
 import type { SchedulePlacement } from "@/lib/scheduling/types";
+import { withParticipantTooltip } from "@/lib/schedule-filters";
 import { cn } from "@/lib/utils";
 
 const PX_PER_MINUTE = 1.1;
@@ -106,7 +107,10 @@ export function SchedulingCandidateCalendar({
                               borderColor: tone.border,
                               color: tone.color,
                             }}
-                            title={`${placementLabel(placement)} ${formatTime(start)} → ${formatTime(end)}`}
+                            title={withParticipantTooltip(
+                              `${placementLabel(placement)}\n${formatTime(start)} → ${formatTime(end)}`,
+                              placement.participantNames,
+                            )}
                           >
                             <p className={cn("font-semibold", blockHeight < 40 && "truncate")}>
                               {placementLabel(placement)}

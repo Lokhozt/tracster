@@ -195,6 +195,9 @@ function toCandidate(
           locationName: locationNames.get(placement.locationId) ?? "Location",
           startsAt: new Date(placement.start).toISOString(),
           endsAt: new Date(placement.end).toISOString(),
+          participantNames: item.participants
+            .map((person) => person.name)
+            .sort((a, b) => a.localeCompare(b)),
         };
       }),
   };
