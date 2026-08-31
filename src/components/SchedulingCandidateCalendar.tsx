@@ -112,7 +112,7 @@ export function SchedulingCandidateCalendar({
                               placement.participantNames,
                             )}
                           >
-                            <p className={cn("font-semibold", blockHeight < 40 && "truncate")}>
+                            <p className={cn("font-semibold break-words", blockHeight < 60 && "line-clamp-2")}>
                               {placementLabel(placement)}
                             </p>
                             <p>

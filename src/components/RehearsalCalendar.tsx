@@ -168,8 +168,8 @@ function DayCell({
             key={event.id}
             href={event.href}
             className={cn(
-              "block rounded px-1.5 py-0.5 text-xs hover:opacity-90",
-              wrapLabels ? "break-words" : "truncate",
+              "rounded px-1.5 py-0.5 text-xs break-words hover:opacity-90",
+              wrapLabels ? "block" : "line-clamp-2",
               eventCellClassName(event.typeKind),
             )}
             title={eventCellTitle(event)}
