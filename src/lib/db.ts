@@ -17,7 +17,7 @@ type PrismaGlobal = typeof globalThis & {
 const globalForPrisma = globalThis as PrismaGlobal;
 
 // Bump when the Prisma schema changes so dev HMR does not keep a stale client.
-const PRISMA_CLIENT_VERSION = "20260831180000_event_kind_festival";
+const PRISMA_CLIENT_VERSION = "20260901110000_google_calendar_sync";
 
 function isStalePrismaClient(client: PrismaClient | undefined): boolean {
   if (!client) {
@@ -33,7 +33,9 @@ function isStalePrismaClient(client: PrismaClient | undefined): boolean {
     !("siteSettings" in client) ||
     client.siteSettings === undefined ||
     !("eventType" in client) ||
-    client.eventType === undefined
+    client.eventType === undefined ||
+    !("googleCalendarConnection" in client) ||
+    client.googleCalendarConnection === undefined
   );
 }
 

@@ -5,6 +5,7 @@ import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
 import { basicUserSelect } from "@/lib/users";
 import { joinRequestDecisionSchema } from "@/lib/validations";
+import { syncChoreographyRehearsals } from "@/lib/google-calendar";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -103,6 +104,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         userId: parsed.data.userId,
       },
     });
+    await syncChoreographyRehearsals(id);
   }
 
   await prisma.choreographyJoinRequest.delete({

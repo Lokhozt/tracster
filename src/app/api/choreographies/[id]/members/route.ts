@@ -6,6 +6,7 @@ import { assignUserSchema } from "@/lib/validations";
 import { canEditChoreography } from "@/lib/permissions";
 import { removeUserFromChoreographyGroups } from "@/lib/groups";
 import { basicUserSelect } from "@/lib/users";
+import { syncChoreographyRehearsals } from "@/lib/google-calendar";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       userId: parsed.data.userId,
     },
   });
+  await syncChoreographyRehearsals(id);
 
   return Response.json({ member }, { status: 201 });
 }
@@ -85,6 +87,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       userId: parsed.data.userId,
     },
   });
+  await syncChoreographyRehearsals(id);
 
   return Response.json({ ok: true });
 }

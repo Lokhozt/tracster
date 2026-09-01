@@ -8,6 +8,7 @@ import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { isAdmin } from "@/lib/roles";
 import { schedulingApplySchema } from "@/lib/validations";
+import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
       }),
     ),
   );
+  await Promise.all(created.map(({ id }) => syncGoogleEventBestEffort(id)));
 
   return Response.json({ rehearsals: created }, { status: 201 });
 }

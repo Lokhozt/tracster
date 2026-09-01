@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { canViewChoreography } from "@/lib/permissions";
 import { basicUserSelect } from "@/lib/users";
+import { syncChoreographyRehearsals } from "@/lib/google-calendar";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -50,6 +51,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
   await prisma.choreographyJoinRequest.deleteMany({
     where: { choreographyId: id, userId: user.id },
   });
+  await syncChoreographyRehearsals(id);
 
   return Response.json({ member }, { status: 201 });
 }

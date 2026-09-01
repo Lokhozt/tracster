@@ -5,6 +5,7 @@ import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { findLocationByName, snapshotLocationUsage } from "@/lib/locations";
 import { canManageSettings } from "@/lib/roles";
 import { locationSchema } from "@/lib/validations";
+import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -34,12 +35,17 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   if (duplicate) {
     return jsonError("A location with this name already exists.", 409);
   }
+  const affectedEvents = await prisma.event.findMany({
+    where: { locationId: id, startsAt: { gte: new Date() } },
+    select: { id: true },
+  });
 
   const location = await prisma.location.update({
     where: { id },
     data: { name: parsed.data.name },
     select: { id: true, name: true },
   });
+  await Promise.all(affectedEvents.map(({ id: eventId }) => syncGoogleEventBestEffort(eventId)));
 
   return Response.json({ location });
 }
@@ -59,9 +65,14 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
   if (!existing) {
     return notFound("Location");
   }
+  const affectedEvents = await prisma.event.findMany({
+    where: { locationId: id, startsAt: { gte: new Date() } },
+    select: { id: true },
+  });
 
   await snapshotLocationUsage(id, existing.name);
   await prisma.location.delete({ where: { id } });
+  await Promise.all(affectedEvents.map(({ id: eventId }) => syncGoogleEventBestEffort(eventId)));
 
   return Response.json({ ok: true });
 }

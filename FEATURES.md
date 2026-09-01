@@ -5,7 +5,4 @@
 - Representation management
 - Availability
 - Rehearsals scheduling tools
-
-
-# TODO
-- Export/Sync to google calendar
+- One-way Google Calendar sync for shared events and per-user rehearsals

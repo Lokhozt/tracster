@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
 import type { UpcomingChoreographyImpact } from "@/lib/choreography-lifecycle";
 
 export const visibleChoreographyWhere = { archivedAt: null };
@@ -59,6 +60,14 @@ export async function getUpcomingChoreographyImpact(
 
 export async function archiveChoreography(choreographyId: string) {
   const now = new Date();
+  const deletedRehearsals = await prisma.event.findMany({
+    where: {
+      choreographyId,
+      type: { kind: "REHEARSAL" },
+      startsAt: { gte: now },
+    },
+    select: { id: true },
+  });
 
   await prisma.$transaction([
     prisma.event.deleteMany({
@@ -79,10 +88,15 @@ export async function archiveChoreography(choreographyId: string) {
       data: { archivedAt: now },
     }),
   ]);
+  await Promise.all(deletedRehearsals.map(({ id }) => syncGoogleEventBestEffort(id)));
 }
 
 export async function deleteChoreography(choreographyId: string) {
   const now = new Date();
+  const deletedRehearsals = await prisma.event.findMany({
+    where: { choreographyId, type: { kind: "REHEARSAL" } },
+    select: { id: true },
+  });
 
   await prisma.$transaction([
     prisma.event.deleteMany({
@@ -100,4 +114,5 @@ export async function deleteChoreography(choreographyId: string) {
     }),
     prisma.choreography.delete({ where: { id: choreographyId } }),
   ]);
+  await Promise.all(deletedRehearsals.map(({ id }) => syncGoogleEventBestEffort(id)));
 }

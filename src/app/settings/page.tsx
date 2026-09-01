@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { EventTypesManager } from "@/components/EventTypesManager";
 import { LocationsManager } from "@/components/LocationsManager";
 import { SiteSettingsForm } from "@/components/SiteSettingsForm";
+import { GoogleCalendarConnectionCard } from "@/components/GoogleCalendarConnectionCard";
 import { UsersList } from "@/components/UsersList";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -10,8 +11,17 @@ import { canManageSettings } from "@/lib/roles";
 import { getEventTypes } from "@/lib/event-types";
 import { getSiteSettings } from "@/lib/site-settings";
 import { adminUserSelect, serializeAdminUser } from "@/lib/users";
+import {
+  connectionIdFor,
+  isGoogleCalendarConfigured,
+  serializeGoogleConnection,
+} from "@/lib/google-calendar";
 
-export default async function SettingsPage() {
+type PageProps = {
+  searchParams: Promise<{ googleCalendar?: string }>;
+};
+
+export default async function SettingsPage({ searchParams }: PageProps) {
   const user = await getCurrentUser();
   if (!user) {
     redirect("/login");
@@ -21,7 +31,7 @@ export default async function SettingsPage() {
     redirect("/");
   }
 
-  const [locations, settings, users, eventTypes] = await Promise.all([
+  const [locations, settings, users, eventTypes, googleConnection, query] = await Promise.all([
     prisma.location.findMany({
       orderBy: { name: "asc" },
       select: { id: true, name: true },
@@ -32,6 +42,10 @@ export default async function SettingsPage() {
       select: adminUserSelect,
     }),
     getEventTypes(),
+    prisma.googleCalendarConnection.findUnique({
+      where: { id: connectionIdFor("ASSOCIATION", user.id) },
+    }),
+    searchParams,
   ]);
 
   return (
@@ -41,6 +55,12 @@ export default async function SettingsPage() {
       </p>
       <div className="space-y-8">
         <SiteSettingsForm settings={settings} />
+        <GoogleCalendarConnectionCard
+          kind="association"
+          connection={serializeGoogleConnection(googleConnection)}
+          configured={isGoogleCalendarConfigured()}
+          result={query.googleCalendar}
+        />
         <EventTypesManager eventTypes={eventTypes} />
         <LocationsManager locations={locations} />
         <UsersList users={users.map(serializeAdminUser)} />

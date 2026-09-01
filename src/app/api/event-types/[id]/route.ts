@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { canManageSettings } from "@/lib/roles";
 import { eventTypeSchema } from "@/lib/validations";
+import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -48,6 +49,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     data: { name: parsed.data.name },
     select: { id: true, name: true, kind: true, immutable: true, sortOrder: true },
   });
+  const affectedEvents = await prisma.event.findMany({
+    where: { typeId: id, startsAt: { gte: new Date() } },
+    select: { id: true },
+  });
+  await Promise.all(affectedEvents.map(({ id: eventId }) => syncGoogleEventBestEffort(eventId)));
 
   return Response.json({ eventType });
 }

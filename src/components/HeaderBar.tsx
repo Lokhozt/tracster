@@ -109,7 +109,9 @@ function UserCluster({ user }: { user: HeaderUser }) {
   return (
     <div className="flex items-center gap-3 text-sm">
       <div className="flex min-w-0 items-center gap-2">
-        <span className="truncate text-stone-600">{user.name}</span>
+        <Link href="/account" className="truncate text-stone-600 hover:text-stone-900">
+          {user.name}
+        </Link>
         {(user.role === "ADMIN" || user.role === "OWNER") && (
           <RoleBadge role={user.role} />
         )}

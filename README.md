@@ -23,6 +23,8 @@ Tracster is a web application for dance and performance associations to plan reh
 - **Unavailability** — members record personal timeframes they cannot attend; the calendar selection is date-accurate.
 - **Conflict warnings** — when scheduling a rehearsal, choreographers are warned if participants are already engaged or marked unavailable.
 - **Join & visibility** — choreographies and events can allow free join, join requests (accept/decline), and hiding from non-participants.
+- **Account** — members can update their name and phone, and connect a personal Google calendar for rehearsals.
+- **Google Calendar** — one-way sync from Tracster. Shared association events (everything except rehearsals) go to one Google calendar; each member can copy their own rehearsals to a personal calendar. Unavailability stays in the app.
 
 ## Core workflow
 
@@ -33,6 +35,7 @@ Tracster is a web application for dance and performance associations to plan reh
 5. Assigned participants respond with **availability** (available, unavailable, maybe) and can maintain a personal **unavailability** calendar.
 6. Choreographers (or admins) schedule **representations** and **demonstrations** and attach choreographies, and can also create **competitions**, **festivals**, and standalone **events**.
 7. The home **schedule** shows rehearsals, representations, and events the user is involved in.
+8. Members can update their **name and phone** and connect a personal Google calendar on **Account**. Admins connect the association calendar in **Settings**.
 
 ## Getting started
 
@@ -84,6 +87,29 @@ After running the seed script, you can sign in with:
 | bob@example.com | Admin | password123 |
 | claire@example.com | User / participant | password123 |
 
+### Google Calendar sync
+
+Create a Google Cloud OAuth 2.0 web client with the Google Calendar API enabled. Add this
+authorized redirect URI (replace the origin in production):
+
+```text
+http://localhost:3000/api/google-calendar/callback
+```
+
+Then configure:
+
+```bash
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+GOOGLE_CALENDAR_CLIENT_ID="..."
+GOOGLE_CALENDAR_CLIENT_SECRET="..."
+SESSION_SECRET="a-long-random-production-secret"
+```
+
+Admins connect the association calendar under **Settings**. It receives every future event except
+rehearsals. Each member can connect a personal calendar on **Account** to copy their upcoming
+rehearsals. Sync is one-way from Tracster; personal unavailability is never sent to or read from
+Google.
+
 ## Project structure
 
 ```
@@ -105,7 +131,8 @@ prisma/
 | POST | `/api/auth/logout` | Sign out |
 | GET | `/api/auth/me` | Current user |
 | GET / POST | `/api/users` | List users / create user (admin) |
-| GET / PATCH | `/api/users/:id` | User details / update |
+| GET / PATCH | `/api/users/:id` | User details / update (admin) |
+| GET / PATCH | `/api/users/me` | Current user profile / update name and phone |
 | PATCH | `/api/users/:id/role` | Change role |
 | POST | `/api/users/transfer-ownership` | Transfer owner role |
 | GET / POST | `/api/choreographies` | List / create choreographies |
@@ -132,6 +159,11 @@ prisma/
 | POST / PATCH / DELETE | `/api/events/:id/join-requests` | Request, accept, or withdraw join |
 | GET / POST | `/api/users/me/unavailability` | List / create unavailability |
 | PATCH / DELETE | `/api/unavailability/:id` | Update or delete unavailability |
+| GET | `/api/google-calendar/connect` | Start Google OAuth (`kind=association` or `kind=user`) |
+| GET | `/api/google-calendar/callback` | OAuth callback |
+| GET | `/api/google-calendar/calendars` | List writable calendars for the connected account |
+| PATCH / DELETE | `/api/google-calendar/connection` | Change destination calendar / disconnect |
+| POST | `/api/google-calendar/sync` | Re-copy upcoming events for the connection |
 
 ## Data model
 
@@ -146,12 +178,13 @@ prisma/
 - **UserUnavailability** — personal unavailable timeframes
 - **EventType** — includes immutable kinds: Event, Rehearsal, Representation, Competition, Demonstration, Festival
 - **Event** / **EventChoreography** / **EventParticipant** / **EventJoinRequest** — scheduled items, linked pieces, and attendance
+- **GoogleCalendarConnection** — association or per-user OAuth tokens and destination calendar
+- **GoogleCalendarEvent** — mapping from a Tracster event to a Google event on a connection
 
 ## Next steps
 
 Possible future extensions:
 
-- Export / sync to Google Calendar
 - Stronger rehearsal scheduling tools
 - Email notifications for new rehearsals
 - Recurring rehearsals

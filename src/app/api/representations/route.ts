@@ -9,6 +9,7 @@ import { getEventTypeByKind } from "@/lib/event-types";
 import { canCreateEvent } from "@/lib/site-settings";
 import { forbidden } from "@/lib/api";
 import { canCreateEventOfType } from "@/lib/events";
+import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -80,6 +81,7 @@ export async function POST(request: NextRequest) {
       },
     },
   });
+  await syncGoogleEventBestEffort(representation.id);
 
   return Response.json({ representation, event: representation }, { status: 201 });
 }

@@ -5,6 +5,7 @@ import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { assignUserSchema } from "@/lib/validations";
 import { canEditChoreography } from "@/lib/permissions";
 import { basicUserSelect } from "@/lib/users";
+import { syncChoreographyRehearsals } from "@/lib/google-calendar";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -47,6 +48,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     },
     include: { user: { select: basicUserSelect } },
   });
+  await syncChoreographyRehearsals(id);
 
   return Response.json({ choreographer }, { status: 201 });
 }
@@ -101,6 +103,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       },
     },
   });
+  await syncChoreographyRehearsals(id);
 
   return Response.json({ ok: true });
 }

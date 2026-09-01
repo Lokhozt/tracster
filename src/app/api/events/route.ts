@@ -12,6 +12,7 @@ import { getEventType } from "@/lib/event-types";
 import { eventKindAllowsChoreographyLinks, isGenericEventKind } from "@/lib/event-type-helpers";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { canCreateEvent } from "@/lib/site-settings";
+import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -113,6 +114,7 @@ export async function POST(request: NextRequest) {
       },
     },
   });
+  await syncGoogleEventBestEffort(event.id);
 
   return Response.json({ event }, { status: 201 });
 }

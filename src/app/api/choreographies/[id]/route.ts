@@ -16,6 +16,7 @@ import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
 import { isAdmin } from "@/lib/roles";
 import { basicUserSelect } from "@/lib/users";
 import { choreographyLifecycleSchema, choreographySchema } from "@/lib/validations";
+import { syncChoreographyRehearsals } from "@/lib/google-calendar";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -95,6 +96,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       createdBy: { select: basicUserSelect },
     },
   });
+  await syncChoreographyRehearsals(id);
 
   return Response.json({ choreography });
 }

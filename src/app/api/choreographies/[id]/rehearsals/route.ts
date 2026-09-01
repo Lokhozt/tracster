@@ -8,6 +8,7 @@ import { basicUserSelect } from "@/lib/users";
 import { rehearsalSchema } from "@/lib/validations";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { getEventTypeByKind } from "@/lib/event-types";
+import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -71,6 +72,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       },
     },
   });
+  await syncGoogleEventBestEffort(rehearsal.id);
 
   return Response.json({ rehearsal, event: rehearsal }, { status: 201 });
 }

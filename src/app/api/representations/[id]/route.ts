@@ -6,6 +6,7 @@ import { representationSchema } from "@/lib/validations";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { assertRepresentationEvent } from "@/lib/representations";
 import { canEditEvent, canViewEvent } from "@/lib/events";
+import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -86,6 +87,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       },
     },
   });
+  await syncGoogleEventBestEffort(id);
 
   return Response.json({ representation: updated, event: updated });
 }
@@ -107,6 +109,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
   }
 
   await prisma.event.delete({ where: { id } });
+  await syncGoogleEventBestEffort(id);
 
   return Response.json({ ok: true });
 }

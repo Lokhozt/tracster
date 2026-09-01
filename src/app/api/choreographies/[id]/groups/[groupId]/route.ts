@@ -5,6 +5,7 @@ import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { getGroupForChoreography, serializeGroup, validateGroupMemberIds } from "@/lib/groups";
 import { canEditChoreography } from "@/lib/permissions";
 import { groupSchema } from "@/lib/validations";
+import { syncChoreographyRehearsals } from "@/lib/google-calendar";
 
 type RouteContext = { params: Promise<{ id: string; groupId: string }> };
 
@@ -54,6 +55,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       },
     },
   });
+  await syncChoreographyRehearsals(id);
 
   return Response.json({ group: serializeGroup(group) });
 }
@@ -76,6 +78,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
   }
 
   await prisma.choreographyGroup.delete({ where: { id: groupId } });
+  await syncChoreographyRehearsals(id);
 
   return Response.json({ ok: true });
 }
