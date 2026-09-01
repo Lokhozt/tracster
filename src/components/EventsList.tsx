@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EditIconLink } from "@/components/EditIconLink";
+import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
+import { ParticipatingCheck } from "@/components/ParticipatingCheck";
 import { Card, Input, Label } from "@/components/ui";
 import { formatDateTime } from "@/lib/datetime";
+import { isGenericEventKind } from "@/lib/event-type-helpers";
 import { isPastDate, matchesSearch } from "@/lib/search";
 import type { SerializedEvent } from "@/lib/events";
 
@@ -12,6 +15,8 @@ export type EventListItem = {
   event: SerializedEvent;
   canEdit: boolean;
   isParticipating: boolean;
+  isEventParticipant: boolean;
+  hasPendingJoinRequest: boolean;
 };
 
 function matchesEventSearch(item: EventListItem, query: string): boolean {
@@ -95,16 +100,19 @@ export function EventsList({ events }: { events: EventListItem[] }) {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {filteredEvents.map(({ event, canEdit, isParticipating }) => (
+          {filteredEvents.map(({ event, canEdit, isParticipating, isEventParticipant, hasPendingJoinRequest }) => (
             <Card key={event.id} className="transition hover:border-stone-400">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
                     {event.type.name}
                   </p>
-                  <Link href={`/events/${event.id}`} className="hover:underline">
-                    <h2 className="mt-1 text-lg font-semibold">{event.displayTitle}</h2>
-                  </Link>
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                    <Link href={`/events/${event.id}`} className="hover:underline">
+                      <h2 className="text-lg font-semibold">{event.displayTitle}</h2>
+                    </Link>
+                    {isParticipating && <ParticipatingCheck />}
+                  </div>
                   <p className="mt-1 text-sm text-stone-600">
                     {formatDateTime(new Date(event.startsAt))}
                     {event.endsAt && ` – ${formatDateTime(new Date(event.endsAt))}`}
@@ -133,6 +141,22 @@ export function EventsList({ events }: { events: EventListItem[] }) {
                   )}
                 </div>
               </div>
+              {isGenericEventKind(event.type.kind) &&
+                !isEventParticipant &&
+                (event.allowParticipantJoin ||
+                  event.allowJoinRequests ||
+                  hasPendingJoinRequest) && (
+                <div className="mt-4 border-t border-stone-100 pt-4">
+                  <JoinAsParticipantControls
+                    joinUrl={`/api/events/${event.id}/join`}
+                    requestUrl={`/api/events/${event.id}/join-requests`}
+                    allowJoin={event.allowParticipantJoin}
+                    allowRequest={event.allowJoinRequests}
+                    isParticipant={isEventParticipant}
+                    hasPendingRequest={hasPendingJoinRequest}
+                  />
+                </div>
+              )}
             </Card>
           ))}
         </div>

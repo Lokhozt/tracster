@@ -83,6 +83,10 @@ export async function getUserScheduleEvents(userId: string) {
           user: { select: scheduleUserSelect },
         },
       },
+      joinRequests: {
+        where: { userId },
+        select: { userId: true },
+      },
       availabilities: {
         where: { userId },
         select: { status: true },
@@ -105,9 +109,12 @@ export async function getUserScheduleEvents(userId: string) {
         ? event.group.members.some((member) => member.userId === userId)
         : (event.choreography?.members.some((member) => member.userId === userId) ?? false);
 
+      const isEventParticipant = event.participants.some(
+        (participant) => participant.userId === userId,
+      );
       const isParticipating =
         event.createdById === userId ||
-        event.participants.some((participant) => participant.userId === userId) ||
+        isEventParticipant ||
         (kind === "REHEARSAL" && rehearsalMember) ||
         (eventKindAllowsChoreographyLinks(kind) && involvedInLinkedChoreography);
 
@@ -144,8 +151,12 @@ export async function getUserScheduleEvents(userId: string) {
             ? rehearsalMember
             : eventKindAllowsChoreographyLinks(kind)
               ? involvedInLinkedChoreography
-              : event.participants.some((participant) => participant.userId === userId),
+              : isEventParticipant,
         isParticipating,
+        isEventParticipant,
+        allowParticipantJoin: event.allowParticipantJoin,
+        allowJoinRequests: event.allowJoinRequests,
+        hasPendingJoinRequest: event.joinRequests.length > 0,
         availabilityStatus:
           kind === "REHEARSAL" ? (event.availabilities[0]?.status ?? null) : null,
         href: `/events/${event.id}`,

@@ -16,7 +16,7 @@ export function LoginForm({ defaultEmail }: LoginFormProps) {
   );
 
   return (
-    <form action={formAction} method="post" className="space-y-4">
+    <form action={formAction} className="space-y-4">
       <div>
         <Label htmlFor="email">Email</Label>
         <Input

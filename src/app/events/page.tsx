@@ -24,6 +24,8 @@ export default async function EventsPage() {
       isParticipating:
         entry.participants.some((participant) => participant.userId === user.id) ||
         entry.createdById === user.id,
+      isEventParticipant: entry.participants.some((participant) => participant.userId === user.id),
+      hasPendingJoinRequest: entry.joinRequests.some((request) => request.userId === user.id),
     })),
   );
 

@@ -39,6 +39,9 @@ const eventListInclude = {
     },
     orderBy: { user: { lastName: "asc" as const } },
   },
+  joinRequests: {
+    select: { userId: true },
+  },
 };
 
 export async function isEventParticipant(

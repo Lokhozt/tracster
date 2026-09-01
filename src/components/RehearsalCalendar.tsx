@@ -308,52 +308,56 @@ export function RehearsalCalendar({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-lg border border-stone-300 p-0.5">
-            {viewOptions.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setView(option.value)}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-sm font-medium transition",
-                  view === option.value
-                    ? "bg-stone-900 text-white"
-                    : "text-stone-600 hover:bg-stone-100",
-                )}
-              >
-                {option.label}
-              </button>
-            ))}
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex rounded-lg border border-stone-300 p-0.5">
+              {viewOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setView(option.value)}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-sm font-medium transition",
+                    view === option.value
+                      ? "bg-stone-900 text-white"
+                      : "text-stone-600 hover:bg-stone-100",
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={goToToday}
+              className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
+            >
+              Today
+            </button>
           </div>
 
-          <button
-            type="button"
-            onClick={goToToday}
-            className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
-          >
-            Today
-          </button>
-
-          <button
-            type="button"
-            onClick={() => shiftFocus(-1)}
-            className="rounded-lg border border-stone-300 px-3 py-2.5 text-sm hover:bg-stone-100 sm:py-1.5"
-            aria-label={`Previous ${periodName}`}
-          >
-            ←
-          </button>
-          <span className="min-w-0 flex-1 text-center text-sm font-medium sm:min-w-40 sm:flex-none">
-            {periodLabel}
-          </span>
-          <button
-            type="button"
-            onClick={() => shiftFocus(1)}
-            className="rounded-lg border border-stone-300 px-3 py-2.5 text-sm hover:bg-stone-100 sm:py-1.5"
-            aria-label={`Next ${periodName}`}
-          >
-            →
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => shiftFocus(-1)}
+              className="rounded-lg border border-stone-300 px-3 py-2.5 text-sm hover:bg-stone-100 sm:py-1.5"
+              aria-label={`Previous ${periodName}`}
+            >
+              ←
+            </button>
+            <span className="min-w-0 flex-1 text-center text-sm font-medium sm:min-w-40 sm:flex-none">
+              {periodLabel}
+            </span>
+            <button
+              type="button"
+              onClick={() => shiftFocus(1)}
+              className="rounded-lg border border-stone-300 px-3 py-2.5 text-sm hover:bg-stone-100 sm:py-1.5"
+              aria-label={`Next ${periodName}`}
+            >
+              →
+            </button>
+          </div>
         </div>
       </div>
 

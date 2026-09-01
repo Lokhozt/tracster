@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { EditIconLink } from "@/components/EditIconLink";
+import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
+import { ParticipatingCheck } from "@/components/ParticipatingCheck";
 import { Card, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/datetime";
@@ -12,6 +14,7 @@ import {
   type UpcomingEventRange,
 } from "@/lib/schedule-filters";
 import {
+  isGenericScheduleEvent,
   isRehearsalScheduleEvent,
   scheduleEventLabel,
   type SerializedScheduleEvent,
@@ -222,9 +225,12 @@ export function UpcomingEventsList({
                     )}
                     <EventTypeBadge event={event} />
                   </div>
-                  <Link href={event.href} className="text-base font-semibold hover:underline">
-                    {defaultEventTitle(event)}
-                  </Link>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Link href={event.href} className="text-base font-semibold hover:underline">
+                      {defaultEventTitle(event)}
+                    </Link>
+                    {event.isParticipating && <ParticipatingCheck />}
+                  </div>
                   <p className="text-sm text-stone-600">
                     {formatDateTime(new Date(event.startsAt))}
                     {event.endsAt && ` – ${formatDateTime(new Date(event.endsAt))}`}
@@ -252,6 +258,22 @@ export function UpcomingEventsList({
                   <AvailabilityQuickReply
                     rehearsalId={event.id}
                     currentStatus={event.availabilityStatus}
+                  />
+                </div>
+              )}
+              {isGenericScheduleEvent(event) &&
+                !event.isEventParticipant &&
+                (event.allowParticipantJoin ||
+                  event.allowJoinRequests ||
+                  event.hasPendingJoinRequest) && (
+                <div className="mt-4 border-t border-stone-100 pt-4">
+                  <JoinAsParticipantControls
+                    joinUrl={`/api/events/${event.id}/join`}
+                    requestUrl={`/api/events/${event.id}/join-requests`}
+                    allowJoin={event.allowParticipantJoin}
+                    allowRequest={event.allowJoinRequests}
+                    isParticipant={event.isEventParticipant}
+                    hasPendingRequest={event.hasPendingJoinRequest}
                   />
                 </div>
               )}

@@ -15,6 +15,10 @@ export type SerializedScheduleEvent = {
   participantNames: string[];
   isMember: boolean;
   isParticipating: boolean;
+  isEventParticipant: boolean;
+  allowParticipantJoin: boolean;
+  allowJoinRequests: boolean;
+  hasPendingJoinRequest: boolean;
   availabilityStatus: "AVAILABLE" | "UNAVAILABLE" | "MAYBE" | null;
   href: string;
   canEdit: boolean;
