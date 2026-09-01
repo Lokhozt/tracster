@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EditIconLink } from "@/components/EditIconLink";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
+import { LeaveEventButton } from "@/components/LeaveEventButton";
 import { ParticipatingCheck } from "@/components/ParticipatingCheck";
 import { Card, Input, Label } from "@/components/ui";
 import { formatDateTime } from "@/lib/datetime";
 import { isGenericEventKind } from "@/lib/event-type-helpers";
 import { isPastDate, matchesSearch } from "@/lib/search";
 import type { SerializedEvent } from "@/lib/events";
+import { cn } from "@/lib/utils";
 
 export type EventListItem = {
   event: SerializedEvent;
@@ -101,7 +103,13 @@ export function EventsList({ events }: { events: EventListItem[] }) {
       ) : (
         <div className="grid gap-4">
           {filteredEvents.map(({ event, canEdit, isParticipating, isEventParticipant, hasPendingJoinRequest }) => (
-            <Card key={event.id} className="transition hover:border-stone-400">
+            <Card
+              key={event.id}
+              className={cn(
+                "relative transition hover:border-stone-400",
+                isEventParticipant && "pb-10",
+              )}
+            >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
@@ -156,6 +164,13 @@ export function EventsList({ events }: { events: EventListItem[] }) {
                     hasPendingRequest={hasPendingJoinRequest}
                   />
                 </div>
+              )}
+              {isEventParticipant && (
+                <LeaveEventButton
+                  eventId={event.id}
+                  eventTitle={event.displayTitle}
+                  className="absolute right-2 bottom-2"
+                />
               )}
             </Card>
           ))}

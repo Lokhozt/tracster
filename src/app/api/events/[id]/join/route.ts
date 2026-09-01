@@ -53,3 +53,29 @@ export async function POST(_request: NextRequest, context: RouteContext) {
 
   return Response.json({ participant }, { status: 201 });
 }
+
+export async function DELETE(_request: NextRequest, context: RouteContext) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return unauthorized();
+  }
+
+  const { id } = await context.params;
+
+  if (!(await canViewEvent(id, user.id))) {
+    return forbidden();
+  }
+
+  const removed = await prisma.eventParticipant.deleteMany({
+    where: {
+      eventId: id,
+      userId: user.id,
+    },
+  });
+
+  if (removed.count === 0) {
+    return jsonError("You are not a participant of this event.");
+  }
+
+  return Response.json({ ok: true });
+}
