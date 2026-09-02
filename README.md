@@ -89,12 +89,17 @@ After running the seed script, you can sign in with:
 
 ### Google Calendar sync
 
-Create a Google Cloud OAuth 2.0 web client with the Google Calendar API enabled. Add this
-authorized redirect URI (replace the origin in production):
+Create a Google Cloud OAuth 2.0 **Web application** client with the Google Calendar API enabled.
+Under **Authorized redirect URIs**, add the callback path for every origin you use (exact match,
+no trailing slash):
 
 ```text
 http://localhost:3000/api/google-calendar/callback
+http://127.0.0.1:3000/api/google-calendar/callback
 ```
+
+If you open the app from the LAN URL shown by `npm run dev` (for example `http://192.168.1.50:3000`),
+add that origin’s callback as well. Do not put these URLs under Authorized JavaScript origins.
 
 Then configure:
 
@@ -218,3 +223,13 @@ nvm install 22 && nvm use   # with nvm
 ```
 
 Then rerun `npm run db:migrate`.
+
+### Google Calendar `Error 400: redirect_uri_mismatch`
+
+The URI Tracster sends must appear **exactly** on the OAuth client’s **Authorized redirect URIs**
+list. Google’s error page shows “The redirect URI in the request”. Copy that value into the
+client and save.
+
+Common mismatches: registering only the site origin (`http://localhost:3000`), using `https` for
+local dev, mixing `localhost` and `127.0.0.1`, or using the Network IP from `npm run dev` without
+adding that IP’s callback URI. Changes in Google Cloud can take a minute to apply.

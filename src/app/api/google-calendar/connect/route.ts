@@ -1,8 +1,8 @@
 import { randomBytes } from "crypto";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { forbidden, jsonError, unauthorized } from "@/lib/api";
-import { googleAuthorizationUrl, isGoogleCalendarConfigured } from "@/lib/google-calendar";
+import { googleAuthorizationUrl, googleOAuthRedirectUri, isGoogleCalendarConfigured } from "@/lib/google-calendar";
 import { canManageSettings } from "@/lib/roles";
 
 const OAUTH_STATE_COOKIE = "tracster_google_calendar_oauth_state";
@@ -24,16 +24,16 @@ export async function GET(request: NextRequest) {
   }
 
   const state = `${kind}:${randomBytes(24).toString("base64url")}`;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? request.nextUrl.origin;
-  const redirectUri = `${appUrl}/api/google-calendar/callback`;
-  const response = Response.redirect(
+  const redirectUri = googleOAuthRedirectUri(request);
+  const response = NextResponse.redirect(
     googleAuthorizationUrl({ redirectUri, state, loginHint: user.email }),
   );
-  response.headers.append(
-    "Set-Cookie",
-    `${OAUTH_STATE_COOKIE}=${encodeURIComponent(state)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600${
-      process.env.NODE_ENV === "production" ? "; Secure" : ""
-    }`,
-  );
+  response.cookies.set(OAUTH_STATE_COOKIE, state, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 600,
+    path: "/",
+  });
   return response;
 }

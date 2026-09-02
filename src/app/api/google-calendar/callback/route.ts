@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import {
   exchangeGoogleCode,
   getGoogleAccountEmail,
+  googleOAuthRedirectUri,
   saveGoogleConnection,
 } from "@/lib/google-calendar";
 import { canManageSettings } from "@/lib/roles";
@@ -43,8 +44,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? request.nextUrl.origin;
-    const tokens = await exchangeGoogleCode(code, `${appUrl}/api/google-calendar/callback`);
+    const tokens = await exchangeGoogleCode(code, googleOAuthRedirectUri(request));
     await saveGoogleConnection({
       kind: kind === "association" ? "ASSOCIATION" : "USER",
       userId: user.id,

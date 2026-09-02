@@ -54,6 +54,13 @@ export function isGoogleCalendarConfigured() {
   );
 }
 
+export function googleOAuthRedirectUri(request: { nextUrl: URL }) {
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  const origin =
+    process.env.NODE_ENV === "production" && configured ? configured : request.nextUrl.origin;
+  return `${origin}/api/google-calendar/callback`;
+}
+
 function encryptionKey() {
   const secret = process.env.SESSION_SECRET;
   if (!secret) {
