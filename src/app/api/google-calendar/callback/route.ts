@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import {
+  appOrigin,
   exchangeGoogleCode,
   getGoogleAccountEmail,
   googleOAuthRedirectUri,
@@ -12,7 +13,7 @@ const OAUTH_STATE_COOKIE = "tracster_google_calendar_oauth_state";
 
 function resultRedirect(request: NextRequest, kind: "association" | "user", result: string) {
   const destination = kind === "association" ? "/settings" : "/account";
-  const url = new URL(destination, request.url);
+  const url = new URL(destination, appOrigin(request));
   url.searchParams.set("googleCalendar", result);
   const response = NextResponse.redirect(url);
   response.cookies.delete(OAUTH_STATE_COOKIE);

@@ -54,11 +54,27 @@ export function isGoogleCalendarConfigured() {
   );
 }
 
-export function googleOAuthRedirectUri(request: { nextUrl: URL }) {
+type OriginRequest = { nextUrl: URL; headers: Headers };
+
+// Behind a proxy the request URL carries the internal host, so prefer the public origin.
+export function appOrigin(request: OriginRequest) {
   const configured = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
-  const origin =
-    process.env.NODE_ENV === "production" && configured ? configured : request.nextUrl.origin;
-  return `${origin}/api/google-calendar/callback`;
+  if (configured && process.env.NODE_ENV === "production") {
+    return configured;
+  }
+
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  if (forwardedHost) {
+    const protocol =
+      request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() ?? request.nextUrl.protocol.replace(":", "");
+    return `${protocol}://${forwardedHost}`;
+  }
+
+  return request.nextUrl.origin;
+}
+
+export function googleOAuthRedirectUri(request: OriginRequest) {
+  return `${appOrigin(request)}/api/google-calendar/callback`;
 }
 
 function encryptionKey() {
