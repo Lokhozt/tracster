@@ -55,7 +55,19 @@
       "Google Calendar synchronization failed.": "La synchronisation avec Google Agenda a échoué.",
       "This Google account has no writable calendars.": "Ce compte Google ne possède aucun agenda modifiable.",
       "Google did not return a refresh token.": "Google n’a pas renvoyé de jeton d’actualisation.",
-      "Unable to refresh Google access.": "Impossible de renouveler l’accès à Google."
+      "Unable to refresh Google access.": "Impossible de renouveler l’accès à Google.",
+      "Resource links must use HTTPS.": "Les liens de ressources doivent utiliser HTTPS.",
+      "Enter a valid resource URL.": "Saisissez une adresse de ressource valide.",
+      "Resource URLs are limited to 2048 characters.": "Les adresses de ressources sont limitées à 2 048 caractères.",
+      "Files are limited to 250 MB.": "Les fichiers sont limités à 250 Mo.",
+      "This file type is not supported.": "Ce type de fichier n’est pas pris en charge.",
+      "File storage is unavailable.": "Le stockage de fichiers est indisponible.",
+      "Invalid file resource.": "La ressource fichier est invalide.",
+      "The uploaded file could not be found.": "Le fichier téléversé est introuvable.",
+      "The uploaded file did not match the requested file.": "Le fichier téléversé ne correspond pas au fichier demandé.",
+      "The invalid resource file could not be deleted.": "Le fichier de ressource invalide n’a pas pu être supprimé.",
+      "The resource file could not be deleted.": "Le fichier de ressource n’a pas pu être supprimé.",
+      "Choreography resource files could not be deleted.": "Les fichiers de ressources de la chorégraphie n’ont pas pu être supprimés."
     },
     "notFound": "{resource} est introuvable.",
     "resources": {

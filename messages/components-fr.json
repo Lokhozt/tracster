@@ -358,6 +358,35 @@
     "start": "Début",
     "end": "Fin",
     "removeMemberConfirm": "Retirer {name} de cette chorégraphie ?",
-    "twentyFourHour": "24 h"
+    "twentyFourHour": "24 h",
+    "choreographyResources": "Ressources",
+    "noChoreographyResources": "Aucune ressource n’a encore été ajoutée.",
+    "addResource": "Ajouter une ressource",
+    "resourceType": "Type de ressource",
+    "resourceLink": "Lien",
+    "resourceFile": "Fichier",
+    "resourceUrl": "Adresse du lien",
+    "resourceVisibility": {
+      "CHOREOGRAPHER": "Chorégraphes",
+      "PARTICIPANT": "Participants",
+      "ALL": "Toute personne ayant accès à la chorégraphie"
+    },
+    "resourceDescriptionPlaceholder": "Contexte ou instructions facultatifs",
+    "resourceFileHelp": "Images, audio, vidéo, PDF, texte et documents bureautiques courants. 250 Mo maximum.",
+    "uploadProgress": "Téléversement : {progress} %",
+    "savingResource": "Ajout de la ressource…",
+    "resourceCreateError": "Impossible d’ajouter la ressource.",
+    "resourceUploadError": "Impossible de téléverser le fichier.",
+    "resourceLoadError": "Impossible de charger le fichier.",
+    "resourceDeleteError": "Impossible de supprimer la ressource.",
+    "selectResourceFile": "Choisissez un fichier à téléverser.",
+    "deleteResourceConfirm": "Supprimer cette ressource ? Cette action est irréversible.",
+    "youtubeVideo": "Vidéo YouTube",
+    "openImage": "Ouvrir {name}",
+    "resourceImageViewer": "Visionneuse d’image",
+    "zoomOut": "Dézoomer",
+    "zoomIn": "Zoomer",
+    "reset": "Réinitialiser",
+    "close": "Fermer"
   }
 }

@@ -358,6 +358,35 @@
     "start": "Start",
     "end": "End",
     "removeMemberConfirm": "Remove {name} from this choreography?",
-    "twentyFourHour": "24h"
+    "twentyFourHour": "24h",
+    "choreographyResources": "Resources",
+    "noChoreographyResources": "No resources have been added yet.",
+    "addResource": "Add resource",
+    "resourceType": "Resource type",
+    "resourceLink": "Link",
+    "resourceFile": "File",
+    "resourceUrl": "Link URL",
+    "resourceVisibility": {
+      "CHOREOGRAPHER": "Choreographers",
+      "PARTICIPANT": "Participants",
+      "ALL": "Everyone with choreography access"
+    },
+    "resourceDescriptionPlaceholder": "Optional context or instructions",
+    "resourceFileHelp": "Images, audio, video, PDF, text, and common office documents. Maximum 250 MB.",
+    "uploadProgress": "Uploading: {progress}%",
+    "savingResource": "Adding resource…",
+    "resourceCreateError": "Unable to add the resource.",
+    "resourceUploadError": "Unable to upload the file.",
+    "resourceLoadError": "Unable to load the resource file.",
+    "resourceDeleteError": "Unable to delete the resource.",
+    "selectResourceFile": "Choose a file to upload.",
+    "deleteResourceConfirm": "Delete this resource? This cannot be undone.",
+    "youtubeVideo": "YouTube video",
+    "openImage": "Open {name}",
+    "resourceImageViewer": "Image viewer",
+    "zoomOut": "Zoom out",
+    "zoomIn": "Zoom in",
+    "reset": "Reset",
+    "close": "Close"
   }
 }

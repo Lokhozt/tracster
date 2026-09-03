@@ -92,6 +92,7 @@
       "createdBy": "Created by {name}",
       "choreographers": "Choreographers",
       "participants": "Participants",
+      "resources": "Resources",
       "editChoreography": "Edit choreography"
     },
     "NewUser": {

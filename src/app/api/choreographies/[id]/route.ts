@@ -18,6 +18,7 @@ import { basicUserSelect } from "@/lib/users";
 import { choreographyLifecycleSchema, choreographySchema } from "@/lib/validations";
 import { syncChoreographyRehearsals } from "@/lib/google-calendar";
 import { getServerLocale, getServerTranslator } from "@/i18n/server";
+import { ChoreographyResourceCleanupError } from "@/lib/choreography-resources";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -152,6 +153,13 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     );
   }
 
-  await deleteChoreography(id);
+  try {
+    await deleteChoreography(id);
+  } catch (error) {
+    if (error instanceof ChoreographyResourceCleanupError) {
+      return jsonError(error.message, 503);
+    }
+    throw error;
+  }
   return Response.json({ ok: true });
 }

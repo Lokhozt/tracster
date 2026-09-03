@@ -1,6 +1,14 @@
-import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectsCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const STATIC_PREFIX = "static/";
+const RESOURCE_PREFIX = "ressources/choreographies/";
 
 export type S3Config = {
   bucket: string;
@@ -70,6 +78,14 @@ function getS3Client(config: S3Config) {
   return client;
 }
 
+function getConfiguredS3() {
+  const config = getS3Config();
+  if (!config) {
+    throw new Error("S3 storage is not configured.");
+  }
+  return { config, client: getS3Client(config) };
+}
+
 export function staticObjectKey(path: string) {
   const normalized = path.replace(/^\/+/, "").replace(/\\/g, "/");
   if (!normalized || normalized.includes("..")) {
@@ -83,6 +99,90 @@ export function staticObjectKey(path: string) {
 
 export const APP_LOGO_OBJECT_PATH = "LOGO.png";
 export const APP_LOGO_SRC = `/api/static/${APP_LOGO_OBJECT_PATH}`;
+
+export function choreographyResourceObjectKey(
+  choreographyId: string,
+  resourceId: string,
+  fileName: string,
+) {
+  if (
+    !/^[A-Za-z0-9_-]+$/.test(choreographyId) ||
+    !/^[A-Za-z0-9_-]+$/.test(resourceId) ||
+    !/^[A-Za-z0-9._-]+$/.test(fileName)
+  ) {
+    throw new Error("Invalid resource object key.");
+  }
+  return `${RESOURCE_PREFIX}${choreographyId}/${resourceId}/${fileName}`;
+}
+
+export async function createChoreographyResourceUploadUrl(options: {
+  key: string;
+  mimeType: string;
+  sizeBytes: number;
+}) {
+  const { config, client } = getConfiguredS3();
+  return getSignedUrl(
+    client,
+    new PutObjectCommand({
+      Bucket: config.bucket,
+      Key: options.key,
+      ContentType: options.mimeType,
+      ContentLength: options.sizeBytes,
+    }),
+    { expiresIn: 15 * 60 },
+  );
+}
+
+export async function headChoreographyResourceObject(key: string) {
+  const { config, client } = getConfiguredS3();
+  const response = await client.send(
+    new HeadObjectCommand({ Bucket: config.bucket, Key: key }),
+  );
+  return {
+    contentType: response.ContentType ?? "application/octet-stream",
+    contentLength: response.ContentLength ?? 0,
+  };
+}
+
+export async function createChoreographyResourceDownloadUrl(options: {
+  key: string;
+  fileName: string;
+  mimeType: string;
+}) {
+  const { config, client } = getConfiguredS3();
+  return getSignedUrl(
+    client,
+    new GetObjectCommand({
+      Bucket: config.bucket,
+      Key: options.key,
+      ResponseContentType: options.mimeType,
+      ResponseContentDisposition: `inline; filename="${options.fileName.replace(/["\\]/g, "_")}"`,
+    }),
+    { expiresIn: 15 * 60 },
+  );
+}
+
+export async function deleteChoreographyResourceObjects(keys: string[]) {
+  if (keys.length === 0) return;
+  const { config, client } = getConfiguredS3();
+  for (let index = 0; index < keys.length; index += 1000) {
+    const batch = keys.slice(index, index + 1000);
+    const response = await client.send(
+      new DeleteObjectsCommand({
+        Bucket: config.bucket,
+        Delete: {
+          Objects: batch.map((Key) => ({ Key })),
+          Quiet: true,
+        },
+      }),
+    );
+    if (response.Errors?.length) {
+      throw new Error(
+        `Could not delete ${response.Errors.length} resource object(s) from S3.`,
+      );
+    }
+  }
+}
 
 export async function getStaticObject(path: string) {
   const config = getS3Config();

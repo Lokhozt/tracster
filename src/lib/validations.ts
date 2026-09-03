@@ -176,6 +176,39 @@ export const eventSchema = z.object({
   refineExclusiveLocation(value, context);
 });
 
+export const choreographyResourceVisibilitySchema = z.enum([
+  "CHOREOGRAPHER",
+  "PARTICIPANT",
+  "ALL",
+]);
+
+const choreographyResourceDescriptionSchema = z.string().trim().max(1000).optional();
+
+export const choreographyResourceLinkSchema = z.object({
+  url: z
+    .string()
+    .trim()
+    .url({ message: "Enter a valid resource URL." })
+    .max(2048, { message: "Resource URLs are limited to 2048 characters." })
+    .refine((value) => new URL(value).protocol === "https:", {
+      message: "Resource links must use HTTPS.",
+    }),
+  description: choreographyResourceDescriptionSchema,
+  visibility: choreographyResourceVisibilitySchema,
+});
+
+export const choreographyResourceUploadSchema = z.object({
+  fileName: z.string().trim().min(1).max(255),
+  mimeType: z.string().trim().min(1).max(150),
+  sizeBytes: z
+    .number()
+    .int()
+    .positive()
+    .max(250 * 1024 * 1024, { message: "Files are limited to 250 MB." }),
+  description: choreographyResourceDescriptionSchema,
+  visibility: choreographyResourceVisibilitySchema,
+});
+
 const schedulingWindowSchema = z.object({
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime(),

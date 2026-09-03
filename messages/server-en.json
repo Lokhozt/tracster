@@ -55,7 +55,19 @@
       "Google Calendar synchronization failed.": "Google Calendar synchronization failed.",
       "This Google account has no writable calendars.": "This Google account has no writable calendars.",
       "Google did not return a refresh token.": "Google did not return a refresh token.",
-      "Unable to refresh Google access.": "Unable to refresh Google access."
+      "Unable to refresh Google access.": "Unable to refresh Google access.",
+      "Resource links must use HTTPS.": "Resource links must use HTTPS.",
+      "Enter a valid resource URL.": "Enter a valid resource URL.",
+      "Resource URLs are limited to 2048 characters.": "Resource URLs are limited to 2048 characters.",
+      "Files are limited to 250 MB.": "Files are limited to 250 MB.",
+      "This file type is not supported.": "This file type is not supported.",
+      "File storage is unavailable.": "File storage is unavailable.",
+      "Invalid file resource.": "Invalid file resource.",
+      "The uploaded file could not be found.": "The uploaded file could not be found.",
+      "The uploaded file did not match the requested file.": "The uploaded file did not match the requested file.",
+      "The invalid resource file could not be deleted.": "The invalid resource file could not be deleted.",
+      "The resource file could not be deleted.": "The resource file could not be deleted.",
+      "Choreography resource files could not be deleted.": "Choreography resource files could not be deleted."
     },
     "notFound": "{resource} not found.",
     "resources": {

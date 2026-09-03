@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
 import type { UpcomingChoreographyImpact } from "@/lib/choreography-lifecycle";
+import { deleteChoreographyResourceFiles } from "@/lib/choreography-resources";
 
 export const visibleChoreographyWhere = { archivedAt: null };
 
@@ -92,6 +93,7 @@ export async function archiveChoreography(choreographyId: string) {
 }
 
 export async function deleteChoreography(choreographyId: string) {
+  await deleteChoreographyResourceFiles(choreographyId);
   const now = new Date();
   const deletedRehearsals = await prisma.event.findMany({
     where: { choreographyId, type: { kind: "REHEARSAL" } },

@@ -16,6 +16,7 @@ import { JoinRequestsList } from "@/components/JoinRequestsList";
 import { ChoreographyLifecycleActions } from "@/components/ChoreographyLifecycleActions";
 import { RepresentationsSection } from "@/components/RepresentationForms";
 import { ChoreographerBadge } from "@/components/CrownIcon";
+import { ChoreographyResources } from "@/components/ChoreographyResources";
 import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -25,6 +26,7 @@ import { getChoreographyGroups, serializeGroup } from "@/lib/groups";
 import { getEventTypes } from "@/lib/event-types";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { basicUserSelect, formatUserName, serializeBasicUser } from "@/lib/users";
+import { getVisibleChoreographyResources } from "@/lib/choreography-resources";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -46,7 +48,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
   const canEdit = await canEditChoreography(id, user.id);
   const canManageLifecycle = await isAdmin(user.id);
 
-  const [choreography, users, groups, eventTypes] = await Promise.all([
+  const [choreography, users, groups, eventTypes, resources] = await Promise.all([
     prisma.choreography.findUnique({
       where: { id },
       include: {
@@ -102,6 +104,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
       : Promise.resolve([]),
     getChoreographyGroups(id),
     getEventTypes(),
+    getVisibleChoreographyResources(id, user.id),
   ]);
 
   if (!choreography || choreography.archivedAt) {
@@ -144,6 +147,12 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           hasPendingRequest={hasPendingRequest}
         />
       </div>
+
+      <ChoreographyResources
+        choreographyId={id}
+        resources={resources}
+        canEdit={canEdit}
+      />
 
       {canEdit && (choreography.allowJoinRequests || choreography.joinRequests.length > 0) && (
         <div className="mb-6">

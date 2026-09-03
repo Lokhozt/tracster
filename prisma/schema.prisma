@@ -39,6 +39,7 @@ model User {
   availabilityResponses      AvailabilityResponse[]
   createdEvents              Event[]                     @relation("EventCreator")
   eventParticipants          EventParticipant[]
+  uploadedChoreographyResources ChoreographyResource[]
   unavailabilityTimeframes   UserUnavailability[]
   choreographyJoinRequests   ChoreographyJoinRequest[]
   eventJoinRequests          EventJoinRequest[]
@@ -74,6 +75,7 @@ model Choreography {
   rehearsals     Event[]                     @relation("EventRehearsalChoreography")
   eventLinks     EventChoreography[]
   joinRequests   ChoreographyJoinRequest[]
+  resources      ChoreographyResource[]
 }
 
 model ChoreographyChoreographer {
@@ -203,6 +205,22 @@ enum EventKind {
   FESTIVAL
 }
 
+enum ChoreographyResourceType {
+  LINK
+  FILE
+}
+
+enum ChoreographyResourceVisibility {
+  CHOREOGRAPHER
+  PARTICIPANT
+  ALL
+}
+
+enum ChoreographyResourceStatus {
+  PENDING
+  ACTIVE
+}
+
 model EventType {
   id        String     @id @default(cuid())
   name      String     @unique
@@ -249,6 +267,29 @@ model Event {
   @@index([locationId])
   @@index([choreographyId])
   @@index([groupId])
+}
+
+model ChoreographyResource {
+  id              String                         @id @default(cuid())
+  choreographyId  String
+  uploadedById String?
+  type            ChoreographyResourceType
+  visibility      ChoreographyResourceVisibility @default(ALL)
+  status          ChoreographyResourceStatus     @default(ACTIVE)
+  description  String?
+  url          String?
+  storageKey   String?                 @unique
+  fileName     String?
+  mimeType     String?
+  sizeBytes    BigInt?
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  choreography Choreography @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
+  uploadedBy   User?        @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([choreographyId, status, createdAt])
+  @@index([uploadedById])
 }
 
 model EventChoreography {
