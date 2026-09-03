@@ -9,7 +9,7 @@ type RouteContext = {
   params: Promise<{ id: string; resourceId: string }>;
 };
 
-export async function GET(_request: NextRequest, context: RouteContext) {
+export async function GET(request: NextRequest, context: RouteContext) {
   const user = await getCurrentUser();
   if (!user) return unauthorized();
   const { id, resourceId } = await context.params;
@@ -30,12 +30,15 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     return jsonError("Invalid file resource.", 409);
   }
 
+  const download = request.nextUrl.searchParams.get("download") === "1";
+
   try {
     return Response.json({
       url: await createChoreographyResourceDownloadUrl({
         key: resource.storageKey,
         fileName: resource.fileName,
         mimeType: resource.mimeType,
+        disposition: download ? "attachment" : "inline",
       }),
     });
   } catch {

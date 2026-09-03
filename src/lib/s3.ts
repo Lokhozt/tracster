@@ -148,15 +148,18 @@ export async function createChoreographyResourceDownloadUrl(options: {
   key: string;
   fileName: string;
   mimeType: string;
+  disposition?: "inline" | "attachment";
 }) {
   const { config, client } = getConfiguredS3();
+  const safeFileName = options.fileName.replace(/["\\]/g, "_");
+  const disposition = options.disposition ?? "inline";
   return getSignedUrl(
     client,
     new GetObjectCommand({
       Bucket: config.bucket,
       Key: options.key,
       ResponseContentType: options.mimeType,
-      ResponseContentDisposition: `inline; filename="${options.fileName.replace(/["\\]/g, "_")}"`,
+      ResponseContentDisposition: `${disposition}; filename="${safeFileName}"`,
     }),
     { expiresIn: 15 * 60 },
   );

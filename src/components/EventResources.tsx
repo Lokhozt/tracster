@@ -162,6 +162,54 @@ function ImageViewer({
   );
 }
 
+function ResourceDownloadButton({
+  choreographyId,
+  resource,
+}: {
+  choreographyId: string;
+  resource: SerializedChoreographyResource;
+}) {
+  const t = useTranslations("Components");
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function download() {
+    setDownloading(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/choreographies/${choreographyId}/resources/${resource.id}/content?download=1`,
+      );
+      if (!response.ok) throw new Error(await responseError(response, t("resourceDownloadError")));
+      const body = await response.json();
+      const link = document.createElement("a");
+      link.href = body.url;
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : t("resourceDownloadError"));
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        type="button"
+        className="text-sm font-medium text-stone-800 hover:text-stone-600 disabled:opacity-50"
+        disabled={downloading}
+        onClick={download}
+      >
+        {downloading ? t("downloading") : t("download")}
+      </button>
+      {error && <p className="text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}
+
 function FileResource({
   choreographyId,
   resource,
@@ -270,16 +318,21 @@ function ResourceCard({
           </span>
           {resource.fileName && <span className="text-sm font-medium">{resource.fileName}</span>}
         </div>
-        {canEdit && (
-          <button
-            type="button"
-            className="text-sm text-red-700 hover:text-red-900 disabled:opacity-50"
-            disabled={deleting}
-            onClick={remove}
-          >
-            {deleting ? t("deleting") : t("delete")}
-          </button>
-        )}
+        <div className="flex shrink-0 items-start gap-3">
+          {resource.type === "FILE" && (
+            <ResourceDownloadButton choreographyId={choreographyId} resource={resource} />
+          )}
+          {canEdit && (
+            <button
+              type="button"
+              className="text-sm text-red-700 hover:text-red-900 disabled:opacity-50"
+              disabled={deleting}
+              onClick={remove}
+            >
+              {deleting ? t("deleting") : t("delete")}
+            </button>
+          )}
+        </div>
       </div>
       {resource.description && <p className="mb-3 whitespace-pre-wrap text-sm text-stone-600">{resource.description}</p>}
       {resource.type === "LINK" && resource.youtubeId ? (
