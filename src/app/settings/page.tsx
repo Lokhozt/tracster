@@ -12,6 +12,7 @@ import { getEventTypes } from "@/lib/event-types";
 import { getSiteSettings } from "@/lib/site-settings";
 import { adminUserSelect, serializeAdminUser } from "@/lib/users";
 import {
+  associationCalendarFollowUrl,
   connectionIdFor,
   isGoogleCalendarConfigured,
   serializeGoogleConnection,
@@ -60,6 +61,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
           connection={serializeGoogleConnection(googleConnection)}
           configured={isGoogleCalendarConfigured()}
           result={query.googleCalendar}
+          followUrl={associationCalendarFollowUrl()}
         />
         <EventTypesManager eventTypes={eventTypes} />
         <LocationsManager locations={locations} />

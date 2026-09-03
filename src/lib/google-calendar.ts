@@ -54,6 +54,28 @@ export function isGoogleCalendarConfigured() {
   );
 }
 
+const DEFAULT_ASSOCIATION_CALENDAR_TIMEZONE = "Europe/Paris";
+
+export function associationCalendarFollowUrl() {
+  const configured = process.env.GOOGLE_ASSOCIATION_CALENDAR_ID?.trim();
+  if (!configured) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(configured)) {
+    return configured;
+  }
+
+  const timezone =
+    process.env.GOOGLE_ASSOCIATION_CALENDAR_TIMEZONE?.trim() ||
+    DEFAULT_ASSOCIATION_CALENDAR_TIMEZONE;
+  const parameters = new URLSearchParams({
+    src: configured,
+    ctz: timezone,
+  });
+  return `https://calendar.google.com/calendar/embed?${parameters.toString()}`;
+}
+
 type OriginRequest = { nextUrl: URL; headers: Headers };
 
 // Behind a proxy the request URL carries the internal host, so prefer the public origin.

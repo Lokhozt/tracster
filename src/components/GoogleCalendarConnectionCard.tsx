@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { FollowAssociationCalendarLink } from "@/components/FollowAssociationCalendarLink";
 import { Button, Card, Label, Select } from "@/components/ui";
 
 type Connection = {
@@ -23,11 +24,13 @@ export function GoogleCalendarConnectionCard({
   connection,
   configured,
   result,
+  followUrl,
 }: {
   kind: "association" | "user";
   connection: Connection;
   configured: boolean;
   result?: string;
+  followUrl?: string | null;
 }) {
   const router = useRouter();
   const [calendars, setCalendars] = useState<CalendarOption[]>([]);
@@ -173,6 +176,15 @@ export function GoogleCalendarConnectionCard({
         >
           Connect Google Calendar
         </a>
+      )}
+
+      {followUrl && (
+        <div className="mt-4 border-t border-stone-200 pt-4">
+          <p className="mb-2 text-sm text-stone-600">
+            Open the association's public Google calendar in a new tab.
+          </p>
+          <FollowAssociationCalendarLink href={followUrl} />
+        </div>
       )}
 
       {result === "connected" && (

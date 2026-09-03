@@ -108,7 +108,13 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 GOOGLE_CALENDAR_CLIENT_ID="..."
 GOOGLE_CALENDAR_CLIENT_SECRET="..."
 SESSION_SECRET="a-long-random-production-secret"
+GOOGLE_ASSOCIATION_CALENDAR_ID="...@group.calendar.google.com"
+GOOGLE_ASSOCIATION_CALENDAR_TIMEZONE="Europe/Paris"
 ```
+
+`GOOGLE_ASSOCIATION_CALENDAR_ID` is the public calendar shown by **Follow association's calendar**
+on the schedule, account, and settings pages (a calendar id, or a full Google embed URL). Make that
+calendar public in Google Calendar so members can open it.
 
 Admins connect the association calendar under **Settings**. It receives every future event except
 rehearsals. Each member can connect a personal calendar on **Account** to copy their upcoming

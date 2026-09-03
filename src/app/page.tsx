@@ -4,6 +4,8 @@ import { RehearsalCalendar } from "@/components/RehearsalCalendar";
 import { UpcomingEventsList } from "@/components/UpcomingEventsList";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { FollowAssociationCalendarLink } from "@/components/FollowAssociationCalendarLink";
+import { associationCalendarFollowUrl } from "@/lib/google-calendar";
 import { getUpcomingScheduleEvents, getUserScheduleEvents } from "@/lib/schedule";
 import { formatBirthdayGreeting, isBirthdayOnDate } from "@/lib/users";
 
@@ -30,12 +32,18 @@ export default async function HomePage() {
     ]);
     const upcoming = getUpcomingScheduleEvents(events);
     const birthdayGreeting = formatBirthdayGreeting(birthdayUsers);
+    const associationCalendarUrl = associationCalendarFollowUrl();
 
     return (
       <AppShell title="Schedule">
         {birthdayGreeting && (
           <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950">
             {birthdayGreeting}
+          </p>
+        )}
+        {associationCalendarUrl && (
+          <p className="mb-4">
+            <FollowAssociationCalendarLink href={associationCalendarUrl} />
           </p>
         )}
         <RehearsalCalendar events={events} />

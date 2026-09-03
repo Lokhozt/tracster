@@ -5,6 +5,7 @@ import { GoogleCalendarConnectionCard } from "@/components/GoogleCalendarConnect
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
+  associationCalendarFollowUrl,
   connectionIdFor,
   isGoogleCalendarConfigured,
   serializeGoogleConnection,
@@ -45,6 +46,7 @@ export default async function AccountPage({ searchParams }: PageProps) {
           connection={serializeGoogleConnection(connection)}
           configured={isGoogleCalendarConfigured()}
           result={query.googleCalendar}
+          followUrl={associationCalendarFollowUrl()}
         />
       </div>
     </AppShell>
