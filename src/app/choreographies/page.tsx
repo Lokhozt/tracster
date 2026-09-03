@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { ChoreographiesList } from "@/components/ChoreographiesList";
 import { getCurrentUser } from "@/lib/auth";
@@ -24,7 +25,10 @@ function isUserChoreographer(
 }
 
 export default async function ChoreographiesPage() {
-  const user = await getCurrentUser();
+  const [user, t] = await Promise.all([
+    getCurrentUser(),
+    getTranslations("Pages.Choreographies"),
+  ]);
   if (!user) {
     redirect("/login");
   }
@@ -50,17 +54,17 @@ export default async function ChoreographiesPage() {
   });
 
   return (
-    <AppShell title="Choreographies">
+    <AppShell title={t("title")}>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-stone-600">
-          By default this list shows choreographies you created, choreograph, or participate in.
+          {t("intro")}
         </p>
         {canCreate && (
           <Link
             href="/choreographies/new"
             className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
           >
-            New choreography
+            {t("newChoreography")}
           </Link>
         )}
       </div>

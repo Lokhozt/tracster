@@ -1,11 +1,14 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Input, Label } from "@/components/ui";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
 
 export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventType[] }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -29,7 +32,7 @@ export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventT
     setCreating(false);
 
     if (!response.ok) {
-      setCreateError(data.error ?? "Unable to create event type.");
+      setCreateError(data.error ?? t("eventTypeCreateError"));
       return;
     }
 
@@ -55,7 +58,7 @@ export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventT
     setSavingId(null);
 
     if (!response.ok) {
-      setRowError(data.error ?? "Unable to rename event type.");
+      setRowError(data.error ?? t("eventTypeRenameError"));
       return;
     }
 
@@ -64,7 +67,7 @@ export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventT
   }
 
   async function handleDelete(type: SerializedEventType) {
-    if (!window.confirm(`Delete “${type.name}”?`)) {
+    if (!window.confirm(t("deleteNamedConfirm", {name: type.name}))) {
       return;
     }
 
@@ -76,7 +79,7 @@ export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventT
     setSavingId(null);
 
     if (!response.ok) {
-      setRowError(data.error ?? "Unable to delete event type.");
+      setRowError(data.error ?? t("eventTypeDeleteError"));
       return;
     }
 
@@ -85,24 +88,23 @@ export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventT
 
   return (
     <Card className="max-w-xl">
-      <h2 className="mb-2 text-lg font-semibold">Event types</h2>
+      <h2 className="mb-2 text-lg font-semibold">{t("eventTypes")}</h2>
       <p className="mb-4 text-sm text-stone-500">
-        Built-in types (Event, Rehearsal, Representation, Competition, Demonstration, Festival) cannot be changed.
-        You can add custom types for other association events.
+        {t("eventTypesHelp")}
       </p>
       <form onSubmit={handleCreate} className="mb-6 flex flex-wrap items-end gap-3">
         <div className="min-w-48 flex-1">
-          <Label htmlFor="event-type-name">New type</Label>
+          <Label htmlFor="event-type-name">{t("newType")}</Label>
           <Input
             id="event-type-name"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Workshop"
+            placeholder={t("workshopPlaceholder")}
             required
           />
         </div>
         <Button type="submit" disabled={creating || !name.trim()}>
-          {creating ? "Adding..." : "Add type"}
+          {creating ? t("adding") : t("addType")}
         </Button>
       </form>
       {createError && <p className="mb-4 text-sm text-red-600">{createError}</p>}
@@ -122,10 +124,10 @@ export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventT
                   required
                 />
                 <Button type="submit" disabled={savingId === type.id}>
-                  {savingId === type.id ? "Saving..." : "Save"}
+                  {savingId === type.id ? t("saving") : t("save")}
                 </Button>
                 <Button type="button" variant="secondary" onClick={() => setEditingId(null)}>
-                  Cancel
+                  {t("cancel")}
                 </Button>
               </form>
             ) : (
@@ -133,7 +135,7 @@ export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventT
                 <div>
                   <p className="font-medium">{type.name}</p>
                   <p className="text-xs text-stone-500">
-                    {type.immutable ? "Built-in" : "Custom"}
+                    {type.immutable ? t("builtIn") : t("custom")}
                   </p>
                 </div>
                 {!type.immutable && (
@@ -147,7 +149,7 @@ export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventT
                         setRowError(null);
                       }}
                     >
-                      Rename
+                      {t("rename")}
                     </Button>
                     <Button
                       type="button"
@@ -155,7 +157,7 @@ export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventT
                       disabled={savingId === type.id}
                       onClick={() => void handleDelete(type)}
                     >
-                      Delete
+                      {t("delete")}
                     </Button>
                   </div>
                 )}

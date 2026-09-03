@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { AuthNav } from "@/components/AuthNav";
-import { LogoutButton } from "@/components/LogoutButton";
 import { MainNav, type NavItem, getNavItems } from "@/components/MainNav";
 import { RoleBadge } from "@/components/UserForms";
 import type { UserRole } from "@/generated/prisma/client";
@@ -20,15 +20,12 @@ export function HeaderBar({
 }: {
   user: HeaderUser | null;
 }) {
+  const t = useTranslations("Navigation");
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
   const showAdminNav = user?.role === "ADMIN" || user?.role === "OWNER";
   const navItems = user ? getNavItems(showAdminNav) : [];
-
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     if (!menuOpen) {
@@ -76,7 +73,7 @@ export function HeaderBar({
           )}
           aria-expanded={menuOpen}
           aria-controls={menuId}
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-label={menuOpen ? t("closeMenu") : t("openMenu")}
           onClick={() => setMenuOpen((open) => !open)}
         >
           <MenuIcon open={menuOpen} />
@@ -94,7 +91,11 @@ export function HeaderBar({
           {user ? (
             <div className="space-y-4">
               <UserCluster user={user} />
-              <MobileNav items={navItems} pathname={pathname} />
+              <MobileNav
+                items={navItems}
+                pathname={pathname}
+                onNavigate={() => setMenuOpen(false)}
+              />
             </div>
           ) : (
             <AuthNav stacked />
@@ -116,12 +117,20 @@ function UserCluster({ user }: { user: HeaderUser }) {
           <RoleBadge role={user.role} />
         )}
       </div>
-      <LogoutButton />
     </div>
   );
 }
 
-function MobileNav({ items, pathname }: { items: NavItem[]; pathname: string }) {
+function MobileNav({
+  items,
+  pathname,
+  onNavigate,
+}: {
+  items: NavItem[];
+  pathname: string;
+  onNavigate: () => void;
+}) {
+  const t = useTranslations("Navigation");
   return (
     <nav className="flex flex-col gap-1">
       {items.map((item) => {
@@ -131,6 +140,7 @@ function MobileNav({ items, pathname }: { items: NavItem[]; pathname: string }) 
           <Link
             key={item.href}
             href={item.href}
+            onClick={onNavigate}
             aria-current={isActive ? "page" : undefined}
             className={cn(
               "rounded-lg px-3 py-3 text-base font-medium transition",
@@ -139,7 +149,7 @@ function MobileNav({ items, pathname }: { items: NavItem[]; pathname: string }) 
                 : "text-stone-700 hover:bg-stone-100 hover:text-stone-900",
             )}
           >
-            {item.label}
+            {t(item.label)}
           </Link>
         );
       })}

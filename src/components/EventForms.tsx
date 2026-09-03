@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -22,7 +24,6 @@ import {
   dateTimePartsToDate,
   dateToDateTimeParts,
   defaultStartDateTime,
-  formatDateTime,
   type DateTimeParts,
 } from "@/lib/datetime";
 import {
@@ -38,16 +39,16 @@ import {
 
 type UserOption = { id: string; name: string; email: string };
 
-function validateSchedule(start: DateTimeParts, end: DateTimeParts): string | null {
+function validateSchedule(start: DateTimeParts, end: DateTimeParts, startRequired: string, endAfterStart: string): string | null {
   const startsAt = dateTimePartsToDate(start);
   const endsAt = dateTimePartsToDate(end);
 
   if (!startsAt) {
-    return "Start date and time are required.";
+    return startRequired;
   }
 
   if (endsAt && endsAt <= startsAt) {
-    return "End time must be after start time.";
+    return endAfterStart;
   }
 
   return null;
@@ -64,18 +65,19 @@ function EventScheduleFields({
   onStartChange: (value: DateTimeParts) => void;
   onEndChange: (value: DateTimeParts) => void;
 }) {
+  const t = useTranslations("Components");
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <DateTime24Input
         name="startsAt"
-        label="Start"
+        label={t("start")}
         required
         value={start}
         onChange={onStartChange}
       />
       <DateTime24Input
         name="endsAt"
-        label="End"
+        label={t("end")}
         required
         value={end}
         onChange={onEndChange}
@@ -113,6 +115,7 @@ export function CreateEventForm({
   onSuccess?: (eventId: string) => void;
   redirectBasePath?: string;
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -177,7 +180,7 @@ export function CreateEventForm({
     setLoading(true);
     setError(null);
 
-    const validationError = validateSchedule(start, end);
+    const validationError = validateSchedule(start, end, t("startRequired"), t("endAfterStart"));
     if (validationError) {
       setError(validationError);
       setLoading(false);
@@ -214,7 +217,7 @@ export function CreateEventForm({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to create event.");
+      setError(data.error ?? t("eventCreateError"));
       return;
     }
 
@@ -230,7 +233,7 @@ export function CreateEventForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label htmlFor="event-type">Type</Label>
+        <Label htmlFor="event-type">{t("type")}</Label>
         <Select
           id="event-type"
           className="mt-1 block w-full"
@@ -246,13 +249,13 @@ export function CreateEventForm({
         </Select>
       </div>
       <div>
-        <Label htmlFor="event-title">Title</Label>
+        <Label htmlFor="event-title">{t("title")}</Label>
         <Input
           id="event-title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required={generic}
-          placeholder={eventType?.name ?? "Event"}
+          placeholder={eventType?.name ?? t("event")}
         />
       </div>
       <EventScheduleFields
@@ -268,7 +271,7 @@ export function CreateEventForm({
       />
       {eventType?.kind === "REHEARSAL" && choreographyOptions && (
         <div>
-          <Label htmlFor="event-choreography">Choreography</Label>
+          <Label htmlFor="event-choreography">{t("choreography")}</Label>
           <Select
             id="event-choreography"
             className="mt-1 block w-full"
@@ -279,7 +282,7 @@ export function CreateEventForm({
               setAudience("");
             }}
           >
-            <option value="">None</option>
+            <option value="">{t("none")}</option>
             {choreographyOptions.map((choreography) => (
               <option key={choreography.id} value={choreography.id}>
                 {choreography.title}
@@ -306,7 +309,7 @@ export function CreateEventForm({
       {allowsChoreographyLinks && choreographyOptions && choreographyOptions.length > 0 && (
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium text-stone-700">
-            Link to choreographies (optional)
+            {t("linkChoreographiesOptional")}
           </legend>
           {choreographyOptions.map((choreography) => (
             <label key={choreography.id} className="flex items-center gap-2 text-sm">
@@ -329,7 +332,7 @@ export function CreateEventForm({
         </fieldset>
       )}
       <div>
-        <Label htmlFor="event-description">{generic ? "Description" : "Notes"}</Label>
+        <Label htmlFor="event-description">{generic ? t("description") : t("notes")}</Label>
         <Textarea
           id="event-description"
           value={generic ? description : notes}
@@ -337,13 +340,13 @@ export function CreateEventForm({
             generic ? setDescription(e.target.value) : setNotes(e.target.value)
           }
           rows={4}
-          placeholder={generic ? "Optional details about this event" : "Optional notes"}
+          placeholder={generic ? t("optionalEventDetails") : t("optionalNotes")}
         />
       </div>
       {generic && participantOptions && participantOptions.length > 0 && (
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium text-stone-700">
-            Participants (optional)
+            {t("participantsOptional")}
           </legend>
           {participantOptions.map((user) => (
             <label key={user.id} className="flex items-center gap-2 text-sm">
@@ -374,7 +377,7 @@ export function CreateEventForm({
       )}
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading || !typeId}>
-        {loading ? "Creating..." : "Create event"}
+        {loading ? t("creating") : t("createEvent")}
       </Button>
     </form>
   );
@@ -389,6 +392,7 @@ export function EditEventForm({
   eventTypes: SerializedEventType[];
   choreographyOptions?: ChoreographyOption[];
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -431,7 +435,7 @@ export function EditEventForm({
     setLoading(true);
     setError(null);
 
-    const validationError = validateSchedule(start, end);
+    const validationError = validateSchedule(start, end, t("startRequired"), t("endAfterStart"));
     if (validationError) {
       setError(validationError);
       setLoading(false);
@@ -462,7 +466,7 @@ export function EditEventForm({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to update event.");
+      setError(data.error ?? t("eventUpdateError"));
       return;
     }
 
@@ -473,7 +477,7 @@ export function EditEventForm({
     <div className="space-y-4">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="edit-event-type">Type</Label>
+          <Label htmlFor="edit-event-type">{t("type")}</Label>
           <Select
             id="edit-event-type"
             className="mt-1 block w-full"
@@ -488,7 +492,7 @@ export function EditEventForm({
           </Select>
         </div>
         <div>
-          <Label htmlFor="edit-event-title">Title</Label>
+          <Label htmlFor="edit-event-title">{t("title")}</Label>
           <Input
             id="edit-event-title"
             value={title}
@@ -509,14 +513,14 @@ export function EditEventForm({
         />
         {eventType?.kind === "REHEARSAL" && choreographyOptions && (
           <div>
-            <Label htmlFor="edit-event-choreography">Choreography</Label>
+            <Label htmlFor="edit-event-choreography">{t("choreography")}</Label>
             <Select
               id="edit-event-choreography"
               className="mt-1 block w-full"
               value={choreographyId}
               onChange={(formEvent) => setChoreographyId(formEvent.target.value)}
             >
-              <option value="">None</option>
+              <option value="">{t("none")}</option>
               {choreographyOptions.map((choreography) => (
                 <option key={choreography.id} value={choreography.id}>
                   {choreography.title}
@@ -528,7 +532,7 @@ export function EditEventForm({
         {allowsChoreographyLinks && choreographyOptions && (
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium text-stone-700">
-              Linked choreographies
+              {t("linkedChoreographies")}
             </legend>
             {choreographyOptions.map((choreography) => (
               <label key={choreography.id} className="flex items-center gap-2 text-sm">
@@ -550,7 +554,7 @@ export function EditEventForm({
           </fieldset>
         )}
         <div>
-          <Label htmlFor="edit-event-description">{generic ? "Description" : "Notes"}</Label>
+          <Label htmlFor="edit-event-description">{generic ? t("description") : t("notes")}</Label>
           <Textarea
             id="edit-event-description"
             value={generic ? description : notes}
@@ -570,15 +574,15 @@ export function EditEventForm({
         )}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <Button type="submit" disabled={loading}>
-          {loading ? "Saving..." : "Save changes"}
+          {loading ? t("saving") : t("saveChanges")}
         </Button>
       </form>
 
       <div className="border-t border-stone-100 pt-4">
-        <p className="mb-2 text-sm font-medium text-stone-700">Danger zone</p>
+        <p className="mb-2 text-sm font-medium text-stone-700">{t("dangerZone")}</p>
         <DeleteEventButton
           deleteUrl={`/api/events/${event.id}`}
-          confirmMessage="Delete this event? This cannot be undone."
+          confirmMessage={t("deleteEventConfirm")}
           redirectTo="/events"
         />
       </div>
@@ -595,10 +599,11 @@ export function EventParticipantsList({
   participants: UserOption[];
   canEdit: boolean;
 }) {
+  const t = useTranslations("Components");
   return (
     <ul className="space-y-2">
       {participants.length === 0 ? (
-        <li className="text-sm text-stone-600">No participants assigned yet.</li>
+        <li className="text-sm text-stone-600">{t("noAssignedParticipants")}</li>
       ) : (
         participants.map((participant) => (
           <li
@@ -612,7 +617,7 @@ export function EventParticipantsList({
               <DeleteEventButton
                 deleteUrl={`/api/events/${eventId}/participants`}
                 deleteBody={{ userId: participant.id }}
-                confirmMessage={`Remove ${participant.name} from this event?`}
+                confirmMessage={t("removeParticipantEvent", {name: participant.name})}
               />
             )}
           </li>
@@ -631,6 +636,7 @@ export function AssignEventParticipantForm({
   users: UserOption[];
   assignedUserIds: string[];
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -655,7 +661,7 @@ export function AssignEventParticipantForm({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to assign participant.");
+      setError(data.error ?? t("assignParticipantError"));
       return;
     }
 
@@ -666,14 +672,14 @@ export function AssignEventParticipantForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <Label htmlFor="event-participant">Add participant</Label>
+        <Label htmlFor="event-participant">{t("addParticipant")}</Label>
         <select
           id="event-participant"
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
           className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"
         >
-          <option value="">Select a user</option>
+          <option value="">{t("selectUser")}</option>
           {availableUsers.map((user) => (
             <option key={user.id} value={user.id}>
               {user.name}
@@ -683,7 +689,7 @@ export function AssignEventParticipantForm({
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading || !userId}>
-        {loading ? "Adding..." : "Add participant"}
+        {loading ? t("adding") : t("addParticipant")}
       </Button>
     </form>
   );
@@ -728,6 +734,12 @@ function LinkedEventKindSection({
   eventTypes: SerializedEventType[];
   participantOptions: UserOption[];
 }) {
+  const t = useTranslations("Components");
+  const locale = useLocale();
+  const dateFormatter = new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
   const [showAddForm, setShowAddForm] = useState(false);
   const eventType = eventTypes.find((type) => type.kind === kind);
 
@@ -757,7 +769,7 @@ function LinkedEventKindSection({
           />
           <div className="mt-3">
             <Button type="button" variant="secondary" onClick={() => setShowAddForm(false)}>
-              Cancel
+              {t("cancel")}
             </Button>
           </div>
         </div>
@@ -783,8 +795,8 @@ function LinkedEventKindSection({
                     {item.title || fallbackTitle}
                   </Link>
                   <p className="mt-1 text-sm text-stone-600">
-                    {formatDateTime(new Date(item.startsAt))}
-                    {item.endsAt && ` – ${formatDateTime(new Date(item.endsAt))}`}
+                    {dateFormatter.format(new Date(item.startsAt))}
+                    {item.endsAt && ` – ${dateFormatter.format(new Date(item.endsAt))}`}
                   </p>
                   {item.location && (
                     <p className="mt-1 text-sm text-stone-500">{item.location}</p>
@@ -824,14 +836,15 @@ export function DemonstrationsSection({
   eventTypes: SerializedEventType[];
   participantOptions: UserOption[];
 }) {
+  const t = useTranslations("Components");
   return (
     <LinkedEventKindSection
       kind="DEMONSTRATION"
       heading="Demonstrations"
-      addLabel="Add a demonstration"
-      emptyLabel="No demonstrations linked yet."
+      addLabel={t("addDemonstration")}
+      emptyLabel={t("noDemonstrations")}
       fallbackTitle="Demonstration"
-      editLabel="Edit demonstration"
+      editLabel={t("editDemonstration")}
       unlinkConfirm="Remove this demonstration from the choreography? The demonstration itself will not be deleted."
       choreographyId={choreographyId}
       choreographyTitle={choreographyTitle}

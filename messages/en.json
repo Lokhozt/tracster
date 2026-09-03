@@ -1,0 +1,50 @@
+{
+  "Common": {
+    "appName": "Tracster",
+    "english": "English",
+    "french": "French",
+    "language": "Display language",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "create": "Create",
+    "update": "Update",
+    "close": "Close",
+    "loading": "Loading...",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "Navigation": {
+    "schedule": "Schedule",
+    "choreographies": "Choreographies",
+    "events": "Events",
+    "unavailability": "Unavailability",
+    "scheduling": "Scheduling",
+    "settings": "Settings",
+    "account": "Account",
+    "signIn": "Sign in",
+    "register": "Register",
+    "signOut": "Sign out",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "Metadata": {
+    "description": "Plan rehearsals and track participant availability for your association."
+  },
+  "Account": {
+    "title": "Account",
+    "intro": "Update your contact details, display language, and personal Google Calendar connection.",
+    "profile": "Profile",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "phone": "Phone",
+    "saved": "Profile saved.",
+    "saveProfile": "Save profile",
+    "saveError": "Unable to save your profile.",
+    "session": "Session",
+    "signOutHelp": "Sign out of Tracster on this device."
+  }
+}

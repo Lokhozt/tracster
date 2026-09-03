@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useEffect, useState } from "react";
 import type { ParticipantConflicts } from "@/lib/conflicts";
 
@@ -16,13 +18,16 @@ export function ParticipantConflictWarnings({
   endsAt: Date | null;
   groupId: string;
 }) {
+  const t = useTranslations("Components");
   const [conflicts, setConflicts] = useState<ConflictState>(null);
   const startsAtIso = startsAt?.toISOString() ?? "";
   const endsAtIso = endsAt?.toISOString() ?? "";
+  const hasValidRange =
+    Boolean(startsAtIso) &&
+    (!endsAtIso || new Date(endsAtIso) > new Date(startsAtIso));
 
   useEffect(() => {
-    if (!startsAtIso || (endsAtIso && new Date(endsAtIso) <= new Date(startsAtIso))) {
-      setConflicts(null);
+    if (!hasValidRange) {
       return;
     }
 
@@ -62,9 +67,9 @@ export function ParticipantConflictWarnings({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [choreographyId, startsAtIso, endsAtIso, groupId]);
+  }, [choreographyId, startsAtIso, endsAtIso, groupId, hasValidRange]);
 
-  if (!conflicts) {
+  if (!hasValidRange || !conflicts) {
     return null;
   }
 
@@ -79,13 +84,13 @@ export function ParticipantConflictWarnings({
     <div className="space-y-3">
       {hasUnavailable && (
         <ConflictWarning
-          title="Following participants are unavailable on this date/time"
+          title={t("participantsUnavailable")}
           participants={conflicts.unavailable}
         />
       )}
       {hasEngaged && (
         <ConflictWarning
-          title="Following participants are unavailable (engaged elsewhere)"
+          title={t("participantsEngaged")}
           participants={conflicts.engaged}
         />
       )}

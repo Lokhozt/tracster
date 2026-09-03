@@ -13,6 +13,7 @@ import {
 } from "@/lib/choreography-lifecycle";
 import { isAdmin } from "@/lib/roles";
 import { choreographyLifecycleSchema } from "@/lib/validations";
+import { getServerLocale, getServerTranslator } from "@/i18n/server";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -40,12 +41,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const impact = await getUpcomingChoreographyImpact(id);
   if (hasUpcomingImpact(impact) && parsed.data.confirmUpcoming !== true) {
+    const [t, locale] = await Promise.all([
+      getServerTranslator(user.displayLanguage),
+      getServerLocale(user.displayLanguage),
+    ]);
     return NextResponse.json(
       {
         error: formatChoreographyLifecycleWarning({
           action: "archive",
           title: choreography.title,
           impact,
+          t,
+          locale,
         }),
         requiresConfirmation: true,
         upcoming: serializeUpcomingImpact(impact),

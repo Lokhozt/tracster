@@ -5,7 +5,11 @@ import {
   subtractIntervals,
 } from "@/lib/scheduling/intervals";
 import { scoreSchedule, type InternalPlacement } from "@/lib/scheduling/score";
+import type { ServerTranslator } from "@/i18n/server";
 import type { IntervalMs, SchedulingCandidate, SchedulingProblem } from "@/lib/scheduling/types";
+
+const englishSchedulingTranslator: ServerTranslator = (key) =>
+  key === "resources.Location" ? "Location" : key;
 
 const SLOT_MS = 5 * 60 * 1000;
 const MAX_EXPANSIONS = 12_000;
@@ -172,8 +176,9 @@ function toCandidate(
   id: string,
   assigned: InternalPlacement[],
   problem: SchedulingProblem,
+  t: ServerTranslator,
 ): SchedulingCandidate {
-  const { score, caveats } = scoreSchedule(assigned, problem);
+  const { score, caveats } = scoreSchedule(assigned, problem, t);
   const locationNames = new Map(problem.windows.map((window) => [window.locationId, window.locationName]));
 
   return {
@@ -192,7 +197,7 @@ function toCandidate(
           groupId: item.groupId,
           groupName: item.groupName,
           locationId: placement.locationId,
-          locationName: locationNames.get(placement.locationId) ?? "Location",
+          locationName: locationNames.get(placement.locationId) ?? t("resources.Location"),
           startsAt: new Date(placement.start).toISOString(),
           endsAt: new Date(placement.end).toISOString(),
           participantNames: item.participants
@@ -220,7 +225,10 @@ function dedupeCaveats(
 }
 
 /** Best-first (A*) beam search: assign one rehearsal per layer, keep the highest-scoring partials. */
-export function generateScheduleCandidates(problem: SchedulingProblem): SchedulingCandidate[] {
+export function generateScheduleCandidates(
+  problem: SchedulingProblem,
+  t: ServerTranslator = englishSchedulingTranslator,
+): SchedulingCandidate[] {
   if (problem.items.length === 0) {
     return [];
   }
@@ -287,5 +295,7 @@ export function generateScheduleCandidates(problem: SchedulingProblem): Scheduli
     }
   }
 
-  return unique.map((node, index) => toCandidate(String(index + 1), node.assigned, problem));
+  return unique.map((node, index) =>
+    toCandidate(String(index + 1), node.assigned, problem, t),
+  );
 }

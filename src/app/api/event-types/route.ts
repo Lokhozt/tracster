@@ -5,6 +5,7 @@ import { forbidden, jsonError, unauthorized } from "@/lib/api";
 import { canManageSettings } from "@/lib/roles";
 import { eventTypeSchema } from "@/lib/validations";
 import { getEventTypes } from "@/lib/event-types";
+import { getServerTranslator, localizeEventType } from "@/i18n/server";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -12,7 +13,7 @@ export async function GET() {
     return unauthorized();
   }
 
-  const eventTypes = await getEventTypes();
+  const eventTypes = await getEventTypes(await getServerTranslator(user.displayLanguage));
   return Response.json({ eventTypes });
 }
 
@@ -54,5 +55,7 @@ export async function POST(request: NextRequest) {
     select: { id: true, name: true, kind: true, immutable: true, sortOrder: true },
   });
 
-  return Response.json({ eventType }, { status: 201 });
+  return Response.json({
+    eventType: localizeEventType(eventType, await getServerTranslator(user.displayLanguage)),
+  }, { status: 201 });
 }

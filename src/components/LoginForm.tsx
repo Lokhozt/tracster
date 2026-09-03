@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useActionState } from "react";
 import Link from "next/link";
 import { login, type LoginState } from "@/app/login/actions";
@@ -10,6 +12,7 @@ type LoginFormProps = {
 };
 
 export function LoginForm({ defaultEmail }: LoginFormProps) {
+  const t = useTranslations("Components");
   const [state, formAction, pending] = useActionState<LoginState | null, FormData>(
     login,
     null,
@@ -18,7 +21,7 @@ export function LoginForm({ defaultEmail }: LoginFormProps) {
   return (
     <form action={formAction} className="space-y-4">
       <div>
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t("email")}</Label>
         <Input
           id="email"
           name="email"
@@ -29,7 +32,7 @@ export function LoginForm({ defaultEmail }: LoginFormProps) {
         />
       </div>
       <div>
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">{t("password")}</Label>
         <Input
           id="password"
           name="password"
@@ -40,12 +43,12 @@ export function LoginForm({ defaultEmail }: LoginFormProps) {
       </div>
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       <Button type="submit" disabled={pending} className="w-full">
-        {pending ? "Signing in..." : "Sign in"}
+        {pending ? t("signingIn") : t("signIn")}
       </Button>
       <p className="text-center text-sm text-stone-600">
-        No account yet?{" "}
+        {t("noAccount")}{" "}
         <Link href="/register" className="font-medium text-stone-900">
-          Register
+          {t("register")}
         </Link>
       </p>
     </form>

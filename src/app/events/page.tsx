@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { EventsList } from "@/components/EventsList";
 import { getCurrentUser } from "@/lib/auth";
@@ -8,7 +9,10 @@ import { hasGlobalAccess } from "@/lib/roles";
 import { canCreateEvent } from "@/lib/site-settings";
 
 export default async function EventsPage() {
-  const user = await getCurrentUser();
+  const [user, t] = await Promise.all([
+    getCurrentUser(),
+    getTranslations("Pages.Events"),
+  ]);
   if (!user) {
     redirect("/login");
   }
@@ -30,12 +34,12 @@ export default async function EventsPage() {
   );
 
   return (
-    <AppShell title="Events">
+    <AppShell title={t("title")}>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-stone-600">
           {globalAccess
-            ? "All association events, including rehearsals, representations, demonstrations, competitions, and festivals."
-            : "Events you created, participate in, or that are linked to your choreographies."}
+            ? t("introAll")
+            : t("introRelevant")}
         </p>
         <div className="flex shrink-0 flex-wrap gap-2">
           {globalAccess && (
@@ -43,7 +47,7 @@ export default async function EventsPage() {
               href="/scheduling"
               className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium hover:bg-stone-100"
             >
-              Schedule rehearsals
+              {t("scheduleRehearsals")}
             </Link>
           )}
           {canCreate && (
@@ -51,7 +55,7 @@ export default async function EventsPage() {
               href="/events/new"
               className="inline-flex min-h-11 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
             >
-              New event
+              {t("newEvent")}
             </Link>
           )}
         </div>
@@ -59,7 +63,7 @@ export default async function EventsPage() {
 
       {eventItems.length === 0 ? (
         <p className="text-stone-600">
-          {canCreate ? "No events yet. Create your first one." : "No events yet."}
+          {canCreate ? t("emptyCreate") : t("empty")}
         </p>
       ) : (
         <EventsList events={eventItems} />

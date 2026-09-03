@@ -1,10 +1,17 @@
 import bcrypt from "bcryptjs";
+import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 import { createSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { jsonError } from "@/lib/api";
 import { registerSchema } from "@/lib/validations";
 import { serializeBasicUser } from "@/lib/users";
+import {
+  getDefaultLanguage,
+  isLanguage,
+  LANGUAGE_COOKIE,
+  preferenceFromLanguage,
+} from "@/i18n/config";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -22,6 +29,9 @@ export async function POST(request: NextRequest) {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
+  const cookieStore = await cookies();
+  const cookieLanguage = cookieStore.get(LANGUAGE_COOKIE)?.value;
+  const language = isLanguage(cookieLanguage) ? cookieLanguage : getDefaultLanguage();
   const user = await prisma.user.create({
     data: {
       firstName,
@@ -30,6 +40,7 @@ export async function POST(request: NextRequest) {
       phone: phone || null,
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
       passwordHash,
+      displayLanguage: preferenceFromLanguage(language),
     },
     select: { id: true, firstName: true, lastName: true, email: true },
   });

@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
-import type { UserRole } from "@/generated/prisma/client";
+import type { DisplayLanguage, UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { formatUserName } from "@/lib/users";
 
@@ -16,6 +16,7 @@ export type AuthUser = {
   phone: string | null;
   dateOfBirth: string | null;
   role: UserRole;
+  displayLanguage: DisplayLanguage | null;
 };
 
 function serializeAuthUser(user: {
@@ -26,6 +27,7 @@ function serializeAuthUser(user: {
   phone: string | null;
   dateOfBirth: Date | null;
   role: UserRole;
+  displayLanguage: DisplayLanguage | null;
 }): AuthUser {
   return {
     id: user.id,
@@ -36,6 +38,7 @@ function serializeAuthUser(user: {
     phone: user.phone,
     dateOfBirth: user.dateOfBirth?.toISOString() ?? null,
     role: user.role,
+    displayLanguage: user.displayLanguage,
   };
 }
 
@@ -89,6 +92,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
           phone: true,
           dateOfBirth: true,
           role: true,
+          displayLanguage: true,
         },
       },
     },

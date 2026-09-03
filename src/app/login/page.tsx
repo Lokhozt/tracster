@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { LoginForm } from "@/components/LoginForm";
 import { Card } from "@/components/ui";
@@ -8,7 +9,10 @@ type LoginPageProps = {
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const params = await searchParams;
+  const [params, t] = await Promise.all([
+    searchParams,
+    getTranslations("Pages.Login"),
+  ]);
 
   if (typeof params.password === "string") {
     const email =
@@ -19,7 +23,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const defaultEmail = typeof params.email === "string" ? params.email : undefined;
 
   return (
-    <AppShell title="Sign in">
+    <AppShell title={t("title")}>
       <Card className="mx-auto max-w-md">
         <LoginForm defaultEmail={defaultEmail} />
       </Card>

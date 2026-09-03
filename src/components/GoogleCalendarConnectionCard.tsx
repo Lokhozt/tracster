@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FollowAssociationCalendarLink } from "@/components/FollowAssociationCalendarLink";
@@ -32,7 +34,9 @@ export function GoogleCalendarConnectionCard({
   result?: string;
   followUrl?: string | null;
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
+  const locale = useLocale();
   const [calendars, setCalendars] = useState<CalendarOption[]>([]);
   const [selectedId, setSelectedId] = useState(connection?.calendarId ?? "");
   const [busy, setBusy] = useState(false);
@@ -49,14 +53,14 @@ export function GoogleCalendarConnectionCard({
           error?: string;
         };
         if (!response.ok) {
-          throw new Error(data.error ?? "Unable to load calendars.");
+          throw new Error(data.error ?? t("calendarLoadError"));
         }
         setCalendars(data.calendars ?? []);
       })
       .catch((loadError: unknown) => {
-        setError(loadError instanceof Error ? loadError.message : "Unable to load calendars.");
+        setError(loadError instanceof Error ? loadError.message : t("calendarLoadError"));
       });
-  }, [connection, kind]);
+  }, [connection, kind, t]);
 
   async function request(path: string, init: RequestInit) {
     setBusy(true);
@@ -65,7 +69,7 @@ export function GoogleCalendarConnectionCard({
     const data = (await response.json()) as { error?: string };
     setBusy(false);
     if (!response.ok) {
-      setError(data.error ?? "Google Calendar request failed.");
+      setError(data.error ?? t("calendarRequestError"));
       return false;
     }
     router.refresh();
@@ -85,7 +89,7 @@ export function GoogleCalendarConnectionCard({
   }
 
   async function disconnect() {
-    if (!window.confirm("Disconnect Google Calendar and remove synchronized events?")) {
+    if (!window.confirm(t("calendarDisconnectConfirm"))) {
       return;
     }
     await request(`/api/google-calendar/connection?kind=${kind}`, { method: "DELETE" });
@@ -96,33 +100,32 @@ export function GoogleCalendarConnectionCard({
   return (
     <Card className="max-w-xl">
       <h2 className="mb-2 text-lg font-semibold">
-        {isAssociation ? "Association Google Calendar" : "My Google Calendar"}
+        {isAssociation ? t("associationCalendar") : t("myCalendar")}
       </h2>
       <p className="mb-4 text-sm text-stone-600">
         {isAssociation
-          ? "Events, performances, competitions, demonstrations, festivals, and custom event types are copied to one shared calendar. Rehearsals are excluded."
-          : "Your upcoming rehearsals are copied to your selected Google calendar. App unavailability and other association events are excluded."}
+          ? t("associationCalendarHelp")
+          : t("myCalendarHelp")}
       </p>
 
       {!configured ? (
         <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-          Set GOOGLE_CALENDAR_CLIENT_ID, GOOGLE_CALENDAR_CLIENT_SECRET, SESSION_SECRET, and
-          NEXT_PUBLIC_APP_URL to enable this integration.
+          {t("calendarNotConfigured")}
         </p>
       ) : connection ? (
         <div className="space-y-4">
           <div className="text-sm text-stone-700">
             <p>
-              Connected{connection.accountEmail ? ` as ${connection.accountEmail}` : ""}.
+              {connection.accountEmail ? t("connectedAs", {email: connection.accountEmail}) : t("connected")}
             </p>
             {connection.lastSyncedAt && (
               <p className="text-stone-500">
-                Last synchronized {new Date(connection.lastSyncedAt).toLocaleString()}.
+                {t("lastSynchronized", {date: new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"}).format(new Date(connection.lastSyncedAt))})}
               </p>
             )}
           </div>
           <div>
-            <Label htmlFor={`google-calendar-${kind}`}>Destination calendar</Label>
+            <Label htmlFor={`google-calendar-${kind}`}>{t("destinationCalendar")}</Label>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Select
                 id={`google-calendar-${kind}`}
@@ -136,7 +139,7 @@ export function GoogleCalendarConnectionCard({
                 {calendars.map((calendar) => (
                   <option key={calendar.id} value={calendar.id}>
                     {calendar.name}
-                    {calendar.primary ? " (primary)" : ""}
+                    {calendar.primary ? ` ${t("primaryCalendar")}` : ""}
                   </option>
                 ))}
               </Select>
@@ -146,7 +149,7 @@ export function GoogleCalendarConnectionCard({
                 disabled={busy || selectedId === connection.calendarId}
                 onClick={changeCalendar}
               >
-                Use calendar
+                {t("useCalendar")}
               </Button>
             </div>
           </div>
@@ -162,10 +165,10 @@ export function GoogleCalendarConnectionCard({
                 request(`/api/google-calendar/sync?kind=${kind}`, { method: "POST" })
               }
             >
-              {busy ? "Working..." : "Synchronize now"}
+              {busy ? t("working") : t("synchronizeNow")}
             </Button>
             <Button type="button" variant="danger" disabled={busy} onClick={disconnect}>
-              Disconnect
+              {t("disconnect")}
             </Button>
           </div>
         </div>
@@ -174,25 +177,25 @@ export function GoogleCalendarConnectionCard({
           href={`/api/google-calendar/connect?kind=${kind}`}
           className="inline-flex min-h-11 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
         >
-          Connect Google Calendar
+          {t("connectGoogleCalendar")}
         </a>
       )}
 
       {followUrl && (
         <div className="mt-4 border-t border-stone-200 pt-4">
           <p className="mb-2 text-sm text-stone-600">
-            Open the association's public Google calendar in a new tab.
+            {t("openPublicCalendar")}
           </p>
           <FollowAssociationCalendarLink href={followUrl} />
         </div>
       )}
 
       {result === "connected" && (
-        <p className="mt-3 text-sm text-green-700">Google Calendar connected.</p>
+        <p className="mt-3 text-sm text-green-700">{t("calendarConnected")}</p>
       )}
       {result && result !== "connected" && (
         <p className="mt-3 text-sm text-red-700">
-          Google Calendar was not connected. Please try again.
+          {t("calendarNotConnected")}
         </p>
       )}
     </Card>

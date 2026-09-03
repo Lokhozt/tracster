@@ -1,16 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 
 type AvailabilityStatus = "AVAILABLE" | "UNAVAILABLE" | "MAYBE";
-
-const statusLabels: Record<AvailabilityStatus, string> = {
-  AVAILABLE: "Available",
-  UNAVAILABLE: "Unavailable",
-  MAYBE: "Maybe",
-};
 
 export function AvailabilityButtons({
   rehearsalId,
@@ -19,6 +15,7 @@ export function AvailabilityButtons({
   rehearsalId: string;
   currentStatus?: AvailabilityStatus;
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loading, setLoading] = useState<AvailabilityStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +34,7 @@ export function AvailabilityButtons({
     setLoading(null);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to save availability.");
+      setError(data.error ?? t("availabilitySaveError"));
       return;
     }
 
@@ -47,7 +44,7 @@ export function AvailabilityButtons({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
-        {(Object.keys(statusLabels) as AvailabilityStatus[]).map((status) => (
+        {(["AVAILABLE", "UNAVAILABLE", "MAYBE"] as AvailabilityStatus[]).map((status) => (
           <Button
             key={status}
             type="button"
@@ -55,7 +52,7 @@ export function AvailabilityButtons({
             disabled={loading !== null}
             onClick={() => submitStatus(status)}
           >
-            {loading === status ? "Saving..." : statusLabels[status]}
+            {loading === status ? t("saving") : t(`status${status}`)}
           </Button>
         ))}
       </div>

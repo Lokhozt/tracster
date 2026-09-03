@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import {
   EditUserForm,
@@ -16,7 +17,10 @@ import { adminUserSelect, serializeAdminUser } from "@/lib/users";
 type PageProps = { params: Promise<{ id: string }> };
 
 export default async function UserDetailPage({ params }: PageProps) {
-  const currentUser = await getCurrentUser();
+  const [currentUser, t] = await Promise.all([
+    getCurrentUser(),
+    getTranslations("Pages.UserDetail"),
+  ]);
   if (!currentUser) {
     redirect("/login");
   }
@@ -50,7 +54,7 @@ export default async function UserDetailPage({ params }: PageProps) {
     <AppShell title={user.name}>
       <div className="mb-6">
         <Link href="/settings" className="text-sm text-stone-600 hover:text-stone-900">
-          ← Back to settings
+          {t("backToSettings")}
         </Link>
       </div>
 
@@ -60,22 +64,21 @@ export default async function UserDetailPage({ params }: PageProps) {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <h2 className="mb-4 text-lg font-semibold">Profile</h2>
+          <h2 className="mb-4 text-lg font-semibold">{t("profile")}</h2>
           <EditUserForm user={user} />
         </Card>
 
         <div className="space-y-6">
           <Card>
-            <h2 className="mb-4 text-lg font-semibold">Role</h2>
+            <h2 className="mb-4 text-lg font-semibold">{t("role")}</h2>
             <UserRoleForm user={user} actorRole={currentUser.role} />
           </Card>
 
           {ownerIsCurrentUser && user.role === "OWNER" && (
             <Card>
-              <h2 className="mb-2 text-lg font-semibold">Transfer ownership</h2>
+              <h2 className="mb-2 text-lg font-semibold">{t("transferOwnership")}</h2>
               <p className="mb-4 text-sm text-stone-600">
-                Transfer the owner role to another user. You will become a regular user.
-                This is the only way to change who holds the owner role.
+                {t("transferOwnershipIntro")}
               </p>
               <TransferOwnershipForm
                 users={serializedUsers}

@@ -1,10 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChoreographerBadge } from "@/components/CrownIcon";
 import { Card } from "@/components/ui";
-import { formatDateTime } from "@/lib/datetime";
+import { useLocale } from "next-intl";
 
 export type ChoreographyListItem = {
   id: string;
@@ -25,7 +27,10 @@ export function ChoreographiesList({
   choreographies: ChoreographyListItem[];
   canCreate: boolean;
 }) {
+  const t = useTranslations("Components");
   const [showAll, setShowAll] = useState(false);
+  const locale = useLocale();
+  const dateFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
 
   const visible = useMemo(
     () =>
@@ -44,7 +49,7 @@ export function ChoreographiesList({
           onChange={(event) => setShowAll(event.target.checked)}
           className="rounded border-stone-300"
         />
-        Display all choreographies
+        {t("displayAllChoreographies")}
       </label>
 
       {visible.length === 0 ? (
@@ -52,9 +57,9 @@ export function ChoreographiesList({
           <p className="text-stone-600">
             {showAll
               ? canCreate
-                ? "No choreographies yet. Create your first one."
-                : "No choreographies yet."
-              : "You are not part of any choreography yet. Check “Display all choreographies” to browse others you can see."}
+                ? t("noChoreographiesCreate")
+                : t("noChoreographies")
+              : t("noOwnChoreographies")}
           </p>
         </Card>
       ) : (
@@ -72,18 +77,17 @@ export function ChoreographiesList({
                       <p className="mt-1 text-sm text-stone-600">{choreography.description}</p>
                     )}
                     <p className="mt-3 text-xs text-stone-500">
-                      Created by {choreography.createdByName} · Updated{" "}
-                      {formatDateTime(new Date(choreography.updatedAt))}
+                      {t("createdUpdated", {name: choreography.createdByName, date: dateFormatter.format(new Date(choreography.updatedAt))})}
                     </p>
                     {!choreography.isInvolved && (
                       <p className="mt-2 text-xs font-medium text-stone-500">
-                        You are not part of this choreography
+                        {t("notPartChoreography")}
                       </p>
                     )}
                   </div>
                   <div className="shrink-0 text-sm text-stone-600 sm:text-right">
-                    <p>{choreography.memberCount} participants</p>
-                    <p>{choreography.rehearsalCount} rehearsals</p>
+                    <p>{t("participantCount", {count: choreography.memberCount})}</p>
+                    <p>{t("rehearsalCount", {count: choreography.rehearsalCount})}</p>
                   </div>
                 </div>
               </Card>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { RehearsalCalendar } from "@/components/RehearsalCalendar";
 import { UpcomingEventsList } from "@/components/UpcomingEventsList";
@@ -23,7 +24,10 @@ async function getUsersWithBirthdayToday(now = new Date()) {
 }
 
 export default async function HomePage() {
-  const user = await getCurrentUser();
+  const [user, t] = await Promise.all([
+    getCurrentUser(),
+    getTranslations("Pages.Home"),
+  ]);
 
   if (user) {
     const [events, birthdayUsers] = await Promise.all([
@@ -35,7 +39,7 @@ export default async function HomePage() {
     const associationCalendarUrl = associationCalendarFollowUrl();
 
     return (
-      <AppShell title="Schedule">
+      <AppShell title={t("title")}>
         {birthdayGreeting && (
           <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950">
             {birthdayGreeting}
@@ -56,27 +60,26 @@ export default async function HomePage() {
     <AppShell>
       <section className="mx-auto max-w-2xl py-16 text-center">
         <p className="mb-3 text-sm font-medium uppercase tracking-wide text-stone-500">
-          Rehearsal planning
+          {t("eyebrow")}
         </p>
         <h1 className="mb-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-          Plan choreographies and track availability
+          {t("heading")}
         </h1>
         <p className="mb-8 text-base text-stone-600 sm:text-lg">
-          Tracster helps associations organize rehearsals, assign participants, and
-          collect availability for each rehearsal.
+          {t("intro")}
         </p>
         <div className="flex flex-col justify-center gap-3 sm:flex-row">
           <Link
             href="/register"
             className="inline-flex min-h-11 items-center justify-center rounded-lg bg-stone-900 px-5 py-3 text-sm font-medium text-white hover:bg-stone-700"
           >
-            Get started
+            {t("getStarted")}
           </Link>
           <Link
             href="/login"
             className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 px-5 py-3 text-sm font-medium hover:bg-stone-100"
           >
-            Sign in
+            {t("signIn")}
           </Link>
         </div>
       </section>

@@ -5,6 +5,7 @@ import {
   type EventKind,
   type SerializedEventType,
 } from "@/lib/event-type-helpers";
+import { getServerTranslator, type ServerTranslator } from "@/i18n/server";
 
 export {
   BUILTIN_EVENT_TYPE_IDS,
@@ -40,15 +41,16 @@ export async function ensureEventTypes() {
   );
 }
 
-export async function getEventTypes(): Promise<SerializedEventType[]> {
+export async function getEventTypes(t?: ServerTranslator): Promise<SerializedEventType[]> {
   await ensureEventTypes();
+  const translator = t ?? await getServerTranslator();
 
   const types = await prisma.eventType.findMany({
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     select: { id: true, name: true, kind: true, immutable: true, sortOrder: true },
   });
 
-  return types.map(serializeEventType);
+  return types.map((type) => serializeEventType(type, translator));
 }
 
 export async function getEventType(id: string) {

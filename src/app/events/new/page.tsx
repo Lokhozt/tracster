@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { CreateEventForm } from "@/components/EventForms";
 import { Card } from "@/components/ui";
@@ -25,7 +26,10 @@ const kindAliases: Record<string, EventKind> = {
 };
 
 export default async function NewEventPage({ searchParams }: PageProps) {
-  const user = await getCurrentUser();
+  const [user, t] = await Promise.all([
+    getCurrentUser(),
+    getTranslations("Pages.NewEvent"),
+  ]);
   if (!user) {
     redirect("/login");
   }
@@ -70,7 +74,7 @@ export default async function NewEventPage({ searchParams }: PageProps) {
   );
 
   return (
-    <AppShell title="New event">
+    <AppShell title={t("title")}>
       <Card className="max-w-xl">
         <CreateEventForm
           eventTypes={eventTypes}

@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EditIconLink } from "@/components/EditIconLink";
@@ -7,7 +9,6 @@ import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControl
 import { LeaveEventButton } from "@/components/LeaveEventButton";
 import { ParticipatingCheck } from "@/components/ParticipatingCheck";
 import { Card, Input, Label } from "@/components/ui";
-import { formatDateTime } from "@/lib/datetime";
 import { isGenericEventKind } from "@/lib/event-type-helpers";
 import { isPastDate, matchesSearch } from "@/lib/search";
 import type { SerializedEvent } from "@/lib/events";
@@ -39,6 +40,12 @@ function matchesEventSearch(item: EventListItem, query: string): boolean {
 }
 
 export function EventsList({ events }: { events: EventListItem[] }) {
+  const t = useTranslations("Components");
+  const locale = useLocale();
+  const dateFormatter = new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
   const [search, setSearch] = useState("");
   const [hideNonParticipating, setHideNonParticipating] = useState(false);
   const [showPast, setShowPast] = useState(false);
@@ -60,13 +67,13 @@ export function EventsList({ events }: { events: EventListItem[] }) {
       <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
         <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
           <div>
-            <Label htmlFor="event-search">Search</Label>
+            <Label htmlFor="event-search">{t("search")}</Label>
             <Input
               id="event-search"
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Title, description, location, or participant…"
+              placeholder={t("eventSearchPlaceholder")}
               autoComplete="off"
             />
           </div>
@@ -78,7 +85,7 @@ export function EventsList({ events }: { events: EventListItem[] }) {
                 onChange={(event) => setHideNonParticipating(event.target.checked)}
                 className="rounded border-stone-300"
               />
-              Hide events I&apos;m not in
+              {t("hideEventsNotIn")}
             </label>
             <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700">
               <input
@@ -87,7 +94,7 @@ export function EventsList({ events }: { events: EventListItem[] }) {
                 onChange={(event) => setShowPast(event.target.checked)}
                 className="rounded border-stone-300"
               />
-              Show past events
+              {t("showPastEvents")}
             </label>
           </div>
         </div>
@@ -98,7 +105,7 @@ export function EventsList({ events }: { events: EventListItem[] }) {
 
       {filteredEvents.length === 0 ? (
         <Card>
-          <p className="text-stone-600">No events match your search or filters.</p>
+          <p className="text-stone-600">{t("noMatchingEvents")}</p>
         </Card>
       ) : (
         <div className="grid gap-4">
@@ -122,8 +129,8 @@ export function EventsList({ events }: { events: EventListItem[] }) {
                     {isParticipating && <ParticipatingCheck />}
                   </div>
                   <p className="mt-1 text-sm text-stone-600">
-                    {formatDateTime(new Date(event.startsAt))}
-                    {event.endsAt && ` – ${formatDateTime(new Date(event.endsAt))}`}
+                    {dateFormatter.format(new Date(event.startsAt))}
+                    {event.endsAt && ` – ${dateFormatter.format(new Date(event.endsAt))}`}
                   </p>
                   {event.location && (
                     <p className="mt-1 text-sm text-stone-500">{event.location}</p>
@@ -135,7 +142,7 @@ export function EventsList({ events }: { events: EventListItem[] }) {
                   )}
                   {!isParticipating && (
                     <p className="mt-2 text-xs font-medium text-stone-500">
-                      Not participating
+                      {t("notParticipating")}
                     </p>
                   )}
                 </div>
@@ -145,7 +152,7 @@ export function EventsList({ events }: { events: EventListItem[] }) {
                     {event.participants.length === 1 ? "participant" : "participants"}
                   </p>
                   {canEdit && (
-                    <EditIconLink href={`/events/${event.id}`} label="Edit event" />
+                    <EditIconLink href={`/events/${event.id}`} label={t("editEvent")} />
                   )}
                 </div>
               </div>

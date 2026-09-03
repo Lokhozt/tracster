@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button, Card } from "@/components/ui";
@@ -17,6 +19,7 @@ export function JoinRequestsList({
   requests: JoinRequestItem[];
   reviewUrl: string;
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +37,7 @@ export function JoinRequestsList({
     setLoadingId(null);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to update request.");
+      setError(data.error ?? t("requestUpdateError"));
       return;
     }
 
@@ -43,9 +46,9 @@ export function JoinRequestsList({
 
   return (
     <Card>
-      <h2 className="mb-4 text-lg font-semibold">Join requests</h2>
+      <h2 className="mb-4 text-lg font-semibold">{t("joinRequests")}</h2>
       {requests.length === 0 ? (
-        <p className="text-sm text-stone-600">No pending requests.</p>
+        <p className="text-sm text-stone-600">{t("noPendingRequests")}</p>
       ) : (
         <ul className="space-y-2">
           {requests.map((request) => (
@@ -65,7 +68,7 @@ export function JoinRequestsList({
                   disabled={loadingId !== null}
                   onClick={() => void decide(request.id, "accept")}
                 >
-                  {loadingId === request.id ? "Saving..." : "Add"}
+                  {loadingId === request.id ? t("saving") : t("add")}
                 </Button>
                 <Button
                   type="button"
@@ -73,7 +76,7 @@ export function JoinRequestsList({
                   disabled={loadingId !== null}
                   onClick={() => void decide(request.id, "decline")}
                 >
-                  Remove
+                  {t("remove")}
                 </Button>
               </div>
             </li>

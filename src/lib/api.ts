@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { getServerTranslator, translateMessageWith } from "@/i18n/server";
 
-export function jsonError(message: string, status = 400) {
-  return NextResponse.json({ error: message }, { status });
+export async function jsonError(message: string, status = 400) {
+  const translated = translateMessageWith(await getServerTranslator(), message);
+  return NextResponse.json({ error: translated }, { status });
 }
 
 export function unauthorized() {

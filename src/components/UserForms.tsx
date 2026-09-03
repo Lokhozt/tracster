@@ -1,12 +1,15 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button, Input, Label, Select } from "@/components/ui";
 import type { UserRole } from "@/generated/prisma/client";
-import { roleLabels, type AdminUser } from "@/lib/users";
+import { type AdminUser } from "@/lib/users";
 
 export function EditUserForm({ user }: { user: AdminUser }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +42,7 @@ export function EditUserForm({ user }: { user: AdminUser }) {
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to update user.");
+      setError(data.error ?? t("userUpdateError"));
       return;
     }
 
@@ -50,7 +53,7 @@ export function EditUserForm({ user }: { user: AdminUser }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="firstName">First name</Label>
+          <Label htmlFor="firstName">{t("firstName")}</Label>
           <Input
             id="firstName"
             value={firstName}
@@ -59,7 +62,7 @@ export function EditUserForm({ user }: { user: AdminUser }) {
           />
         </div>
         <div>
-          <Label htmlFor="lastName">Last name</Label>
+          <Label htmlFor="lastName">{t("lastName")}</Label>
           <Input
             id="lastName"
             value={lastName}
@@ -69,7 +72,7 @@ export function EditUserForm({ user }: { user: AdminUser }) {
         </div>
       </div>
       <div>
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t("email")}</Label>
         <Input
           id="email"
           type="email"
@@ -79,7 +82,7 @@ export function EditUserForm({ user }: { user: AdminUser }) {
         />
       </div>
       <div>
-        <Label htmlFor="phone">Phone</Label>
+        <Label htmlFor="phone">{t("phone")}</Label>
         <Input
           id="phone"
           type="tel"
@@ -89,7 +92,7 @@ export function EditUserForm({ user }: { user: AdminUser }) {
         />
       </div>
       <div>
-        <Label htmlFor="dateOfBirth">Date of birth</Label>
+        <Label htmlFor="dateOfBirth">{t("dateOfBirth")}</Label>
         <Input
           id="dateOfBirth"
           type="date"
@@ -99,7 +102,7 @@ export function EditUserForm({ user }: { user: AdminUser }) {
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading}>
-        {loading ? "Saving..." : "Save changes"}
+        {loading ? t("saving") : t("saveChanges")}
       </Button>
     </form>
   );
@@ -112,6 +115,7 @@ export function UserRoleForm({
   user: AdminUser;
   actorRole: UserRole;
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -122,7 +126,7 @@ export function UserRoleForm({
   if (user.role === "OWNER") {
     return (
       <p className="text-sm text-stone-600">
-        This user is the owner. Ownership can only be changed by transferring it.
+        {t("ownerRoleHelp")}
       </p>
     );
   }
@@ -148,7 +152,7 @@ export function UserRoleForm({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to update role.");
+      setError(data.error ?? t("roleUpdateError"));
       return;
     }
 
@@ -158,24 +162,24 @@ export function UserRoleForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <Label htmlFor="role">Role</Label>
+        <Label htmlFor="role">{t("role")}</Label>
         <Select
           id="role"
           value={role}
           onChange={(event) => setRole(event.target.value as "USER" | "ADMIN")}
         >
-          <option value="USER">{roleLabels.USER}</option>
-          <option value="ADMIN">{roleLabels.ADMIN}</option>
+          <option value="USER">{t("roleUSER")}</option>
+          <option value="ADMIN">{t("roleADMIN")}</option>
         </Select>
         {actorRole === "ADMIN" && (
           <p className="mt-1 text-xs text-stone-500">
-            Admins can appoint or revoke admin access for users.
+            {t("adminRoleHelp")}
           </p>
         )}
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading || role === user.role}>
-        {loading ? "Updating..." : "Update role"}
+        {loading ? t("updating") : t("updateRole")}
       </Button>
     </form>
   );
@@ -188,6 +192,7 @@ export function TransferOwnershipForm({
   users: AdminUser[];
   currentUserId: string;
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -202,7 +207,7 @@ export function TransferOwnershipForm({
 
     if (
       !confirm(
-        "Transfer ownership to this user? You will become a regular user and lose owner privileges.",
+        t("transferConfirm"),
       )
     ) {
       return;
@@ -221,7 +226,7 @@ export function TransferOwnershipForm({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to transfer ownership.");
+      setError(data.error ?? t("ownershipTransferError"));
       return;
     }
 
@@ -232,7 +237,7 @@ export function TransferOwnershipForm({
   if (candidates.length === 0) {
     return (
       <p className="text-sm text-stone-600">
-        Add another user before transferring ownership.
+        {t("addUserBeforeTransfer")}
       </p>
     );
   }
@@ -240,7 +245,7 @@ export function TransferOwnershipForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <Label htmlFor="newOwner">New owner</Label>
+        <Label htmlFor="newOwner">{t("newOwner")}</Label>
         <Select
           id="newOwner"
           value={userId}
@@ -255,13 +260,14 @@ export function TransferOwnershipForm({
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading || !userId} variant="secondary">
-        {loading ? "Transferring..." : "Transfer ownership"}
+        {loading ? t("transferring") : t("transferOwnership")}
       </Button>
     </form>
   );
 }
 
 export function RoleBadge({ role }: { role: UserRole }) {
+  const t = useTranslations("Components");
   const styles =
     role === "OWNER"
       ? "bg-amber-100 text-amber-900"
@@ -271,12 +277,13 @@ export function RoleBadge({ role }: { role: UserRole }) {
 
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${styles}`}>
-      {roleLabels[role]}
+      {t(`role${role}`)}
     </span>
   );
 }
 
 export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -311,7 +318,7 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to create user.");
+      setError(data.error ?? t("userCreateError"));
       return;
     }
 
@@ -323,7 +330,7 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="firstName">First name</Label>
+          <Label htmlFor="firstName">{t("firstName")}</Label>
           <Input
             id="firstName"
             value={firstName}
@@ -333,7 +340,7 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
           />
         </div>
         <div>
-          <Label htmlFor="lastName">Last name</Label>
+          <Label htmlFor="lastName">{t("lastName")}</Label>
           <Input
             id="lastName"
             value={lastName}
@@ -344,7 +351,7 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
         </div>
       </div>
       <div>
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t("email")}</Label>
         <Input
           id="email"
           type="email"
@@ -355,7 +362,7 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
         />
       </div>
       <div>
-        <Label htmlFor="phone">Phone</Label>
+        <Label htmlFor="phone">{t("phone")}</Label>
         <Input
           id="phone"
           type="tel"
@@ -365,7 +372,7 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
         />
       </div>
       <div>
-        <Label htmlFor="dateOfBirth">Date of birth</Label>
+        <Label htmlFor="dateOfBirth">{t("dateOfBirth")}</Label>
         <Input
           id="dateOfBirth"
           type="date"
@@ -374,7 +381,7 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
         />
       </div>
       <div>
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">{t("password")}</Label>
         <Input
           id="password"
           type="password"
@@ -386,25 +393,24 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
         />
       </div>
       <div>
-        <Label htmlFor="role">Role</Label>
+        <Label htmlFor="role">{t("role")}</Label>
         <Select
           id="role"
           value={role}
           onChange={(event) => setRole(event.target.value as "USER" | "ADMIN")}
         >
-          <option value="USER">{roleLabels.USER}</option>
-          <option value="ADMIN">{roleLabels.ADMIN}</option>
+          <option value="USER">{t("roleUSER")}</option>
+          <option value="ADMIN">{t("roleADMIN")}</option>
         </Select>
         {actorRole === "ADMIN" && (
           <p className="mt-1 text-xs text-stone-500">
-            Admins can create users or appoint other admins. Owner role can only be
-            transferred.
+            {t("adminCreateHelp")}
           </p>
         )}
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading}>
-        {loading ? "Creating..." : "Create user"}
+        {loading ? t("creating") : t("createUser")}
       </Button>
     </form>
   );

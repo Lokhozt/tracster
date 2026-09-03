@@ -1,10 +1,11 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EditIconLink } from "@/components/EditIconLink";
 import { Card, Input, Label } from "@/components/ui";
-import { formatDateTime } from "@/lib/datetime";
 import { matchesSearch } from "@/lib/search";
 import type { SerializedRepresentation } from "@/lib/representations";
 
@@ -25,6 +26,12 @@ function matchesRepresentationSearch(item: RepresentationListItem, query: string
 }
 
 export function RepresentationsList({ items }: { items: RepresentationListItem[] }) {
+  const t = useTranslations("Components");
+  const locale = useLocale();
+  const dateFormatter = new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
   const [search, setSearch] = useState("");
 
   const filteredItems = useMemo(() => {
@@ -35,13 +42,13 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
     <div className="space-y-4">
       <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
         <div>
-          <Label htmlFor="representation-search">Search</Label>
+          <Label htmlFor="representation-search">{t("search")}</Label>
           <Input
             id="representation-search"
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Title, location, or choreography…"
+            placeholder={t("representationSearchPlaceholder")}
             autoComplete="off"
           />
         </div>
@@ -52,7 +59,7 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
 
       {filteredItems.length === 0 ? (
         <Card>
-          <p className="text-stone-600">No representations match your search.</p>
+          <p className="text-stone-600">{t("noMatchingRepresentations")}</p>
         </Card>
       ) : (
         <div className="grid gap-4">
@@ -61,20 +68,20 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium uppercase tracking-wide text-amber-800">
-                    Representation
+                    {t("representation")}
                   </p>
                   <Link
                     href={`/events/${representation.id}`}
                     className="hover:underline"
                   >
                     <h2 className="mt-1 text-lg font-semibold">
-                      {representation.title ?? "Representation"}
+                      {representation.title ?? t("representation")}
                     </h2>
                   </Link>
                   <p className="mt-1 text-sm text-stone-600">
-                    {formatDateTime(new Date(representation.startsAt))}
+                    {dateFormatter.format(new Date(representation.startsAt))}
                     {representation.endsAt &&
-                      ` – ${formatDateTime(new Date(representation.endsAt))}`}
+                      ` – ${dateFormatter.format(new Date(representation.endsAt))}`}
                   </p>
                   {representation.location && (
                     <p className="mt-1 text-sm text-stone-500">{representation.location}</p>
@@ -83,17 +90,17 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
                 {canEdit && (
                   <EditIconLink
                     href={`/events/${representation.id}`}
-                    label="Edit representation"
+                    label={t("editRepresentation")}
                   />
                 )}
               </div>
 
               <div className="mt-4 border-t border-stone-100 pt-4">
                 <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
-                  Choreographies
+                  {t("choreographies")}
                 </p>
                 {representation.choreographies.length === 0 ? (
-                  <p className="mt-2 text-sm text-stone-500">No choreographies linked</p>
+                  <p className="mt-2 text-sm text-stone-500">{t("noLinkedChoreographies")}</p>
                 ) : (
                   <ul className="mt-2 flex flex-wrap gap-2">
                     {representation.choreographies.map((choreography) => (

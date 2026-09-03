@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Label, Select } from "@/components/ui";
@@ -7,6 +9,7 @@ import { HOURS_24 } from "@/lib/datetime";
 import type { SiteSettingsRecord } from "@/lib/site-settings";
 
 export function SiteSettingsForm({ settings }: { settings: SiteSettingsRecord }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [allowUserCreateChoreographies, setAllowUserCreateChoreographies] = useState(
     settings.allowUserCreateChoreographies,
@@ -38,7 +41,7 @@ export function SiteSettingsForm({ settings }: { settings: SiteSettingsRecord })
     setSaving(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to save settings.");
+      setError(data.error ?? t("settingsSaveError"));
       return;
     }
 
@@ -48,7 +51,7 @@ export function SiteSettingsForm({ settings }: { settings: SiteSettingsRecord })
 
   return (
     <Card className="max-w-xl">
-      <h2 className="mb-4 text-lg font-semibold">Site settings</h2>
+      <h2 className="mb-4 text-lg font-semibold">{t("siteSettings")}</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
           <input
@@ -58,9 +61,9 @@ export function SiteSettingsForm({ settings }: { settings: SiteSettingsRecord })
             className="mt-0.5 rounded border-stone-300"
           />
           <span>
-            <span className="font-medium">Allow users to create choreographies</span>
+            <span className="font-medium">{t("allowCreateChoreographies")}</span>
             <span className="mt-0.5 block text-stone-500">
-              When off, only admins and the owner can create choreographies.
+              {t("createChoreographiesHelp")}
             </span>
           </span>
         </label>
@@ -72,14 +75,14 @@ export function SiteSettingsForm({ settings }: { settings: SiteSettingsRecord })
             className="mt-0.5 rounded border-stone-300"
           />
           <span>
-            <span className="font-medium">Allow users to create events</span>
+            <span className="font-medium">{t("allowCreateEvents")}</span>
             <span className="mt-0.5 block text-stone-500">
-              When off, only admins and the owner can create events.
+              {t("createEventsHelp")}
             </span>
           </span>
         </label>
         <div>
-          <Label htmlFor="start-of-day-hour">Start of day</Label>
+          <Label htmlFor="start-of-day-hour">{t("startOfDay")}</Label>
           <Select
             id="start-of-day-hour"
             className="mt-1 block"
@@ -93,13 +96,13 @@ export function SiteSettingsForm({ settings }: { settings: SiteSettingsRecord })
             ))}
           </Select>
           <p className="mt-1 text-sm text-stone-500">
-            The unavailability calendar begins at this hour. Default is 8h.
+            {t("startDayHelp")}
           </p>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        {saved && !error && <p className="text-sm text-stone-600">Settings saved.</p>}
+        {saved && !error && <p className="text-sm text-stone-600">{t("settingsSaved")}</p>}
         <Button type="submit" disabled={saving}>
-          {saving ? "Saving..." : "Save settings"}
+          {saving ? t("saving") : t("saveSettings")}
         </Button>
       </form>
     </Card>

@@ -6,6 +6,11 @@ import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { hasGlobalAccess } from "@/lib/roles";
 import type { SerializedScheduleEvent } from "@/lib/schedule-filters";
 import { formatUserName, type UserNameFields } from "@/lib/users";
+import {
+  eventTypeLabel,
+  getServerTranslator,
+  type ServerTranslator,
+} from "@/i18n/server";
 
 export type { SerializedScheduleEvent } from "@/lib/schedule-filters";
 
@@ -28,8 +33,9 @@ function uniqueSortedNames(users: Array<{ id: string } & UserNameFields>) {
   return names.sort((a, b) => a.localeCompare(b));
 }
 
-export async function getUserScheduleEvents(userId: string) {
+export async function getUserScheduleEvents(userId: string, t?: ServerTranslator) {
   const globalAccess = await hasGlobalAccess(userId);
+  const translator = t ?? await getServerTranslator();
 
   const records = await prisma.event.findMany({
     where: globalAccess ? undefined : listedEventWhere(userId),
@@ -137,7 +143,7 @@ export async function getUserScheduleEvents(userId: string) {
       return {
         id: event.id,
         typeId: event.type.id,
-        typeName: event.type.name,
+        typeName: eventTypeLabel(translator, kind, event.type.name),
         typeKind: kind,
         title: event.title || null,
         startsAt: event.startsAt.toISOString(),

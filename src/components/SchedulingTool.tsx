@@ -1,8 +1,11 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { enUS, fr } from "date-fns/locale";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { SchedulingCandidateCalendar } from "@/components/SchedulingCandidateCalendar";
 import { Button, Card, Input, Label, Select } from "@/components/ui";
@@ -34,13 +37,7 @@ export type SchedulingLocationOption = {
   name: string;
 };
 
-const STEPS = [
-  "Choreographies",
-  "Days & locations",
-  "Constraints",
-  "Generate",
-  "Choose a solution",
-] as const;
+const STEPS = ["choreographies", "daysLocations", "constraints", "generate", "chooseSolution"] as const;
 
 const MINUTES_5 = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, "0"));
 
@@ -58,11 +55,12 @@ function defaultUnavailabilityTimes(day: string): { start: DateTimeParts; end: D
 function itemLabel(
   item: SchedulingItemDraft,
   choreographies: SchedulingChoreographyOption[],
+  fallback: string,
 ) {
   const choreography = choreographies.find((entry) => entry.id === item.choreographyId);
   const group = choreography?.groups.find((entry) => entry.id === item.groupId);
   if (!choreography) {
-    return "Choreography";
+    return fallback;
   }
   return group ? `${choreography.title} · ${group.name}` : choreography.title;
 }
@@ -74,7 +72,10 @@ export function SchedulingTool({
   choreographies: SchedulingChoreographyOption[];
   locations: SchedulingLocationOption[];
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
+  const locale = useLocale();
+  const dateLocale = locale === "fr" ? fr : enUS;
   const [step, setStep] = useState(0);
   const [items, setItems] = useState<SchedulingItemDraft[]>([]);
   const [selectedChoreographyId, setSelectedChoreographyId] = useState(choreographies[0]?.id ?? "");
@@ -97,7 +98,7 @@ export function SchedulingTool({
 
   function addItem() {
     if (!selectedChoreographyId) {
-      setError("Select a choreography.");
+      setError(t("selectChoreography"));
       return;
     }
     setError(null);
@@ -145,13 +146,13 @@ export function SchedulingTool({
 
   function validateThrough(targetStep: number): string | null {
     if (targetStep >= 1 && items.length === 0) {
-      return "Add at least one choreography.";
+      return t("addOneChoreography");
     }
     if (targetStep >= 2 && days.length === 0) {
-      return "Select at least one day.";
+      return t("selectOneDay");
     }
     if (targetStep >= 2 && locationIds.length === 0) {
-      return "Select at least one location.";
+      return t("selectOneLocation");
     }
     return null;
   }
@@ -186,7 +187,7 @@ export function SchedulingTool({
     setGenerating(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Could not generate a schedule.");
+      setError(data.error ?? t("scheduleGenerateError"));
       return;
     }
 
@@ -199,7 +200,7 @@ export function SchedulingTool({
   async function applySelected() {
     const candidate = candidates.find((entry) => entry.id === selectedCandidateId);
     if (!candidate) {
-      setError("Select a candidate first.");
+      setError(t("selectCandidate"));
       return;
     }
 
@@ -223,7 +224,7 @@ export function SchedulingTool({
     setApplying(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Could not create the rehearsals.");
+      setError(data.error ?? t("rehearsalsCreateError"));
       return;
     }
 
@@ -246,7 +247,7 @@ export function SchedulingTool({
                   : "bg-stone-100 text-stone-600 hover:bg-stone-200",
               )}
             >
-              {index + 1}. {label}
+              {index + 1}. {t(`step${label}`)}
             </button>
           </li>
         ))}
@@ -259,11 +260,11 @@ export function SchedulingTool({
       {step === 0 && (
         <Card className="space-y-4">
           <p className="text-sm text-stone-600">
-            Choose choreographies or choreography groups. The same piece can be added more than once.
+            {t("chooseChoreographiesHelp")}
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label htmlFor="scheduling-choreography">Choreography</Label>
+              <Label htmlFor="scheduling-choreography">{t("choreography")}</Label>
               <Select
                 id="scheduling-choreography"
                 className="w-full"
@@ -273,7 +274,7 @@ export function SchedulingTool({
                   setSelectedGroupId("");
                 }}
               >
-                {choreographies.length === 0 && <option value="">No choreographies</option>}
+                {choreographies.length === 0 && <option value="">{t("noChoreographies")}</option>}
                 {choreographies.map((choreography) => (
                   <option key={choreography.id} value={choreography.id}>
                     {choreography.title}
@@ -282,7 +283,7 @@ export function SchedulingTool({
               </Select>
             </div>
             <div>
-              <Label htmlFor="scheduling-group">Group</Label>
+              <Label htmlFor="scheduling-group">{t("group")}</Label>
               <Select
                 id="scheduling-group"
                 className="w-full"
@@ -290,7 +291,7 @@ export function SchedulingTool({
                 onChange={(event) => setSelectedGroupId(event.target.value)}
                 disabled={!selectedChoreography}
               >
-                <option value="">Whole choreography</option>
+                <option value="">{t("wholeChoreography")}</option>
                 {selectedChoreography?.groups.map((group) => (
                   <option key={group.id} value={group.id}>
                     {group.name}
@@ -299,7 +300,7 @@ export function SchedulingTool({
               </Select>
             </div>
             <div>
-              <Label htmlFor="scheduling-duration">Duration (minutes)</Label>
+              <Label htmlFor="scheduling-duration">{t("durationMinutes")}</Label>
               <Input
                 id="scheduling-duration"
                 type="number"
@@ -311,11 +312,11 @@ export function SchedulingTool({
             </div>
           </div>
           <Button type="button" onClick={addItem} disabled={!selectedChoreographyId}>
-            Add to list
+            {t("addToList")}
           </Button>
 
           {items.length === 0 ? (
-            <p className="text-sm text-stone-500">No rehearsals in the list yet.</p>
+            <p className="text-sm text-stone-500">{t("noRehearsalsList")}</p>
           ) : (
             <ul className="space-y-2">
               {items.map((item, index) => (
@@ -324,11 +325,11 @@ export function SchedulingTool({
                   className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-stone-200 px-3 py-2"
                 >
                   <span className="text-sm font-medium">
-                    {index + 1}. {itemLabel(item, choreographies)}
+                    {index + 1}. {itemLabel(item, choreographies, t("choreography"))}
                   </span>
                   <div className="flex items-center gap-2">
                     <Label className="mb-0 text-xs" htmlFor={`duration-${item.id}`}>
-                      Minutes
+                      {t("minutes")}
                     </Label>
                     <Input
                       id={`duration-${item.id}`}
@@ -342,7 +343,7 @@ export function SchedulingTool({
                       }
                     />
                     <Button type="button" variant="ghost" onClick={() => setItems(items.filter((entry) => entry.id !== item.id))}>
-                      Remove
+                      {t("remove")}
                     </Button>
                   </div>
                 </li>
@@ -355,15 +356,15 @@ export function SchedulingTool({
       {step === 1 && (
         <Card className="space-y-5">
           <div>
-            <p className="mb-2 text-sm font-medium text-stone-800">Days</p>
-            <p className="mb-3 text-sm text-stone-600">Defaults to the next weekend.</p>
+            <p className="mb-2 text-sm font-medium text-stone-800">{t("days")}</p>
+            <p className="mb-3 text-sm text-stone-600">{t("nextWeekendDefault")}</p>
             <div className="flex flex-wrap gap-2">
               {days.map((day) => (
                 <span
                   key={day}
                   className="inline-flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1 text-sm"
                 >
-                  {format(parseDayKey(day), "EEEE d MMM")}
+                  {format(parseDayKey(day), "EEEE d MMM", {locale: dateLocale})}
                   <button
                     type="button"
                     className="text-stone-500 hover:text-stone-800"
@@ -373,7 +374,7 @@ export function SchedulingTool({
                         current.filter((entry) => entry.day !== day),
                       );
                     }}
-                    aria-label={`Remove ${day}`}
+                    aria-label={t("removeDay", {day: format(parseDayKey(day), "PPP", {locale: dateLocale})})}
                   >
                     ×
                   </button>
@@ -382,7 +383,7 @@ export function SchedulingTool({
             </div>
             <div className="mt-3 flex flex-wrap items-end gap-2">
               <div>
-                <Label htmlFor="add-day">Add a day</Label>
+                <Label htmlFor="add-day">{t("addDay")}</Label>
                 <Input
                   id="add-day"
                   type="date"
@@ -399,15 +400,15 @@ export function SchedulingTool({
                   }
                 }}
               >
-                Add day
+                {t("addDay")}
               </Button>
             </div>
           </div>
 
           <div>
-            <p className="mb-2 text-sm font-medium text-stone-800">Locations</p>
+            <p className="mb-2 text-sm font-medium text-stone-800">{t("locations")}</p>
             {locations.length === 0 ? (
-              <p className="text-sm text-stone-500">Add listed locations in Settings first.</p>
+              <p className="text-sm text-stone-500">{t("addLocationsFirst")}</p>
             ) : (
               <div className="space-y-2">
                 {locations.map((location) => (
@@ -426,7 +427,7 @@ export function SchedulingTool({
           </div>
 
           <div>
-            <p className="mb-2 text-sm font-medium text-stone-800">Location unavailability</p>
+            <p className="mb-2 text-sm font-medium text-stone-800">{t("locationUnavailability")}</p>
             <p className="mb-3 text-sm text-stone-600">
               Locations are available from 09:00 to 20:00 on the selected days. Add times when a
               location cannot be used.
@@ -440,7 +441,7 @@ export function SchedulingTool({
                 return (
                   <LocationUnavailabilityCard
                     key={locationId}
-                    name={location?.name ?? "Location"}
+                    name={location?.name ?? t("location")}
                     locationId={locationId}
                     days={days}
                     entries={entries}
@@ -457,7 +458,7 @@ export function SchedulingTool({
           </div>
 
           <div className="max-w-xs">
-            <Label htmlFor="rest-minutes">Rest between choreographies (minutes)</Label>
+            <Label htmlFor="rest-minutes">{t("restMinutes")}</Label>
             <Input
               id="rest-minutes"
               type="number"
@@ -472,13 +473,13 @@ export function SchedulingTool({
       {step === 2 && (
         <div className="space-y-4">
           <p className="text-sm text-stone-600">
-            Optionally limit each rehearsal to certain locations or datetime windows.
+            {t("constraintHelp")}
           </p>
           {items.map((item) => (
             <ConstraintCard
               key={item.id}
               item={item}
-              label={itemLabel(item, choreographies)}
+              label={itemLabel(item, choreographies, t("choreography"))}
               locations={locations.filter((location) => locationIds.includes(location.id))}
               days={days}
               onChange={(patch) => updateItem(item.id, patch)}
@@ -494,7 +495,7 @@ export function SchedulingTool({
             searches with A* using availability, rest, and the listed scoring weights.
           </p>
           <Button type="button" onClick={generate} disabled={generating}>
-            {generating ? "Generating…" : "Generate 3 candidates"}
+            {generating ? t("generating") : t("generateCandidates")}
           </Button>
         </Card>
       )}
@@ -521,14 +522,14 @@ export function SchedulingTool({
                     variant={selected ? "primary" : "secondary"}
                     onClick={() => setSelectedCandidateId(candidate.id)}
                   >
-                    {selected ? "Selected" : "Select"}
+                    {selected ? t("selected") : t("select")}
                   </Button>
                 </div>
                 <SchedulingCandidateCalendar placements={candidate.placements} />
                 <div>
-                  <p className="mb-1 text-sm font-medium">Participants not available</p>
+                  <p className="mb-1 text-sm font-medium">{t("participantsNotAvailable")}</p>
                   {unavailable.length === 0 ? (
-                    <p className="text-sm text-stone-500">None for this candidate.</p>
+                    <p className="text-sm text-stone-500">{t("noneCandidate")}</p>
                   ) : (
                     <ul className="list-disc space-y-1 pl-5 text-sm text-stone-700">
                       {unavailable.map((caveat) => (
@@ -541,7 +542,7 @@ export function SchedulingTool({
             );
           })}
           <Button type="button" onClick={applySelected} disabled={applying || !selectedCandidateId}>
-            {applying ? "Creating rehearsals…" : "Create rehearsals"}
+            {applying ? t("creatingRehearsals") : t("createRehearsals")}
           </Button>
         </div>
       )}
@@ -549,12 +550,12 @@ export function SchedulingTool({
       <div className="flex flex-wrap gap-2">
         {step > 0 && (
           <Button type="button" variant="secondary" onClick={() => goTo(step - 1)} disabled={generating || applying}>
-            Back
+            {t("back")}
           </Button>
         )}
         {step < 3 && (
           <Button type="button" onClick={() => goTo(step + 1)}>
-            Continue
+            {t("continue")}
           </Button>
         )}
       </div>
@@ -589,6 +590,9 @@ function LocationUnavailabilityCard({
   onAdd: (entry: LocationUnavailability) => void;
   onRemove: (id: string) => void;
 }) {
+  const t = useTranslations("Components");
+  const locale = useLocale();
+  const dateLocale = locale === "fr" ? fr : enUS;
   const [day, setDay] = useState(days[0] ?? "");
   const [times, setTimes] = useState(() => defaultUnavailabilityTimes(days[0] ?? todayDateInputValue()));
 
@@ -614,17 +618,17 @@ function LocationUnavailabilityCard({
     <div className="rounded-lg border border-stone-200 p-3">
       <p className="mb-2 text-sm font-semibold">{name}</p>
       {entries.length === 0 ? (
-        <p className="mb-3 text-sm text-stone-500">No unavailability added.</p>
+        <p className="mb-3 text-sm text-stone-500">{t("noUnavailability")}</p>
       ) : (
         <ul className="mb-3 space-y-1 text-sm text-stone-700">
           {entries.map((entry) => (
             <li key={entry.id} className="flex items-center justify-between gap-2">
               <span>
-                {format(parseDayKey(entry.day), "EEE d MMM")}{" "}
+                {format(parseDayKey(entry.day), "EEE d MMM", {locale: dateLocale})}{" "}
                 {format(new Date(entry.startsAt), "HH:mm")}→{format(new Date(entry.endsAt), "HH:mm")}
               </span>
               <Button type="button" variant="ghost" onClick={() => onRemove(entry.id)}>
-                Remove
+                {t("remove")}
               </Button>
             </li>
           ))}
@@ -633,7 +637,7 @@ function LocationUnavailabilityCard({
       {days.length > 0 && (
         <div className="grid gap-2 sm:grid-cols-[8rem_1fr_1fr_auto] sm:items-end">
           <div>
-            <Label htmlFor={`unavail-day-${locationId}`}>Day</Label>
+            <Label htmlFor={`unavail-day-${locationId}`}>{t("day")}</Label>
             <Select
               id={`unavail-day-${locationId}`}
               className="w-full"
@@ -642,23 +646,23 @@ function LocationUnavailabilityCard({
             >
               {days.map((entry) => (
                 <option key={entry} value={entry}>
-                  {format(parseDayKey(entry), "EEE d MMM")}
+                  {format(parseDayKey(entry), "EEE d MMM", {locale: dateLocale})}
                 </option>
               ))}
             </Select>
           </div>
           <TimeSelect
-            label="Unavailable from"
+            label={t("unavailableFrom")}
             value={times.start}
             onChange={(start) => setTimes((current) => ({ ...current, start }))}
           />
           <TimeSelect
-            label="Unavailable until"
+            label={t("unavailableUntil")}
             value={times.end}
             onChange={(end) => setTimes((current) => ({ ...current, end }))}
           />
           <Button type="button" variant="secondary" onClick={addEntry}>
-            Add
+            {t("add")}
           </Button>
         </div>
       )}
@@ -675,6 +679,7 @@ function TimeSelect({
   value: DateTimeParts;
   onChange: (value: DateTimeParts) => void;
 }) {
+  const t = useTranslations("Components");
   return (
     <div>
       <Label className="text-xs">{label}</Label>
@@ -683,7 +688,7 @@ function TimeSelect({
           value={value.hour}
           onChange={(event) => onChange({ ...value, hour: event.target.value })}
           className="min-h-11 w-20"
-          aria-label={`${label} hour`}
+          aria-label={t("hourInput", {label})}
         >
           {HOURS_24.map((hour) => (
             <option key={hour} value={hour}>
@@ -696,7 +701,7 @@ function TimeSelect({
           value={value.minute}
           onChange={(event) => onChange({ ...value, minute: event.target.value })}
           className="min-h-11 w-20"
-          aria-label={`${label} minute`}
+          aria-label={t("minuteInput", {label})}
         >
           {MINUTES_5.map((minute) => (
             <option key={minute} value={minute}>
@@ -722,6 +727,9 @@ function ConstraintCard({
   days: string[];
   onChange: (patch: Partial<SchedulingItemDraft>) => void;
 }) {
+  const t = useTranslations("Components");
+  const locale = useLocale();
+  const dateLocale = locale === "fr" ? fr : enUS;
   const [windowStart, setWindowStart] = useState<DateTimeParts>(() => ({
     date: days[0] ?? todayDateInputValue(),
     hour: "09",
@@ -760,8 +768,8 @@ function ConstraintCard({
     <Card className="space-y-4">
       <h2 className="font-semibold">{label}</h2>
       <div>
-        <p className="mb-2 text-sm font-medium">Limit to locations</p>
-        <p className="mb-2 text-xs text-stone-500">Leave all unchecked to allow every selected location.</p>
+        <p className="mb-2 text-sm font-medium">{t("limitLocations")}</p>
+        <p className="mb-2 text-xs text-stone-500">{t("limitLocationsHelp")}</p>
         <div className="flex flex-wrap gap-3">
           {locations.map((location) => (
             <label key={location.id} className="flex cursor-pointer items-center gap-2 text-sm">
@@ -777,20 +785,25 @@ function ConstraintCard({
         </div>
       </div>
       <div>
-        <p className="mb-2 text-sm font-medium">Limit to datetime windows</p>
+        <p className="mb-2 text-sm font-medium">{t("limitWindows")}</p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <DateTime24Input name={`${item.id}-from`} label="From" value={windowStart} onChange={setWindowStart} />
-          <DateTime24Input name={`${item.id}-to`} label="To" value={windowEnd} onChange={setWindowEnd} />
+          <DateTime24Input name={`${item.id}-from`} label={t("from")} value={windowStart} onChange={setWindowStart} />
+          <DateTime24Input
+            name={`${item.id}-to`}
+            label={t("until")}
+            value={windowEnd}
+            onChange={setWindowEnd}
+          />
         </div>
         <Button type="button" variant="secondary" className="mt-3" onClick={addWindow}>
-          Add window
+          {t("addWindow")}
         </Button>
         {item.allowedWindows.length > 0 && (
           <ul className="mt-3 space-y-1 text-sm text-stone-700">
             {item.allowedWindows.map((window, index) => (
               <li key={`${window.startsAt}-${window.endsAt}`} className="flex items-center justify-between gap-2">
                 <span>
-                  {format(new Date(window.startsAt), "EEE d MMM HH:mm")} → {format(new Date(window.endsAt), "HH:mm")}
+                  {format(new Date(window.startsAt), "EEE d MMM HH:mm", {locale: dateLocale})} → {format(new Date(window.endsAt), "HH:mm", {locale: dateLocale})}
                 </span>
                 <Button
                   type="button"
@@ -801,7 +814,7 @@ function ConstraintCard({
                     })
                   }
                 >
-                  Remove
+                  {t("remove")}
                 </Button>
               </li>
             ))}

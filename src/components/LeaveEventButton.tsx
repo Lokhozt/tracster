@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -33,12 +35,13 @@ export function LeaveEventButton({
   eventTitle: string;
   className?: string;
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleLeave() {
-    if (!confirm(`Leave “${eventTitle}”?`)) {
+    if (!confirm(t("leaveConfirm", {title: eventTitle}))) {
       return;
     }
 
@@ -50,7 +53,7 @@ export function LeaveEventButton({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to leave event.");
+      setError(data.error ?? t("leaveError"));
       return;
     }
 
@@ -64,8 +67,8 @@ export function LeaveEventButton({
         onClick={() => void handleLeave()}
         disabled={loading}
         className="rounded-lg p-2 text-stone-500 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-        aria-label="Leave event"
-        title="Leave event"
+        aria-label={t("leaveEvent")}
+        title={t("leaveEvent")}
       >
         <ExitIcon />
       </button>

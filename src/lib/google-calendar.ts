@@ -2,6 +2,13 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypt
 import { prisma } from "@/lib/db";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { defaultEventTitle } from "@/lib/event-type-helpers";
+import {
+  createServerTranslator,
+  eventTypeLabel,
+  getServerTranslator,
+  type ServerTranslator,
+} from "@/i18n/server";
+import { getDefaultLanguage, languageLocales } from "@/i18n/config";
 
 export type GoogleConnectionKind = "ASSOCIATION" | "USER";
 
@@ -333,15 +340,20 @@ function rehearsalAudience(event: SyncEvent) {
   return [...ids];
 }
 
-function googleEventPayload(event: SyncEvent) {
+function googleEventPayload(event: SyncEvent, t: ServerTranslator) {
   const isRehearsal = event.type.kind === "REHEARSAL";
   const choreography = event.choreography?.title;
   const group = event.group?.name;
   const summary =
     event.title.trim() ||
     (isRehearsal
-      ? ["Rehearsal", choreography, group].filter(Boolean).join(" · ")
-      : defaultEventTitle(event.type, event.title));
+      ? [eventTypeLabel(t, "REHEARSAL", event.type.name), choreography, group]
+          .filter(Boolean)
+          .join(" · ")
+      : defaultEventTitle(
+          { ...event.type, name: eventTypeLabel(t, event.type.kind, event.type.name) },
+          event.title,
+        ));
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
   const details = isRehearsal ? event.notes : event.description;
   const description = [details, appUrl ? `${appUrl}/events/${event.id}` : null]
@@ -378,6 +390,8 @@ async function upsertMapping(
   event: SyncEvent,
   connection: {
     id: string;
+    kind: GoogleConnectionKind;
+    user?: { displayLanguage: "ENGLISH" | "FRENCH" | null } | null;
     calendarId: string;
     encryptedRefreshToken: string;
   },
@@ -392,7 +406,10 @@ async function upsertMapping(
   });
   const token = await accessToken(connection.encryptedRefreshToken);
   const baseUrl = `${GOOGLE_API_URL}/calendar/v3/calendars/${encodeURIComponent(connection.calendarId)}/events`;
-  const body = JSON.stringify(googleEventPayload(event));
+  const t = connection.user?.displayLanguage
+    ? await getServerTranslator(connection.user.displayLanguage)
+    : createServerTranslator(languageLocales[getDefaultLanguage()]);
+  const body = JSON.stringify(googleEventPayload(event, t));
 
   if (mapping) {
     try {
@@ -454,6 +471,7 @@ export async function syncGoogleEvent(eventId: string) {
   if (event.type.kind !== "REHEARSAL") {
     const connection = await prisma.googleCalendarConnection.findUnique({
       where: { id: ASSOCIATION_CONNECTION_ID },
+      include: { user: { select: { displayLanguage: true } } },
     });
     if (connection) {
       try {
@@ -475,6 +493,7 @@ export async function syncGoogleEvent(eventId: string) {
   const userIds = rehearsalAudience(event);
   const desiredConnections = await prisma.googleCalendarConnection.findMany({
     where: { kind: "USER", userId: { in: userIds } },
+    include: { user: { select: { displayLanguage: true } } },
   });
   const desiredIds = new Set(desiredConnections.map(({ id }) => id));
   const staleMappings = await prisma.googleCalendarEvent.findMany({

@@ -7,6 +7,7 @@ import { canEditEvent, canViewEvent, validateEventTypeFields } from "@/lib/event
 import { getEventType, eventKindAllowsChoreographyLinks, isGenericEventKind } from "@/lib/event-types";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
+import { getServerTranslator, localizeEventType } from "@/i18n/server";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -42,7 +43,12 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     return notFound("Event");
   }
 
-  return Response.json({ event });
+  return Response.json({
+    event: {
+      ...event,
+      type: localizeEventType(event.type, await getServerTranslator(user.displayLanguage)),
+    },
+  });
 }
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
@@ -135,7 +141,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   });
   await syncGoogleEventBestEffort(id);
 
-  return Response.json({ event: updated });
+  return Response.json({
+    event: {
+      ...updated,
+      type: localizeEventType(updated.type, await getServerTranslator(user.displayLanguage)),
+    },
+  });
 }
 
 export async function DELETE(_request: NextRequest, context: RouteContext) {

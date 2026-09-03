@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { CreateUserForm } from "@/components/UserForms";
 import { Card } from "@/components/ui";
@@ -7,7 +8,10 @@ import { getCurrentUser } from "@/lib/auth";
 import { canManageUsers } from "@/lib/roles";
 
 export default async function NewUserPage() {
-  const user = await getCurrentUser();
+  const [user, t] = await Promise.all([
+    getCurrentUser(),
+    getTranslations("Pages.NewUser"),
+  ]);
   if (!user) {
     redirect("/login");
   }
@@ -17,10 +21,10 @@ export default async function NewUserPage() {
   }
 
   return (
-    <AppShell title="New user">
+    <AppShell title={t("title")}>
       <div className="mb-6">
         <Link href="/settings" className="text-sm text-stone-600 hover:text-stone-900">
-          ← Back to settings
+          {t("backToSettings")}
         </Link>
       </div>
 

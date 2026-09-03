@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { EventTypesManager } from "@/components/EventTypesManager";
 import { LocationsManager } from "@/components/LocationsManager";
@@ -23,7 +24,10 @@ type PageProps = {
 };
 
 export default async function SettingsPage({ searchParams }: PageProps) {
-  const user = await getCurrentUser();
+  const [user, t] = await Promise.all([
+    getCurrentUser(),
+    getTranslations("Pages.Settings"),
+  ]);
   if (!user) {
     redirect("/login");
   }
@@ -54,9 +58,9 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   ]);
 
   return (
-    <AppShell title="Settings">
+    <AppShell title={t("title")}>
       <p className="mb-6 text-stone-600">
-        Configure association-wide options, listed locations, and members.
+        {t("intro")}
       </p>
       <div className="space-y-8">
         <SiteSettingsForm settings={settings} />

@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import Link from "next/link";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import {
@@ -17,6 +19,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
+import { enUS, fr } from "date-fns/locale";
 import { Card } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/datetime";
@@ -79,7 +82,11 @@ function eventCoveredDays(event: SerializedScheduleEvent): Date[] {
   return eachDayOfInterval({ start: first, end: last });
 }
 
-function eventTimeLabel(event: SerializedScheduleEvent, day: Date): string {
+function eventTimeLabel(
+  event: SerializedScheduleEvent,
+  day: Date,
+  allDayLabel: string,
+): string {
   const start = new Date(event.startsAt);
   const end = event.endsAt ? new Date(event.endsAt) : null;
   const firstDay = startOfDay(start);
@@ -100,7 +107,7 @@ function eventTimeLabel(event: SerializedScheduleEvent, day: Date): string {
     return `→ ${formatTime(end)}`;
   }
 
-  return "All day";
+  return allDayLabel;
 }
 
 function eventCellTitle(event: SerializedScheduleEvent): string {
@@ -148,6 +155,7 @@ function DayCell({
   tall?: boolean;
   wrapLabels?: boolean;
 }) {
+  const t = useTranslations("Components");
   return (
     <div
       className={cn(
@@ -177,7 +185,7 @@ function DayCell({
             )}
             title={eventCellTitle(event)}
           >
-            <span className="font-medium">{eventTimeLabel(event, day)}</span>{" "}
+            <span className="font-medium">{eventTimeLabel(event, day, t("allDay"))}</span>{" "}
             {eventCellLabel(event)}
           </Link>
         ))}
@@ -191,7 +199,10 @@ export function RehearsalCalendar({
 }: {
   events: SerializedScheduleEvent[];
 }) {
+  const t = useTranslations("Components");
   const isSmallScreen = useIsSmallScreen();
+  const locale = useLocale();
+  const dateLocale = locale === "fr" ? fr : enUS;
   const [largeScreenView, setLargeScreenView] = useState<CalendarView>("month");
   const [smallScreenView, setSmallScreenView] = useState<CalendarView>("threeDay");
   const [focusDate, setFocusDate] = useState(() => new Date());
@@ -200,12 +211,12 @@ export function RehearsalCalendar({
   const setView = isSmallScreen ? setSmallScreenView : setLargeScreenView;
   const viewOptions: Array<{ value: CalendarView; label: string }> = isSmallScreen
     ? [
-        { value: "week", label: "Week" },
-        { value: "threeDay", label: "3 days" },
+        { value: "week", label: t("week") },
+        { value: "threeDay", label: t("threeDays") },
       ]
     : [
-        { value: "month", label: "Month" },
-        { value: "week", label: "Week" },
+        { value: "month", label: t("month") },
+        { value: "week", label: t("week") },
       ];
 
   const eventsByDay = useMemo(() => {
@@ -251,15 +262,15 @@ export function RehearsalCalendar({
 
   const periodLabel = useMemo(() => {
     if (view === "month") {
-      return format(startOfMonth(focusDate), "MMMM yyyy");
+      return format(startOfMonth(focusDate), "MMMM yyyy", {locale: dateLocale});
     }
 
     const first = calendarDays[0];
     const last = calendarDays[calendarDays.length - 1];
-    return `${format(first, "d MMM")} – ${format(last, "d MMM yyyy")}`;
-  }, [calendarDays, focusDate, view]);
+    return `${format(first, "d MMM", {locale: dateLocale})} – ${format(last, "d MMM yyyy", {locale: dateLocale})}`;
+  }, [calendarDays, dateLocale, focusDate, view]);
 
-  const periodName = view === "threeDay" ? "3 days" : view === "week" ? "week" : "month";
+  const periodName = view === "threeDay" ? t("threeDays") : view === "week" ? t("week") : t("month");
 
   function shiftFocus(direction: 1 | -1) {
     setFocusDate((date) => {
@@ -283,27 +294,27 @@ export function RehearsalCalendar({
     <Card className="mb-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">Calendar</h2>
+          <h2 className="text-lg font-semibold">{t("calendar")}</h2>
           <div className="mt-1 flex flex-wrap gap-3 text-xs text-stone-500">
             <span className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded bg-stone-200" />
-              Rehearsal
+              {t("rehearsal")}
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded bg-amber-200" />
-              Representation
+              {t("representation")}
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded bg-sky-200" />
-              Event
+              {t("event")}
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded bg-violet-200" />
-              Competition
+              {t("competition")}
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded bg-rose-200" />
-              Festival
+              {t("festival")}
             </span>
           </div>
         </div>
@@ -333,7 +344,7 @@ export function RehearsalCalendar({
               onClick={goToToday}
               className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
             >
-              Today
+              {t("today")}
             </button>
           </div>
 
@@ -342,7 +353,7 @@ export function RehearsalCalendar({
               type="button"
               onClick={() => shiftFocus(-1)}
               className="rounded-lg border border-stone-300 px-3 py-2.5 text-sm hover:bg-stone-100 sm:py-1.5"
-              aria-label={`Previous ${periodName}`}
+              aria-label={t("previousPeriod", {period: periodName})}
             >
               ←
             </button>
@@ -353,7 +364,7 @@ export function RehearsalCalendar({
               type="button"
               onClick={() => shiftFocus(1)}
               className="rounded-lg border border-stone-300 px-3 py-2.5 text-sm hover:bg-stone-100 sm:py-1.5"
-              aria-label={`Next ${periodName}`}
+              aria-label={t("nextPeriod", {period: periodName})}
             >
               →
             </button>
@@ -377,7 +388,7 @@ export function RehearsalCalendar({
                     isToday(day) && "text-stone-900",
                   )}
                 >
-                  {format(day, "EEE")}
+                  {format(day, "EEE", {locale: dateLocale})}
                 </div>
               ))
             : weekdays.map((day) => (

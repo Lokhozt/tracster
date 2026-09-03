@@ -1,3 +1,4 @@
+type MessageTranslator = (key: string, values?: Record<string, string | number>) => string;
 export type EventKind =
   | "EVENT"
   | "REHEARSAL"
@@ -42,10 +43,16 @@ export type SerializedEventType = {
   sortOrder: number;
 };
 
-export function serializeEventType(type: SerializedEventType): SerializedEventType {
+export function serializeEventType(
+  type: SerializedEventType,
+  t?: MessageTranslator,
+): SerializedEventType {
   return {
     id: type.id,
-    name: type.name,
+    name:
+      t && type.immutable && type.kind
+        ? t(`eventTypes.${type.kind}`)
+        : type.name,
     kind: type.kind,
     immutable: type.immutable,
     sortOrder: type.sortOrder,

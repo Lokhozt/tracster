@@ -12,6 +12,19 @@ import type {
   SchedulingPerson,
   SchedulingProblem,
 } from "@/lib/scheduling/types";
+import type { ServerTranslator } from "@/i18n/server";
+
+const englishCaveatTranslator: ServerTranslator = (key, values = {}) => {
+  const messages: Record<string, string> = {
+    "caveats.constraint": "{title}{group} breaks a location or time constraint.",
+    "caveats.choreographerUnavailable":
+      "{name} (choreographer) is unavailable for {title}.",
+    "caveats.participantUnavailable": "{name} is unavailable for {title}{group}.",
+  };
+  return (messages[key] ?? key).replace(/\{(\w+)\}/g, (match, name: string) =>
+    Object.prototype.hasOwnProperty.call(values, name) ? String(values[name]) : match,
+  );
+};
 
 export type InternalPlacement = {
   itemIndex: number;
@@ -113,6 +126,7 @@ function hasOverlappingSessionsAtDifferentLocations(sessions: InternalPlacement[
 export function scoreSchedule(
   placements: InternalPlacement[],
   problem: SchedulingProblem,
+  t: ServerTranslator = englishCaveatTranslator,
 ): { score: number; caveats: ScheduleCaveat[] } {
   let score = 0;
   const caveats: ScheduleCaveat[] = [];
@@ -126,7 +140,10 @@ export function scoreSchedule(
       score -= CONSTRAINT_PENALTY;
       caveats.push({
         kind: "constraint",
-        message: `${item.choreographyTitle}${item.groupName ? ` (${item.groupName})` : ""} breaks a location or time constraint.`,
+        message: t("caveats.constraint", {
+          title: item.choreographyTitle,
+          group: item.groupName ? ` (${item.groupName})` : "",
+        }),
       });
     }
 
@@ -152,7 +169,10 @@ export function scoreSchedule(
         score -= CHOREOGRAPHER_UNAVAILABLE;
         caveats.push({
           kind: "choreographer_unavailable",
-          message: `${choreographer.name} (choreographer) is unavailable for ${item.choreographyTitle}.`,
+          message: t("caveats.choreographerUnavailable", {
+            name: choreographer.name,
+            title: item.choreographyTitle,
+          }),
           userId: choreographer.id,
           userName: choreographer.name,
         });
@@ -164,7 +184,11 @@ export function scoreSchedule(
         score -= PARTICIPANT_UNAVAILABLE;
         caveats.push({
           kind: "participant_unavailable",
-          message: `${participant.name} is unavailable for ${item.choreographyTitle}${item.groupName ? ` (${item.groupName})` : ""}.`,
+          message: t("caveats.participantUnavailable", {
+            name: participant.name,
+            title: item.choreographyTitle,
+            group: item.groupName ? ` (${item.groupName})` : "",
+          }),
           userId: participant.id,
           userName: participant.name,
         });

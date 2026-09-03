@@ -12,6 +12,7 @@ import {
 } from "@/lib/event-type-helpers";
 import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { getGroupForChoreography } from "@/lib/groups";
+import { getServerTranslator, type ServerTranslator } from "@/i18n/server";
 
 const eventTypeSelect = {
   id: true,
@@ -137,14 +138,19 @@ export async function canEditEvent(eventId: string, userId: string): Promise<boo
   return false;
 }
 
-export async function getUserEvents(userId: string) {
+export async function getUserEvents(userId: string, t?: ServerTranslator) {
   const globalAccess = await hasGlobalAccess(userId);
+  const translator = t ?? await getServerTranslator();
 
-  return prisma.event.findMany({
+  const events = await prisma.event.findMany({
     where: globalAccess ? undefined : listedEventWhere(userId),
     include: eventListInclude,
     orderBy: { startsAt: "asc" },
   });
+  return events.map((event) => ({
+    ...event,
+    type: serializeEventType(event.type, translator),
+  }));
 }
 
 export type SerializedEvent = {
@@ -191,8 +197,8 @@ export function serializeEvent(event: {
   participants: {
     user: { id: string; firstName: string; lastName: string; email: string };
   }[];
-}): SerializedEvent {
-  const type = serializeEventType(event.type);
+}, t?: ServerTranslator): SerializedEvent {
+  const type = serializeEventType(event.type, t);
   return {
     id: event.id,
     title: event.title,

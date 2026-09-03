@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { CreateChoreographyForm } from "@/components/CreateChoreographyForm";
 import { Card } from "@/components/ui";
@@ -6,7 +7,10 @@ import { getCurrentUser } from "@/lib/auth";
 import { canCreateChoreography } from "@/lib/site-settings";
 
 export default async function NewChoreographyPage() {
-  const user = await getCurrentUser();
+  const [user, t] = await Promise.all([
+    getCurrentUser(),
+    getTranslations("Pages.NewChoreography"),
+  ]);
   if (!user) {
     redirect("/login");
   }
@@ -16,7 +20,7 @@ export default async function NewChoreographyPage() {
   }
 
   return (
-    <AppShell title="New choreography">
+    <AppShell title={t("title")}>
       <Card>
         <CreateChoreographyForm />
       </Card>

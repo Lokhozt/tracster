@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -39,6 +41,7 @@ export function DeleteEventButton({
   redirectTo?: string;
   className?: string;
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +63,7 @@ export function DeleteEventButton({
 
     if (!response.ok) {
       const data = await response.json();
-      setError(data.error ?? "Unable to delete.");
+      setError(data.error ?? t("deleteError"));
       return;
     }
 
@@ -78,8 +81,8 @@ export function DeleteEventButton({
         onClick={handleDelete}
         disabled={loading}
         className="rounded-lg p-2 text-stone-500 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-        aria-label="Delete"
-        title="Delete"
+        aria-label={t("delete")}
+        title={t("delete")}
       >
         <TrashIcon />
       </button>

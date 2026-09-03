@@ -1,5 +1,7 @@
 import type { UserRole } from "@/generated/prisma/client";
 
+type MessageTranslator = (key: string, values?: Record<string, string | number>) => string;
+
 export type UserNameFields = {
   firstName: string;
   lastName: string;
@@ -16,12 +18,16 @@ export function isBirthdayOnDate(dateOfBirth: Date, date: Date): boolean {
   );
 }
 
-export function formatBirthdayGreeting(users: UserNameFields[]): string | null {
+export function formatBirthdayGreeting(
+  users: UserNameFields[],
+  t?: MessageTranslator,
+): string | null {
   if (users.length === 0) {
     return null;
   }
 
-  return `Today, happy birthday to ${users.map(formatUserName).join(", ")}`;
+  const names = users.map(formatUserName).join(", ");
+  return t ? t("birthdayGreeting", { names }) : `Today, happy birthday to ${names}`;
 }
 
 export const basicUserSelect = {
@@ -100,3 +106,11 @@ export const roleLabels: Record<UserRole, string> = {
   ADMIN: "Admin",
   OWNER: "Owner",
 };
+
+export function getRoleLabels(t: MessageTranslator): Record<UserRole, string> {
+  return {
+    USER: t("roles.USER"),
+    ADMIN: t("roles.ADMIN"),
+    OWNER: t("roles.OWNER"),
+  };
+}

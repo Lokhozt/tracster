@@ -13,6 +13,7 @@ import { eventKindAllowsChoreographyLinks, isGenericEventKind } from "@/lib/even
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { canCreateEvent } from "@/lib/site-settings";
 import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
+import { getServerTranslator, localizeEventType } from "@/i18n/server";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -20,7 +21,10 @@ export async function GET() {
     return unauthorized();
   }
 
-  const events = await getUserEvents(user.id);
+  const events = await getUserEvents(
+    user.id,
+    await getServerTranslator(user.displayLanguage),
+  );
 
   return Response.json({ events });
 }
@@ -116,5 +120,10 @@ export async function POST(request: NextRequest) {
   });
   await syncGoogleEventBestEffort(event.id);
 
-  return Response.json({ event }, { status: 201 });
+  return Response.json({
+    event: {
+      ...event,
+      type: localizeEventType(event.type, await getServerTranslator(user.displayLanguage)),
+    },
+  }, { status: 201 });
 }

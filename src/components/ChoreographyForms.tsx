@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DateTime24Input } from "@/components/DateTime24Input";
@@ -46,6 +48,7 @@ export function AssignMemberForm({
   users: UserOption[];
   assignedUserIds: string[];
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -70,7 +73,7 @@ export function AssignMemberForm({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to assign member.");
+      setError(data.error ?? t("assignMemberError"));
       return;
     }
 
@@ -81,14 +84,14 @@ export function AssignMemberForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <Label htmlFor="member">Assign participant</Label>
+        <Label htmlFor="member">{t("assignParticipant")}</Label>
         <select
           id="member"
           value={userId}
           onChange={(event) => setUserId(event.target.value)}
           className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"
         >
-          <option value="">Select a user</option>
+          <option value="">{t("selectUser")}</option>
           {availableUsers.map((user) => (
             <option key={user.id} value={user.id}>
               {user.name}
@@ -98,7 +101,7 @@ export function AssignMemberForm({
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading || !userId}>
-        {loading ? "Assigning..." : "Assign participant"}
+        {loading ? t("assigning") : t("assignParticipant")}
       </Button>
     </form>
   );
@@ -113,6 +116,7 @@ export function AssignChoreographerForm({
   users: UserOption[];
   assignedUserIds: string[];
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -140,7 +144,7 @@ export function AssignChoreographerForm({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to assign choreographer.");
+      setError(data.error ?? t("assignChoreographerError"));
       return;
     }
 
@@ -151,14 +155,14 @@ export function AssignChoreographerForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <Label htmlFor="choreographer">Add choreographer</Label>
+        <Label htmlFor="choreographer">{t("addChoreographer")}</Label>
         <select
           id="choreographer"
           value={userId}
           onChange={(event) => setUserId(event.target.value)}
           className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"
         >
-          <option value="">Select a user</option>
+          <option value="">{t("selectUser")}</option>
           {availableUsers.map((user) => (
             <option key={user.id} value={user.id}>
               {user.name}
@@ -168,7 +172,7 @@ export function AssignChoreographerForm({
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading || !userId} variant="secondary">
-        {loading ? "Adding..." : "Add choreographer"}
+        {loading ? t("adding") : t("addChoreographer")}
       </Button>
     </form>
   );
@@ -187,10 +191,11 @@ export function CreateRehearsalForm({
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
+  const t = useTranslations("Components");
   const rehearsalType = eventTypes.find((type) => type.kind === "REHEARSAL");
 
   if (!rehearsalType) {
-    return <p className="text-sm text-stone-600">Rehearsal type is not configured.</p>;
+    return <p className="text-sm text-stone-600">{t("rehearsalTypeMissing")}</p>;
   }
 
   return (
@@ -202,12 +207,12 @@ export function CreateRehearsalForm({
         defaultChoreographyId={choreographyId}
         lockChoreography
         groups={groups}
-        choreographyOptions={[{ id: choreographyId, title: "This choreography" }]}
+        choreographyOptions={[{ id: choreographyId, title: t("thisChoreography") }]}
         onSuccess={() => onSuccess?.()}
       />
       {onCancel && (
         <Button type="button" variant="secondary" onClick={onCancel}>
-          Cancel
+          {t("cancel")}
         </Button>
       )}
     </div>
@@ -215,6 +220,7 @@ export function CreateRehearsalForm({
 }
 
 export function EditRehearsalForm({ rehearsal }: { rehearsal: RehearsalDetailItem }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -246,13 +252,13 @@ export function EditRehearsalForm({ rehearsal }: { rehearsal: RehearsalDetailIte
     const endsAt = dateTimePartsToDate(end);
 
     if (!startsAt) {
-      setError("Start date and time are required.");
+      setError(t("startRequired"));
       setLoading(false);
       return;
     }
 
     if (endsAt && endsAt <= startsAt) {
-      setError("End time must be after start time.");
+      setError(t("endAfterStart"));
       setLoading(false);
       return;
     }
@@ -273,7 +279,7 @@ export function EditRehearsalForm({ rehearsal }: { rehearsal: RehearsalDetailIte
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to update rehearsal.");
+      setError(data.error ?? t("rehearsalUpdateError"));
       return;
     }
 
@@ -283,25 +289,25 @@ export function EditRehearsalForm({ rehearsal }: { rehearsal: RehearsalDetailIte
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <Label htmlFor="edit-rehearsal-title">Title</Label>
+        <Label htmlFor="edit-rehearsal-title">{t("title")}</Label>
         <Input
           id="edit-rehearsal-title"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="Rehearsal"
+          placeholder={t("rehearsal")}
         />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <DateTime24Input
           name="startsAt"
-          label="Start"
+          label={t("start")}
           required
           value={start}
           onChange={handleStartChange}
         />
         <DateTime24Input
           name="endsAt"
-          label="End"
+          label={t("end")}
           required
           value={end}
           onChange={setEnd}
@@ -313,7 +319,7 @@ export function EditRehearsalForm({ rehearsal }: { rehearsal: RehearsalDetailIte
         onChange={setLocationSelection}
       />
       <div>
-        <Label htmlFor="edit-rehearsal-notes">Notes</Label>
+        <Label htmlFor="edit-rehearsal-notes">{t("notes")}</Label>
         <Textarea
           id="edit-rehearsal-notes"
           value={notes}
@@ -323,7 +329,7 @@ export function EditRehearsalForm({ rehearsal }: { rehearsal: RehearsalDetailIte
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading}>
-        {loading ? "Saving..." : "Save changes"}
+        {loading ? t("saving") : t("saveChanges")}
       </Button>
     </form>
   );
@@ -342,6 +348,7 @@ export function RehearsalsSection({
   rehearsals: RehearsalListItem[];
   eventTypes: SerializedEventType[];
 }) {
+  const t = useTranslations("Components");
   const [showAddForm, setShowAddForm] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -361,23 +368,23 @@ export function RehearsalsSection({
   return (
     <section className="mt-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold">Rehearsals</h2>
+        <h2 className="text-xl font-semibold">{t("rehearsals")}</h2>
         {canEdit && !showAddForm && (
           <Button type="button" onClick={() => setShowAddForm(true)}>
-            Schedule a rehearsal
+            {t("scheduleRehearsal")}
           </Button>
         )}
       </div>
 
       {rehearsals.length > 0 && (
         <div className="mb-4 rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
-          <Label htmlFor="rehearsal-search">Search</Label>
+          <Label htmlFor="rehearsal-search">{t("search")}</Label>
           <Input
             id="rehearsal-search"
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Title, location, or participant…"
+            placeholder={t("rehearsalSearchPlaceholder")}
             autoComplete="off"
             className="mt-1"
           />
@@ -389,7 +396,7 @@ export function RehearsalsSection({
 
       {canEdit && showAddForm && (
         <Card className="mb-6">
-          <h3 className="mb-4 font-medium">Schedule a rehearsal</h3>
+          <h3 className="mb-4 font-medium">{t("scheduleRehearsal")}</h3>
           <CreateRehearsalForm
             choreographyId={choreographyId}
             groups={groups}
@@ -402,11 +409,11 @@ export function RehearsalsSection({
 
       {rehearsals.length === 0 ? (
         <Card>
-          <p className="text-stone-600">No rehearsals scheduled yet.</p>
+          <p className="text-stone-600">{t("noRehearsals")}</p>
         </Card>
       ) : filteredRehearsals.length === 0 ? (
         <Card>
-          <p className="text-stone-600">No rehearsals match your search.</p>
+          <p className="text-stone-600">{t("noMatchingRehearsals")}</p>
         </Card>
       ) : (
         <div className="grid gap-4">
@@ -432,8 +439,9 @@ export function ParticipantsList({
   members: UserOption[];
   canEdit: boolean;
 }) {
+  const t = useTranslations("Components");
   if (members.length === 0) {
-    return <p className="mb-4 text-sm text-stone-600">No participants assigned yet.</p>;
+    return <p className="mb-4 text-sm text-stone-600">{t("noAssignedParticipants")}</p>;
   }
 
   return (
@@ -445,7 +453,7 @@ export function ParticipantsList({
             <DeleteEventButton
               deleteUrl={`/api/choreographies/${choreographyId}/members`}
               deleteBody={{ userId: member.id }}
-              confirmMessage={`Remove ${member.name} from this choreography?`}
+              confirmMessage={t("removeMemberConfirm", {name: member.name})}
             />
           )}
         </li>
@@ -463,6 +471,7 @@ export function ChoreographersList({
   choreographers: UserOption[];
   canEdit: boolean;
 }) {
+  const t = useTranslations("Components");
   const canRemove = canEdit && choreographers.length > 1;
 
   return (
@@ -474,7 +483,9 @@ export function ChoreographersList({
             <DeleteEventButton
               deleteUrl={`/api/choreographies/${choreographyId}/choreographers`}
               deleteBody={{ userId: choreographer.id }}
-              confirmMessage={`Remove ${choreographer.name} as choreographer?`}
+              confirmMessage={t("removeChoreographerConfirm", {
+                name: choreographer.name,
+              })}
             />
           )}
         </li>

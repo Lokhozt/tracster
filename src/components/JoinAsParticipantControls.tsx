@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui";
@@ -19,6 +21,7 @@ export function JoinAsParticipantControls({
   isParticipant: boolean;
   hasPendingRequest: boolean;
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +38,7 @@ export function JoinAsParticipantControls({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to update participation.");
+      setError(data.error ?? t("participationUpdateError"));
       return;
     }
 
@@ -46,7 +49,7 @@ export function JoinAsParticipantControls({
     <div className="space-y-2">
       {allowJoin && (
         <Button type="button" disabled={loading} onClick={() => void submit(joinUrl, "POST")}>
-          {loading ? "Joining..." : "Join as participant"}
+          {loading ? t("joining") : t("joinAsParticipant")}
         </Button>
       )}
       {allowRequest && !hasPendingRequest && (
@@ -55,19 +58,19 @@ export function JoinAsParticipantControls({
           disabled={loading}
           onClick={() => void submit(requestUrl, "POST")}
         >
-          {loading ? "Sending..." : "Request to join"}
+          {loading ? t("sending") : t("requestToJoin")}
         </Button>
       )}
       {hasPendingRequest && (
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm text-stone-600">Your request to join is pending.</p>
+          <p className="text-sm text-stone-600">{t("joinRequestPending")}</p>
           <Button
             type="button"
             variant="secondary"
             disabled={loading}
             onClick={() => void submit(requestUrl, "DELETE")}
           >
-            {loading ? "Cancelling..." : "Cancel request"}
+            {loading ? t("cancelling") : t("cancelRequest")}
           </Button>
         </div>
       )}

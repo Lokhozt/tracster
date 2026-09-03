@@ -4,6 +4,7 @@ import { forbidden, jsonError, unauthorized } from "@/lib/api";
 import { isAdmin } from "@/lib/roles";
 import { buildSchedulingProblem, generateScheduleCandidates } from "@/lib/scheduling";
 import { schedulingRequestSchema } from "@/lib/validations";
+import { getServerTranslator } from "@/i18n/server";
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
@@ -33,7 +34,10 @@ export async function POST(request: NextRequest) {
     return jsonError(problem.error);
   }
 
-  const candidates = generateScheduleCandidates(problem);
+  const candidates = generateScheduleCandidates(
+    problem,
+    await getServerTranslator(user.displayLanguage),
+  );
   if (candidates.length === 0) {
     return jsonError(
       "No complete schedule could be generated. Shorten durations, reduce rehearsals, or free more location time.",

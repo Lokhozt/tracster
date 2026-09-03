@@ -1,4 +1,5 @@
 import { addHours, format } from "date-fns";
+import { enGB, fr } from "date-fns/locale";
 
 const DATE_TIME_FORMAT = "dd MMM yyyy, HH:mm";
 const DATE_INPUT_FORMAT = "yyyy-MM-dd";
@@ -9,8 +10,8 @@ export type DateTimeParts = {
   minute: string;
 };
 
-export function formatDateTime(date: Date): string {
-  return format(date, DATE_TIME_FORMAT);
+export function formatDateTime(date: Date, locale: "en" | "fr" = "en"): string {
+  return format(date, DATE_TIME_FORMAT, { locale: locale === "fr" ? fr : enGB });
 }
 
 export function dateToDateTimeParts(date: Date): DateTimeParts {

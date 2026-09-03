@@ -1,11 +1,14 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Input, Label } from "@/components/ui";
 import type { LocationRecord } from "@/lib/locations";
 
 export function LocationsManager({ locations }: { locations: LocationRecord[] }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -29,7 +32,7 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
     setCreating(false);
 
     if (!response.ok) {
-      setCreateError(data.error ?? "Unable to create location.");
+      setCreateError(data.error ?? t("locationCreateError"));
       return;
     }
 
@@ -61,7 +64,7 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
     setSavingId(null);
 
     if (!response.ok) {
-      setRowError(data.error ?? "Unable to rename location.");
+      setRowError(data.error ?? t("locationRenameError"));
       return;
     }
 
@@ -88,7 +91,7 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
     setSavingId(null);
 
     if (!response.ok) {
-      setRowError(data.error ?? "Unable to delete location.");
+      setRowError(data.error ?? t("locationDeleteError"));
       return;
     }
 
@@ -100,32 +103,32 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
 
   return (
     <Card className="max-w-xl">
-      <h2 className="mb-1 text-lg font-semibold">Locations</h2>
+      <h2 className="mb-1 text-lg font-semibold">{t("locations")}</h2>
       <p className="mb-4 text-sm text-stone-500">
-        Listed locations can be reused on rehearsals, representations, and events.
+        {t("locationsHelp")}
         A unique location can still be entered when scheduling.
       </p>
 
       <form onSubmit={handleCreate} className="space-y-3">
         <div>
-          <Label htmlFor="new-location-name">Name</Label>
+          <Label htmlFor="new-location-name">{t("name")}</Label>
           <Input
             id="new-location-name"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Studio 2"
+            placeholder={t("studioPlaceholder")}
             required
           />
         </div>
         {createError && <p className="text-sm text-red-600">{createError}</p>}
         <Button type="submit" disabled={creating || !name.trim()}>
-          {creating ? "Adding..." : "Add location"}
+          {creating ? t("adding") : t("addLocation")}
         </Button>
       </form>
 
       <div className="mt-6 border-t border-stone-100 pt-4">
         {locations.length === 0 ? (
-          <p className="text-sm text-stone-600">No locations yet.</p>
+          <p className="text-sm text-stone-600">{t("noLocations")}</p>
         ) : (
           <ul className="space-y-3">
             {locations.map((location) => (
@@ -143,7 +146,7 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
                     />
                     <div className="flex flex-wrap gap-2">
                       <Button type="submit" disabled={savingId === location.id}>
-                        {savingId === location.id ? "Saving..." : "Save"}
+                        {savingId === location.id ? t("saving") : t("save")}
                       </Button>
                       <Button
                         type="button"
@@ -151,7 +154,7 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
                         onClick={() => setEditingId(null)}
                         disabled={savingId === location.id}
                       >
-                        Cancel
+                        {t("cancel")}
                       </Button>
                     </div>
                   </form>
@@ -165,7 +168,7 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
                         onClick={() => startRename(location)}
                         disabled={savingId === location.id}
                       >
-                        Rename
+                        {t("rename")}
                       </Button>
                       <Button
                         type="button"
@@ -173,7 +176,7 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
                         onClick={() => handleDelete(location)}
                         disabled={savingId === location.id}
                       >
-                        Delete
+                        {t("delete")}
                       </Button>
                     </div>
                   </div>

@@ -1,3 +1,5 @@
+
+import { useTranslations } from "next-intl";
 import type { DateTimeParts } from "@/lib/datetime";
 import { HOURS_24, MINUTES } from "@/lib/datetime";
 import { Input, Label, Select } from "@/components/ui";
@@ -15,6 +17,7 @@ export function DateTime24Input({
   value: DateTimeParts;
   onChange: (value: DateTimeParts) => void;
 }) {
+  const t = useTranslations("Components");
   function updateField(field: keyof DateTimeParts, fieldValue: string) {
     onChange({ ...value, [field]: fieldValue });
   }
@@ -28,7 +31,7 @@ export function DateTime24Input({
         required={required}
         value={value.date}
         onChange={(event) => updateField("date", event.target.value)}
-        aria-label={`${label} date`}
+        aria-label={t("dateInput", {label})}
       />
       <div className="flex items-center gap-2">
         <Select
@@ -36,7 +39,7 @@ export function DateTime24Input({
           required={required}
           value={value.hour}
           onChange={(event) => updateField("hour", event.target.value)}
-          aria-label={`${label} hour`}
+          aria-label={t("hourInput", {label})}
           className="w-20 min-h-11"
         >
           {HOURS_24.map((hour) => (
@@ -53,7 +56,7 @@ export function DateTime24Input({
           required={required}
           value={value.minute}
           onChange={(event) => updateField("minute", event.target.value)}
-          aria-label={`${label} minute`}
+          aria-label={t("minuteInput", {label})}
           className="w-20 min-h-11"
         >
           {MINUTES.map((minute) => (
@@ -62,7 +65,7 @@ export function DateTime24Input({
             </option>
           ))}
         </Select>
-        <span className="text-xs text-stone-500">24h</span>
+        <span className="text-xs text-stone-500">{t("twentyFourHour")}</span>
       </div>
     </div>
   );

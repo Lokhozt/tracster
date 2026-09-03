@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -8,7 +10,7 @@ import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControl
 import { ParticipatingCheck } from "@/components/ParticipatingCheck";
 import { Card, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import { formatDateTime } from "@/lib/datetime";
+
 import {
   filterUpcomingScheduleEvents,
   type UpcomingEventRange,
@@ -22,11 +24,6 @@ import {
 
 type AvailabilityStatus = "AVAILABLE" | "UNAVAILABLE";
 
-const statusLabels = {
-  AVAILABLE: "Available",
-  UNAVAILABLE: "Unavailable",
-  MAYBE: "Maybe",
-} as const;
 
 function eventKindClassName(kind: SerializedScheduleEvent["typeKind"]) {
   if (kind === "REPRESENTATION") {
@@ -60,10 +57,11 @@ function AvailabilityBadge({
 }: {
   status: SerializedScheduleEvent["availabilityStatus"];
 }) {
+  const t = useTranslations("Components");
   if (!status) {
     return (
       <span className="rounded-full bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-600">
-        No response
+        {t("noResponse")}
       </span>
     );
   }
@@ -78,7 +76,7 @@ function AvailabilityBadge({
     <span
       className={`rounded-full px-2.5 py-1 text-xs font-medium ${styles[status]}`}
     >
-      {statusLabels[status]}
+      {t(`status${status}`)}
     </span>
   );
 }
@@ -90,6 +88,7 @@ function AvailabilityQuickReply({
   rehearsalId: string;
   currentStatus: SerializedScheduleEvent["availabilityStatus"];
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loading, setLoading] = useState<AvailabilityStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +107,7 @@ function AvailabilityQuickReply({
     setLoading(null);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to save availability.");
+      setError(data.error ?? t("availabilitySaveError"));
       return;
     }
 
@@ -124,7 +123,7 @@ function AvailabilityQuickReply({
           disabled={loading !== null}
           onClick={() => submitStatus("AVAILABLE")}
         >
-          {loading === "AVAILABLE" ? "Saving..." : "Available"}
+          {loading === "AVAILABLE" ? t("saving") : t("statusAVAILABLE")}
         </Button>
         <Button
           type="button"
@@ -132,7 +131,7 @@ function AvailabilityQuickReply({
           disabled={loading !== null}
           onClick={() => submitStatus("UNAVAILABLE")}
         >
-          {loading === "UNAVAILABLE" ? "Saving..." : "Unavailable"}
+          {loading === "UNAVAILABLE" ? t("saving") : t("statusUNAVAILABLE")}
         </Button>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -144,18 +143,17 @@ function defaultEventTitle(event: SerializedScheduleEvent) {
   return scheduleEventLabel(event);
 }
 
-const rangeOptions: Array<{ value: UpcomingEventRange; label: string }> = [
-  { value: "all", label: "All events" },
-  { value: "week", label: "Next Week" },
-  { value: "month", label: "Next Month" },
-];
+const rangeOptions: UpcomingEventRange[] = ["all", "week", "month"];
 
 export function UpcomingEventsList({
   events,
 }: {
   events: SerializedScheduleEvent[];
 }) {
+  const t = useTranslations("Components");
   const [range, setRange] = useState<UpcomingEventRange>("all");
+  const locale = useLocale();
+  const dateFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
   const [hideNonParticipating, setHideNonParticipating] = useState(false);
 
   const filteredEvents = useMemo(
@@ -168,22 +166,22 @@ export function UpcomingEventsList({
   return (
     <section>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <h2 className="text-lg font-semibold">Upcoming events</h2>
+        <h2 className="text-lg font-semibold">{t("upcomingEvents")}</h2>
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex rounded-lg border border-stone-300 p-0.5">
             {rangeOptions.map((option) => (
               <button
-                key={option.value}
+                key={option}
                 type="button"
-                onClick={() => setRange(option.value)}
+                onClick={() => setRange(option)}
                 className={cn(
                   "rounded-md px-3 py-1.5 text-sm font-medium transition",
-                  range === option.value
+                  range === option
                     ? "bg-stone-900 text-white"
                     : "text-stone-600 hover:bg-stone-100",
                 )}
               >
-                {option.label}
+                {t(`range${option}`)}
               </button>
             ))}
           </div>
@@ -194,21 +192,21 @@ export function UpcomingEventsList({
               onChange={(event) => setHideNonParticipating(event.target.checked)}
               className="rounded border-stone-300"
             />
-            Hide events I&apos;m not participating in
+            {t("hideNonParticipatingEvents")}
           </label>
         </div>
       </div>
 
       {events.length === 0 ? (
         <Card>
-          <p className="text-stone-600">No upcoming events scheduled.</p>
+          <p className="text-stone-600">{t("noUpcomingEvents")}</p>
         </Card>
       ) : filteredEvents.length === 0 ? (
         <Card>
           <p className="text-stone-600">
             {filtersActive
-              ? "No upcoming events match your filters."
-              : "No upcoming events scheduled."}
+              ? t("noUpcomingFilterMatches")
+              : t("noUpcomingEvents")}
           </p>
         </Card>
       ) : (
@@ -232,8 +230,8 @@ export function UpcomingEventsList({
                     {event.isParticipating && <ParticipatingCheck />}
                   </div>
                   <p className="text-sm text-stone-600">
-                    {formatDateTime(new Date(event.startsAt))}
-                    {event.endsAt && ` – ${formatDateTime(new Date(event.endsAt))}`}
+                    {dateFormatter.format(new Date(event.startsAt))}
+                    {event.endsAt && ` – ${dateFormatter.format(new Date(event.endsAt))}`}
                   </p>
                   {event.location && (
                     <p className="text-sm text-stone-500">{event.location}</p>
@@ -247,7 +245,7 @@ export function UpcomingEventsList({
                   {event.canEdit && (
                     <EditIconLink
                       href={event.href}
-                      label={`Edit ${event.typeName.toLowerCase()}`}
+                      label={t("editNamed", {name: event.typeName.toLocaleLowerCase(locale)})}
                     />
                   )}
                 </div>

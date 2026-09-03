@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Label, Textarea } from "@/components/ui";
@@ -10,6 +12,7 @@ import {
 } from "@/lib/participation";
 
 export function CreateChoreographyForm() {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,7 +40,7 @@ export function CreateChoreographyForm() {
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to create choreography.");
+      setError(data.error ?? t("choreographyCreateError"));
       return;
     }
 
@@ -48,16 +51,16 @@ export function CreateChoreographyForm() {
   return (
     <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
       <div>
-        <Label htmlFor="title">Title</Label>
-        <Input id="title" name="title" required placeholder="Summer showcase" />
+        <Label htmlFor="title">{t("title")}</Label>
+        <Input id="title" name="title" required placeholder={t("summerShowcasePlaceholder")} />
       </div>
       <div>
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">{t("description")}</Label>
         <Textarea
           id="description"
           name="description"
           rows={4}
-          placeholder="Optional notes about this choreography"
+          placeholder={t("optionalChoreographyNotes")}
         />
       </div>
       <ParticipationSettingsFields
@@ -67,7 +70,7 @@ export function CreateChoreographyForm() {
       />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading}>
-        {loading ? "Creating..." : "Create choreography"}
+        {loading ? t("creating") : t("createChoreography")}
       </Button>
     </form>
   );
@@ -86,6 +89,7 @@ export function EditChoreographyForm({
   };
 }) {
   const router = useRouter();
+  const t = useTranslations("Components");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState(choreography.title);
@@ -115,7 +119,7 @@ export function EditChoreographyForm({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to update choreography.");
+      setError(data.error ?? t("choreographyUpdateError"));
       return;
     }
 
@@ -125,7 +129,7 @@ export function EditChoreographyForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label htmlFor="edit-choreography-title">Title</Label>
+        <Label htmlFor="edit-choreography-title">{t("title")}</Label>
         <Input
           id="edit-choreography-title"
           value={title}
@@ -134,7 +138,7 @@ export function EditChoreographyForm({
         />
       </div>
       <div>
-        <Label htmlFor="edit-choreography-description">Description</Label>
+        <Label htmlFor="edit-choreography-description">{t("description")}</Label>
         <Textarea
           id="edit-choreography-description"
           value={description}
@@ -149,7 +153,7 @@ export function EditChoreographyForm({
       />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading}>
-        {loading ? "Saving..." : "Save changes"}
+        {loading ? t("saving") : t("saveChanges")}
       </Button>
     </form>
   );

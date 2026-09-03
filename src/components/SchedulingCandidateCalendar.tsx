@@ -1,4 +1,7 @@
+
+import { useLocale, useTranslations } from "next-intl";
 import { format } from "date-fns";
+import { enUS, fr } from "date-fns/locale";
 import { formatTime } from "@/lib/datetime";
 import { parseDayKey } from "@/lib/scheduling/intervals";
 import type { SchedulePlacement } from "@/lib/scheduling/types";
@@ -32,8 +35,11 @@ export function SchedulingCandidateCalendar({
 }: {
   placements: SchedulePlacement[];
 }) {
+  const t = useTranslations("Components");
+  const locale = useLocale();
+  const dateLocale = locale === "fr" ? fr : enUS;
   if (placements.length === 0) {
-    return <p className="text-sm text-stone-600">This candidate has no rehearsals.</p>;
+    return <p className="text-sm text-stone-600">{t("candidateNoRehearsals")}</p>;
   }
 
   const uniqueDays = [
@@ -59,7 +65,7 @@ export function SchedulingCandidateCalendar({
         {uniqueDays.map((day) => (
           <div key={day} className="min-w-[220px] flex-1">
             <p className="mb-2 text-sm font-semibold text-stone-800">
-              {format(parseDayKey(day), "EEEE d MMM")}
+              {format(parseDayKey(day), "EEEE d MMM", {locale: dateLocale})}
             </p>
             <div className="flex gap-2">
               {locations.map(([locationId, locationName]) => {

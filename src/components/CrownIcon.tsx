@@ -1,17 +1,22 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 export function ChoreographerBadge({
   className,
-  label = "You are a choreographer",
+  label,
 }: {
   className?: string;
   label?: string;
 }) {
+  const t = useTranslations("Components");
+  const accessibleLabel = label ?? t("youAreChoreographer");
   return (
     <span
       className={cn("inline-flex shrink-0 items-center leading-none", className)}
-      title={label}
-      aria-label={label}
+      title={accessibleLabel}
+      aria-label={accessibleLabel}
       role="img"
     >
       👑

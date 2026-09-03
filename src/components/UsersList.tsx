@@ -1,18 +1,20 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { RoleBadge } from "@/components/UserForms";
 import { Card, Input, Label, Select } from "@/components/ui";
 import type { UserRole } from "@/generated/prisma/client";
-import { roleLabels, type AdminUser } from "@/lib/users";
-import { formatDateTime } from "@/lib/datetime";
+import { type AdminUser } from "@/lib/users";
 
-function formatDateOfBirth(value: string | null): string {
+
+function formatDateOfBirth(value: string | null, locale: string): string {
   if (!value) {
     return "—";
   }
-  return new Date(value).toLocaleDateString("en-GB", {
+  return new Date(value).toLocaleDateString(locale, {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -39,7 +41,10 @@ function matchesSearch(user: AdminUser, query: string): boolean {
 }
 
 export function UsersList({ users }: { users: AdminUser[] }) {
+  const t = useTranslations("Components");
   const [search, setSearch] = useState("");
+  const locale = useLocale();
+  const dateTimeFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
   const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
 
   const filteredUsers = useMemo(() => {
@@ -55,33 +60,33 @@ export function UsersList({ users }: { users: AdminUser[] }) {
     <Card>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Users</h2>
+          <h2 className="text-lg font-semibold">{t("users")}</h2>
           <p className="mt-1 text-sm text-stone-500">
-            Manage association members, contact details, and admin access.
+            {t("usersHelp")}
           </p>
         </div>
         <Link
           href="/users/new"
           className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
         >
-          New user
+          {t("newUser")}
         </Link>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-[1fr_180px]">
         <div>
-          <Label htmlFor="user-search">Search</Label>
+          <Label htmlFor="user-search">{t("search")}</Label>
           <Input
             id="user-search"
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Name, email, or phone…"
+            placeholder={t("userSearchPlaceholder")}
             autoComplete="off"
           />
         </div>
         <div>
-          <Label htmlFor="user-role-filter">Role</Label>
+          <Label htmlFor="user-role-filter">{t("role")}</Label>
           <Select
             id="user-role-filter"
             value={roleFilter}
@@ -90,20 +95,20 @@ export function UsersList({ users }: { users: AdminUser[] }) {
             }
             className="w-full"
           >
-            <option value="ALL">All roles</option>
-            <option value="USER">{roleLabels.USER}</option>
-            <option value="ADMIN">{roleLabels.ADMIN}</option>
-            <option value="OWNER">{roleLabels.OWNER}</option>
+            <option value="ALL">{t("allRoles")}</option>
+            <option value="USER">{t("roleUSER")}</option>
+            <option value="ADMIN">{t("roleADMIN")}</option>
+            <option value="OWNER">{t("roleOWNER")}</option>
           </Select>
         </div>
       </div>
       <p className="mt-3 text-sm text-stone-500">
-        {filteredUsers.length} of {users.length} users
+        {t("usersShown", {shown: filteredUsers.length, total: users.length})}
       </p>
 
       <div className="mt-4 border-t border-stone-100 pt-4">
         {filteredUsers.length === 0 ? (
-          <p className="text-sm text-stone-600">No users match your search.</p>
+          <p className="text-sm text-stone-600">{t("noMatchingUsers")}</p>
         ) : (
           <ul className="space-y-3">
             {filteredUsers.map((entry) => (
@@ -124,8 +129,8 @@ export function UsersList({ users }: { users: AdminUser[] }) {
                       )}
                     </div>
                     <div className="text-sm text-stone-500 sm:text-right">
-                      <p>Born {formatDateOfBirth(entry.dateOfBirth)}</p>
-                      <p className="mt-1">Updated {formatDateTime(new Date(entry.updatedAt))}</p>
+                      <p>{t("bornDate", {date: formatDateOfBirth(entry.dateOfBirth, locale)})}</p>
+                      <p className="mt-1">{t("updatedDate", {date: dateTimeFormatter.format(new Date(entry.updatedAt))})}</p>
                     </div>
                   </div>
                 </Link>

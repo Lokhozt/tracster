@@ -13,17 +13,23 @@ enum UserRole {
   OWNER
 }
 
+enum DisplayLanguage {
+  ENGLISH
+  FRENCH
+}
+
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  firstName    String
-  lastName     String
-  phone        String?
-  dateOfBirth  DateTime?
-  role         UserRole  @default(USER)
-  passwordHash String
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id              String           @id @default(cuid())
+  email           String           @unique
+  firstName       String
+  lastName        String
+  phone           String?
+  dateOfBirth     DateTime?
+  role            UserRole         @default(USER)
+  displayLanguage DisplayLanguage?
+  passwordHash    String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   sessions                   Session[]
   createdChoreographies      Choreography[]              @relation("ChoreographyCreator")

@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import {
   addDays,
   addMinutes,
@@ -15,9 +17,10 @@ import {
   startOfWeek,
   subWeeks,
 } from "date-fns";
+import { enUS, fr } from "date-fns/locale";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card } from "@/components/ui";
-import { formatDateTime, formatTime } from "@/lib/datetime";
+import { formatTime } from "@/lib/datetime";
 import type { SerializedUnavailability } from "@/lib/unavailability";
 import { cn } from "@/lib/utils";
 
@@ -184,7 +187,7 @@ async function fetchTimeframes(from: Date, to: Date): Promise<SerializedUnavaila
   });
   const response = await fetch(`/api/users/me/unavailability?${params.toString()}`);
   if (!response.ok) {
-    throw new Error("Unable to load unavailability.");
+    throw new Error("UNAVAILABILITY_LOAD_FAILED");
   }
   const data = await response.json();
   return data.timeframes as SerializedUnavailability[];
@@ -201,6 +204,13 @@ export function UnavailabilityCalendar({
   initialWeekStart: string;
   startOfDayHour: number;
 }) {
+  const t = useTranslations("Components");
+  const locale = useLocale();
+  const dateLocale = locale === "fr" ? fr : enUS;
+  const dateTimeFormatter = new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
   const grid = dayGrid(startOfDayHour);
   const gridHeightPx = grid.slotsPerDay * SLOT_HEIGHT_PX;
   // Earliest week the user can reach: unavailability is only useful going forward.
@@ -219,8 +229,11 @@ export function UnavailabilityCalendar({
   const pendingPressRef = useRef<PendingPress | null>(null);
   const [pressing, setPressing] = useState(false);
   const timeframesRef = useRef(timeframes);
-  timeframesRef.current = timeframes;
   const scrollLocked = Boolean(selectedId || interaction);
+
+  useEffect(() => {
+    timeframesRef.current = timeframes;
+  }, [timeframes]);
 
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)),
@@ -263,13 +276,15 @@ export function UnavailabilityCalendar({
         current && entries.some((entry) => entry.id === current) ? current : null,
       );
     } catch {
-      setError("Unable to load unavailability for this week.");
+      setError(t("unavailabilityLoadError"));
     } finally {
       setLoading(false);
     }
-  }, [weekStart, weekEnd]);
+  }, [weekStart, weekEnd, t]);
 
   useEffect(() => {
+    // Loading the selected week is the external synchronization owned by this effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadTimeframes();
   }, [loadTimeframes]);
 
@@ -437,7 +452,7 @@ export function UnavailabilityCalendar({
     setSaving(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to save unavailability.");
+      setError(data.error ?? t("unavailabilitySaveError"));
       await loadTimeframes();
       return null;
     }
@@ -595,7 +610,7 @@ export function UnavailabilityCalendar({
     setSaving(false);
 
     if (!response.ok) {
-      setError("Unable to delete unavailability.");
+      setError(t("unavailabilityDeleteError"));
       await loadTimeframes();
       return;
     }
@@ -609,7 +624,7 @@ export function UnavailabilityCalendar({
       return;
     }
 
-    if (!window.confirm("Delete this unavailability period?")) {
+    if (!window.confirm(t("unavailabilityDeleteConfirm"))) {
       return;
     }
 
@@ -701,20 +716,16 @@ export function UnavailabilityCalendar({
     ];
   }, [interaction, timeframes, weekStart, grid]);
 
-  const periodLabel = `${format(weekDays[0], "d MMM")} – ${format(weekDays[6], "d MMM yyyy")}`;
+  const periodLabel = `${format(weekDays[0], "d MMM", {locale: dateLocale})} – ${format(weekDays[6], "d MMM yyyy", {locale: dateLocale})}`;
 
   return (
     <div className={cn("space-y-4", selectedTimeframe && "pb-24 sm:pb-0")}>
       <Card>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">Week view</h2>
+            <h2 className="text-lg font-semibold">{t("weekView")}</h2>
             <p className="mt-1 text-sm text-stone-500">
-              Click a date to mark the whole day unavailable, and click it again to clear it. Click
-              and drag on the grid to add periods. Drag blocks to move, or resize from the edges. On a touch screen, press and
-              hold to start drawing — a plain swipe scrolls. Tap a period to select it and lock
-              scrolling so you can drag or resize. Press Delete to remove a selected period, or tap
-              empty space to deselect. Collapse a period to nothing to remove it.
+              {t("unavailabilityHelp")}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -723,7 +734,7 @@ export function UnavailabilityCalendar({
               onClick={() => setWeekStart((date) => subWeeks(date, 1))}
               disabled={!canGoBack}
               className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-              aria-label="Previous week"
+              aria-label={t("previousWeek")}
             >
               ←
             </button>
@@ -734,7 +745,7 @@ export function UnavailabilityCalendar({
               type="button"
               onClick={() => setWeekStart((date) => addWeeks(date, 1))}
               className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
-              aria-label="Next week"
+              aria-label={t("nextWeek")}
             >
               →
             </button>
@@ -748,13 +759,13 @@ export function UnavailabilityCalendar({
               }}
               className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
             >
-              Today
+              {t("today")}
             </button>
           </div>
         </div>
 
         {(loading || saving) && (
-          <p className="mb-3 text-sm text-stone-500">{saving ? "Saving…" : "Loading…"}</p>
+          <p className="mb-3 text-sm text-stone-500">{saving ? t("saving") : t("loading")}</p>
         )}
         {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
@@ -778,8 +789,8 @@ export function UnavailabilityCalendar({
                     disabled={saving}
                     aria-label={
                       fullDayIndexes.has(dayIndex)
-                        ? `Clear unavailability on ${format(day, "EEEE d MMMM")}`
-                        : `Mark ${format(day, "EEEE d MMMM")} unavailable`
+                        ? t("clearDayUnavailability", {date: format(day, "EEEE d MMMM", {locale: dateLocale})})
+                        : t("markDayUnavailable", {date: format(day, "EEEE d MMMM", {locale: dateLocale})})
                     }
                     onClick={() => void toggleDayUnavailable(dayIndex)}
                   >
@@ -789,7 +800,7 @@ export function UnavailabilityCalendar({
                           "inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-stone-900 px-2 text-white",
                       )}
                     >
-                      {format(day, "EEE d")}
+                      {format(day, "EEE d", {locale: dateLocale})}
                     </span>
                   </button>
                 </div>
@@ -952,7 +963,7 @@ export function UnavailabilityCalendar({
                           <div className="pointer-events-none px-2 py-1">
                             <p className="font-medium">
                               {isFullDay
-                                ? "All day"
+                                ? t("allDay")
                                 : `${formatTime(startsAt)} – ${formatTime(endsAt)}`}
                             </p>
                           </div>
@@ -989,10 +1000,10 @@ export function UnavailabilityCalendar({
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-semibold sm:text-lg">Selected period</h3>
+              <h3 className="text-sm font-semibold sm:text-lg">{t("selectedPeriod")}</h3>
               <p className="mt-1 text-sm text-stone-600">
-                {formatDateTime(new Date(selectedTimeframe.startsAt))} –{" "}
-                {formatDateTime(new Date(selectedTimeframe.endsAt))}
+                {dateTimeFormatter.format(new Date(selectedTimeframe.startsAt))} –{" "}
+                {dateTimeFormatter.format(new Date(selectedTimeframe.endsAt))}
               </p>
             </div>
             <Button
@@ -1001,7 +1012,7 @@ export function UnavailabilityCalendar({
               disabled={saving}
               onClick={() => void deleteSelected()}
             >
-              Delete
+              {t("delete")}
             </Button>
           </div>
         </Card>
@@ -1012,7 +1023,7 @@ export function UnavailabilityCalendar({
           aria-hidden
           className="pointer-events-none fixed inset-x-0 bottom-6 z-50 mx-auto w-fit rounded-full bg-stone-900/90 px-4 py-2 text-sm text-white"
         >
-          Hold to draw…
+          {t("holdToDraw")}
         </p>
       )}
     </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import type { ParticipationSettings } from "@/lib/participation";
 
 type ParticipationMode = "managed" | "join" | "request";
@@ -34,6 +36,7 @@ function HideFromNonParticipantsField({
   value: ParticipationSettings;
   onChange: (value: ParticipationSettings) => void;
 }) {
+  const t = useTranslations("Components");
   return (
     <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
       <input
@@ -49,10 +52,9 @@ function HideFromNonParticipantsField({
         className="mt-0.5 rounded border-stone-300"
       />
       <span>
-        <span className="font-medium">Hide from non-participants</span>
+        <span className="font-medium">{t("hideNonParticipants")}</span>
         <span className="mt-0.5 block text-stone-500">
-          People who are not participants will not see this in lists or on the
-          schedule.
+          {t("hideNonParticipantsHelp")}
         </span>
       </span>
     </label>
@@ -70,6 +72,7 @@ export function ParticipationSettingsFields({
   idPrefix: string;
   variant?: "event" | "choreography";
 }) {
+  const t = useTranslations("Components");
   const mode = participationMode(value);
 
   if (variant === "event") {
@@ -77,7 +80,7 @@ export function ParticipationSettingsFields({
       <div className="space-y-4">
         <fieldset className="space-y-3 rounded-lg border border-stone-200 p-4">
           <legend className="px-1 text-sm font-medium text-stone-700">
-            Visibility
+            {t("visibility")}
           </legend>
           <HideFromNonParticipantsField
             id={`${idPrefix}-hide`}
@@ -87,7 +90,7 @@ export function ParticipationSettingsFields({
         </fieldset>
         <fieldset className="space-y-3 rounded-lg border border-stone-200 p-4">
           <legend className="px-1 text-sm font-medium text-stone-700">
-            Participation
+            {t("participation")}
           </legend>
           <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
             <input
@@ -99,9 +102,9 @@ export function ParticipationSettingsFields({
               className="mt-0.5 border-stone-300"
             />
             <span>
-              <span className="font-medium">Managed by choreographer</span>
+              <span className="font-medium">{t("managedByChoreographer")}</span>
               <span className="mt-0.5 block text-stone-500">
-                Only editors can add and remove participants.
+                {t("managedHelp")}
               </span>
             </span>
           </label>
@@ -115,9 +118,9 @@ export function ParticipationSettingsFields({
               className="mt-0.5 border-stone-300"
             />
             <span>
-              <span className="font-medium">Allow participants to join</span>
+              <span className="font-medium">{t("allowParticipantsJoin")}</span>
               <span className="mt-0.5 block text-stone-500">
-                Anyone who can see this can become a participant with one click.
+                {t("joinHelp")}
               </span>
             </span>
           </label>
@@ -131,9 +134,9 @@ export function ParticipationSettingsFields({
               className="mt-0.5 border-stone-300"
             />
             <span>
-              <span className="font-medium">Allow participants to request in</span>
+              <span className="font-medium">{t("allowRequests")}</span>
               <span className="mt-0.5 block text-stone-500">
-                Requests appear in a list you can accept or decline.
+                {t("requestsHelp")}
               </span>
             </span>
           </label>
@@ -145,7 +148,7 @@ export function ParticipationSettingsFields({
   return (
     <fieldset className="space-y-3 rounded-lg border border-stone-200 p-4">
       <legend className="px-1 text-sm font-medium text-stone-700">
-        Participation
+        {t("participation")}
       </legend>
       <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
         <input
@@ -164,9 +167,9 @@ export function ParticipationSettingsFields({
           className="mt-0.5 rounded border-stone-300"
         />
         <span>
-          <span className="font-medium">Allow participants to join</span>
+          <span className="font-medium">{t("allowParticipantsJoin")}</span>
           <span className="mt-0.5 block text-stone-500">
-            Anyone who can see this can become a participant with one click.
+            {t("joinHelp")}
           </span>
         </span>
       </label>
@@ -187,10 +190,9 @@ export function ParticipationSettingsFields({
           className="mt-0.5 rounded border-stone-300"
         />
         <span>
-          <span className="font-medium">Allow participants to request in</span>
+          <span className="font-medium">{t("allowRequests")}</span>
           <span className="mt-0.5 block text-stone-500">
-            Requests appear in a list you can accept or decline. Cannot be combined
-            with free join.
+            {t("requestsExclusiveHelp")}
           </span>
         </span>
       </label>

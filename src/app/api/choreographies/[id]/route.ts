@@ -17,6 +17,7 @@ import { isAdmin } from "@/lib/roles";
 import { basicUserSelect } from "@/lib/users";
 import { choreographyLifecycleSchema, choreographySchema } from "@/lib/validations";
 import { syncChoreographyRehearsals } from "@/lib/google-calendar";
+import { getServerLocale, getServerTranslator } from "@/i18n/server";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -131,12 +132,18 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
   const impact = await getUpcomingChoreographyImpact(id);
   if (hasUpcomingImpact(impact) && !confirmUpcoming) {
+    const [t, locale] = await Promise.all([
+      getServerTranslator(user.displayLanguage),
+      getServerLocale(user.displayLanguage),
+    ]);
     return NextResponse.json(
       {
         error: formatChoreographyLifecycleWarning({
           action: "delete",
           title: choreography.title,
           impact,
+          t,
+          locale,
         }),
         requiresConfirmation: true,
         upcoming: serializeUpcomingImpact(impact),

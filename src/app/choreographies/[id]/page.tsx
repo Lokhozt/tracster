@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import {
   AssignChoreographerForm,
@@ -28,7 +29,10 @@ import { basicUserSelect, formatUserName, serializeBasicUser } from "@/lib/users
 type PageProps = { params: Promise<{ id: string }> };
 
 export default async function ChoreographyDetailPage({ params }: PageProps) {
-  const user = await getCurrentUser();
+  const [user, t] = await Promise.all([
+    getCurrentUser(),
+    getTranslations("Pages.ChoreographyDetail"),
+  ]);
   if (!user) {
     redirect("/login");
   }
@@ -129,7 +133,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           <p className="text-stone-600">{choreography.description}</p>
         )}
         <p className="text-sm text-stone-500">
-          Created by {formatUserName(choreography.createdBy)}
+          {t("createdBy", { name: formatUserName(choreography.createdBy) })}
         </p>
         <JoinAsParticipantControls
           joinUrl={`/api/choreographies/${id}/join`}
@@ -155,7 +159,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <h2 className="mb-4 text-lg font-semibold">Choreographers</h2>
+          <h2 className="mb-4 text-lg font-semibold">{t("choreographers")}</h2>
           <ChoreographersList
             choreographyId={id}
             canEdit={canEdit}
@@ -173,7 +177,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
         </Card>
 
         <Card>
-          <h2 className="mb-4 text-lg font-semibold">Participants</h2>
+          <h2 className="mb-4 text-lg font-semibold">{t("participants")}</h2>
           <ParticipantsList
             choreographyId={id}
             canEdit={canEdit}
@@ -265,7 +269,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
 
       {canEdit && (
         <Card className="mt-8">
-          <h2 className="mb-4 text-lg font-semibold">Edit choreography</h2>
+          <h2 className="mb-4 text-lg font-semibold">{t("editChoreography")}</h2>
           <EditChoreographyForm
             choreography={{
               id: choreography.id,

@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -20,7 +22,6 @@ import {
   dateTimePartsToDate,
   dateToDateTimeParts,
   defaultStartDateTime,
-  formatDateTime,
   type DateTimeParts,
 } from "@/lib/datetime";
 
@@ -73,28 +74,29 @@ function RepresentationFields({
   notesId?: string;
   showNotes?: boolean;
 }) {
+  const t = useTranslations("Components");
   return (
     <>
       <div>
-        <Label htmlFor={titleId}>Title</Label>
+        <Label htmlFor={titleId}>{t("title")}</Label>
         <Input
           id={titleId}
           value={title}
           onChange={(event) => onTitleChange(event.target.value)}
-          placeholder="Opening night"
+          placeholder={t("openingNight")}
         />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <DateTime24Input
           name="startsAt"
-          label="Start"
+          label={t("start")}
           required
           value={start}
           onChange={onStartChange}
         />
         <DateTime24Input
           name="endsAt"
-          label="End"
+          label={t("end")}
           required
           value={end}
           onChange={onEndChange}
@@ -107,13 +109,13 @@ function RepresentationFields({
       />
       {showNotes && notesId && onNotesChange && (
         <div>
-          <Label htmlFor={notesId}>Notes</Label>
+          <Label htmlFor={notesId}>{t("notes")}</Label>
           <Textarea
             id={notesId}
             value={notes}
             onChange={(event) => onNotesChange(event.target.value)}
             rows={3}
-            placeholder="Optional notes"
+            placeholder={t("optionalNotes")}
           />
         </div>
       )}
@@ -121,16 +123,16 @@ function RepresentationFields({
   );
 }
 
-function validateSchedule(start: DateTimeParts, end: DateTimeParts): string | null {
+function validateSchedule(start: DateTimeParts, end: DateTimeParts, startRequired: string, endAfterStart: string): string | null {
   const startsAt = dateTimePartsToDate(start);
   const endsAt = dateTimePartsToDate(end);
 
   if (!startsAt) {
-    return "Start date and time are required.";
+    return startRequired;
   }
 
   if (endsAt && endsAt <= startsAt) {
-    return "End time must be after start time.";
+    return endAfterStart;
   }
 
   return null;
@@ -160,7 +162,7 @@ export function CreateRepresentationForm({
   choreographyIds,
   choreographyOptions,
   onSuccess,
-  submitLabel = "Create representation",
+  submitLabel,
   redirectBasePath,
 }: {
   choreographyIds?: string[];
@@ -169,6 +171,8 @@ export function CreateRepresentationForm({
   submitLabel?: string;
   redirectBasePath?: string;
 }) {
+  const t = useTranslations("Components");
+  const localizedSubmitLabel = submitLabel ?? t("createRepresentation");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -191,7 +195,7 @@ export function CreateRepresentationForm({
     setLoading(true);
     setError(null);
 
-    const validationError = validateSchedule(start, end);
+    const validationError = validateSchedule(start, end, t("startRequired"), t("endAfterStart"));
     if (validationError) {
       setError(validationError);
       setLoading(false);
@@ -212,7 +216,7 @@ export function CreateRepresentationForm({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to create representation.");
+      setError(data.error ?? t("representationCreateError"));
       return;
     }
 
@@ -246,7 +250,7 @@ export function CreateRepresentationForm({
       {choreographyOptions && choreographyOptions.length > 0 && (
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium text-stone-700">
-            Link to choreographies (optional)
+            {t("linkChoreographiesOptional")}
           </legend>
           {choreographyOptions.map((choreography) => (
             <label key={choreography.id} className="flex items-center gap-2 text-sm">
@@ -269,7 +273,7 @@ export function CreateRepresentationForm({
       )}
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading}>
-        {loading ? "Creating..." : submitLabel}
+        {loading ? t("creating") : localizedSubmitLabel}
       </Button>
     </form>
   );
@@ -282,6 +286,7 @@ export function EditRepresentationForm({
   representation: RepresentationItem;
   onCancel?: () => void;
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -309,7 +314,7 @@ export function EditRepresentationForm({
     setLoading(true);
     setError(null);
 
-    const validationError = validateSchedule(start, end);
+    const validationError = validateSchedule(start, end, t("startRequired"), t("endAfterStart"));
     if (validationError) {
       setError(validationError);
       setLoading(false);
@@ -328,7 +333,7 @@ export function EditRepresentationForm({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to update representation.");
+      setError(data.error ?? t("representationUpdateError"));
       return;
     }
 
@@ -358,21 +363,21 @@ export function EditRepresentationForm({
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex flex-wrap gap-2">
           <Button type="submit" disabled={loading}>
-            {loading ? "Saving..." : "Save changes"}
+            {loading ? t("saving") : t("saveChanges")}
           </Button>
           {onCancel && (
             <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
-              Cancel
+              {t("cancel")}
             </Button>
           )}
         </div>
       </form>
 
       <div className="border-t border-stone-100 pt-4">
-        <p className="mb-2 text-sm font-medium text-stone-700">Danger zone</p>
+        <p className="mb-2 text-sm font-medium text-stone-700">{t("dangerZone")}</p>
         <DeleteEventButton
           deleteUrl={`/api/representations/${representation.id}`}
-          confirmMessage="Delete this representation? It will be removed from all choreographies."
+          confirmMessage={t("deleteRepresentationConfirm")}
           redirectTo="/events"
           className="inline-block"
         />
@@ -392,6 +397,7 @@ function CreateRepresentationForChoreographyForm({
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const representationType = eventTypes.find((type) => type.kind === "REPRESENTATION");
   const [loading, setLoading] = useState(false);
@@ -411,7 +417,7 @@ function CreateRepresentationForChoreographyForm({
     setLoading(true);
     setError(null);
 
-    const validationError = validateSchedule(start, end);
+    const validationError = validateSchedule(start, end, t("startRequired"), t("endAfterStart"));
     if (validationError) {
       setError(validationError);
       setLoading(false);
@@ -431,7 +437,7 @@ function CreateRepresentationForChoreographyForm({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to add representation.");
+      setError(data.error ?? t("representationAddError"));
       return;
     }
 
@@ -447,7 +453,7 @@ function CreateRepresentationForChoreographyForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <Label htmlFor="choreography-representation-type">Type</Label>
+        <Label htmlFor="choreography-representation-type">{t("type")}</Label>
         <select
           id="choreography-representation-type"
           disabled
@@ -455,7 +461,7 @@ function CreateRepresentationForChoreographyForm({
           className="mt-1 w-full rounded-lg border border-stone-300 bg-stone-50 px-3 py-2 text-base sm:text-sm"
         >
           <option value={representationType?.id ?? ""}>
-            {representationType?.name ?? "Representation"}
+            {representationType?.name ?? t("representation")}
           </option>
         </select>
       </div>
@@ -475,11 +481,11 @@ function CreateRepresentationForChoreographyForm({
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" disabled={loading}>
-          {loading ? "Adding..." : "Create and link"}
+          {loading ? t("adding") : t("createAndLink")}
         </Button>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
-            Cancel
+            {t("cancel")}
           </Button>
         )}
       </div>
@@ -496,6 +502,12 @@ function LinkRepresentationForm({
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
+  const t = useTranslations("Components");
+  const locale = useLocale();
+  const dateFormatter = new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -515,7 +527,7 @@ function LinkRepresentationForm({
           setOptions(data.representations ?? []);
           setRepresentationId(data.representations?.[0]?.id ?? "");
         } else {
-          setError(data.error ?? "Unable to load representations.");
+          setError(data.error ?? t("representationsLoadError"));
         }
         setFetching(false);
       }
@@ -526,7 +538,7 @@ function LinkRepresentationForm({
     return () => {
       cancelled = true;
     };
-  }, [choreographyId]);
+  }, [choreographyId, t]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -550,7 +562,7 @@ function LinkRepresentationForm({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to link representation.");
+      setError(data.error ?? t("representationLinkError"));
       return;
     }
 
@@ -559,18 +571,18 @@ function LinkRepresentationForm({
   }
 
   if (fetching) {
-    return <p className="text-sm text-stone-600">Loading representations...</p>;
+    return <p className="text-sm text-stone-600">{t("loadingRepresentations")}</p>;
   }
 
   if (options.length === 0) {
     return (
       <div className="space-y-3">
         <p className="text-sm text-stone-600">
-          No other representations available to link. Create a new one instead.
+          {t("noRepresentationsToLink")}
         </p>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel}>
-            Cancel
+            {t("cancel")}
           </Button>
         )}
       </div>
@@ -580,7 +592,7 @@ function LinkRepresentationForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <Label htmlFor="link-representation">Representation</Label>
+        <Label htmlFor="link-representation">{t("representation")}</Label>
         <select
           id="link-representation"
           value={representationId}
@@ -589,7 +601,8 @@ function LinkRepresentationForm({
         >
           {options.map((option) => (
             <option key={option.id} value={option.id}>
-              {option.title ?? "Representation"} · {formatDateTime(new Date(option.startsAt))}
+              {option.title ?? t("representation")} ·{" "}
+              {dateFormatter.format(new Date(option.startsAt))}
               {option.location ? ` · ${option.location}` : ""}
             </option>
           ))}
@@ -598,11 +611,11 @@ function LinkRepresentationForm({
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" disabled={loading || !representationId}>
-          {loading ? "Linking..." : "Link representation"}
+          {loading ? t("linking") : t("linkRepresentation")}
         </Button>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
-            Cancel
+            {t("cancel")}
           </Button>
         )}
       </div>
@@ -619,6 +632,12 @@ function RepresentationCard({
   choreographyId: string;
   canEdit: boolean;
 }) {
+  const t = useTranslations("Components");
+  const locale = useLocale();
+  const dateFormatter = new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
   return (
     <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -627,12 +646,12 @@ function RepresentationCard({
             href={`/events/${representation.id}`}
             className="font-semibold hover:text-stone-700"
           >
-            {representation.title ?? "Representation"}
+            {representation.title ?? t("representation")}
           </Link>
           <p className="mt-1 text-sm text-stone-600">
-            {formatDateTime(new Date(representation.startsAt))}
+            {dateFormatter.format(new Date(representation.startsAt))}
             {representation.endsAt &&
-              ` – ${formatDateTime(new Date(representation.endsAt))}`}
+              ` – ${dateFormatter.format(new Date(representation.endsAt))}`}
           </p>
           {representation.location && (
             <p className="mt-1 text-sm text-stone-500">{representation.location}</p>
@@ -642,12 +661,12 @@ function RepresentationCard({
           <div className="flex items-center gap-1">
             <EditIconLink
               href={`/events/${representation.id}`}
-              label="Edit representation"
+              label={t("editRepresentation")}
             />
             <DeleteEventButton
               deleteUrl={`/api/choreographies/${choreographyId}/representations`}
               deleteBody={{ representationId: representation.id }}
-              confirmMessage="Remove this representation from the choreography? The representation itself will not be deleted."
+              confirmMessage={t("unlinkRepresentationConfirm")}
             />
           </div>
         )}
@@ -667,16 +686,17 @@ export function RepresentationsSection({
   canEdit: boolean;
   eventTypes: SerializedEventType[];
 }) {
+  const t = useTranslations("Components");
   const [showAddForm, setShowAddForm] = useState(false);
   const [addMode, setAddMode] = useState<"create" | "link">("create");
 
   return (
     <section className="mt-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold">Representations</h2>
+        <h2 className="text-xl font-semibold">{t("representations")}</h2>
         {canEdit && !showAddForm && (
           <Button type="button" onClick={() => setShowAddForm(true)}>
-            Add a representation
+            {t("addRepresentation")}
           </Button>
         )}
       </div>
@@ -689,14 +709,14 @@ export function RepresentationsSection({
               variant={addMode === "create" ? "primary" : "secondary"}
               onClick={() => setAddMode("create")}
             >
-              Create new
+              {t("createNew")}
             </Button>
             <Button
               type="button"
               variant={addMode === "link" ? "primary" : "secondary"}
               onClick={() => setAddMode("link")}
             >
-              Link existing
+              {t("linkExisting")}
             </Button>
           </div>
 
@@ -719,7 +739,7 @@ export function RepresentationsSection({
 
       {representations.length === 0 ? (
         <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-          <p className="text-stone-600">No representations linked yet.</p>
+          <p className="text-stone-600">{t("noLinkedRepresentations")}</p>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -748,6 +768,7 @@ function LinkChoreographyForm({
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -767,7 +788,7 @@ function LinkChoreographyForm({
           setOptions(data.choreographies ?? []);
           setChoreographyId(data.choreographies?.[0]?.id ?? "");
         } else {
-          setError(data.error ?? "Unable to load choreographies.");
+          setError(data.error ?? t("choreographiesLoadError"));
         }
         setFetching(false);
       }
@@ -778,7 +799,7 @@ function LinkChoreographyForm({
     return () => {
       cancelled = true;
     };
-  }, [representationId]);
+  }, [representationId, t]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -799,7 +820,7 @@ function LinkChoreographyForm({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to link choreography.");
+      setError(data.error ?? t("choreographyLinkError"));
       return;
     }
 
@@ -808,18 +829,18 @@ function LinkChoreographyForm({
   }
 
   if (fetching) {
-    return <p className="text-sm text-stone-600">Loading choreographies...</p>;
+    return <p className="text-sm text-stone-600">{t("loadingChoreographies")}</p>;
   }
 
   if (options.length === 0) {
     return (
       <div className="space-y-3">
         <p className="text-sm text-stone-600">
-          No other choreographies available to link.
+          {t("noChoreographiesToLink")}
         </p>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel}>
-            Cancel
+            {t("cancel")}
           </Button>
         )}
       </div>
@@ -829,7 +850,7 @@ function LinkChoreographyForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <Label htmlFor="link-choreography">Choreography</Label>
+        <Label htmlFor="link-choreography">{t("choreography")}</Label>
         <select
           id="link-choreography"
           value={choreographyId}
@@ -846,11 +867,11 @@ function LinkChoreographyForm({
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" disabled={loading || !choreographyId}>
-          {loading ? "Linking..." : "Link choreography"}
+          {loading ? t("linking") : t("linkChoreography")}
         </Button>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
-            Cancel
+            {t("cancel")}
           </Button>
         )}
       </div>
@@ -862,7 +883,7 @@ export function RepresentationChoreographiesSection({
   representationId,
   choreographies,
   canEdit,
-  description = "Pieces performed in this representation.",
+  description,
 }: {
   representationId: string;
   choreographies: {
@@ -875,20 +896,22 @@ export function RepresentationChoreographiesSection({
   canEdit: boolean;
   description?: string;
 }) {
+  const t = useTranslations("Components");
+  const localizedDescription = description ?? t("representationPiecesHelp");
   const [showLinkForm, setShowLinkForm] = useState(false);
 
   return (
     <section className="mt-2">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold">Linked choreographies</h2>
+          <h2 className="text-xl font-semibold">{t("linkedChoreographies")}</h2>
           <p className="mt-1 text-sm text-stone-500">
-            {description}
+            {localizedDescription}
           </p>
         </div>
         {canEdit && !showLinkForm && (
           <Button type="button" onClick={() => setShowLinkForm(true)}>
-            Link choreography
+            {t("linkChoreography")}
           </Button>
         )}
       </div>
@@ -905,7 +928,7 @@ export function RepresentationChoreographiesSection({
 
       {choreographies.length === 0 ? (
         <Card>
-          <p className="text-stone-600">No choreographies linked yet.</p>
+          <p className="text-stone-600">{t("noLinkedChoreographiesYet")}</p>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -922,7 +945,7 @@ export function RepresentationChoreographiesSection({
                   <DeleteEventButton
                     deleteUrl={`/api/events/${representationId}/choreographies`}
                     deleteBody={{ choreographyId: choreography.id }}
-                    confirmMessage={`Remove ${choreography.title} from this event? The choreography itself will not be deleted.`}
+                    confirmMessage={t("unlinkChoreographyConfirm", {title: choreography.title})}
                   />
                 )}
               </div>

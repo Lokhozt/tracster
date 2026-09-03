@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui";
-import { formatChoreographyLifecycleWarning } from "@/lib/choreography-lifecycle";
+
 
 type UpcomingItem = {
   id: string;
@@ -22,6 +24,7 @@ export function ChoreographyLifecycleActions({
   upcomingRehearsals: UpcomingItem[];
   upcomingRepresentations: UpcomingItem[];
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loadingAction, setLoadingAction] = useState<"archive" | "delete" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +41,7 @@ export function ChoreographyLifecycleActions({
   };
 
   async function runAction(action: "archive" | "delete") {
-    const warning = formatChoreographyLifecycleWarning({ action, title, impact });
+    const warning = t(action === "archive" ? "archiveChoreographyConfirm" : "deleteChoreographyConfirm", {title, rehearsals: impact.rehearsals.length, representations: impact.representations.length});
     if (!confirm(warning)) {
       return;
     }
@@ -61,7 +64,7 @@ export function ChoreographyLifecycleActions({
     setLoadingAction(null);
 
     if (!response.ok) {
-      setError(data.error ?? `Unable to ${action} choreography.`);
+      setError(data.error ?? t(action === "archive" ? "archiveChoreographyError" : "deleteChoreographyError"));
       return;
     }
 
@@ -71,11 +74,9 @@ export function ChoreographyLifecycleActions({
 
   return (
     <div className="mt-8 rounded-xl border border-red-200 bg-red-50 p-4 sm:p-5">
-      <h2 className="mb-1 text-lg font-semibold text-red-950">Admin actions</h2>
+      <h2 className="mb-1 text-lg font-semibold text-red-950">{t("adminActions")}</h2>
       <p className="mb-4 text-sm text-red-800">
-        Archiving hides this choreography. Deleting removes it permanently.
-        Upcoming rehearsals are deleted and this piece is unlinked from upcoming
-        representations.
+        {t("lifecycleHelp")}
       </p>
       {error && <p className="mb-3 text-sm text-red-700">{error}</p>}
       <div className="flex flex-wrap gap-2">
@@ -85,7 +86,7 @@ export function ChoreographyLifecycleActions({
           disabled={loadingAction !== null}
           onClick={() => runAction("archive")}
         >
-          {loadingAction === "archive" ? "Archiving..." : "Archive choreography"}
+          {loadingAction === "archive" ? t("archiving") : t("archiveChoreography")}
         </Button>
         <Button
           type="button"
@@ -93,7 +94,7 @@ export function ChoreographyLifecycleActions({
           disabled={loadingAction !== null}
           onClick={() => runAction("delete")}
         >
-          {loadingAction === "delete" ? "Deleting..." : "Delete choreography"}
+          {loadingAction === "delete" ? t("deleting") : t("deleteChoreography")}
         </Button>
       </div>
     </div>

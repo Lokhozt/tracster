@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useEffect, useState } from "react";
 import { Input, Label, Select } from "@/components/ui";
 import type { LocationRecord } from "@/lib/locations";
@@ -55,6 +57,7 @@ export function LocationPicker({
   value: LocationSelection;
   onChange: (value: LocationSelection) => void;
 }) {
+  const t = useTranslations("Components");
   const [locations, setLocations] = useState<LocationRecord[]>([]);
   const selectValue =
     value.kind === "listed" && value.locationId
@@ -102,14 +105,14 @@ export function LocationPicker({
   return (
     <div className="space-y-3">
       <div>
-        <Label htmlFor={id}>Location</Label>
+        <Label htmlFor={id}>{t("location")}</Label>
         <Select
           id={id}
           value={selectValue}
           onChange={(event) => handleSelectChange(event.target.value)}
           className="w-full"
         >
-          <option value="">No location</option>
+          <option value="">{t("noLocation")}</option>
           {locations.map((location) => (
             <option key={location.id} value={location.id}>
               {location.name}
@@ -118,21 +121,21 @@ export function LocationPicker({
           {value.kind === "listed" &&
             value.locationId &&
             !locations.some((location) => location.id === value.locationId) && (
-              <option value={value.locationId}>Current location</option>
+              <option value={value.locationId}>{t("currentLocation")}</option>
             )}
-          <option value={UNIQUE_VALUE}>Unique location…</option>
+          <option value={UNIQUE_VALUE}>{t("uniqueLocationOption")}</option>
         </Select>
       </div>
       {value.kind === "unique" && (
         <div>
-          <Label htmlFor={`${id}-unique`}>Unique location</Label>
+          <Label htmlFor={`${id}-unique`}>{t("uniqueLocation")}</Label>
           <Input
             id={`${id}-unique`}
             value={value.location}
             onChange={(event) =>
               onChange({ kind: "unique", locationId: null, location: event.target.value })
             }
-            placeholder="Studio 2"
+            placeholder={t("studioPlaceholder")}
           />
         </div>
       )}

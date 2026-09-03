@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -22,13 +25,15 @@ function PenIcon({ className }: { className?: string }) {
 
 export function EditIconLink({
   href,
-  label = "Edit",
+  label,
   className,
 }: {
   href: string;
   label?: string;
   className?: string;
 }) {
+  const t = useTranslations("Components");
+  const accessibleLabel = label ?? t("edit");
   return (
     <Link
       href={href}
@@ -36,8 +41,8 @@ export function EditIconLink({
         "inline-flex rounded-lg p-2 text-stone-500 transition hover:bg-stone-100 hover:text-stone-900",
         className,
       )}
-      aria-label={label}
-      title={label}
+      aria-label={accessibleLabel}
+      title={accessibleLabel}
     >
       <PenIcon />
     </Link>

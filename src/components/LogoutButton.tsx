@@ -1,9 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui";
 
 export function LogoutButton() {
   const router = useRouter();
+  const t = useTranslations("Navigation");
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -12,12 +15,8 @@ export function LogoutButton() {
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleLogout}
-      className="min-h-11 px-2 text-stone-600 hover:text-stone-900"
-    >
-      Sign out
-    </button>
+    <Button type="button" variant="secondary" onClick={handleLogout}>
+      {t("signOut")}
+    </Button>
   );
 }

@@ -1,14 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { cn } from "@/lib/utils";
 
 export function AuthNav({ stacked = false }: { stacked?: boolean }) {
   const pathname = usePathname();
+  const t = useTranslations("Navigation");
 
   return (
-    <div className={cn("flex gap-2 text-sm", stacked ? "flex-col" : "flex-wrap")}>
+    <div className={cn("flex gap-2 text-sm", stacked ? "flex-col" : "flex-wrap items-center")}>
+      <LanguageSwitcher compact />
       <Link
         href="/login"
         aria-current={pathname === "/login" ? "page" : undefined}
@@ -20,7 +24,7 @@ export function AuthNav({ stacked = false }: { stacked?: boolean }) {
             : "text-stone-600 hover:bg-stone-100 hover:text-stone-900",
         )}
       >
-        Sign in
+        {t("signIn")}
       </Link>
       <Link
         href="/register"
@@ -33,7 +37,7 @@ export function AuthNav({ stacked = false }: { stacked?: boolean }) {
             : "bg-stone-900 text-white hover:bg-stone-700",
         )}
       >
-        Register
+        {t("register")}
       </Link>
     </div>
   );

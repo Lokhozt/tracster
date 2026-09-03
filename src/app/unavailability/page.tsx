@@ -1,5 +1,6 @@
 import { addDays, format, startOfWeek } from "date-fns";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { UnavailabilityCalendar } from "@/components/UnavailabilityCalendar";
 import { getCurrentUser } from "@/lib/auth";
@@ -10,7 +11,10 @@ import {
 import { getSiteSettings } from "@/lib/site-settings";
 
 export default async function UnavailabilityPage() {
-  const user = await getCurrentUser();
+  const [user, t] = await Promise.all([
+    getCurrentUser(),
+    getTranslations("Pages.Unavailability"),
+  ]);
   if (!user) {
     redirect("/login");
   }
@@ -23,10 +27,9 @@ export default async function UnavailabilityPage() {
   ]);
 
   return (
-    <AppShell title="My unavailability">
+    <AppShell title={t("title")}>
       <p className="mb-6 text-stone-600">
-        Mark periods when you are not available. Click a date to mark the whole day, click it again
-        to clear it, or use the calendar to draw, move, and resize blocks.
+        {t("intro")}
       </p>
       <UnavailabilityCalendar
         initialTimeframes={timeframes.map(serializeUnavailability)}

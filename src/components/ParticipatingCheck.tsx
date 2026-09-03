@@ -1,17 +1,21 @@
+
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 export function ParticipatingCheck({
   className,
-  label = "You are participating",
+  label,
 }: {
   className?: string;
   label?: string;
 }) {
+  const t = useTranslations("Components");
+  const accessibleLabel = label ?? t("youParticipate");
   return (
     <span
       className={cn("inline-flex shrink-0 items-center text-green-600", className)}
-      title={label}
-      aria-label={label}
+      title={accessibleLabel}
+      aria-label={accessibleLabel}
       role="img"
     >
       <svg

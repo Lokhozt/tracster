@@ -1,6 +1,8 @@
 import { addMonths, addWeeks } from "date-fns";
 import { defaultEventTitle, isGenericEventKind, type EventKind } from "@/lib/event-type-helpers";
 
+type MessageTranslator = (key: string, values?: Record<string, string | number>) => string;
+
 export type SerializedScheduleEvent = {
   id: string;
   typeId: string;
@@ -24,11 +26,18 @@ export type SerializedScheduleEvent = {
   canEdit: boolean;
 };
 
-export function withParticipantTooltip(base: string, names: string[]) {
+export function withParticipantTooltip(
+  base: string,
+  names: string[],
+  t?: MessageTranslator,
+) {
   if (names.length === 0) {
     return base;
   }
-  return `${base}\nParticipants: ${names.join(", ")}`;
+  const participantNames = names.join(", ");
+  return `${base}\n${
+    t ? t("participantsTooltip", { names: participantNames }) : `Participants: ${participantNames}`
+  }`;
 }
 
 export type UpcomingEventRange = "all" | "week" | "month";

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getLocale, getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { AvailabilityButtons } from "@/components/AvailabilityButtons";
 import {
@@ -20,6 +21,7 @@ import { getRehearsalAudience, isRehearsalParticipant } from "@/lib/groups";
 import { listedLocationInclude } from "@/lib/locations";
 import { canEditChoreography } from "@/lib/permissions";
 import { basicUserSelect, formatUserName, serializeBasicUser } from "@/lib/users";
+import { getServerTranslator } from "@/i18n/server";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -30,7 +32,12 @@ const statusStyles = {
 } as const;
 
 export default async function EventDetailPage({ params }: PageProps) {
-  const user = await getCurrentUser();
+  const [user, t, locale, serverT] = await Promise.all([
+    getCurrentUser(),
+    getTranslations("Pages.EventDetail"),
+    getLocale(),
+    getServerTranslator(),
+  ]);
   if (!user) {
     redirect("/login");
   }
@@ -114,7 +121,7 @@ export default async function EventDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const event = serializeEvent(eventRecord);
+  const event = serializeEvent(eventRecord, serverT);
   const generic = isGenericEventKind(event.type.kind);
   const isParticipant = eventRecord.participants.some(
     (participant) => participant.userId === user.id,
@@ -155,8 +162,8 @@ export default async function EventDetailPage({ params }: PageProps) {
       : "/events";
   const backLabel =
     event.type.kind === "REHEARSAL" && event.choreographyTitle
-      ? `← Back to ${event.choreographyTitle}`
-      : "← Back to events";
+      ? t("backToChoreography", { title: event.choreographyTitle })
+      : t("backToEvents");
 
   return (
     <AppShell title={event.displayTitle}>
@@ -186,41 +193,43 @@ export default async function EventDetailPage({ params }: PageProps) {
       <Card className="mb-6">
         <div className="grid gap-2 text-sm text-stone-600">
           <p>
-            <span className="font-medium text-stone-900">Start:</span>{" "}
-            {formatDateTime(new Date(event.startsAt))}
+            <span className="font-medium text-stone-900">{t("start")}:</span>{" "}
+            {formatDateTime(new Date(event.startsAt), locale as "en" | "fr")}
           </p>
           {event.endsAt && (
             <p>
-              <span className="font-medium text-stone-900">End:</span>{" "}
-              {formatDateTime(new Date(event.endsAt))}
+              <span className="font-medium text-stone-900">{t("end")}:</span>{" "}
+              {formatDateTime(new Date(event.endsAt), locale as "en" | "fr")}
             </p>
           )}
           {event.location && (
             <p>
-              <span className="font-medium text-stone-900">Location:</span>{" "}
+              <span className="font-medium text-stone-900">{t("location")}:</span>{" "}
               {event.location}
             </p>
           )}
           {event.choreographyTitle && (
             <p>
-              <span className="font-medium text-stone-900">Choreography:</span>{" "}
+              <span className="font-medium text-stone-900">{t("choreography")}:</span>{" "}
               {event.choreographyTitle}
             </p>
           )}
           {event.groupName && (
             <p>
-              <span className="font-medium text-stone-900">Group:</span> {event.groupName}
+              <span className="font-medium text-stone-900">{t("group")}:</span>{" "}
+              {event.groupName}
             </p>
           )}
           {event.description && (
             <p>
-              <span className="font-medium text-stone-900">Description:</span>{" "}
+              <span className="font-medium text-stone-900">{t("description")}:</span>{" "}
               {event.description}
             </p>
           )}
           {event.notes && (
             <p>
-              <span className="font-medium text-stone-900">Notes:</span> {event.notes}
+              <span className="font-medium text-stone-900">{t("notes")}:</span>{" "}
+              {event.notes}
             </p>
           )}
         </div>
@@ -240,7 +249,7 @@ export default async function EventDetailPage({ params }: PageProps) {
 
       {canRespondAvailability && (
         <Card className="mb-6">
-          <h2 className="mb-3 text-lg font-semibold">Your availability</h2>
+          <h2 className="mb-3 text-lg font-semibold">{t("yourAvailability")}</h2>
           <AvailabilityButtons
             rehearsalId={eventRecord.id}
             currentStatus={myResponse?.status}
@@ -250,10 +259,10 @@ export default async function EventDetailPage({ params }: PageProps) {
 
       {event.type.kind === "REHEARSAL" && canEdit && (
         <Card className="mb-6">
-          <h2 className="mb-4 text-lg font-semibold">Participant availability</h2>
+          <h2 className="mb-4 text-lg font-semibold">{t("participantAvailability")}</h2>
           <div className="space-y-3">
             {rehearsalMembers.length === 0 ? (
-              <p className="text-sm text-stone-600">No participants assigned yet.</p>
+              <p className="text-sm text-stone-600">{t("noParticipantsAssigned")}</p>
             ) : (
               rehearsalMembers.map((member) => {
                 const response = eventRecord.availabilities.find(
@@ -272,7 +281,9 @@ export default async function EventDetailPage({ params }: PageProps) {
                         response ? statusStyles[response.status] : "text-stone-400"
                       }`}
                     >
-                      {response?.status ?? "No response"}
+                      {response
+                        ? t(`availabilityStatus.${response.status}`)
+                        : t("availabilityStatus.noResponse")}
                     </p>
                   </div>
                 );
@@ -289,8 +300,8 @@ export default async function EventDetailPage({ params }: PageProps) {
             canEdit={canEdit}
             description={
               event.type.kind === "DEMONSTRATION"
-                ? "Pieces shown in this demonstration."
-                : "Pieces performed in this representation."
+                ? t("demonstrationPieces")
+                : t("representationPieces")
             }
             choreographies={eventRecord.choreographies.map((link) => ({
               id: link.choreography.id,
@@ -305,7 +316,7 @@ export default async function EventDetailPage({ params }: PageProps) {
 
       {generic && (
         <Card>
-          <h2 className="mb-4 text-lg font-semibold">Participants</h2>
+          <h2 className="mb-4 text-lg font-semibold">{t("participants")}</h2>
           <EventParticipantsList
             eventId={id}
             participants={event.participants}
@@ -325,7 +336,7 @@ export default async function EventDetailPage({ params }: PageProps) {
 
       {canEdit && (
         <Card className="mt-8">
-          <h2 className="mb-4 text-lg font-semibold">Edit event</h2>
+          <h2 className="mb-4 text-lg font-semibold">{t("editEvent")}</h2>
           <EditEventForm
             event={event}
             eventTypes={eventTypes}

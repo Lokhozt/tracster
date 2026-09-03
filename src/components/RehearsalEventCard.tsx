@@ -1,10 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import Link from "next/link";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
 import { EditIconLink } from "@/components/EditIconLink";
 import { Card } from "@/components/ui";
-import { formatDateTime } from "@/lib/datetime";
+import { useLocale } from "next-intl";
 
 export type RehearsalListItem = {
   id: string;
@@ -24,20 +26,23 @@ export function RehearsalEventCard({
   rehearsal: RehearsalListItem;
   canEdit: boolean;
 }) {
+  const t = useTranslations("Components");
+  const locale = useLocale();
+  const dateFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
   return (
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h3 className="font-semibold">{rehearsal.title ?? "Rehearsal"}</h3>
+          <h3 className="font-semibold">{rehearsal.title ?? t("rehearsal")}</h3>
           <p className="mt-1 text-sm text-stone-600">
-            {formatDateTime(new Date(rehearsal.startsAt))}
-            {rehearsal.endsAt && ` – ${formatDateTime(new Date(rehearsal.endsAt))}`}
+            {dateFormatter.format(new Date(rehearsal.startsAt))}
+            {rehearsal.endsAt && ` – ${dateFormatter.format(new Date(rehearsal.endsAt))}`}
           </p>
           {rehearsal.location && (
             <p className="mt-1 text-sm text-stone-500">{rehearsal.location}</p>
           )}
           {rehearsal.groupName && (
-            <p className="mt-1 text-sm text-stone-500">Group: {rehearsal.groupName}</p>
+            <p className="mt-1 text-sm text-stone-500">{t("groupName", {name: rehearsal.groupName})}</p>
           )}
         </div>
         <div className="flex items-center gap-1">
@@ -45,14 +50,14 @@ export function RehearsalEventCard({
             href={`/events/${rehearsal.id}`}
             className="text-sm font-medium text-stone-900 hover:underline"
           >
-            View details
+            {t("viewDetails")}
           </Link>
           {canEdit && (
             <>
-              <EditIconLink href={`/events/${rehearsal.id}`} label="Edit rehearsal" />
+              <EditIconLink href={`/events/${rehearsal.id}`} label={t("editRehearsal")} />
               <DeleteEventButton
                 deleteUrl={`/api/events/${rehearsal.id}`}
-                confirmMessage="Delete this rehearsal? This cannot be undone."
+                confirmMessage={t("deleteRehearsalConfirm")}
               />
             </>
           )}
@@ -62,7 +67,7 @@ export function RehearsalEventCard({
         <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
           <div>
             <p className="font-medium text-green-700">
-              Available ({rehearsal.availableNames.length})
+              {t("availableCount", {count: rehearsal.availableNames.length})}
             </p>
             <p className="text-stone-600">
               {rehearsal.availableNames.join(", ") || "—"}
@@ -70,7 +75,7 @@ export function RehearsalEventCard({
           </div>
           <div>
             <p className="font-medium text-red-700">
-              Unavailable ({rehearsal.unavailableNames.length})
+              {t("unavailableCount", {count: rehearsal.unavailableNames.length})}
             </p>
             <p className="text-stone-600">
               {rehearsal.unavailableNames.join(", ") || "—"}

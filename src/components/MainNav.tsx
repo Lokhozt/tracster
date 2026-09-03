@@ -1,29 +1,30 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export type NavItem = {
   href: string;
-  label: string;
+  label: "schedule" | "choreographies" | "events" | "unavailability" | "scheduling" | "settings";
   match: (pathname: string) => boolean;
 };
 
 const baseNavItems: NavItem[] = [
   {
     href: "/",
-    label: "Schedule",
+    label: "schedule",
     match: (pathname) => pathname === "/",
   },
   {
     href: "/choreographies",
-    label: "Choreographies",
+    label: "choreographies",
     match: (pathname) => pathname.startsWith("/choreographies"),
   },
   {
     href: "/events",
-    label: "Events",
+    label: "events",
     match: (pathname) =>
       pathname.startsWith("/events") ||
       pathname.startsWith("/representations") ||
@@ -32,7 +33,7 @@ const baseNavItems: NavItem[] = [
   },
   {
     href: "/unavailability",
-    label: "Unavailability",
+    label: "unavailability",
     match: (pathname) => pathname.startsWith("/unavailability"),
   },
 ];
@@ -40,12 +41,12 @@ const baseNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
   {
     href: "/scheduling",
-    label: "Scheduling",
+    label: "scheduling",
     match: (pathname) => pathname.startsWith("/scheduling"),
   },
   {
     href: "/settings",
-    label: "Settings",
+    label: "settings",
     match: (pathname) =>
       pathname.startsWith("/settings") || pathname.startsWith("/users"),
   },
@@ -57,6 +58,7 @@ export function getNavItems(showAdminNav = false): NavItem[] {
 
 export function MainNav({ showAdminNav = false }: { showAdminNav?: boolean }) {
   const pathname = usePathname();
+  const t = useTranslations("Navigation");
   const navItems = getNavItems(showAdminNav);
 
   return (
@@ -76,7 +78,7 @@ export function MainNav({ showAdminNav = false }: { showAdminNav?: boolean }) {
                 : "text-stone-600 hover:bg-stone-100 hover:text-stone-900",
             )}
           >
-            {item.label}
+            {t(item.label)}
           </Link>
         );
       })}

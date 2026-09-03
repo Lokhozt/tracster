@@ -1,3 +1,5 @@
+
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 export function FollowAssociationCalendarLink({
@@ -7,6 +9,7 @@ export function FollowAssociationCalendarLink({
   href: string;
   className?: string;
 }) {
+  const t = useTranslations("Components");
   return (
     <a
       href={href}
@@ -18,7 +21,7 @@ export function FollowAssociationCalendarLink({
       )}
     >
       <GoogleCalendarMark />
-      Follow association's calendar
+      {t("followAssociationCalendar")}
     </a>
   );
 }

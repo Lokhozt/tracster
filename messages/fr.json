@@ -1,0 +1,50 @@
+{
+  "Common": {
+    "appName": "Tracster",
+    "english": "Anglais",
+    "french": "Français",
+    "language": "Langue d’affichage",
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "create": "Créer",
+    "update": "Mettre à jour",
+    "close": "Fermer",
+    "loading": "Chargement...",
+    "yes": "Oui",
+    "no": "Non"
+  },
+  "Navigation": {
+    "schedule": "Planning",
+    "choreographies": "Chorégraphies",
+    "events": "Événements",
+    "unavailability": "Indisponibilités",
+    "scheduling": "Planification",
+    "settings": "Paramètres",
+    "account": "Compte",
+    "signIn": "Se connecter",
+    "register": "S’inscrire",
+    "signOut": "Se déconnecter",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu"
+  },
+  "Metadata": {
+    "description": "Planifiez les répétitions et suivez les disponibilités des participants de votre association."
+  },
+  "Account": {
+    "title": "Compte",
+    "intro": "Mettez à jour vos coordonnées, votre langue d’affichage et votre connexion personnelle à Google Agenda.",
+    "profile": "Profil",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "phone": "Téléphone",
+    "saved": "Profil enregistré.",
+    "saveProfile": "Enregistrer le profil",
+    "saveError": "Impossible d’enregistrer votre profil.",
+    "session": "Session",
+    "signOutHelp": "Déconnectez-vous de Tracster sur cet appareil."
+  }
+}

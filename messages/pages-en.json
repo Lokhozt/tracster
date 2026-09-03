@@ -1,0 +1,91 @@
+{
+  "Pages": {
+    "Home": {
+      "title": "Schedule",
+      "eyebrow": "Rehearsal planning",
+      "heading": "Plan choreographies and track availability",
+      "intro": "Tracster helps associations organize rehearsals, assign participants, and collect availability for each rehearsal.",
+      "getStarted": "Get started",
+      "signIn": "Sign in"
+    },
+    "Login": {
+      "title": "Sign in"
+    },
+    "Register": {
+      "title": "Create account"
+    },
+    "Unavailability": {
+      "title": "My unavailability",
+      "intro": "Mark periods when you are not available. Click a date to mark the whole day, click it again to clear it, or use the calendar to draw, move, and resize blocks."
+    },
+    "Scheduling": {
+      "title": "Scheduling",
+      "intro": "Build an optimized rehearsal weekend: pick pieces, days, and locations, then choose one of the generated calendars. Confirming creates the rehearsals."
+    },
+    "Events": {
+      "title": "Events",
+      "introAll": "All association events, including rehearsals, representations, demonstrations, competitions, and festivals.",
+      "introRelevant": "Events you created, participate in, or that are linked to your choreographies.",
+      "scheduleRehearsals": "Schedule rehearsals",
+      "newEvent": "New event",
+      "emptyCreate": "No events yet. Create your first one.",
+      "empty": "No events yet."
+    },
+    "NewEvent": {
+      "title": "New event"
+    },
+    "EventDetail": {
+      "backToChoreography": "← Back to {title}",
+      "backToEvents": "← Back to events",
+      "start": "Start",
+      "end": "End",
+      "location": "Location",
+      "choreography": "Choreography",
+      "group": "Group",
+      "description": "Description",
+      "notes": "Notes",
+      "yourAvailability": "Your availability",
+      "participantAvailability": "Participant availability",
+      "noParticipantsAssigned": "No participants assigned yet.",
+      "availabilityStatus": {
+        "AVAILABLE": "Available",
+        "UNAVAILABLE": "Unavailable",
+        "MAYBE": "Maybe",
+        "noResponse": "No response"
+      },
+      "demonstrationPieces": "Pieces shown in this demonstration.",
+      "representationPieces": "Pieces performed in this representation.",
+      "participants": "Participants",
+      "editEvent": "Edit event"
+    },
+    "Settings": {
+      "title": "Settings",
+      "intro": "Configure association-wide options, listed locations, and members."
+    },
+    "Choreographies": {
+      "title": "Choreographies",
+      "intro": "By default this list shows choreographies you created, choreograph, or participate in.",
+      "newChoreography": "New choreography"
+    },
+    "NewChoreography": {
+      "title": "New choreography"
+    },
+    "ChoreographyDetail": {
+      "createdBy": "Created by {name}",
+      "choreographers": "Choreographers",
+      "participants": "Participants",
+      "editChoreography": "Edit choreography"
+    },
+    "NewUser": {
+      "title": "New user",
+      "backToSettings": "← Back to settings"
+    },
+    "UserDetail": {
+      "backToSettings": "← Back to settings",
+      "profile": "Profile",
+      "role": "Role",
+      "transferOwnership": "Transfer ownership",
+      "transferOwnershipIntro": "Transfer the owner role to another user. You will become a regular user. This is the only way to change who holds the owner role."
+    }
+  }
+}

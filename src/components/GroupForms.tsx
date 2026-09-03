@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Input, Label } from "@/components/ui";
@@ -16,6 +18,7 @@ function GroupMemberCheckboxes({
   selectedMemberIds: string[];
   onChange: (memberIds: string[]) => void;
 }) {
+  const t = useTranslations("Components");
   function toggleMember(memberId: string) {
     if (selectedMemberIds.includes(memberId)) {
       onChange(selectedMemberIds.filter((id) => id !== memberId));
@@ -26,7 +29,7 @@ function GroupMemberCheckboxes({
   }
 
   if (members.length === 0) {
-    return <p className="text-sm text-stone-500">Add participants before creating groups.</p>;
+    return <p className="text-sm text-stone-500">{t("addParticipantsBeforeGroups")}</p>;
   }
 
   return (
@@ -60,6 +63,7 @@ function CreateGroupForm({
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [name, setName] = useState("");
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
@@ -84,7 +88,7 @@ function CreateGroupForm({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to create group.");
+      setError(data.error ?? t("groupCreateError"));
       return;
     }
 
@@ -97,17 +101,17 @@ function CreateGroupForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label htmlFor="group-name">Group name</Label>
+        <Label htmlFor="group-name">{t("groupNameLabel")}</Label>
         <Input
           id="group-name"
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="Group A"
+          placeholder={t("groupPlaceholder")}
           required
         />
       </div>
       <div>
-        <Label>Members</Label>
+        <Label>{t("members")}</Label>
         <div className="mt-2">
           <GroupMemberCheckboxes
             members={members}
@@ -119,11 +123,11 @@ function CreateGroupForm({
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" disabled={loading || !name.trim() || selectedMemberIds.length === 0}>
-          {loading ? "Creating..." : "Create group"}
+          {loading ? t("creating") : t("createGroup")}
         </Button>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
-            Cancel
+            {t("cancel")}
           </Button>
         )}
       </div>
@@ -144,6 +148,7 @@ function EditGroupForm({
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [name, setName] = useState(group.name);
   const [selectedMemberIds, setSelectedMemberIds] = useState(
@@ -173,7 +178,7 @@ function EditGroupForm({
     setLoading(false);
 
     if (!response.ok) {
-      setError(data.error ?? "Unable to update group.");
+      setError(data.error ?? t("groupUpdateError"));
       return;
     }
 
@@ -184,7 +189,7 @@ function EditGroupForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label htmlFor={`group-name-${group.id}`}>Group name</Label>
+        <Label htmlFor={`group-name-${group.id}`}>{t("groupNameLabel")}</Label>
         <Input
           id={`group-name-${group.id}`}
           value={name}
@@ -193,7 +198,7 @@ function EditGroupForm({
         />
       </div>
       <div>
-        <Label>Members</Label>
+        <Label>{t("members")}</Label>
         <div className="mt-2">
           <GroupMemberCheckboxes
             members={members}
@@ -205,10 +210,10 @@ function EditGroupForm({
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" disabled={loading || !name.trim() || selectedMemberIds.length === 0}>
-          {loading ? "Saving..." : "Save group"}
+          {loading ? t("saving") : t("saveGroup")}
         </Button>
         <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
-          Cancel
+          {t("cancel")}
         </Button>
       </div>
     </form>
@@ -222,6 +227,7 @@ function DeleteGroupButton({
   choreographyId: string;
   groupId: string;
 }) {
+  const t = useTranslations("Components");
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -252,7 +258,7 @@ function DeleteGroupButton({
 
   return (
     <Button type="button" variant="ghost" disabled={loading} onClick={handleDelete}>
-      {loading ? "Deleting..." : "Delete"}
+      {loading ? t("deleting") : t("delete")}
     </Button>
   );
 }
@@ -268,6 +274,7 @@ export function GroupsSection({
   groups: SerializedGroup[];
   members: MemberOption[];
 }) {
+  const t = useTranslations("Components");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
 
@@ -275,21 +282,21 @@ export function GroupsSection({
     <section className="mt-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold">Groups</h2>
+          <h2 className="text-xl font-semibold">{t("groups")}</h2>
           <p className="mt-1 text-sm text-stone-500">
-            Optional participant groups with overlapping membership.
+            {t("groupsHelp")}
           </p>
         </div>
         {canEdit && !showCreateForm && members.length > 0 && (
           <Button type="button" onClick={() => setShowCreateForm(true)}>
-            New group
+            {t("newGroup")}
           </Button>
         )}
       </div>
 
       {canEdit && showCreateForm && (
         <Card className="mb-6">
-          <h3 className="mb-4 font-medium">Create group</h3>
+          <h3 className="mb-4 font-medium">{t("createGroup")}</h3>
           <CreateGroupForm
             choreographyId={choreographyId}
             members={members}
@@ -304,7 +311,7 @@ export function GroupsSection({
           <p className="text-stone-600">
             {canEdit
               ? "No groups yet. Create groups to schedule rehearsals for a subset of participants."
-              : "No groups defined for this choreography."}
+              : t("noGroups")}
           </p>
         </Card>
       ) : (
@@ -324,7 +331,7 @@ export function GroupsSection({
                   <div>
                     <h3 className="font-semibold">{group.name}</h3>
                     <p className="mt-2 text-sm text-stone-600">
-                      {group.members.map((member) => member.name).join(", ") || "No members"}
+                      {group.members.map((member) => member.name).join(", ") || t("noMembers")}
                     </p>
                   </div>
                   {canEdit && (
@@ -334,7 +341,7 @@ export function GroupsSection({
                         variant="secondary"
                         onClick={() => setEditingGroupId(group.id)}
                       >
-                        Edit
+                        {t("edit")}
                       </Button>
                       <DeleteGroupButton
                         choreographyId={choreographyId}
@@ -367,20 +374,21 @@ export function RehearsalAudienceSelect({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const t = useTranslations("Components");
   if (groups.length === 0) {
     return null;
   }
 
   return (
     <div>
-      <Label htmlFor="rehearsal-audience">Participants</Label>
+      <Label htmlFor="rehearsal-audience">{t("participants")}</Label>
       <select
         id="rehearsal-audience"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"
       >
-        <option value="">All participants</option>
+        <option value="">{t("allParticipants")}</option>
         {groups.map((group) => (
           <option key={group.id} value={group.id}>
             {group.name} ({group.memberCount}{" "}
