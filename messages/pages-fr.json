@@ -4,7 +4,25 @@
       "title": "Planning",
       "eyebrow": "Planification des répétitions",
       "heading": "Planifiez les chorégraphies et suivez les disponibilités",
-      "intro": "Tracster aide les associations à organiser les répétitions, à affecter les participants et à recueillir leurs disponibilités pour chaque répétition.",
+      "intro": "Tout ce dont votre association a besoin pour accompagner ses chorégraphies du studio à la scène.",
+      "features": {
+        "choreographies": {
+          "title": "Gestion des chorégraphies",
+          "description": "Centralisez les pièces, chorégraphes, groupes, participants, répétitions et représentations."
+        },
+        "resources": {
+          "title": "Ressources des chorégraphies",
+          "description": "Regroupez les vidéos, musiques, documents et autres supports utiles avec chaque chorégraphie."
+        },
+        "planning": {
+          "title": "Planification intelligente",
+          "description": "Recueillez les disponibilités, repérez les conflits et créez des plannings adaptés à tous."
+        },
+        "calendar": {
+          "title": "Synchronisation Google Agenda",
+          "description": "Synchronisez les répétitions et événements avec Google Agenda pour que chacun reste informé."
+        }
+      },
       "getStarted": "Commencer",
       "signIn": "Se connecter"
     },

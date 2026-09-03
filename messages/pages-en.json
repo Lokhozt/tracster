@@ -4,7 +4,25 @@
       "title": "Schedule",
       "eyebrow": "Rehearsal planning",
       "heading": "Plan choreographies and track availability",
-      "intro": "Tracster helps associations organize rehearsals, assign participants, and collect availability for each rehearsal.",
+      "intro": "Everything your association needs to bring choreographies from the studio to the stage.",
+      "features": {
+        "choreographies": {
+          "title": "Choreography management",
+          "description": "Organize pieces, choreographers, groups, participants, rehearsals, and performances in one place."
+        },
+        "resources": {
+          "title": "Choreography resources",
+          "description": "Keep videos, music, documents, and other useful materials together with each choreography."
+        },
+        "planning": {
+          "title": "Smart rehearsal planning",
+          "description": "Collect availability, spot conflicts, and build schedules that work for every participant."
+        },
+        "calendar": {
+          "title": "Google Calendar synchronization",
+          "description": "Sync rehearsals and events with Google Calendar so everyone stays up to date."
+        }
+      },
       "getStarted": "Get started",
       "signIn": "Sign in"
     },
