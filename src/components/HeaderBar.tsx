@@ -17,8 +17,10 @@ type HeaderUser = {
 
 export function HeaderBar({
   user,
+  logoSrc,
 }: {
   user: HeaderUser | null;
+  logoSrc?: string | null;
 }) {
   const t = useTranslations("Navigation");
   const pathname = usePathname();
@@ -50,9 +52,7 @@ export function HeaderBar({
   return (
     <header className="sticky top-0 z-40 border-b border-stone-200 bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
-        <Link href="/" className="shrink-0 text-lg font-semibold tracking-tight">
-          Tracster
-        </Link>
+        <BrandLink logoSrc={logoSrc} />
 
         {user ? (
           <div className="hidden min-w-0 items-center justify-between gap-4 lg:flex lg:flex-1">
@@ -103,6 +103,29 @@ export function HeaderBar({
         </div>
       )}
     </header>
+  );
+}
+
+function BrandLink({ logoSrc }: { logoSrc?: string | null }) {
+  const [showLogo, setShowLogo] = useState(Boolean(logoSrc));
+
+  return (
+    <Link
+      href="/"
+      className="flex shrink-0 items-center gap-2 text-lg font-semibold tracking-tight"
+    >
+      {showLogo && logoSrc ? (
+        // S3-backed logo is already sized for the header; skip Next image optimization.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={logoSrc}
+          alt=""
+          className="h-8 w-auto object-contain"
+          onError={() => setShowLogo(false)}
+        />
+      ) : null}
+      Tracster
+    </Link>
   );
 }
 

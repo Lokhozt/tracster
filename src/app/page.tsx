@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 import { FollowAssociationCalendarLink } from "@/components/FollowAssociationCalendarLink";
 import { associationCalendarFollowUrl } from "@/lib/google-calendar";
 import { getUpcomingScheduleEvents, getUserScheduleEvents } from "@/lib/schedule";
+import { APP_LOGO_SRC, isS3Configured } from "@/lib/s3";
 import { formatBirthdayGreeting, isBirthdayOnDate } from "@/lib/users";
 
 async function getUsersWithBirthdayToday(now = new Date()) {
@@ -24,10 +25,12 @@ async function getUsersWithBirthdayToday(now = new Date()) {
 }
 
 export default async function HomePage() {
-  const [user, t] = await Promise.all([
+  const [user, t, tCommon] = await Promise.all([
     getCurrentUser(),
     getTranslations("Pages.Home"),
+    getTranslations("Common"),
   ]);
+  const logoSrc = isS3Configured() ? APP_LOGO_SRC : null;
 
   if (user) {
     const [events, birthdayUsers] = await Promise.all([
@@ -59,12 +62,23 @@ export default async function HomePage() {
   return (
     <AppShell>
       <section className="mx-auto max-w-2xl py-16 text-center">
+        <h1 className="mb-4 flex items-center justify-center gap-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+          {logoSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoSrc}
+              alt=""
+              className="h-12 w-auto object-contain sm:h-14"
+            />
+          ) : null}
+          {tCommon("appName")}
+        </h1>
         <p className="mb-3 text-sm font-medium uppercase tracking-wide text-stone-500">
           {t("eyebrow")}
         </p>
-        <h1 className="mb-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+        <p className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">
           {t("heading")}
-        </h1>
+        </p>
         <p className="mb-8 text-base text-stone-600 sm:text-lg">
           {t("intro")}
         </p>

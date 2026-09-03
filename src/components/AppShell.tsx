@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth";
 import { HeaderBar } from "@/components/HeaderBar";
+import { APP_LOGO_SRC, isS3Configured } from "@/lib/s3";
 
 export async function AppShell({
   children,
@@ -21,6 +22,7 @@ export async function AppShell({
               }
             : null
         }
+        logoSrc={isS3Configured() ? APP_LOGO_SRC : null}
       />
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
         {title && (
