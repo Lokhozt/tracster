@@ -121,6 +121,55 @@ rehearsals. Each member can connect a personal calendar on **Account** to copy t
 rehearsals. Sync is one-way from Tracster; personal unavailability is never sent to or read from
 Google.
 
+### File storage (Railway bucket)
+
+Choreography resources (files attached to a piece) upload directly from the browser to an
+S3-compatible [Railway Storage Bucket](https://docs.railway.com/storage-buckets/uploading-serving)
+via presigned URLs. Configure the bucket credentials in `.env`:
+
+```bash
+AWS_ACCESS_KEY_ID="..."
+AWS_SECRET_ACCESS_KEY="..."
+AWS_ENDPOINT_URL="https://storage.railway.app"   # or your bucket endpoint, e.g. https://t3.storageapi.dev
+AWS_S3_BUCKET_NAME="..."
+AWS_DEFAULT_REGION="auto"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+On Railway, you can reference the bucket preset from the service variables tab instead of
+copying values manually.
+
+#### Bucket CORS (required for uploads)
+
+Railway buckets have no CORS settings in the dashboard. Browser uploads fail with a CORS error
+until you allow your app origin on the bucket. Configure CORS with the AWS CLI (credentials are
+in the bucket’s **Credentials** tab on the Railway canvas):
+
+```bash
+AWS_ACCESS_KEY_ID=your_access_key_id \
+AWS_SECRET_ACCESS_KEY=your_secret_access_key \
+aws s3api put-bucket-cors \
+  --bucket your_bucket_name \
+  --endpoint-url https://storage.railway.app \
+  --cors-configuration '{
+    "CORSRules": [{
+      "AllowedHeaders": ["*"],
+      "AllowedMethods": ["PUT", "GET", "HEAD"],
+      "AllowedOrigins": ["http://localhost:3000", "http://127.0.0.1:3000"],
+      "ExposeHeaders": ["ETag"],
+      "MaxAgeSeconds": 3000
+    }]
+  }'
+```
+
+Replace `your_access_key_id`, `your_secret_access_key`, `your_bucket_name`, and
+`--endpoint-url` with your bucket values. Use `https://storage.railway.app` or the endpoint
+shown in Railway (for example `https://t3.storageapi.dev`).
+
+For production, add your deployed origin to `AllowedOrigins` (the same value as
+`NEXT_PUBLIC_APP_URL`, e.g. `https://tracster.example.com`). If you open the app from a LAN IP
+during development (for example `http://192.168.1.50:3000`), add that origin as well.
+
 ## Project structure
 
 ```
@@ -239,3 +288,10 @@ client and save.
 Common mismatches: registering only the site origin (`http://localhost:3000`), using `https` for
 local dev, mixing `localhost` and `127.0.0.1`, or using the Network IP from `npm run dev` without
 adding that IP’s callback URI. Changes in Google Cloud can take a minute to apply.
+
+### CORS error when uploading a choreography resource
+
+If the browser blocks a `PUT` request to your bucket URL with a cross-origin (CORS) error, the
+bucket CORS policy does not include the origin you are using. See [Bucket CORS](#bucket-cors-required-for-uploads)
+above and add every origin you use (`http://localhost:3000`, `http://127.0.0.1:3000`, your
+production URL, or a LAN IP from `npm run dev`).
