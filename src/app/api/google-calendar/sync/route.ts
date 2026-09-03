@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { forbidden, jsonError, unauthorized } from "@/lib/api";
 import { connectionIdFor, syncGoogleConnection } from "@/lib/google-calendar";
-import { canManageSettings } from "@/lib/roles";
+import { canManageAssociationGoogleCalendar } from "@/lib/roles";
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   if (kind !== "association" && kind !== "user") {
     return jsonError("Invalid Google Calendar connection type.");
   }
-  if (kind === "association" && !(await canManageSettings(user.id))) {
+  if (kind === "association" && !(await canManageAssociationGoogleCalendar(user.id))) {
     return forbidden();
   }
   try {

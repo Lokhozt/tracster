@@ -35,7 +35,7 @@ Tracster is a web application for dance and performance associations to plan reh
 5. Assigned participants respond with **availability** (available, unavailable, maybe) and can maintain a personal **unavailability** calendar.
 6. Choreographers (or admins) schedule **representations** and **demonstrations** and attach choreographies, and can also create **competitions**, **festivals**, and standalone **events**.
 7. The home **schedule** shows rehearsals, representations, and events the user is involved in.
-8. Members can update their **name and phone** and connect a personal Google calendar on **Account**. Admins connect the association calendar in **Settings**.
+8. Members can update their **name and phone** and connect a personal Google calendar on **Account**. The owner connects the association calendar in **Settings**.
 
 ## Getting started
 
@@ -116,7 +116,7 @@ GOOGLE_ASSOCIATION_CALENDAR_TIMEZONE="Europe/Paris"
 on the schedule, account, and settings pages (a calendar id, or a full Google embed URL). Make that
 calendar public in Google Calendar so members can open it.
 
-Admins connect the association calendar under **Settings**. It receives every future event except
+The owner connects the association calendar under **Settings**. It receives every future event except
 rehearsals. Each member can connect a personal calendar on **Account** to copy their upcoming
 rehearsals. Sync is one-way from Tracster; personal unavailability is never sent to or read from
 Google.

@@ -6,7 +6,7 @@ import {
   connectionIdFor,
   disconnectGoogleCalendar,
 } from "@/lib/google-calendar";
-import { canManageSettings } from "@/lib/roles";
+import { canManageAssociationGoogleCalendar } from "@/lib/roles";
 
 async function authorizedConnection(request: NextRequest) {
   const user = await getCurrentUser();
@@ -17,7 +17,7 @@ async function authorizedConnection(request: NextRequest) {
   if (kind !== "association" && kind !== "user") {
     return { error: jsonError("Invalid Google Calendar connection type.") };
   }
-  if (kind === "association" && !(await canManageSettings(user.id))) {
+  if (kind === "association" && !(await canManageAssociationGoogleCalendar(user.id))) {
     return { error: forbidden() };
   }
   return {

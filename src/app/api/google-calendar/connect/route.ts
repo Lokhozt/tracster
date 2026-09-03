@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { forbidden, jsonError, unauthorized } from "@/lib/api";
 import { googleAuthorizationUrl, googleOAuthRedirectUri, isGoogleCalendarConfigured } from "@/lib/google-calendar";
-import { canManageSettings } from "@/lib/roles";
+import { canManageAssociationGoogleCalendar } from "@/lib/roles";
 
 const OAUTH_STATE_COOKIE = "tracster_google_calendar_oauth_state";
 
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   if (kind !== "association" && kind !== "user") {
     return jsonError("Invalid Google Calendar connection type.");
   }
-  if (kind === "association" && !(await canManageSettings(user.id))) {
+  if (kind === "association" && !(await canManageAssociationGoogleCalendar(user.id))) {
     return forbidden();
   }
   if (!isGoogleCalendarConfigured()) {

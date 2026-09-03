@@ -27,6 +27,10 @@ export async function canManageSettings(userId: string): Promise<boolean> {
   return isAdmin(userId);
 }
 
+export async function canManageAssociationGoogleCalendar(userId: string): Promise<boolean> {
+  return isOwner(userId);
+}
+
 export async function hasGlobalAccess(userId: string): Promise<boolean> {
   return isAdmin(userId);
 }

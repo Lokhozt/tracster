@@ -7,7 +7,7 @@ import { GoogleCalendarConnectionCard } from "@/components/GoogleCalendarConnect
 import { UsersList } from "@/components/UsersList";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { canManageSettings } from "@/lib/roles";
+import { canManageAssociationGoogleCalendar, canManageSettings } from "@/lib/roles";
 import { getEventTypes } from "@/lib/event-types";
 import { getSiteSettings } from "@/lib/site-settings";
 import { adminUserSelect, serializeAdminUser } from "@/lib/users";
@@ -32,6 +32,8 @@ export default async function SettingsPage({ searchParams }: PageProps) {
     redirect("/");
   }
 
+  const showAssociationCalendar = await canManageAssociationGoogleCalendar(user.id);
+
   const [locations, settings, users, eventTypes, googleConnection, query] = await Promise.all([
     prisma.location.findMany({
       orderBy: { name: "asc" },
@@ -43,9 +45,11 @@ export default async function SettingsPage({ searchParams }: PageProps) {
       select: adminUserSelect,
     }),
     getEventTypes(),
-    prisma.googleCalendarConnection.findUnique({
-      where: { id: connectionIdFor("ASSOCIATION", user.id) },
-    }),
+    showAssociationCalendar
+      ? prisma.googleCalendarConnection.findUnique({
+          where: { id: connectionIdFor("ASSOCIATION", user.id) },
+        })
+      : Promise.resolve(null),
     searchParams,
   ]);
 
@@ -56,13 +60,15 @@ export default async function SettingsPage({ searchParams }: PageProps) {
       </p>
       <div className="space-y-8">
         <SiteSettingsForm settings={settings} />
-        <GoogleCalendarConnectionCard
-          kind="association"
-          connection={serializeGoogleConnection(googleConnection)}
-          configured={isGoogleCalendarConfigured()}
-          result={query.googleCalendar}
-          followUrl={associationCalendarFollowUrl()}
-        />
+        {showAssociationCalendar && (
+          <GoogleCalendarConnectionCard
+            kind="association"
+            connection={serializeGoogleConnection(googleConnection)}
+            configured={isGoogleCalendarConfigured()}
+            result={query.googleCalendar}
+            followUrl={associationCalendarFollowUrl()}
+          />
+        )}
         <EventTypesManager eventTypes={eventTypes} />
         <LocationsManager locations={locations} />
         <UsersList users={users.map(serializeAdminUser)} />

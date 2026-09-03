@@ -7,7 +7,7 @@ import {
   googleOAuthRedirectUri,
   saveGoogleConnection,
 } from "@/lib/google-calendar";
-import { canManageSettings } from "@/lib/roles";
+import { canManageAssociationGoogleCalendar } from "@/lib/roles";
 
 const OAUTH_STATE_COOKIE = "tracster_google_calendar_oauth_state";
 
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
   if (!user || !state || !kind || state !== expectedState) {
     return resultRedirect(request, kind ?? "user", "invalid-state");
   }
-  if (kind === "association" && !(await canManageSettings(user.id))) {
+  if (kind === "association" && !(await canManageAssociationGoogleCalendar(user.id))) {
     return resultRedirect(request, kind, "forbidden");
   }
   if (request.nextUrl.searchParams.get("error")) {
