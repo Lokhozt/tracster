@@ -99,9 +99,10 @@ function dateToSlot(date: Date, grid: DayGrid): number {
 }
 
 // The end can fall on the next day (a block drawn to the bottom of the grid ends
-// at midnight), so measure it from the start day instead of its own clock time.
-function dateToEndSlot(start: Date, end: Date, grid: DayGrid): number {
-  const minutes = differenceInMinutes(end, startOfDay(start)) - grid.startHour * 60;
+// at midnight), so measure it from the day it is drawn in rather than from its
+// own clock time.
+function dateToEndSlot(dayStart: Date, end: Date, grid: DayGrid): number {
+  const minutes = differenceInMinutes(end, dayStart) - grid.startHour * 60;
   return Math.max(1, Math.min(grid.slotsPerDay, Math.round(minutes / SLOT_MINUTES)));
 }
 
@@ -129,28 +130,51 @@ function isZeroDuration(startsAt: Date, endsAt: Date) {
   return endsAt.getTime() <= startsAt.getTime();
 }
 
-function timeframeToSlots(
-  timeframe: SerializedUnavailability,
-  weekStart: Date,
-  grid: DayGrid,
-): {
+type Segment = {
   dayIndex: number;
   startSlot: number;
   endSlot: number;
-} | null {
+  startsAt: Date;
+  endsAt: Date;
+  // A period saved outside the grid can cover several days; dragging and
+  // resizing only make sense on a period held in a single column.
+  wholePeriod: boolean;
+};
+
+// One block per day the period covers, clipped to the visible week.
+function timeframeSegments(
+  timeframe: SerializedUnavailability,
+  weekStart: Date,
+  grid: DayGrid,
+): Segment[] {
   const start = new Date(timeframe.startsAt);
   const end = new Date(timeframe.endsAt);
-  const dayIndex = differenceInCalendarDays(start, weekStart);
+  const firstDay = differenceInCalendarDays(start, weekStart);
+  // The end is exclusive, so a period ending at midnight stops on the day before.
+  const lastDay = differenceInCalendarDays(addMinutes(end, -1), weekStart);
+  const wholePeriod = firstDay === lastDay;
+  const segments: Segment[] = [];
 
-  if (dayIndex < 0 || dayIndex > 6) {
-    return null;
+  for (
+    let dayIndex = Math.max(firstDay, 0);
+    dayIndex <= Math.min(lastDay, 6);
+    dayIndex += 1
+  ) {
+    const dayStart = startOfDay(addDays(weekStart, dayIndex));
+    const segmentStart = dayIndex === firstDay ? start : dayStart;
+    const segmentEnd = dayIndex === lastDay ? end : addDays(dayStart, 1);
+
+    segments.push({
+      dayIndex,
+      startSlot: dateToSlot(segmentStart, grid),
+      endSlot: dateToEndSlot(dayStart, segmentEnd, grid),
+      startsAt: segmentStart,
+      endsAt: segmentEnd,
+      wholePeriod,
+    });
   }
 
-  return {
-    dayIndex,
-    startSlot: dateToSlot(start, grid),
-    endSlot: dateToEndSlot(start, end, grid),
-  };
+  return segments;
 }
 
 async function fetchTimeframes(from: Date, to: Date): Promise<SerializedUnavailability[]> {
@@ -373,10 +397,18 @@ export function UnavailabilityCalendar({
       return;
     }
 
-    await persistTimeframe(null, startsAt, endsAt);
+    // Marking days one after another stays a series of clicks on the dates, so
+    // the new day is not selected: that would lock scrolling and hide the days
+    // already marked behind the selection panel.
+    await persistTimeframe(null, startsAt, endsAt, { select: false });
   }
 
-  async function persistTimeframe(id: string | null, startsAt: Date, endsAt: Date) {
+  async function persistTimeframe(
+    id: string | null,
+    startsAt: Date,
+    endsAt: Date,
+    { select = true }: { select?: boolean } = {},
+  ) {
     if (isZeroDuration(startsAt, endsAt)) {
       if (id) {
         await removeTimeframe(id);
@@ -424,7 +456,9 @@ export function UnavailabilityCalendar({
         (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
       ),
     );
-    setSelectedId(saved.id);
+    if (select) {
+      setSelectedId(saved.id);
+    }
     return saved;
   }
 
@@ -447,7 +481,7 @@ export function UnavailabilityCalendar({
         0,
         Math.min(grid.slotsPerDay - active.durationSlots, active.currentSlot - active.grabOffsetSlots),
       );
-      const existingPosition = timeframeToSlots(existing, weekStart, grid);
+      const [existingPosition] = timeframeSegments(existing, weekStart, grid);
       if (
         existingPosition &&
         existingPosition.dayIndex === active.dayIndex &&
@@ -630,11 +664,6 @@ export function UnavailabilityCalendar({
       return [];
     }
 
-    const position = timeframeToSlots(existing, weekStart, grid);
-    if (!position) {
-      return [];
-    }
-
     if (interaction.type === "move") {
       const startSlot = Math.max(
         0,
@@ -786,14 +815,11 @@ export function UnavailabilityCalendar({
               </div>
 
               {weekDays.map((day, dayIndex) => {
-                const dayBlocks = timeframes
-                  .map((entry) => ({ entry, position: timeframeToSlots(entry, weekStart, grid) }))
-                  .filter(
-                    (item): item is {
-                      entry: SerializedUnavailability;
-                      position: NonNullable<ReturnType<typeof timeframeToSlots>>;
-                    } => item.position?.dayIndex === dayIndex,
-                  );
+                const dayBlocks = timeframes.flatMap((entry) =>
+                  timeframeSegments(entry, weekStart, grid)
+                    .filter((segment) => segment.dayIndex === dayIndex)
+                    .map((segment) => ({ entry, position: segment })),
+                );
 
                 const dayDraft = draftBlocks.filter((block) => block.dayIndex === dayIndex);
 
@@ -847,8 +873,7 @@ export function UnavailabilityCalendar({
                       const isSelected = selectedId === entry.id;
                       const isDragging =
                         interaction?.type !== "create" && interaction?.id === entry.id;
-                      const startsAt = new Date(entry.startsAt);
-                      const endsAt = new Date(entry.endsAt);
+                      const { startsAt, endsAt } = position;
                       const isFullDay =
                         startsAt.getTime() === startOfDay(startsAt).getTime() &&
                         endsAt.getTime() === addDays(startOfDay(startsAt), 1).getTime();
@@ -861,7 +886,7 @@ export function UnavailabilityCalendar({
 
                       return (
                         <div
-                          key={entry.id}
+                          key={`${entry.id}-${dayIndex}`}
                           data-block
                           className={cn(
                             "absolute inset-x-1 z-10 overflow-hidden rounded-md border border-red-300 bg-red-200/90 text-xs text-red-950 shadow-sm",
@@ -874,6 +899,9 @@ export function UnavailabilityCalendar({
                               return;
                             }
                             setSelectedId(entry.id);
+                            if (!position.wholePeriod) {
+                              return;
+                            }
                             const target = event.target as HTMLElement;
                             if (target.dataset.handle === "start") {
                               beginInteraction(event, () =>
@@ -914,11 +942,13 @@ export function UnavailabilityCalendar({
                             );
                           }}
                         >
-                          <div
-                            data-handle="start"
-                            className="absolute inset-x-0 top-0 cursor-ns-resize bg-red-400/40"
-                            style={{ height: handleHeight }}
-                          />
+                          {position.wholePeriod && (
+                            <div
+                              data-handle="start"
+                              className="absolute inset-x-0 top-0 cursor-ns-resize bg-red-400/40"
+                              style={{ height: handleHeight }}
+                            />
+                          )}
                           <div className="pointer-events-none px-2 py-1">
                             <p className="font-medium">
                               {isFullDay
@@ -926,11 +956,13 @@ export function UnavailabilityCalendar({
                                 : `${formatTime(startsAt)} – ${formatTime(endsAt)}`}
                             </p>
                           </div>
-                          <div
-                            data-handle="end"
-                            className="absolute inset-x-0 bottom-0 cursor-ns-resize bg-red-400/40"
-                            style={{ height: handleHeight }}
-                          />
+                          {position.wholePeriod && (
+                            <div
+                              data-handle="end"
+                              className="absolute inset-x-0 bottom-0 cursor-ns-resize bg-red-400/40"
+                              style={{ height: handleHeight }}
+                            />
+                          )}
                         </div>
                       );
                     })}

@@ -69,12 +69,15 @@ export async function saveMergedUnavailability(
 
     while (true) {
       const excludedIds = existingId ? [existingId, ...absorbedIds] : [...absorbedIds];
+      // Periods that merely touch are left alone: a whole day and the whole day
+      // after it are separate periods, so each keeps its own block in the
+      // calendar and can be cleared on its own.
       const overlapping = await tx.userUnavailability.findMany({
         where: {
           userId,
           ...(excludedIds.length > 0 ? { id: { notIn: excludedIds } } : {}),
-          startsAt: { lte: mergedEnd },
-          endsAt: { gte: mergedStart },
+          startsAt: { lt: mergedEnd },
+          endsAt: { gt: mergedStart },
         },
       });
 
