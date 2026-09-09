@@ -13,6 +13,7 @@ import { withParticipantTooltip } from "@/lib/schedule-filters";
 import { cn } from "@/lib/utils";
 
 const PX_PER_MINUTE = 1.1;
+const EDIT_SNAP_MINUTES = 10;
 
 export function rehearsalTone(key: string) {
   let hash = 0;
@@ -94,7 +95,7 @@ export function SchedulingCandidateCalendar({
     const durationMinutes = durationMs / 60_000;
     const rect = event.currentTarget.getBoundingClientRect();
     const rawMinutes = (event.clientY - rect.top) / PX_PER_MINUTE;
-    const snappedMinutes = Math.round(rawMinutes / 5) * 5;
+    const snappedMinutes = Math.round(rawMinutes / EDIT_SNAP_MINUTES) * EDIT_SNAP_MINUTES;
     const offsetMinutes = Math.max(
       0,
       Math.min(totalMinutes - durationMinutes, snappedMinutes),

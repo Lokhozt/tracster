@@ -306,7 +306,7 @@
     "createRehearsals": "Create rehearsals",
     "editSelectedSchedule": "Edit selected schedule",
     "editSchedule": "Edit schedule",
-    "editScheduleHelp": "Drag a rehearsal to another time, day, or location. Start times snap to 5-minute intervals.",
+    "editScheduleHelp": "Drag a rehearsal to another time, day, or location. Start times snap to 10-minute intervals.",
     "createEditedRehearsals": "Create edited rehearsals",
     "scheduleConflicts": "Conflicts",
     "checkingConflicts": "Checking conflicts…",

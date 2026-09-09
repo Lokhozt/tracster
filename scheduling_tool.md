@@ -50,7 +50,7 @@ A candidate is graphically reprensented on a calendar with as many column per da
 The caveat of each candidate are listed: Participants not available (ignore if the participant is not available at all during the period)
 
 Optional step 6- Edit
-The user can drag rehearsals in the selected candidate to another time, day, or location before creating them.
+The user can drag rehearsals in the selected candidate to another time, day, or location before creating them. Dropped start times snap to 10-minute intervals.
 After every move, conflicts are recalculated and displayed for participants who are unavailable or already in another rehearsal, including another rehearsal in the edited planning.
 
 At validation, each rehearsal is automatically created.
