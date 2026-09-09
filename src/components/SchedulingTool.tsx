@@ -2,12 +2,13 @@
 
 import { useLocale, useTranslations } from "next-intl";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { SchedulingCandidateCalendar } from "@/components/SchedulingCandidateCalendar";
+import { SchedulingPlanEditor } from "@/components/SchedulingPlanEditor";
 import { Button, Card, Input, Label, Select } from "@/components/ui";
 import {
   combineDateAndTime,
@@ -20,8 +21,10 @@ import { nextWeekendDayKeys } from "@/lib/scheduling/weekend";
 import type {
   LocationUnavailability,
   ScheduleCaveat,
+  SchedulePlacement,
   SchedulingCandidate,
   SchedulingItemDraft,
+  SchedulingPlacementConflicts,
   SchedulingRequest,
 } from "@/lib/scheduling/types";
 import { cn } from "@/lib/utils";
@@ -47,7 +50,14 @@ export type SchedulingCollectionOption = {
   }>;
 };
 
-const STEPS = ["choreographies", "daysLocations", "constraints", "generate", "chooseSolution"] as const;
+const STEPS = [
+  "choreographies",
+  "daysLocations",
+  "constraints",
+  "generate",
+  "chooseSolution",
+  "edit",
+] as const;
 
 const MINUTES_5 = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, "0"));
 
@@ -113,6 +123,12 @@ export function SchedulingTool({
   const [applying, setApplying] = useState(false);
   const [candidates, setCandidates] = useState<SchedulingCandidate[]>([]);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
+  const [editedPlacements, setEditedPlacements] = useState<SchedulePlacement[]>([]);
+  const [placementConflicts, setPlacementConflicts] =
+    useState<SchedulingPlacementConflicts>({});
+  const [checkingConflicts, setCheckingConflicts] = useState(false);
+  const [conflictError, setConflictError] = useState<string | null>(null);
+  const conflictRequestId = useRef(0);
 
   const selectedChoreography = choreographies.find((entry) => entry.id === selectedChoreographyId);
 
@@ -274,6 +290,10 @@ export function SchedulingTool({
   }
 
   function goTo(nextStep: number) {
+    if (nextStep === 5) {
+      startEditing();
+      return;
+    }
     const message = validateThrough(nextStep);
     if (message) {
       setError(message);
@@ -319,7 +339,10 @@ export function SchedulingTool({
       setError(t("selectCandidate"));
       return;
     }
+    await applyPlacements(candidate.placements);
+  }
 
+  async function applyPlacements(placements: SchedulePlacement[]) {
     setApplying(true);
     setError(null);
 
@@ -327,7 +350,7 @@ export function SchedulingTool({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        placements: candidate.placements.map((placement) => ({
+        placements: placements.map((placement) => ({
           choreographyId: placement.choreographyId,
           groupId: placement.groupId,
           locationId: placement.locationId,
@@ -346,6 +369,82 @@ export function SchedulingTool({
 
     router.push("/events");
     router.refresh();
+  }
+
+  async function checkPlacementConflicts(placements: SchedulePlacement[]) {
+    const requestId = conflictRequestId.current + 1;
+    conflictRequestId.current = requestId;
+    setCheckingConflicts(true);
+    setConflictError(null);
+
+    try {
+      const response = await fetch("/api/scheduling/conflicts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          placements: placements.map((placement) => ({
+            itemId: placement.itemId,
+            choreographyId: placement.choreographyId,
+            groupId: placement.groupId,
+            startsAt: placement.startsAt,
+            endsAt: placement.endsAt,
+          })),
+        }),
+      });
+      const data = await response.json();
+      if (requestId !== conflictRequestId.current) {
+        return;
+      }
+      if (!response.ok) {
+        setConflictError(data.error ?? t("scheduleConflictCheckError"));
+        return;
+      }
+      setPlacementConflicts(data.conflicts as SchedulingPlacementConflicts);
+    } catch {
+      if (requestId === conflictRequestId.current) {
+        setConflictError(t("scheduleConflictCheckError"));
+      }
+    } finally {
+      if (requestId === conflictRequestId.current) {
+        setCheckingConflicts(false);
+      }
+    }
+  }
+
+  function startEditing() {
+    const candidate = candidates.find((entry) => entry.id === selectedCandidateId);
+    if (!candidate) {
+      setError(t("selectCandidate"));
+      return;
+    }
+    const placements = candidate.placements.map((placement) => ({ ...placement }));
+    setEditedPlacements(placements);
+    setPlacementConflicts({});
+    setConflictError(null);
+    setStep(5);
+    void checkPlacementConflicts(placements);
+  }
+
+  function moveEditedPlacement(
+    itemId: string,
+    locationId: string,
+    startsAt: Date,
+    endsAt: Date,
+  ) {
+    const location = locations.find((entry) => entry.id === locationId);
+    const placements = editedPlacements.map((placement) =>
+      placement.itemId === itemId
+        ? {
+            ...placement,
+            locationId,
+            locationName: location?.name ?? placement.locationName,
+            startsAt: startsAt.toISOString(),
+            endsAt: endsAt.toISOString(),
+          }
+        : placement,
+    );
+    setEditedPlacements(placements);
+    void checkPlacementConflicts(placements);
   }
 
   return (
@@ -745,8 +844,39 @@ export function SchedulingTool({
               </Card>
             );
           })}
-          <Button type="button" onClick={applySelected} disabled={applying || !selectedCandidateId}>
-            {applying ? t("creatingRehearsals") : t("createRehearsals")}
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={applySelected} disabled={applying || !selectedCandidateId}>
+              {applying ? t("creatingRehearsals") : t("createRehearsals")}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={startEditing}
+              disabled={applying || !selectedCandidateId}
+            >
+              {t("editSelectedSchedule")}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {step === 5 && (
+        <div className="space-y-4">
+          <SchedulingPlanEditor
+            placements={editedPlacements}
+            days={days}
+            locations={locations.filter((location) => locationIds.includes(location.id))}
+            conflicts={placementConflicts}
+            checkingConflicts={checkingConflicts}
+            conflictError={conflictError}
+            onMove={moveEditedPlacement}
+          />
+          <Button
+            type="button"
+            onClick={() => applyPlacements(editedPlacements)}
+            disabled={applying || editedPlacements.length === 0}
+          >
+            {applying ? t("creatingRehearsals") : t("createEditedRehearsals")}
           </Button>
         </div>
       )}

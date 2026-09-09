@@ -2,9 +2,13 @@
 import { useLocale, useTranslations } from "next-intl";
 import { format } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
+import { useState, type DragEvent } from "react";
 import { formatTime } from "@/lib/datetime";
-import { parseDayKey } from "@/lib/scheduling/intervals";
-import type { SchedulePlacement } from "@/lib/scheduling/types";
+import { atLocalTime, parseDayKey } from "@/lib/scheduling/intervals";
+import type {
+  SchedulePlacement,
+  SchedulingPlacementConflicts,
+} from "@/lib/scheduling/types";
 import { withParticipantTooltip } from "@/lib/schedule-filters";
 import { cn } from "@/lib/utils";
 
@@ -32,20 +36,34 @@ function placementLabel(placement: SchedulePlacement) {
 
 export function SchedulingCandidateCalendar({
   placements,
+  editable = false,
+  days,
+  locations,
+  conflicts = {},
+  onMove,
 }: {
   placements: SchedulePlacement[];
+  editable?: boolean;
+  days?: string[];
+  locations?: Array<{ id: string; name: string }>;
+  conflicts?: SchedulingPlacementConflicts;
+  onMove?: (itemId: string, locationId: string, startsAt: Date, endsAt: Date) => void;
 }) {
   const t = useTranslations("Components");
   const locale = useLocale();
   const dateLocale = locale === "fr" ? fr : enUS;
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   if (placements.length === 0) {
     return <p className="text-sm text-stone-600">{t("candidateNoRehearsals")}</p>;
   }
 
-  const uniqueDays = [
+  const uniqueDays = days ?? [
     ...new Set(placements.map((placement) => format(new Date(placement.startsAt), "yyyy-MM-dd"))),
   ].sort();
-  const locations = [...new Map(placements.map((placement) => [placement.locationId, placement.locationName])).entries()];
+  const calendarLocations = locations?.map((location) => [location.id, location.name] as const) ??
+    [...new Map(
+      placements.map((placement) => [placement.locationId, placement.locationName]),
+    ).entries()];
 
   let minHour = 8;
   let maxHour = 22;
@@ -59,6 +77,37 @@ export function SchedulingCandidateCalendar({
   const totalMinutes = Math.max(60, maxHour * 60 - startMinutes);
   const height = totalMinutes * PX_PER_MINUTE;
 
+  function handleDrop(
+    event: DragEvent<HTMLDivElement>,
+    day: string,
+    locationId: string,
+  ) {
+    event.preventDefault();
+    const itemId = draggedItemId ?? event.dataTransfer.getData("text/scheduling-item");
+    const placement = placements.find((entry) => entry.itemId === itemId);
+    if (!placement || !onMove) {
+      return;
+    }
+
+    const durationMs =
+      new Date(placement.endsAt).getTime() - new Date(placement.startsAt).getTime();
+    const durationMinutes = durationMs / 60_000;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const rawMinutes = (event.clientY - rect.top) / PX_PER_MINUTE;
+    const snappedMinutes = Math.round(rawMinutes / 5) * 5;
+    const offsetMinutes = Math.max(
+      0,
+      Math.min(totalMinutes - durationMinutes, snappedMinutes),
+    );
+    const dayDate = parseDayKey(day);
+    const startsAt = new Date(
+      atLocalTime(dayDate, minHour).getTime() + offsetMinutes * 60_000,
+    );
+    const endsAt = new Date(startsAt.getTime() + durationMs);
+    onMove(itemId, locationId, startsAt, endsAt);
+    setDraggedItemId(null);
+  }
+
   return (
     <div className="overflow-x-auto">
       <div className="inline-flex min-w-full gap-6">
@@ -68,7 +117,7 @@ export function SchedulingCandidateCalendar({
               {format(parseDayKey(day), "EEEE d MMM", {locale: dateLocale})}
             </p>
             <div className="flex gap-2">
-              {locations.map(([locationId, locationName]) => {
+              {calendarLocations.map(([locationId, locationName]) => {
                 const columnPlacements = placements.filter(
                   (placement) =>
                     placement.locationId === locationId &&
@@ -79,8 +128,17 @@ export function SchedulingCandidateCalendar({
                   <div key={`${day}-${locationId}`} className="min-w-[140px] flex-1">
                     <p className="mb-1 truncate text-xs font-medium text-stone-500">{locationName}</p>
                     <div
-                      className="relative overflow-hidden rounded-lg border border-stone-200 bg-stone-50"
+                      className={cn(
+                        "relative overflow-hidden rounded-lg border border-stone-200 bg-stone-50",
+                        editable && "transition-colors hover:bg-stone-100",
+                      )}
                       style={{ height }}
+                      onDragOver={editable ? (event) => event.preventDefault() : undefined}
+                      onDrop={
+                        editable
+                          ? (event) => handleDrop(event, day, locationId)
+                          : undefined
+                      }
                     >
                       {Array.from({ length: maxHour - minHour + 1 }, (_, index) => minHour + index).map((hour) => (
                         <div
@@ -101,11 +159,31 @@ export function SchedulingCandidateCalendar({
                           ((end.getTime() - start.getTime()) / 60000) * PX_PER_MINUTE,
                         );
                         const tone = rehearsalTone(`${placement.choreographyId}:${placement.groupId ?? ""}`);
+                        const conflict = conflicts[placement.itemId];
+                        const hasConflict = Boolean(
+                          conflict &&
+                          (conflict.unavailable.length > 0 || conflict.engaged.length > 0),
+                        );
 
                         return (
                           <div
                             key={`${placement.itemId}-${placement.startsAt}`}
-                            className="absolute right-1 left-1 overflow-hidden rounded-md border px-1.5 py-1 text-xs leading-tight shadow-sm"
+                            draggable={editable}
+                            onDragStart={(event) => {
+                              setDraggedItemId(placement.itemId);
+                              event.dataTransfer.setData(
+                                "text/scheduling-item",
+                                placement.itemId,
+                              );
+                              event.dataTransfer.effectAllowed = "move";
+                            }}
+                            onDragEnd={() => setDraggedItemId(null)}
+                            className={cn(
+                              "absolute right-1 left-1 overflow-hidden rounded-md border px-1.5 py-1 text-xs leading-tight shadow-sm",
+                              editable && "cursor-grab active:cursor-grabbing",
+                              hasConflict && "ring-2 ring-red-600",
+                              draggedItemId === placement.itemId && "opacity-60",
+                            )}
                             style={{
                               top,
                               height: blockHeight,
@@ -118,6 +196,14 @@ export function SchedulingCandidateCalendar({
                               placement.participantNames,
                             )}
                           >
+                            {hasConflict && (
+                              <span
+                                className="float-right ml-1 font-bold text-red-700"
+                                aria-label={t("schedulingConflict")}
+                              >
+                                !
+                              </span>
+                            )}
                             <p className={cn("font-semibold break-words", blockHeight < 60 && "line-clamp-2")}>
                               {placementLabel(placement)}
                             </p>

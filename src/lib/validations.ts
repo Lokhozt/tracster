@@ -266,6 +266,18 @@ export const schedulingApplySchema = z.object({
   ).min(1).max(40),
 });
 
+export const schedulingConflictsSchema = z.object({
+  placements: z.array(
+    z.object({
+      itemId: z.string().min(1).max(80),
+      choreographyId: z.string().min(1),
+      groupId: z.string().min(1).nullable().optional(),
+      startsAt: z.string().datetime(),
+      endsAt: z.string().datetime(),
+    }),
+  ).min(1).max(40),
+});
+
 export const choreographyRepresentationSchema = z.discriminatedUnion("mode", [
   z.object({
     mode: z.literal("create"),

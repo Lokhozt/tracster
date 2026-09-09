@@ -56,6 +56,13 @@ export type SchedulingCandidate = {
   caveats: ScheduleCaveat[];
 };
 
+export type SchedulingPlacementConflict = {
+  unavailable: string[];
+  engaged: string[];
+};
+
+export type SchedulingPlacementConflicts = Record<string, SchedulingPlacementConflict>;
+
 export type IntervalMs = {
   start: number;
   end: number;

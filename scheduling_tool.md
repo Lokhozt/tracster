@@ -48,4 +48,8 @@ The user can look and select one the candidate.
 A candidate is graphically reprensented on a calendar with as many column per day as there are locations, with each rehearsal having its color and name, and start_time->end_time
 The caveat of each candidate are listed: Participants not available (ignore if the participant is not available at all during the period)
 
+Optional step 6- Edit
+The user can drag rehearsals in the selected candidate to another time, day, or location before creating them.
+After every move, conflicts are recalculated and displayed for participants who are unavailable or already in another rehearsal, including another rehearsal in the edited planning.
+
 At validation, each rehearsal is automatically created.
