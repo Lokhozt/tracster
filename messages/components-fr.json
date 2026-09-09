@@ -306,7 +306,7 @@
     "createRehearsals": "Créer les répétitions",
     "editSelectedSchedule": "Modifier le planning sélectionné",
     "editSchedule": "Modifier le planning",
-    "editScheduleHelp": "Déplacez une répétition vers un autre horaire, jour ou lieu. Les horaires sont arrondis par intervalles de 10 minutes.",
+    "editScheduleHelp": "Déplacez une répétition vers un autre horaire, jour ou lieu. Elle suit le curseur et s’aligne sur des intervalles de 10 minutes, et les horaires affichés se mettent à jour pendant le déplacement.",
     "createEditedRehearsals": "Créer les répétitions modifiées",
     "scheduleConflicts": "Conflits",
     "checkingConflicts": "Vérification des conflits…",

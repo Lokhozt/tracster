@@ -2,7 +2,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { format } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
-import { useState, type DragEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatTime } from "@/lib/datetime";
 import { atLocalTime, parseDayKey } from "@/lib/scheduling/intervals";
 import type {
@@ -14,6 +14,22 @@ import { cn } from "@/lib/utils";
 
 const PX_PER_MINUTE = 1.1;
 const EDIT_SNAP_MINUTES = 10;
+
+type EditDrag = {
+  itemId: string;
+  pointerId: number;
+  /** Where inside the block it was grabbed, so it does not jump under the cursor. */
+  grabOffsetMinutes: number;
+  durationMinutes: number;
+  day: string;
+  locationId: string;
+  offsetMinutes: number;
+  moved: boolean;
+};
+
+function columnKey(day: string, locationId: string) {
+  return `${day}|${locationId}`;
+}
 
 export function rehearsalTone(key: string) {
   let hash = 0;
@@ -53,10 +69,8 @@ export function SchedulingCandidateCalendar({
   const t = useTranslations("Components");
   const locale = useLocale();
   const dateLocale = locale === "fr" ? fr : enUS;
-  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
-  if (placements.length === 0) {
-    return <p className="text-sm text-stone-600">{t("candidateNoRehearsals")}</p>;
-  }
+  const [drag, setDrag] = useState<EditDrag | null>(null);
+  const columnRefs = useRef(new Map<string, HTMLDivElement>());
 
   const uniqueDays = days ?? [
     ...new Set(placements.map((placement) => format(new Date(placement.startsAt), "yyyy-MM-dd"))),
@@ -78,35 +92,161 @@ export function SchedulingCandidateCalendar({
   const totalMinutes = Math.max(60, maxHour * 60 - startMinutes);
   const height = totalMinutes * PX_PER_MINUTE;
 
-  function handleDrop(
-    event: DragEvent<HTMLDivElement>,
-    day: string,
-    locationId: string,
-  ) {
-    event.preventDefault();
-    const itemId = draggedItemId ?? event.dataTransfer.getData("text/scheduling-item");
-    const placement = placements.find((entry) => entry.itemId === itemId);
-    if (!placement || !onMove) {
+  function offsetToDate(day: string, offsetMinutes: number) {
+    return new Date(atLocalTime(parseDayKey(day), minHour).getTime() + offsetMinutes * 60_000);
+  }
+
+  /** Where a placement sits right now, which during a drag is the previewed spot. */
+  function livePlacement(placement: SchedulePlacement) {
+    if (!drag || drag.itemId !== placement.itemId) {
+      const start = new Date(placement.startsAt);
+      return {
+        day: format(start, "yyyy-MM-dd"),
+        locationId: placement.locationId,
+        start,
+        end: new Date(placement.endsAt),
+      };
+    }
+
+    const start = offsetToDate(drag.day, drag.offsetMinutes);
+    return {
+      day: drag.day,
+      locationId: drag.locationId,
+      start,
+      end: new Date(start.getTime() + drag.durationMinutes * 60_000),
+    };
+  }
+
+  function startDrag(event: React.PointerEvent<HTMLDivElement>, placement: SchedulePlacement) {
+    if (!editable || !onMove || (event.pointerType === "mouse" && event.button !== 0)) {
       return;
     }
 
-    const durationMs =
-      new Date(placement.endsAt).getTime() - new Date(placement.startsAt).getTime();
-    const durationMinutes = durationMs / 60_000;
-    const rect = event.currentTarget.getBoundingClientRect();
-    const rawMinutes = (event.clientY - rect.top) / PX_PER_MINUTE;
-    const snappedMinutes = Math.round(rawMinutes / EDIT_SNAP_MINUTES) * EDIT_SNAP_MINUTES;
-    const offsetMinutes = Math.max(
-      0,
-      Math.min(totalMinutes - durationMinutes, snappedMinutes),
+    const start = new Date(placement.startsAt);
+    const day = format(start, "yyyy-MM-dd");
+    const column = columnRefs.current.get(columnKey(day, placement.locationId));
+    if (!column) {
+      return;
+    }
+
+    event.preventDefault();
+    const startOffset = start.getHours() * 60 + start.getMinutes() - startMinutes;
+    const pointerMinutes =
+      (event.clientY - column.getBoundingClientRect().top) / PX_PER_MINUTE;
+
+    setDrag({
+      itemId: placement.itemId,
+      pointerId: event.pointerId,
+      grabOffsetMinutes: pointerMinutes - startOffset,
+      durationMinutes: (new Date(placement.endsAt).getTime() - start.getTime()) / 60_000,
+      day,
+      locationId: placement.locationId,
+      offsetMinutes: startOffset,
+      moved: false,
+    });
+  }
+
+  /** The column under the cursor, so a rehearsal can cross days and locations mid-drag. */
+  function columnAt(clientX: number) {
+    for (const [key, element] of columnRefs.current) {
+      const rect = element.getBoundingClientRect();
+      if (clientX >= rect.left && clientX <= rect.right) {
+        const [day, locationId] = key.split("|");
+        return { day, locationId, rect };
+      }
+    }
+    return null;
+  }
+
+  function commitDrag(active: EditDrag) {
+    const placement = placements.find((entry) => entry.itemId === active.itemId);
+    if (!active.moved || !placement || !onMove) {
+      return;
+    }
+
+    const startsAt = offsetToDate(active.day, active.offsetMinutes);
+    const unchanged =
+      placement.locationId === active.locationId &&
+      new Date(placement.startsAt).getTime() === startsAt.getTime();
+    if (unchanged) {
+      return;
+    }
+
+    onMove(
+      active.itemId,
+      active.locationId,
+      startsAt,
+      new Date(startsAt.getTime() + active.durationMinutes * 60_000),
     );
-    const dayDate = parseDayKey(day);
-    const startsAt = new Date(
-      atLocalTime(dayDate, minHour).getTime() + offsetMinutes * 60_000,
-    );
-    const endsAt = new Date(startsAt.getTime() + durationMs);
-    onMove(itemId, locationId, startsAt, endsAt);
-    setDraggedItemId(null);
+  }
+
+  // Listeners live on the window so the pointer can leave the column mid-drag, and they
+  // are rebound every render so they always read the current drag state.
+  useEffect(() => {
+    if (!drag) {
+      return;
+    }
+
+    const active = drag;
+
+    function onPointerMove(event: PointerEvent) {
+      if (event.pointerId !== active.pointerId) {
+        return;
+      }
+
+      const column = columnAt(event.clientX);
+      const rect =
+        column?.rect ??
+        columnRefs.current.get(columnKey(active.day, active.locationId))?.getBoundingClientRect();
+      if (!rect) {
+        return;
+      }
+
+      const rawMinutes =
+        (event.clientY - rect.top) / PX_PER_MINUTE - active.grabOffsetMinutes;
+      const snapped = Math.round(rawMinutes / EDIT_SNAP_MINUTES) * EDIT_SNAP_MINUTES;
+
+      setDrag((current) =>
+        current
+          ? {
+              ...current,
+              day: column?.day ?? current.day,
+              locationId: column?.locationId ?? current.locationId,
+              offsetMinutes: Math.max(
+                0,
+                Math.min(totalMinutes - active.durationMinutes, snapped),
+              ),
+              moved: true,
+            }
+          : current,
+      );
+    }
+
+    function onPointerUp(event: PointerEvent) {
+      if (event.pointerId !== active.pointerId) {
+        return;
+      }
+      setDrag(null);
+      commitDrag(active);
+    }
+
+    function onPointerCancel() {
+      setDrag(null);
+    }
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerCancel);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerCancel);
+    };
+  });
+
+  if (placements.length === 0) {
+    return <p className="text-sm text-stone-600">{t("candidateNoRehearsals")}</p>;
   }
 
   return (
@@ -119,27 +259,29 @@ export function SchedulingCandidateCalendar({
             </p>
             <div className="flex gap-2">
               {calendarLocations.map(([locationId, locationName]) => {
-                const columnPlacements = placements.filter(
-                  (placement) =>
-                    placement.locationId === locationId &&
-                    format(new Date(placement.startsAt), "yyyy-MM-dd") === day,
-                );
+                const columnPlacements = placements.filter((placement) => {
+                  const live = livePlacement(placement);
+                  return live.locationId === locationId && live.day === day;
+                });
 
                 return (
                   <div key={`${day}-${locationId}`} className="min-w-[140px] flex-1">
                     <p className="mb-1 truncate text-xs font-medium text-stone-500">{locationName}</p>
                     <div
+                      ref={(node) => {
+                        const key = columnKey(day, locationId);
+                        if (node) {
+                          columnRefs.current.set(key, node);
+                        } else {
+                          columnRefs.current.delete(key);
+                        }
+                      }}
                       className={cn(
                         "relative overflow-hidden rounded-lg border border-stone-200 bg-stone-50",
-                        editable && "transition-colors hover:bg-stone-100",
+                        editable && "transition-colors",
+                        drag && drag.locationId === locationId && drag.day === day && "bg-stone-100",
                       )}
                       style={{ height }}
-                      onDragOver={editable ? (event) => event.preventDefault() : undefined}
-                      onDrop={
-                        editable
-                          ? (event) => handleDrop(event, day, locationId)
-                          : undefined
-                      }
                     >
                       {Array.from({ length: maxHour - minHour + 1 }, (_, index) => minHour + index).map((hour) => (
                         <div
@@ -151,8 +293,8 @@ export function SchedulingCandidateCalendar({
                         </div>
                       ))}
                       {columnPlacements.map((placement) => {
-                        const start = new Date(placement.startsAt);
-                        const end = new Date(placement.endsAt);
+                        const { start, end } = livePlacement(placement);
+                        const dragging = drag?.itemId === placement.itemId;
                         const top =
                           (start.getHours() * 60 + start.getMinutes() - startMinutes) * PX_PER_MINUTE;
                         const blockHeight = Math.max(
@@ -168,22 +310,13 @@ export function SchedulingCandidateCalendar({
 
                         return (
                           <div
-                            key={`${placement.itemId}-${placement.startsAt}`}
-                            draggable={editable}
-                            onDragStart={(event) => {
-                              setDraggedItemId(placement.itemId);
-                              event.dataTransfer.setData(
-                                "text/scheduling-item",
-                                placement.itemId,
-                              );
-                              event.dataTransfer.effectAllowed = "move";
-                            }}
-                            onDragEnd={() => setDraggedItemId(null)}
+                            key={placement.itemId}
+                            onPointerDown={(event) => startDrag(event, placement)}
                             className={cn(
                               "absolute right-1 left-1 overflow-hidden rounded-md border px-1.5 py-1 text-xs leading-tight shadow-sm",
-                              editable && "cursor-grab active:cursor-grabbing",
+                              editable && "cursor-grab touch-none select-none active:cursor-grabbing",
                               hasConflict && "ring-2 ring-red-600",
-                              draggedItemId === placement.itemId && "opacity-60",
+                              dragging && "z-10 cursor-grabbing shadow-lg ring-2 ring-stone-700",
                             )}
                             style={{
                               top,
