@@ -68,14 +68,15 @@ model Choreography {
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
-  createdBy      User                        @relation("ChoreographyCreator", fields: [createdById], references: [id])
-  choreographers ChoreographyChoreographer[]
-  members        ChoreographyMember[]
-  groups         ChoreographyGroup[]
-  rehearsals     Event[]                     @relation("EventRehearsalChoreography")
-  eventLinks     EventChoreography[]
-  joinRequests   ChoreographyJoinRequest[]
-  resources      ChoreographyResource[]
+  createdBy                 User                        @relation("ChoreographyCreator", fields: [createdById], references: [id])
+  choreographers            ChoreographyChoreographer[]
+  members                   ChoreographyMember[]
+  groups                    ChoreographyGroup[]
+  rehearsals                Event[]                     @relation("EventRehearsalChoreography")
+  eventLinks                EventChoreography[]
+  joinRequests              ChoreographyJoinRequest[]
+  resources                 ChoreographyResource[]
+  schedulingCollectionItems SchedulingCollectionItem[]
 }
 
 model ChoreographyChoreographer {
@@ -119,11 +120,38 @@ model ChoreographyGroup {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  choreography Choreography              @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
-  members      ChoreographyGroupMember[]
-  rehearsals   Event[]
+  choreography              Choreography               @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
+  members                   ChoreographyGroupMember[]
+  rehearsals                Event[]
+  schedulingCollectionItems SchedulingCollectionItem[]
 
   @@index([choreographyId])
+}
+
+model SchedulingCollection {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items SchedulingCollectionItem[]
+}
+
+model SchedulingCollectionItem {
+  id              String  @id @default(cuid())
+  collectionId    String
+  choreographyId  String
+  groupId         String?
+  durationMinutes Int
+  sortOrder       Int
+
+  collection   SchedulingCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  choreography Choreography         @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
+  group        ChoreographyGroup?   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, sortOrder])
+  @@index([choreographyId])
+  @@index([groupId])
 }
 
 model ChoreographyGroupMember {

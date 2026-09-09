@@ -7,6 +7,8 @@ The tool is presented as a list of steps:
 Step 1- Choreographies and groups
 The user choose Choreographies or choreographies+group and add them in a list. A choreography or choreography+group can be added multiple time.
 For each choreography the user input a desired duration (default 1 hour)
+The user can export the ordered list and durations as a named collection. Exporting with an existing name overwrites that collection.
+Importing a collection replaces the current list. The imported list can be modified without changing the saved collection until it is exported again.
 
 Step 2- Days and locations
 The user choose on which days the scheduling takes place. By default it is the next week end (Saturday and Sunday).

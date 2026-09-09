@@ -20,7 +20,7 @@ export default async function SchedulingPage() {
     redirect("/");
   }
 
-  const [choreographies, locations] = await Promise.all([
+  const [choreographies, locations, collections] = await Promise.all([
     prisma.choreography.findMany({
       where: visibleChoreographyWhere,
       select: {
@@ -37,6 +37,21 @@ export default async function SchedulingPage() {
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
+    prisma.schedulingCollection.findMany({
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        items: {
+          orderBy: { sortOrder: "asc" },
+          select: {
+            choreographyId: true,
+            groupId: true,
+            durationMinutes: true,
+          },
+        },
+      },
+    }),
   ]);
 
   return (
@@ -47,6 +62,7 @@ export default async function SchedulingPage() {
       <SchedulingTool
         choreographies={choreographies}
         locations={locations}
+        initialCollections={collections}
       />
     </AppShell>
   );

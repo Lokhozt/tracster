@@ -37,6 +37,16 @@ export type SchedulingLocationOption = {
   name: string;
 };
 
+export type SchedulingCollectionOption = {
+  id: string;
+  name: string;
+  items: Array<{
+    choreographyId: string;
+    groupId: string | null;
+    durationMinutes: number;
+  }>;
+};
+
 const STEPS = ["choreographies", "daysLocations", "constraints", "generate", "chooseSolution"] as const;
 
 const MINUTES_5 = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, "0"));
@@ -68,9 +78,11 @@ function itemLabel(
 export function SchedulingTool({
   choreographies,
   locations,
+  initialCollections,
 }: {
   choreographies: SchedulingChoreographyOption[];
   locations: SchedulingLocationOption[];
+  initialCollections: SchedulingCollectionOption[];
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
@@ -78,6 +90,13 @@ export function SchedulingTool({
   const dateLocale = locale === "fr" ? fr : enUS;
   const [step, setStep] = useState(0);
   const [items, setItems] = useState<SchedulingItemDraft[]>([]);
+  const [collections, setCollections] = useState(initialCollections);
+  const [selectedCollectionId, setSelectedCollectionId] = useState(
+    initialCollections[0]?.id ?? "",
+  );
+  const [collectionName, setCollectionName] = useState("");
+  const [savingCollection, setSavingCollection] = useState(false);
+  const [collectionMessage, setCollectionMessage] = useState<string | null>(null);
   const [selectedChoreographyId, setSelectedChoreographyId] = useState(choreographies[0]?.id ?? "");
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(60);
@@ -114,6 +133,92 @@ export function SchedulingTool({
         allowedWindows: [],
       },
     ]);
+  }
+
+  function importCollection() {
+    const collection = collections.find((entry) => entry.id === selectedCollectionId);
+    if (!collection) {
+      setError(t("selectCollection"));
+      return;
+    }
+
+    const availableChoreographies = new Map(
+      choreographies.map((choreography) => [
+        choreography.id,
+        new Set(choreography.groups.map((group) => group.id)),
+      ]),
+    );
+    const importedItems = collection.items.flatMap((item): SchedulingItemDraft[] => {
+      const groups = availableChoreographies.get(item.choreographyId);
+      if (!groups || (item.groupId && !groups.has(item.groupId))) {
+        return [];
+      }
+      return [{
+        id: newItemId(),
+        choreographyId: item.choreographyId,
+        groupId: item.groupId,
+        durationMinutes: item.durationMinutes,
+        allowedLocationIds: [],
+        allowedWindows: [],
+      }];
+    });
+
+    if (importedItems.length === 0) {
+      setError(t("collectionNoAvailableItems"));
+      return;
+    }
+    setItems(importedItems);
+    setCollectionName(collection.name);
+    setCollectionMessage(t("collectionImported", { name: collection.name }));
+    setError(null);
+  }
+
+  async function exportCollection() {
+    const name = collectionName.trim();
+    if (!name) {
+      setError(t("collectionNameRequired"));
+      return;
+    }
+    if (items.length === 0) {
+      setError(t("addOneChoreography"));
+      return;
+    }
+
+    setSavingCollection(true);
+    setCollectionMessage(null);
+    setError(null);
+    const response = await fetch("/api/scheduling/collections", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        items: items.map((item) => ({
+          choreographyId: item.choreographyId,
+          groupId: item.groupId,
+          durationMinutes: item.durationMinutes,
+        })),
+      }),
+    });
+    const data = await response.json();
+    setSavingCollection(false);
+
+    if (!response.ok) {
+      setError(data.error ?? t("collectionExportError"));
+      return;
+    }
+
+    const saved = data.collection as SchedulingCollectionOption;
+    setCollections((current) =>
+      [...current.filter((entry) => entry.id !== saved.id), saved]
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    );
+    setSelectedCollectionId(saved.id);
+    setCollectionName(saved.name);
+    setCollectionMessage(
+      data.overwritten
+        ? t("collectionOverwritten", { name: saved.name })
+        : t("collectionExported", { name: saved.name }),
+    );
   }
 
   function updateItem(id: string, patch: Partial<SchedulingItemDraft>) {
@@ -269,6 +374,7 @@ export function SchedulingTool({
       )}
 
       {step === 0 && (
+        <div className="space-y-4">
         <Card className="space-y-4">
           <p className="text-sm text-stone-600">
             {t("chooseChoreographiesHelp")}
@@ -362,6 +468,77 @@ export function SchedulingTool({
             </ul>
           )}
         </Card>
+        <Card className="space-y-4">
+          <h2 className="text-sm font-semibold text-stone-800">{t("collections")}</h2>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div>
+              <p className="mb-2 text-sm font-medium">{t("importCollection")}</p>
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="min-w-56 flex-1">
+                  <Label htmlFor="scheduling-collection">{t("collection")}</Label>
+                  <Select
+                    id="scheduling-collection"
+                    className="w-full"
+                    value={selectedCollectionId}
+                    onChange={(event) => {
+                      const id = event.target.value;
+                      setSelectedCollectionId(id);
+                      const collection = collections.find((entry) => entry.id === id);
+                      if (collection) {
+                        setCollectionName(collection.name);
+                      }
+                    }}
+                  >
+                    <option value="">{t("selectCollection")}</option>
+                    {collections.map((collection) => (
+                      <option key={collection.id} value={collection.id}>
+                        {collection.name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={importCollection}
+                  disabled={!selectedCollectionId}
+                >
+                  {t("import")}
+                </Button>
+              </div>
+              <p className="mt-2 text-xs text-stone-500">{t("importCollectionHelp")}</p>
+            </div>
+            <div>
+              <p className="mb-2 text-sm font-medium">{t("exportCollection")}</p>
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="min-w-56 flex-1">
+                  <Label htmlFor="scheduling-collection-name">{t("collectionName")}</Label>
+                  <Input
+                    id="scheduling-collection-name"
+                    value={collectionName}
+                    maxLength={100}
+                    onChange={(event) => setCollectionName(event.target.value)}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={exportCollection}
+                  disabled={savingCollection || items.length === 0 || !collectionName.trim()}
+                >
+                  {savingCollection ? t("exporting") : t("export")}
+                </Button>
+              </div>
+              <p className="mt-2 text-xs text-stone-500">{t("exportCollectionHelp")}</p>
+            </div>
+          </div>
+          {collectionMessage && (
+            <p className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
+              {collectionMessage}
+            </p>
+          )}
+        </Card>
+        </div>
       )}
 
       {step === 1 && (

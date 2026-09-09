@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Scheduling tool: locations can be marked "Prefer this location" in step 2. Each rehearsal placed in a preferred location adds 1 to the candidate score.
+- Scheduling tool: choreography/group selections and durations can be exported as named collections and imported later. Importing replaces the current list without linking subsequent edits to the saved collection; exporting an existing name overwrites it.
 
 ### Fixed
 

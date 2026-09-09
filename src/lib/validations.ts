@@ -223,6 +223,17 @@ export const schedulingItemSchema = z.object({
   allowedWindows: z.array(schedulingWindowSchema).default([]),
 });
 
+export const schedulingCollectionSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  items: z.array(
+    z.object({
+      choreographyId: z.string().min(1),
+      groupId: z.string().min(1).nullable().optional(),
+      durationMinutes: z.number().int().min(15).max(12 * 60),
+    }),
+  ).min(1).max(40),
+});
+
 export const schedulingRequestSchema = z.object({
   items: z.array(schedulingItemSchema).min(1).max(40),
   days: z.array(z.string().date()).min(1).max(14),
