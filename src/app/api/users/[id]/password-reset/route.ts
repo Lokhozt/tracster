@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
+import { appOrigin } from "@/lib/app-url";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   return Response.json(
     {
-      url: passwordResetUrl(request.nextUrl.origin, token),
+      url: passwordResetUrl(appOrigin(request), token),
       expiresAt: expiresAt.toISOString(),
     },
     { status: 201 },

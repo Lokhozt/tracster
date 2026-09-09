@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { appOrigin } from "@/lib/app-url";
 import {
-  appOrigin,
   exchangeGoogleCode,
   getGoogleAccountEmail,
   googleOAuthRedirectUri,
