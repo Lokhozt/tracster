@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Scheduling tool: the generated candidates are no longer near-copies of each other. Candidates were only compared on 30-minute time buckets, so the same plan shifted by ten minutes counted as a separate option. Two plans are now the same option when every rehearsal keeps its location and no rehearsal moves by an hour or more, and fewer than three candidates are returned when there is no real alternative.
 - Scheduling tool: candidates now open the day at 09:00 instead of drifting into the afternoon. The score was flat across the whole 09:00-20:00 window, so packing rehearsals into the longest contiguous block (the afternoon, once the midday break splits the day) scored as well as using the morning. Each started hour between a day's first bookable minute and its first rehearsal now costs 1 point.
 
 ### Changed

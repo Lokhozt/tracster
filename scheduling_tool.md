@@ -41,7 +41,8 @@ Don't consider participants / choreographer that are not available at all on the
 * If a rehearsal is in a "prefered location": +1
 * For each started hour between the first bookable minute of a day and the first rehearsal of that day: -1
 
-The algorithm returns 3 candidates.
+The algorithm returns up to 3 candidates.
+Candidates must be visibly different from each other: two plans count as the same option when every rehearsal keeps the same location and no rehearsal moves by an hour or more. Fewer than 3 candidates are returned when there is no real alternative.
 
 Step 5- Choose a solution
 The user can look and select one the candidate.

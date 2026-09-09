@@ -16,6 +16,8 @@ const MAX_EXPANSIONS = 12_000;
 const MAX_OPEN = 300;
 const MAX_STARTS_PER_ITEM = 48;
 const CANDIDATE_COUNT = 3;
+/** How far a rehearsal must move before the plan counts as a different option. */
+const DISTINCT_START_TOLERANCE_MS = 60 * 60 * 1000;
 
 type SearchNode = {
   assigned: InternalPlacement[];
@@ -157,19 +159,39 @@ function successorPlacements(
   return rested.length > 0 ? rested : crowded;
 }
 
-function fingerprint(assigned: InternalPlacement[]): string {
+type PlanShape = Array<{ key: string; locationId: string; start: number }>;
+
+/**
+ * Identity is what the calendar shows, not which draft row produced it: the same
+ * choreography added twice is interchangeable, so plans are compared as sorted sets.
+ */
+function planShape(assigned: InternalPlacement[], problem: SchedulingProblem): PlanShape {
   return assigned
-    .map((placement) => `${placement.itemIndex}:${placement.locationId}:${placement.start}`)
-    .join("|");
+    .map((placement) => {
+      const item = problem.items[placement.itemIndex];
+      return {
+        key: `${item.choreographyId}:${item.groupId ?? ""}:${item.durationMs}`,
+        locationId: placement.locationId,
+        start: placement.start,
+      };
+    })
+    .sort((a, b) => (a.key === b.key ? a.start - b.start : a.key.localeCompare(b.key)));
 }
 
-function coarseFingerprint(assigned: InternalPlacement[]): string {
-  return assigned
-    .map(
-      (placement) =>
-        `${placement.itemIndex}:${placement.locationId}:${Math.floor(placement.start / (30 * 60 * 1000))}`,
-    )
-    .join("|");
+/** Nudging the whole day by a few minutes is not a second option to choose from. */
+function samePlan(a: PlanShape, b: PlanShape): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  return a.every((placement, index) => {
+    const other = b[index];
+    return (
+      placement.key === other.key &&
+      placement.locationId === other.locationId &&
+      Math.abs(placement.start - other.start) < DISTINCT_START_TOLERANCE_MS
+    );
+  });
 }
 
 function toCandidate(
@@ -266,32 +288,17 @@ export function generateScheduleCandidates(
     layer = nextLayer.slice(0, MAX_OPEN);
   }
 
-  const foundKeys = new Set<string>();
+  const shapes: PlanShape[] = [];
   const unique: SearchNode[] = [];
   for (const node of layer.sort((a, b) => b.score - a.score)) {
-    const key = coarseFingerprint(node.assigned);
-    if (foundKeys.has(key)) {
+    const shape = planShape(node.assigned, problem);
+    if (shapes.some((accepted) => samePlan(shape, accepted))) {
       continue;
     }
-    foundKeys.add(key);
+    shapes.push(shape);
     unique.push(node);
     if (unique.length >= CANDIDATE_COUNT) {
       break;
-    }
-  }
-
-  if (unique.length < CANDIDATE_COUNT) {
-    const seen = new Set(unique.map((node) => fingerprint(node.assigned)));
-    for (const node of layer) {
-      const key = fingerprint(node.assigned);
-      if (seen.has(key)) {
-        continue;
-      }
-      seen.add(key);
-      unique.push(node);
-      if (unique.length >= CANDIDATE_COUNT) {
-        break;
-      }
     }
   }
 
