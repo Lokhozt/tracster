@@ -17,6 +17,7 @@ export type AuthUser = {
   dateOfBirth: string | null;
   role: UserRole;
   displayLanguage: DisplayLanguage | null;
+  adminPrivilegesEnabled: boolean;
 };
 
 function serializeAuthUser(user: {
@@ -28,6 +29,7 @@ function serializeAuthUser(user: {
   dateOfBirth: Date | null;
   role: UserRole;
   displayLanguage: DisplayLanguage | null;
+  adminPrivilegesEnabled: boolean;
 }): AuthUser {
   return {
     id: user.id,
@@ -39,6 +41,7 @@ function serializeAuthUser(user: {
     dateOfBirth: user.dateOfBirth?.toISOString() ?? null,
     role: user.role,
     displayLanguage: user.displayLanguage,
+    adminPrivilegesEnabled: user.adminPrivilegesEnabled,
   };
 }
 
@@ -93,6 +96,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
           dateOfBirth: true,
           role: true,
           displayLanguage: true,
+          adminPrivilegesEnabled: true,
         },
       },
     },

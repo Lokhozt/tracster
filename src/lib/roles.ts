@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import type { UserRole } from "@/generated/prisma/client";
+import { hasAdminPrivileges } from "@/lib/privileges";
 
 export async function getUserRole(userId: string): Promise<UserRole | null> {
   const user = await prisma.user.findUnique({
@@ -10,8 +11,11 @@ export async function getUserRole(userId: string): Promise<UserRole | null> {
 }
 
 export async function isAdmin(userId: string): Promise<boolean> {
-  const role = await getUserRole(userId);
-  return role === "ADMIN" || role === "OWNER";
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, adminPrivilegesEnabled: true },
+  });
+  return Boolean(user && hasAdminPrivileges(user));
 }
 
 export async function isOwner(userId: string): Promise<boolean> {
@@ -28,7 +32,7 @@ export async function canManageSettings(userId: string): Promise<boolean> {
 }
 
 export async function canManageAssociationGoogleCalendar(userId: string): Promise<boolean> {
-  return isOwner(userId);
+  return (await isAdmin(userId)) && (await isOwner(userId));
 }
 
 export async function hasGlobalAccess(userId: string): Promise<boolean> {
@@ -85,6 +89,10 @@ export async function canChangeUserRole(
   newRole: UserRole,
 ): Promise<boolean> {
   if (actorId === targetId) {
+    return false;
+  }
+
+  if (!(await isAdmin(actorId))) {
     return false;
   }
 

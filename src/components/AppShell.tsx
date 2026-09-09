@@ -19,6 +19,7 @@ export async function AppShell({
             ? {
                 name: user.name,
                 role: user.role,
+                adminPrivilegesEnabled: user.adminPrivilegesEnabled,
               }
             : null
         }

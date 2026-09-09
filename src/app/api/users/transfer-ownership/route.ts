@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
-import { isOwner } from "@/lib/roles";
+import { isAdmin, isOwner } from "@/lib/roles";
 import { transferOwnershipSchema } from "@/lib/validations";
 import { adminUserSelect, serializeAdminUser } from "@/lib/users";
 
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     return unauthorized();
   }
 
-  if (!(await isOwner(user.id))) {
+  if (!(await isOwner(user.id)) || !(await isAdmin(user.id))) {
     return forbidden();
   }
 

@@ -8,11 +8,13 @@ import { AuthNav } from "@/components/AuthNav";
 import { MainNav, type NavItem, getNavItems } from "@/components/MainNav";
 import { RoleBadge } from "@/components/UserForms";
 import type { UserRole } from "@/generated/prisma/client";
+import { hasAdminPrivileges } from "@/lib/privileges";
 import { cn } from "@/lib/utils";
 
 type HeaderUser = {
   name: string;
   role: UserRole;
+  adminPrivilegesEnabled: boolean;
 };
 
 export function HeaderBar({
@@ -26,7 +28,7 @@ export function HeaderBar({
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
-  const showAdminNav = user?.role === "ADMIN" || user?.role === "OWNER";
+  const showAdminNav = user ? hasAdminPrivileges(user) : false;
   const navItems = user ? getNavItems(showAdminNav) : [];
 
   useEffect(() => {
@@ -136,7 +138,7 @@ function UserCluster({ user }: { user: HeaderUser }) {
         <Link href="/account" className="truncate text-stone-600 hover:text-stone-900">
           {user.name}
         </Link>
-        {(user.role === "ADMIN" || user.role === "OWNER") && (
+        {hasAdminPrivileges(user) && (
           <RoleBadge role={user.role} />
         )}
       </div>

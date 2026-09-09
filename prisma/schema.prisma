@@ -19,31 +19,32 @@ enum DisplayLanguage {
 }
 
 model User {
-  id              String           @id @default(cuid())
-  email           String           @unique
-  firstName       String
-  lastName        String
-  phone           String?
-  dateOfBirth     DateTime?
-  role            UserRole         @default(USER)
-  displayLanguage DisplayLanguage?
-  passwordHash    String
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id                     String           @id @default(cuid())
+  email                  String           @unique
+  firstName              String
+  lastName               String
+  phone                  String?
+  dateOfBirth            DateTime?
+  role                   UserRole         @default(USER)
+  displayLanguage        DisplayLanguage?
+  adminPrivilegesEnabled Boolean          @default(true)
+  passwordHash           String
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
 
-  sessions                   Session[]
-  createdChoreographies      Choreography[]              @relation("ChoreographyCreator")
-  choreographyChoreographers ChoreographyChoreographer[]
-  choreographyMembers        ChoreographyMember[]
-  choreographyGroupMembers   ChoreographyGroupMember[]
-  availabilityResponses      AvailabilityResponse[]
-  createdEvents              Event[]                     @relation("EventCreator")
-  eventParticipants          EventParticipant[]
+  sessions                      Session[]
+  createdChoreographies         Choreography[]              @relation("ChoreographyCreator")
+  choreographyChoreographers    ChoreographyChoreographer[]
+  choreographyMembers           ChoreographyMember[]
+  choreographyGroupMembers      ChoreographyGroupMember[]
+  availabilityResponses         AvailabilityResponse[]
+  createdEvents                 Event[]                     @relation("EventCreator")
+  eventParticipants             EventParticipant[]
   uploadedChoreographyResources ChoreographyResource[]
-  unavailabilityTimeframes   UserUnavailability[]
-  choreographyJoinRequests   ChoreographyJoinRequest[]
-  eventJoinRequests          EventJoinRequest[]
-  googleCalendarConnection   GoogleCalendarConnection?
+  unavailabilityTimeframes      UserUnavailability[]
+  choreographyJoinRequests      ChoreographyJoinRequest[]
+  eventJoinRequests             EventJoinRequest[]
+  googleCalendarConnection      GoogleCalendarConnection?
 }
 
 model Session {
@@ -298,20 +299,20 @@ model Event {
 }
 
 model ChoreographyResource {
-  id              String                         @id @default(cuid())
-  choreographyId  String
-  uploadedById String?
-  type            ChoreographyResourceType
-  visibility      ChoreographyResourceVisibility @default(ALL)
-  status          ChoreographyResourceStatus     @default(ACTIVE)
-  description  String?
-  url          String?
-  storageKey   String?                 @unique
-  fileName     String?
-  mimeType     String?
-  sizeBytes    BigInt?
-  createdAt    DateTime                @default(now())
-  updatedAt    DateTime                @updatedAt
+  id             String                         @id @default(cuid())
+  choreographyId String
+  uploadedById   String?
+  type           ChoreographyResourceType
+  visibility     ChoreographyResourceVisibility @default(ALL)
+  status         ChoreographyResourceStatus     @default(ACTIVE)
+  description    String?
+  url            String?
+  storageKey     String?                        @unique
+  fileName       String?
+  mimeType       String?
+  sizeBytes      BigInt?
+  createdAt      DateTime                       @default(now())
+  updatedAt      DateTime                       @updatedAt
 
   choreography Choreography @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
   uploadedBy   User?        @relation(fields: [uploadedById], references: [id], onDelete: SetNull)

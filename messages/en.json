@@ -44,6 +44,12 @@
     "saved": "Profile saved.",
     "saveProfile": "Save profile",
     "saveError": "Unable to save your profile.",
+    "adminPrivileges": "Admin privileges",
+    "adminPrivilegesHelp": "Turn this off to use Tracster as a regular member. You can turn it back on here at any time.",
+    "adminPrivilegesLabel": "Use admin privileges",
+    "adminPrivilegesOn": "Scheduling, settings, and other admin tools are available.",
+    "adminPrivilegesOff": "You currently have the same access as a regular member.",
+    "adminPrivilegesError": "Unable to update admin privileges.",
     "session": "Session",
     "signOutHelp": "Sign out of Tracster on this device."
   }

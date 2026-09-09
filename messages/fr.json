@@ -44,6 +44,12 @@
     "saved": "Profil enregistré.",
     "saveProfile": "Enregistrer le profil",
     "saveError": "Impossible d’enregistrer votre profil.",
+    "adminPrivileges": "Privilèges d’administration",
+    "adminPrivilegesHelp": "Désactivez cette option pour utiliser Tracster comme un membre. Vous pourrez la réactiver ici à tout moment.",
+    "adminPrivilegesLabel": "Utiliser les privilèges d’administration",
+    "adminPrivilegesOn": "La planification, les paramètres et les autres outils d’administration sont disponibles.",
+    "adminPrivilegesOff": "Vous avez actuellement le même accès qu’un membre.",
+    "adminPrivilegesError": "Impossible de mettre à jour les privilèges d’administration.",
     "session": "Session",
     "signOutHelp": "Déconnectez-vous de Tracster sur cet appareil."
   }
