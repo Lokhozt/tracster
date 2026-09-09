@@ -354,6 +354,7 @@
     "remove": "Retirer",
     "locationHoursHelp": "Les lieux sont disponibles de 09:00 à 20:00 les jours sélectionnés. Ajoutez les périodes d’indisponibilité.",
     "constraintHelp": "Vous pouvez limiter chaque répétition à certains lieux ou créneaux.",
+    "skipConstraints": "Passer cette étape",
     "schedulerHelp": "Le planificateur place les répétitions dans les lieux disponibles, autorise les chevauchements entre lieux et évite les conflits de participants.",
     "back": "Retour",
     "continue": "Continuer",

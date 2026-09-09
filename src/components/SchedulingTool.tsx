@@ -775,9 +775,14 @@ export function SchedulingTool({
 
       {step === 2 && (
         <div className="space-y-4">
-          <p className="text-sm text-stone-600">
-            {t("constraintHelp")}
-          </p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <p className="text-sm text-stone-600">
+              {t("constraintHelp")}
+            </p>
+            <Button type="button" variant="secondary" onClick={() => goTo(3)}>
+              {t("skipConstraints")}
+            </Button>
+          </div>
           {items.map((item) => (
             <ConstraintCard
               key={item.id}

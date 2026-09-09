@@ -354,6 +354,7 @@
     "remove": "Remove",
     "locationHoursHelp": "Locations are available from 09:00 to 20:00 on the selected days. Add times when a       location is unavailable.",
     "constraintHelp": "Optionally limit each rehearsal to certain locations or datetime windows.",
+    "skipConstraints": "Skip this step",
     "schedulerHelp": "The scheduler places rehearsals on available locations, allows overlap across locations, and     avoids participant conflicts.",
     "back": "Back",
     "continue": "Continue",
