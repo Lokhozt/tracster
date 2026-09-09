@@ -260,6 +260,8 @@
     "unavailabilityLoadError": "Unable to load unavailability for this week.",
     "unavailabilitySaveError": "Unable to save unavailability.",
     "unavailabilityDeleteError": "Unable to delete unavailability.",
+    "unavailabilityUser": "Edit unavailability for",
+    "unavailabilityUserSelf": "{name} (you)",
     "unavailabilityDeleteConfirm": "Delete this unavailability period?",
     "weekView": "Week view",
     "unavailabilityHelp": "Click a date to mark the whole day unavailable, and click it again to clear it. Click and drag on the grid to add periods. Drag blocks to move, or resize from the edges. On a touch screen, press and hold to start drawing — a plain swipe scrolls. Tap a period to select it and lock scrolling so you can drag or resize. Press Delete to remove a selected period, or tap empty space to deselect. Collapse a period to nothing to remove it.",

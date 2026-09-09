@@ -34,7 +34,8 @@
     },
     "Unavailability": {
       "title": "My unavailability",
-      "intro": "Mark periods when you are not available. Click a date to mark the whole day, click it again to clear it, or use the calendar to draw, move, and resize blocks."
+      "intro": "Mark periods when you are not available. Click a date to mark the whole day, click it again to clear it, or use the calendar to draw, move, and resize blocks.",
+      "adminIntro": "Mark periods when you or another member are not available. Choose whose calendar to edit, then draw, move, and resize blocks as usual."
     },
     "Scheduling": {
       "title": "Scheduling",

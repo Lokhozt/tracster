@@ -2,8 +2,8 @@ import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
+import { canManageUserUnavailability } from "@/lib/roles";
 import {
-  getOwnedUnavailability,
   saveMergedUnavailability,
   serializeUnavailability,
   validateUnavailabilityRange,
@@ -12,6 +12,17 @@ import { unavailabilitySchema } from "@/lib/validations";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
+async function getEditableUnavailability(actorId: string, id: string) {
+  const existing = await prisma.userUnavailability.findUnique({ where: { id } });
+  if (!existing) {
+    return { error: await notFound("Unavailability") };
+  }
+  if (!(await canManageUserUnavailability(actorId, existing.userId))) {
+    return { error: await forbidden() };
+  }
+  return { existing };
+}
+
 export async function PATCH(request: NextRequest, context: RouteContext) {
   const user = await getCurrentUser();
   if (!user) {
@@ -19,13 +30,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   }
 
   const { id } = await context.params;
-  const existing = await getOwnedUnavailability(id, user.id);
-  if (!existing) {
-    return notFound("Unavailability");
+  const resolved = await getEditableUnavailability(user.id, id);
+  if ("error" in resolved) {
+    return resolved.error;
   }
 
-  const body = await request.json();
-  const parsed = unavailabilitySchema.safeParse(body);
+  const parsed = unavailabilitySchema.safeParse(await request.json());
   if (!parsed.success) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
@@ -38,7 +48,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   }
 
   const { entry, deletedIds } = await saveMergedUnavailability(
-    user.id,
+    resolved.existing.userId,
     startsAt,
     endsAt,
     id,
@@ -54,12 +64,11 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
   }
 
   const { id } = await context.params;
-  const existing = await getOwnedUnavailability(id, user.id);
-  if (!existing) {
-    return notFound("Unavailability");
+  const resolved = await getEditableUnavailability(user.id, id);
+  if ("error" in resolved) {
+    return resolved.error;
   }
 
   await prisma.userUnavailability.delete({ where: { id } });
-
   return Response.json({ ok: true });
 }

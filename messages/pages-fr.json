@@ -34,7 +34,8 @@
     },
     "Unavailability": {
       "title": "Mes indisponibilités",
-      "intro": "Indiquez les périodes pendant lesquelles vous n’êtes pas disponible. Cliquez sur une date pour marquer toute la journée, cliquez à nouveau pour l’effacer ou utilisez le calendrier pour dessiner, déplacer et redimensionner des plages horaires."
+      "intro": "Indiquez les périodes pendant lesquelles vous n’êtes pas disponible. Cliquez sur une date pour marquer toute la journée, cliquez à nouveau pour l’effacer ou utilisez le calendrier pour dessiner, déplacer et redimensionner des plages horaires.",
+      "adminIntro": "Indiquez les périodes pendant lesquelles vous ou un autre membre n’êtes pas disponibles. Choisissez le calendrier à modifier, puis dessinez, déplacez et redimensionnez les plages comme d’habitude."
     },
     "Scheduling": {
       "title": "Planification",

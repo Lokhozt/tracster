@@ -260,6 +260,8 @@
     "unavailabilityLoadError": "Impossible de charger les indisponibilités de cette semaine.",
     "unavailabilitySaveError": "Impossible d’enregistrer l’indisponibilité.",
     "unavailabilityDeleteError": "Impossible de supprimer l’indisponibilité.",
+    "unavailabilityUser": "Modifier les indisponibilités de",
+    "unavailabilityUserSelf": "{name} (vous)",
     "unavailabilityDeleteConfirm": "Supprimer cette période d’indisponibilité ?",
     "weekView": "Vue hebdomadaire",
     "unavailabilityHelp": "Cliquez sur une date pour marquer toute la journée comme indisponible, puis recliquez pour l’effacer. Cliquez-glissez dans la grille pour ajouter une période. Faites glisser les blocs pour les déplacer ou redimensionnez-les par les bords. Sur écran tactile, maintenez l’appui pour commencer à dessiner ; un simple balayage fait défiler. Touchez une période pour la sélectionner. Appuyez sur Supprimer pour l’effacer ou touchez une zone vide pour la désélectionner.",

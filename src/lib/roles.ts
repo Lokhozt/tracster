@@ -35,6 +35,16 @@ export async function hasGlobalAccess(userId: string): Promise<boolean> {
   return isAdmin(userId);
 }
 
+export async function canManageUserUnavailability(
+  actorId: string,
+  targetUserId: string,
+): Promise<boolean> {
+  if (actorId === targetUserId) {
+    return true;
+  }
+  return isAdmin(actorId);
+}
+
 export function canAssignRole(
   actorRole: UserRole,
   targetRole: UserRole,

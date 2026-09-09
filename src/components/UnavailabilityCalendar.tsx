@@ -19,7 +19,7 @@ import {
 } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Card } from "@/components/ui";
+import { Button, Card, Label, Select } from "@/components/ui";
 import { formatTime } from "@/lib/datetime";
 import type { SerializedUnavailability } from "@/lib/unavailability";
 import { cn } from "@/lib/utils";
@@ -186,12 +186,16 @@ function timeframeSegments(
   return segments;
 }
 
-async function fetchTimeframes(from: Date, to: Date): Promise<SerializedUnavailability[]> {
+async function fetchTimeframes(
+  userId: string,
+  from: Date,
+  to: Date,
+): Promise<SerializedUnavailability[]> {
   const params = new URLSearchParams({
     from: from.toISOString(),
     to: to.toISOString(),
   });
-  const response = await fetch(`/api/users/me/unavailability?${params.toString()}`);
+  const response = await fetch(`/api/users/${userId}/unavailability?${params.toString()}`);
   if (!response.ok) {
     throw new Error("UNAVAILABILITY_LOAD_FAILED");
   }
@@ -199,11 +203,20 @@ async function fetchTimeframes(from: Date, to: Date): Promise<SerializedUnavaila
   return data.timeframes as SerializedUnavailability[];
 }
 
+export type UnavailabilityUserOption = {
+  id: string;
+  name: string;
+};
+
 export function UnavailabilityCalendar({
+  currentUserId,
+  users,
   initialTimeframes,
   initialWeekStart,
   startOfDayHour,
 }: {
+  currentUserId: string;
+  users?: UnavailabilityUserOption[];
   initialTimeframes: SerializedUnavailability[];
   // Calendar day (yyyy-MM-dd) rather than an instant: the grid is laid out in the
   // viewer's timezone, which can differ from the server's.
@@ -225,6 +238,7 @@ export function UnavailabilityCalendar({
     [initialWeekStart],
   );
   const [weekStart, setWeekStart] = useState(firstWeekStart);
+  const [viewingUserId, setViewingUserId] = useState(currentUserId);
   const [timeframes, setTimeframes] = useState(initialTimeframes);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [interaction, setInteraction] = useState<Interaction | null>(null);
@@ -276,7 +290,7 @@ export function UnavailabilityCalendar({
     setLoading(true);
     setError(null);
     try {
-      const entries = await fetchTimeframes(weekStart, weekEnd);
+      const entries = await fetchTimeframes(viewingUserId, weekStart, weekEnd);
       setTimeframes(entries);
       setSelectedId((current) =>
         current && entries.some((entry) => entry.id === current) ? current : null,
@@ -286,7 +300,7 @@ export function UnavailabilityCalendar({
     } finally {
       setLoading(false);
     }
-  }, [weekStart, weekEnd, t]);
+  }, [viewingUserId, weekStart, weekEnd, t]);
 
   useEffect(() => {
     // Loading the selected week is the external synchronization owned by this effect.
@@ -446,7 +460,7 @@ export function UnavailabilityCalendar({
     };
 
     const response = await fetch(
-      id ? `/api/unavailability/${id}` : "/api/users/me/unavailability",
+      id ? `/api/unavailability/${id}` : `/api/users/${viewingUserId}/unavailability`,
       {
         method: id ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -727,6 +741,32 @@ export function UnavailabilityCalendar({
   return (
     <div className={cn("space-y-4", selectedTimeframe && "pb-24 sm:pb-0")}>
       <Card>
+        {users && users.length > 0 && (
+          <div className="mb-4 max-w-md">
+            <Label htmlFor="unavailability-user">{t("unavailabilityUser")}</Label>
+            <Select
+              id="unavailability-user"
+              className="w-full"
+              value={viewingUserId}
+              disabled={saving || Boolean(interaction)}
+              onChange={(event) => {
+                const nextId = event.target.value;
+                setViewingUserId(nextId);
+                setSelectedId(null);
+                setInteraction(null);
+                setError(null);
+              }}
+            >
+              {users.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.id === currentUserId
+                    ? t("unavailabilityUserSelf", { name: entry.name })
+                    : entry.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold">{t("weekView")}</h2>
