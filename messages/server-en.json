@@ -26,6 +26,7 @@
       "Unavailability must be at least 30 minutes.": "Unavailability must be at least 30 minutes.",
       "An account with this email already exists.": "An account with this email already exists.",
       "Invalid email or password.": "Invalid email or password.",
+      "This password reset link is invalid or has expired.": "This password reset link is invalid or has expired.",
       "Choose a different user to transfer ownership to.": "Choose a different user to transfer ownership to.",
       "A location with this name already exists.": "A location with this name already exists.",
       "An event type with this name already exists.": "An event type with this name already exists.",

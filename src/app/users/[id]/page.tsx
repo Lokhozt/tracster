@@ -9,6 +9,7 @@ import {
   UserRoleForm,
 } from "@/components/UserForms";
 import { Card } from "@/components/ui";
+import { PasswordResetLinkControls } from "@/components/PasswordResetLinkControls";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canManageUsers, isOwner } from "@/lib/roles";
@@ -72,6 +73,11 @@ export default async function UserDetailPage({ params }: PageProps) {
           <Card>
             <h2 className="mb-4 text-lg font-semibold">{t("role")}</h2>
             <UserRoleForm user={user} actorRole={currentUser.role} />
+          </Card>
+
+          <Card>
+            <h2 className="mb-4 text-lg font-semibold">{t("resetPassword")}</h2>
+            <PasswordResetLinkControls userId={user.id} />
           </Card>
 
           {ownerIsCurrentUser && user.role === "OWNER" && (

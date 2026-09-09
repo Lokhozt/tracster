@@ -29,6 +29,12 @@
     "Login": {
       "title": "Se connecter"
     },
+    "ResetPassword": {
+      "title": "Définir un nouveau mot de passe",
+      "help": "Choisissez un nouveau mot de passe pour ce compte. Le lien de réinitialisation ne peut être utilisé qu’une fois.",
+      "invalid": "Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau à un administrateur.",
+      "backToSignIn": "Retour à la connexion"
+    },
     "Register": {
       "title": "Créer un compte"
     },
@@ -104,6 +110,7 @@
       "backToSettings": "← Retour aux paramètres",
       "profile": "Profil",
       "role": "Rôle",
+      "resetPassword": "Réinitialiser le mot de passe",
       "transferOwnership": "Transférer la propriété",
       "transferOwnershipIntro": "Transférez le rôle de propriétaire à un autre utilisateur. Vous deviendrez un utilisateur standard. C’est la seule manière de changer de propriétaire."
     }

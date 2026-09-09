@@ -29,6 +29,12 @@
     "Login": {
       "title": "Sign in"
     },
+    "ResetPassword": {
+      "title": "Set a new password",
+      "help": "Choose a new password for this account. The reset link can only be used once.",
+      "invalid": "This password reset link is invalid or has expired. Ask an admin for a new one.",
+      "backToSignIn": "Back to sign in"
+    },
     "Register": {
       "title": "Create account"
     },
@@ -104,6 +110,7 @@
       "backToSettings": "← Back to settings",
       "profile": "Profile",
       "role": "Role",
+      "resetPassword": "Reset password",
       "transferOwnership": "Transfer ownership",
       "transferOwnershipIntro": "Transfer the owner role to another user. You will become a regular user. This is the only way to change who holds the owner role."
     }

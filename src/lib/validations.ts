@@ -45,6 +45,15 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+export const passwordResetLinkSchema = z.object({
+  hours: z.union([z.literal(1), z.literal(24), z.literal(168)]),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(8).max(100),
+});
+
 export const choreographySchema = z.object({
   title: z.string().trim().min(2).max(120),
   description: z.string().trim().max(1000).optional(),

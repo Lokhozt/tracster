@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scheduling tool: choreography/group selections and durations can be exported as named collections and imported later. Importing replaces the current list without linking subsequent edits to the saved collection; exporting an existing name overwrites it.
 - Scheduling tool: an optional final edit step lets admins drag generated rehearsals to another time, day, or location. Participant unavailability and overlapping-rehearsal conflicts are recalculated after every move.
 - Admins and the owner can edit any member's unavailability from the unavailability page by choosing that person in a dropdown.
-- Admins and the owner can turn admin privileges off from their account page to use Tracster as a regular member, and turn them back on there.
+- Admins and the owner can generate a one-time password reset link for a member from that member's page. The link expires after 1 hour, 24 hours, or 7 days, and creating a new one or revoking it invalidates the previous link.
 
 ### Fixed
 

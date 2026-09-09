@@ -26,6 +26,7 @@
       "Unavailability must be at least 30 minutes.": "Une indisponibilité doit durer au moins 30 minutes.",
       "An account with this email already exists.": "Un compte associé à cette adresse e-mail existe déjà.",
       "Invalid email or password.": "Adresse e-mail ou mot de passe incorrect.",
+      "This password reset link is invalid or has expired.": "Ce lien de réinitialisation est invalide ou a expiré.",
       "Choose a different user to transfer ownership to.": "Choisissez un autre utilisateur pour le transfert de propriété.",
       "A location with this name already exists.": "Un lieu portant ce nom existe déjà.",
       "An event type with this name already exists.": "Un type d’événement portant ce nom existe déjà.",

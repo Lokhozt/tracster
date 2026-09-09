@@ -45,6 +45,23 @@ model User {
   choreographyJoinRequests      ChoreographyJoinRequest[]
   eventJoinRequests             EventJoinRequest[]
   googleCalendarConnection      GoogleCalendarConnection?
+  passwordResetTokens           PasswordResetToken[]        @relation("PasswordResetTarget")
+  createdPasswordResetTokens    PasswordResetToken[]        @relation("PasswordResetCreator")
+}
+
+model PasswordResetToken {
+  id          String   @id @default(cuid())
+  tokenHash   String   @unique
+  userId      String
+  createdById String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  user      User @relation("PasswordResetTarget", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy User @relation("PasswordResetCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Session {
