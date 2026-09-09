@@ -6,6 +6,7 @@ import Link from "next/link";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
 import { EditIconLink } from "@/components/EditIconLink";
 import { Card } from "@/components/ui";
+import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 import { useLocale } from "next-intl";
 
 export type RehearsalListItem = {
@@ -30,10 +31,14 @@ export function RehearsalEventCard({
   const locale = useLocale();
   const dateFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
   return (
-    <Card>
+    <Card className="relative transition hover:border-stone-400">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h3 className="font-semibold">{rehearsal.title ?? t("rehearsal")}</h3>
+          <h3 className="font-semibold">
+            <Link href={`/events/${rehearsal.id}`} className={cn("hover:underline", cardLink)}>
+              {rehearsal.title ?? t("rehearsal")}
+            </Link>
+          </h3>
           <p className="mt-1 text-sm text-stone-600">
             {dateFormatter.format(new Date(rehearsal.startsAt))}
             {rehearsal.endsAt && ` – ${dateFormatter.format(new Date(rehearsal.endsAt))}`}
@@ -45,7 +50,7 @@ export function RehearsalEventCard({
             <p className="mt-1 text-sm text-stone-500">{t("groupName", {name: rehearsal.groupName})}</p>
           )}
         </div>
-        <div className="flex items-center gap-1">
+        <div className={cn("flex items-center gap-1", aboveCardLink)}>
           <Link
             href={`/events/${rehearsal.id}`}
             className="text-sm font-medium text-stone-900 hover:underline"

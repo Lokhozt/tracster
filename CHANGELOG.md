@@ -21,5 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Event, rehearsal, representation, demonstration, and choreography cards open when clicked anywhere on the box, instead of only on the title. Buttons and links inside a card, such as edit, delete, join, and availability, keep their own behaviour.
 - Scheduling tool: removed the (already inert) scoring penalty for rehearsals starting before 10:00.
 - On small screens, the hour labels on the unavailability week grid stay pinned to the left while the days scroll sideways.

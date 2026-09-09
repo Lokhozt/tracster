@@ -9,7 +9,7 @@ import { EditIconLink } from "@/components/EditIconLink";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
 import { ParticipatingCheck } from "@/components/ParticipatingCheck";
 import { Card, Button } from "@/components/ui";
-import { cn } from "@/lib/utils";
+import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 
 import {
   filterUpcomingScheduleEvents,
@@ -212,7 +212,7 @@ export function UpcomingEventsList({
       ) : (
         <div className="space-y-3">
           {filteredEvents.map((event) => (
-            <Card key={event.id}>
+            <Card key={event.id} className="relative transition hover:border-stone-400">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -224,7 +224,10 @@ export function UpcomingEventsList({
                     <EventTypeBadge event={event} />
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <Link href={event.href} className="text-base font-semibold hover:underline">
+                    <Link
+                      href={event.href}
+                      className={cn("text-base font-semibold hover:underline", cardLink)}
+                    >
                       {defaultEventTitle(event)}
                     </Link>
                     {event.isParticipating && <ParticipatingCheck />}
@@ -238,7 +241,7 @@ export function UpcomingEventsList({
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
+                <div className={cn("flex flex-wrap items-center gap-2", aboveCardLink)}>
                   {isRehearsalScheduleEvent(event) && event.isMember && (
                     <AvailabilityBadge status={event.availabilityStatus} />
                   )}
@@ -252,7 +255,7 @@ export function UpcomingEventsList({
               </div>
 
               {isRehearsalScheduleEvent(event) && event.isMember && (
-                <div className="mt-4 border-t border-stone-100 pt-4">
+                <div className={cn("mt-4 border-t border-stone-100 pt-4", aboveCardLink)}>
                   <AvailabilityQuickReply
                     rehearsalId={event.id}
                     currentStatus={event.availabilityStatus}
@@ -264,7 +267,7 @@ export function UpcomingEventsList({
                 (event.allowParticipantJoin ||
                   event.allowJoinRequests ||
                   event.hasPendingJoinRequest) && (
-                <div className="mt-4 border-t border-stone-100 pt-4">
+                <div className={cn("mt-4 border-t border-stone-100 pt-4", aboveCardLink)}>
                   <JoinAsParticipantControls
                     joinUrl={`/api/events/${event.id}/join`}
                     requestUrl={`/api/events/${event.id}/join-requests`}

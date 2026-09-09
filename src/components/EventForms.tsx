@@ -36,6 +36,7 @@ import {
   defaultParticipationSettings,
   type ParticipationSettings,
 } from "@/lib/participation";
+import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 
 type UserOption = { id: string; name: string; email: string };
 
@@ -784,13 +785,13 @@ function LinkedEventKindSection({
           {items.map((item) => (
             <div
               key={item.id}
-              className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm"
+              className="relative rounded-xl border border-stone-200 bg-white p-5 shadow-sm transition hover:border-stone-400"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <Link
                     href={`/events/${item.id}`}
-                    className="font-semibold hover:text-stone-700"
+                    className={cn("font-semibold hover:text-stone-700", cardLink)}
                   >
                     {item.title || fallbackTitle}
                   </Link>
@@ -803,7 +804,7 @@ function LinkedEventKindSection({
                   )}
                 </div>
                 {canEdit && (
-                  <div className="flex items-center gap-1">
+                  <div className={cn("flex items-center gap-1", aboveCardLink)}>
                     <EditIconLink href={`/events/${item.id}`} label={editLabel} />
                     <DeleteEventButton
                       deleteUrl={`/api/events/${item.id}/choreographies`}

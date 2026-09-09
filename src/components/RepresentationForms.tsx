@@ -17,6 +17,7 @@ import {
   type LocationSelection,
 } from "@/components/LocationPicker";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
+import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 import {
   addOneHour,
   dateTimePartsToDate,
@@ -639,12 +640,12 @@ function RepresentationCard({
     timeStyle: "short",
   });
   return (
-    <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+    <div className="relative rounded-xl border border-stone-200 bg-white p-5 shadow-sm transition hover:border-stone-400">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Link
             href={`/events/${representation.id}`}
-            className="font-semibold hover:text-stone-700"
+            className={cn("font-semibold hover:text-stone-700", cardLink)}
           >
             {representation.title ?? t("representation")}
           </Link>
@@ -658,7 +659,7 @@ function RepresentationCard({
           )}
         </div>
         {canEdit && (
-          <div className="flex items-center gap-1">
+          <div className={cn("flex items-center gap-1", aboveCardLink)}>
             <EditIconLink
               href={`/events/${representation.id}`}
               label={t("editRepresentation")}
@@ -933,11 +934,14 @@ export function RepresentationChoreographiesSection({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {choreographies.map((choreography) => (
-            <Card key={choreography.id} className="flex flex-col">
+            <Card
+              key={choreography.id}
+              className="relative flex flex-col transition hover:border-stone-400"
+            >
               <div className="flex items-start justify-between gap-2">
                 <Link
                   href={`/choreographies/${choreography.id}`}
-                  className="min-w-0 hover:underline"
+                  className={cn("min-w-0 hover:underline", cardLink)}
                 >
                   <h3 className="text-lg font-semibold">{choreography.title}</h3>
                 </Link>
@@ -946,6 +950,7 @@ export function RepresentationChoreographiesSection({
                     deleteUrl={`/api/events/${representationId}/choreographies`}
                     deleteBody={{ choreographyId: choreography.id }}
                     confirmMessage={t("unlinkChoreographyConfirm", {title: choreography.title})}
+                    className={aboveCardLink}
                   />
                 )}
               </div>

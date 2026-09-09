@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { EditIconLink } from "@/components/EditIconLink";
 import { Card, Input, Label } from "@/components/ui";
 import { matchesSearch } from "@/lib/search";
+import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 import type { SerializedRepresentation } from "@/lib/representations";
 
 export type RepresentationListItem = {
@@ -64,7 +65,7 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
       ) : (
         <div className="grid gap-4">
           {filteredItems.map(({ representation, canEdit }) => (
-            <Card key={representation.id} className="transition hover:border-stone-400">
+            <Card key={representation.id} className="relative transition hover:border-stone-400">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium uppercase tracking-wide text-amber-800">
@@ -72,7 +73,7 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
                   </p>
                   <Link
                     href={`/events/${representation.id}`}
-                    className="hover:underline"
+                    className={cn("hover:underline", cardLink)}
                   >
                     <h2 className="mt-1 text-lg font-semibold">
                       {representation.title ?? t("representation")}
@@ -91,6 +92,7 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
                   <EditIconLink
                     href={`/events/${representation.id}`}
                     label={t("editRepresentation")}
+                    className={aboveCardLink}
                   />
                 )}
               </div>
@@ -102,7 +104,7 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
                 {representation.choreographies.length === 0 ? (
                   <p className="mt-2 text-sm text-stone-500">{t("noLinkedChoreographies")}</p>
                 ) : (
-                  <ul className="mt-2 flex flex-wrap gap-2">
+                  <ul className={cn("mt-2 flex flex-wrap gap-2", aboveCardLink)}>
                     {representation.choreographies.map((choreography) => (
                       <li key={choreography.id}>
                         <Link

@@ -12,7 +12,7 @@ import { Card, Input, Label } from "@/components/ui";
 import { isGenericEventKind } from "@/lib/event-type-helpers";
 import { isPastDate, matchesSearch } from "@/lib/search";
 import type { SerializedEvent } from "@/lib/events";
-import { cn } from "@/lib/utils";
+import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 
 export type EventListItem = {
   event: SerializedEvent;
@@ -123,7 +123,10 @@ export function EventsList({ events }: { events: EventListItem[] }) {
                     {event.type.name}
                   </p>
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                    <Link href={`/events/${event.id}`} className="hover:underline">
+                    <Link
+                      href={`/events/${event.id}`}
+                      className={cn("hover:underline", cardLink)}
+                    >
                       <h2 className="text-lg font-semibold">{event.displayTitle}</h2>
                     </Link>
                     {isParticipating && <ParticipatingCheck />}
@@ -146,7 +149,7 @@ export function EventsList({ events }: { events: EventListItem[] }) {
                     </p>
                   )}
                 </div>
-                <div className="flex items-start gap-3 text-sm text-stone-600">
+                <div className={cn("flex items-start gap-3 text-sm text-stone-600", aboveCardLink)}>
                   <p>
                     {event.participants.length}{" "}
                     {event.participants.length === 1 ? "participant" : "participants"}
@@ -161,7 +164,7 @@ export function EventsList({ events }: { events: EventListItem[] }) {
                 (event.allowParticipantJoin ||
                   event.allowJoinRequests ||
                   hasPendingJoinRequest) && (
-                <div className="mt-4 border-t border-stone-100 pt-4">
+                <div className={cn("mt-4 border-t border-stone-100 pt-4", aboveCardLink)}>
                   <JoinAsParticipantControls
                     joinUrl={`/api/events/${event.id}/join`}
                     requestUrl={`/api/events/${event.id}/join-requests`}
@@ -176,7 +179,7 @@ export function EventsList({ events }: { events: EventListItem[] }) {
                 <LeaveEventButton
                   eventId={event.id}
                   eventTitle={event.displayTitle}
-                  className="absolute right-2 bottom-2"
+                  className="absolute right-2 bottom-2 z-10"
                 />
               )}
             </Card>
