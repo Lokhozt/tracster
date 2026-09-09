@@ -289,6 +289,8 @@
     "removeDay": "Remove {day}",
     "addDay": "Add day",
     "addLocationsFirst": "Add listed locations in Settings first.",
+    "preferLocation": "Prefer this location",
+    "preferLocationHelp": "Each rehearsal placed in a preferred location adds 1 to the score.",
     "locationUnavailability": "Location unavailability",
     "restMinutes": "Rest between choreographies (minutes)",
     "generating": "Generating…",

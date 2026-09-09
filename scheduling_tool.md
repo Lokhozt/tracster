@@ -11,6 +11,7 @@ For each choreography the user input a desired duration (default 1 hour)
 Step 2- Days and locations
 The user choose on which days the scheduling takes place. By default it is the next week end (Saturday and Sunday).
 The user choose the available locations using the list of location.
+For each selected location, the user can mark it as preferred.
 For each location, the user can edit when they are available on the selected days.
 The user set a rest time between choreographies (default 10 minutes)
 
@@ -27,15 +28,16 @@ Don't consider participants / choreographer that are not available at all on the
 * If a constraint is not respected : -100
 * If a choreographer is not available: -50
 * If a participant is not available: -10
-* If a participant has a hole between 2 choreographies: -5 
-* If a participant has 2 consecutive choreography (even in different location): +2
+* If a participant has a hole longer than the rest setting between 2 rehearsals: -5
+* If a participant has 2 consecutive rehearsals with a gap of at most the rest setting: +2
 * If a participant has more than 3 consecutives choreographies: -5
 * If a participant has no time between 12h and 14h: -20
-* Il a choreography starts before 9h: -1
-* Il a choreography starts before 10h: -1
-* If a choreography ends after 20h: -2
-* If a choreography overlap with 12h30-14h: -2
+* If a rehearsal starts before 9h: -1
+* If a rehearsal ends after 20h: -2
+* If a rehearsal overlap with 12h30-14h: -2
 * If a participant in in two or more rehearsal that overlap in time (different location): -10
+* If a rehearsal is in a "prefered location": +1
+* For each started hour between the first bookable minute of a day and the first rehearsal of that day: -1
 
 The algorithm returns 3 candidates.
 

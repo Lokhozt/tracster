@@ -289,6 +289,8 @@
     "removeDay": "Retirer le {day}",
     "addDay": "Ajouter un jour",
     "addLocationsFirst": "Ajoutez d’abord des lieux dans les paramètres.",
+    "preferLocation": "Privilégier ce lieu",
+    "preferLocationHelp": "Chaque répétition placée dans un lieu privilégié ajoute 1 au score.",
     "locationUnavailability": "Indisponibilité des lieux",
     "restMinutes": "Pause entre les chorégraphies (minutes)",
     "generating": "Génération…",

@@ -24,6 +24,7 @@ export type SchedulingRequest = {
   items: SchedulingItemDraft[];
   days: IsoDate[];
   locationIds: string[];
+  preferredLocationIds: string[];
   locationUnavailabilities: LocationUnavailability[];
   restMinutes: number;
 };
@@ -92,5 +93,6 @@ export type ResolvedLocationWindow = {
 export type SchedulingProblem = {
   items: ResolvedSchedulingItem[];
   windows: ResolvedLocationWindow[];
+  preferredLocationIds: string[];
   restMs: number;
 };

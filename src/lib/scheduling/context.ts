@@ -57,6 +57,13 @@ export async function buildSchedulingProblem(
     return { error: "One of the selected locations was not found." };
   }
 
+  const preferredLocationIds = request.preferredLocationIds ?? [];
+  for (const locationId of preferredLocationIds) {
+    if (!request.locationIds.includes(locationId)) {
+      return { error: "A preferred location is not part of the available locations." };
+    }
+  }
+
   const choreographies = await prisma.choreography.findMany({
     where: { id: { in: choreographyIds }, ...visibleChoreographyWhere },
     select: {
@@ -227,6 +234,7 @@ export async function buildSchedulingProblem(
   return {
     items,
     windows,
+    preferredLocationIds,
     restMs: Math.max(0, request.restMinutes) * 60 * 1000,
   };
 }

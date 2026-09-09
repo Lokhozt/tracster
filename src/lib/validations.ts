@@ -227,6 +227,7 @@ export const schedulingRequestSchema = z.object({
   items: z.array(schedulingItemSchema).min(1).max(40),
   days: z.array(z.string().date()).min(1).max(14),
   locationIds: z.array(z.string().min(1)).min(1).max(20),
+  preferredLocationIds: z.array(z.string().min(1)).max(20).default([]),
   locationUnavailabilities: z.array(
     z.object({
       locationId: z.string().min(1),

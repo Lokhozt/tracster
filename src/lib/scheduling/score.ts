@@ -41,10 +41,12 @@ const CONSECUTIVE_BONUS = 2;
 const LONG_STREAK_PENALTY = 5;
 const LUNCH_PENALTY = 20;
 const BEFORE_NINE_PENALTY = 2;
-const BEFORE_TEN_PENALTY = 0;
 const AFTER_TWENTY_PENALTY = 2;
 const MIDDAY_OVERLAP_PENALTY = 2;
 const PARTICIPANT_LOCATION_OVERLAP_PENALTY = 10;
+const PREFERRED_LOCATION_BONUS = 1;
+const LATE_DAY_START_PENALTY = 1;
+const HOUR_MS = 60 * 60 * 1000;
 
 function lunchWindow(day: Date): IntervalMs {
   return {
@@ -123,6 +125,40 @@ function hasOverlappingSessionsAtDifferentLocations(sessions: InternalPlacement[
   return false;
 }
 
+/**
+ * Hours (rounded up) between the first bookable minute of a day and its first rehearsal.
+ * Without this the score is flat across the whole 9h-20h window, so packing the
+ * afternoon scored the same as (or better than) opening the morning.
+ */
+function lateStartHours(placements: InternalPlacement[], problem: SchedulingProblem): number {
+  const openingByDay = new Map<string, number>();
+  for (const window of problem.windows) {
+    const opening = openingByDay.get(window.day);
+    if (opening === undefined || window.start < opening) {
+      openingByDay.set(window.day, window.start);
+    }
+  }
+
+  const firstByDay = new Map<string, number>();
+  for (const placement of placements) {
+    const day = localDayKey(new Date(placement.start));
+    const first = firstByDay.get(day);
+    if (first === undefined || placement.start < first) {
+      firstByDay.set(day, placement.start);
+    }
+  }
+
+  let hours = 0;
+  for (const [day, first] of firstByDay) {
+    const opening = openingByDay.get(day);
+    if (opening === undefined) {
+      continue;
+    }
+    hours += Math.max(0, Math.ceil((first - opening) / HOUR_MS));
+  }
+  return hours;
+}
+
 export function scoreSchedule(
   placements: InternalPlacement[],
   problem: SchedulingProblem,
@@ -147,12 +183,13 @@ export function scoreSchedule(
       });
     }
 
+    if (problem.preferredLocationIds.includes(placement.locationId)) {
+      score += PREFERRED_LOCATION_BONUS;
+    }
+
     const startDate = new Date(placement.start);
     if (startDate.getHours() < 9) {
       score -= BEFORE_NINE_PENALTY;
-    }
-    if (startDate.getHours() < 10) {
-      score -= BEFORE_TEN_PENALTY;
     }
 
     const endDate = new Date(placement.end);
@@ -195,6 +232,8 @@ export function scoreSchedule(
       }
     }
   }
+
+  score -= LATE_DAY_START_PENALTY * lateStartHours(placements, problem);
 
   const participants = uniqueParticipants(items);
 

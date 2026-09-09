@@ -33,6 +33,12 @@ const LONG_PRESS_MS = 400;
 const LONG_PRESS_HINT_MS = 180;
 // A finger is never perfectly still; anything beyond this is a scroll, not a press.
 const LONG_PRESS_TOLERANCE_PX = 10;
+// The hour ruler stays pinned to the left edge while the week scrolls sideways on
+// narrow screens. Sticky needs room to move, so the ruler sits next to the day
+// grid rather than inside it. The shadow draws the separator that would otherwise
+// scroll away with the first day column.
+const HOUR_COLUMN_CLASS =
+  "sticky left-0 z-30 w-14 shrink-0 bg-white shadow-[1px_0_0_0_var(--color-stone-200)]";
 
 type Interaction =
   | {
@@ -776,39 +782,41 @@ export function UnavailabilityCalendar({
           )}
         >
           <div className="min-w-[640px] sm:min-w-[760px]">
-            <div className="grid grid-cols-[56px_repeat(7,1fr)] border-b border-stone-200">
-              <div />
-              {weekDays.map((day, dayIndex) => (
-                <div
-                  key={day.toISOString()}
-                  className="border-l border-stone-200 text-center text-sm font-medium"
-                >
-                  <button
-                    type="button"
-                    className="w-full px-2 py-2 hover:bg-stone-100"
-                    disabled={saving}
-                    aria-label={
-                      fullDayIndexes.has(dayIndex)
-                        ? t("clearDayUnavailability", {date: format(day, "EEEE d MMMM", {locale: dateLocale})})
-                        : t("markDayUnavailable", {date: format(day, "EEEE d MMMM", {locale: dateLocale})})
-                    }
-                    onClick={() => void toggleDayUnavailable(dayIndex)}
+            <div className="flex border-b border-stone-200">
+              <div className={HOUR_COLUMN_CLASS} />
+              <div className="grid flex-1 grid-cols-7">
+                {weekDays.map((day, dayIndex) => (
+                  <div
+                    key={day.toISOString()}
+                    className="border-l border-stone-200 text-center text-sm font-medium"
                   >
-                    <span
-                      className={cn(
-                        isToday(day) &&
-                          "inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-stone-900 px-2 text-white",
-                      )}
+                    <button
+                      type="button"
+                      className="w-full px-2 py-2 hover:bg-stone-100"
+                      disabled={saving}
+                      aria-label={
+                        fullDayIndexes.has(dayIndex)
+                          ? t("clearDayUnavailability", {date: format(day, "EEEE d MMMM", {locale: dateLocale})})
+                          : t("markDayUnavailable", {date: format(day, "EEEE d MMMM", {locale: dateLocale})})
+                      }
+                      onClick={() => void toggleDayUnavailable(dayIndex)}
                     >
-                      {format(day, "EEE d", {locale: dateLocale})}
-                    </span>
-                  </button>
-                </div>
-              ))}
+                      <span
+                        className={cn(
+                          isToday(day) &&
+                            "inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-stone-900 px-2 text-white",
+                        )}
+                      >
+                        {format(day, "EEE d", {locale: dateLocale})}
+                      </span>
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="grid grid-cols-[56px_repeat(7,1fr)]">
-              <div className="relative" style={{ height: gridHeightPx }}>
+            <div className="flex">
+              <div className={HOUR_COLUMN_CLASS} style={{ height: gridHeightPx }}>
                 {Array.from({ length: grid.slotsPerDay }, (_, slotIndex) =>
                   slotIndex % 2 === 0 ? (
                     <div
@@ -825,169 +833,171 @@ export function UnavailabilityCalendar({
                 )}
               </div>
 
-              {weekDays.map((day, dayIndex) => {
-                const dayBlocks = timeframes.flatMap((entry) =>
-                  timeframeSegments(entry, weekStart, grid)
-                    .filter((segment) => segment.dayIndex === dayIndex)
-                    .map((segment) => ({ entry, position: segment })),
-                );
+              <div className="grid flex-1 grid-cols-7">
+                {weekDays.map((day, dayIndex) => {
+                  const dayBlocks = timeframes.flatMap((entry) =>
+                    timeframeSegments(entry, weekStart, grid)
+                      .filter((segment) => segment.dayIndex === dayIndex)
+                      .map((segment) => ({ entry, position: segment })),
+                  );
 
-                const dayDraft = draftBlocks.filter((block) => block.dayIndex === dayIndex);
+                  const dayDraft = draftBlocks.filter((block) => block.dayIndex === dayIndex);
 
-                return (
-                  <div
-                    key={day.toISOString()}
-                    ref={(element) => {
-                      columnRefs.current[dayIndex] = element;
-                    }}
-                    className={cn(
-                      "relative select-none border-l border-stone-200 bg-white [-webkit-touch-callout:none]",
-                      scrollLocked ? "touch-none" : "touch-auto",
-                    )}
-                    style={{ height: gridHeightPx }}
-                    onContextMenu={(event) => event.preventDefault()}
-                    onPointerDown={(event) => {
-                      if (event.button !== 0 || interaction) {
-                        return;
-                      }
-                      if ((event.target as HTMLElement).closest("[data-block]")) {
-                        return;
-                      }
-                      if (selectedId) {
-                        setSelectedId(null);
-                        return;
-                      }
-                      const slot = pointerToSlot(event.clientY, dayIndex);
-                      if (slot === null) {
-                        return;
-                      }
-                      beginInteraction(event, () => startCreate(dayIndex, slot));
-                    }}
-                  >
-                    {Array.from({ length: grid.slotsPerDay }, (_, slotIndex) => (
-                      <div
-                        key={slotIndex}
-                        className={cn(
-                          "absolute inset-x-0 border-t border-stone-100",
-                          slotIndex % 2 === 0 && "border-stone-200",
-                        )}
-                        style={{
-                          top: slotIndex * SLOT_HEIGHT_PX,
-                          height: SLOT_HEIGHT_PX,
-                        }}
-                      />
-                    ))}
-
-                    {dayBlocks.map(({ entry, position }) => {
-                      const style = blockStyle(position.startSlot, position.endSlot);
-                      const durationSlots = Math.max(1, position.endSlot - position.startSlot);
-                      const isSelected = selectedId === entry.id;
-                      const isDragging =
-                        interaction?.type !== "create" && interaction?.id === entry.id;
-                      const { startsAt, endsAt } = position;
-                      const isFullDay =
-                        startsAt.getTime() === startOfDay(startsAt).getTime() &&
-                        endsAt.getTime() === addDays(startOfDay(startsAt), 1).getTime();
-
-                      if (isDragging) {
-                        return null;
-                      }
-
-                      const handleHeight = isSelected ? 16 : RESIZE_HANDLE_PX;
-
-                      return (
+                  return (
+                    <div
+                      key={day.toISOString()}
+                      ref={(element) => {
+                        columnRefs.current[dayIndex] = element;
+                      }}
+                      className={cn(
+                        "relative select-none border-l border-stone-200 bg-white [-webkit-touch-callout:none]",
+                        scrollLocked ? "touch-none" : "touch-auto",
+                      )}
+                      style={{ height: gridHeightPx }}
+                      onContextMenu={(event) => event.preventDefault()}
+                      onPointerDown={(event) => {
+                        if (event.button !== 0 || interaction) {
+                          return;
+                        }
+                        if ((event.target as HTMLElement).closest("[data-block]")) {
+                          return;
+                        }
+                        if (selectedId) {
+                          setSelectedId(null);
+                          return;
+                        }
+                        const slot = pointerToSlot(event.clientY, dayIndex);
+                        if (slot === null) {
+                          return;
+                        }
+                        beginInteraction(event, () => startCreate(dayIndex, slot));
+                      }}
+                    >
+                      {Array.from({ length: grid.slotsPerDay }, (_, slotIndex) => (
                         <div
-                          key={`${entry.id}-${dayIndex}`}
-                          data-block
+                          key={slotIndex}
                           className={cn(
-                            "absolute inset-x-1 z-10 overflow-hidden rounded-md border border-red-300 bg-red-200/90 text-xs text-red-950 shadow-sm",
-                            isSelected && "ring-2 ring-red-500",
+                            "absolute inset-x-0 border-t border-stone-100",
+                            slotIndex % 2 === 0 && "border-stone-200",
                           )}
-                          style={style}
-                          onPointerDown={(event) => {
-                            event.stopPropagation();
-                            if (event.button !== 0 || interaction) {
-                              return;
-                            }
-                            setSelectedId(entry.id);
-                            if (!position.wholePeriod) {
-                              return;
-                            }
-                            const target = event.target as HTMLElement;
-                            if (target.dataset.handle === "start") {
-                              beginInteraction(event, () =>
-                                setInteraction({
-                                  type: "resize-start",
-                                  id: entry.id,
-                                  dayIndex,
-                                  endSlot: position.endSlot,
-                                  currentSlot: position.startSlot,
-                                }),
-                              );
-                              return;
-                            }
-                            if (target.dataset.handle === "end") {
-                              beginInteraction(event, () =>
-                                setInteraction({
-                                  type: "resize-end",
-                                  id: entry.id,
-                                  dayIndex,
-                                  startSlot: position.startSlot,
-                                  currentSlot: position.endSlot,
-                                }),
-                              );
-                              return;
-                            }
-                            const slot = pointerToSlot(event.clientY, dayIndex);
-                            if (slot === null) {
-                              return;
-                            }
-                            beginInteraction(event, () =>
-                              startMove(
-                                entry.id,
-                                dayIndex,
-                                slot,
-                                position.startSlot,
-                                durationSlots,
-                              ),
-                            );
+                          style={{
+                            top: slotIndex * SLOT_HEIGHT_PX,
+                            height: SLOT_HEIGHT_PX,
                           }}
-                        >
-                          {position.wholePeriod && (
-                            <div
-                              data-handle="start"
-                              className="absolute inset-x-0 top-0 cursor-ns-resize bg-red-400/40"
-                              style={{ height: handleHeight }}
-                            />
-                          )}
-                          <div className="pointer-events-none px-2 py-1">
-                            <p className="font-medium">
-                              {isFullDay
-                                ? t("allDay")
-                                : `${formatTime(startsAt)} – ${formatTime(endsAt)}`}
-                            </p>
-                          </div>
-                          {position.wholePeriod && (
-                            <div
-                              data-handle="end"
-                              className="absolute inset-x-0 bottom-0 cursor-ns-resize bg-red-400/40"
-                              style={{ height: handleHeight }}
-                            />
-                          )}
-                        </div>
-                      );
-                    })}
+                        />
+                      ))}
 
-                    {dayDraft.map((block, index) => (
-                      <div
-                        key={`draft-${index}`}
-                        className="pointer-events-none absolute inset-x-1 z-20 rounded-md border border-dashed border-red-400 bg-red-100/80"
-                        style={{ top: block.top, height: block.height }}
-                      />
-                    ))}
-                  </div>
-                );
-              })}
+                      {dayBlocks.map(({ entry, position }) => {
+                        const style = blockStyle(position.startSlot, position.endSlot);
+                        const durationSlots = Math.max(1, position.endSlot - position.startSlot);
+                        const isSelected = selectedId === entry.id;
+                        const isDragging =
+                          interaction?.type !== "create" && interaction?.id === entry.id;
+                        const { startsAt, endsAt } = position;
+                        const isFullDay =
+                          startsAt.getTime() === startOfDay(startsAt).getTime() &&
+                          endsAt.getTime() === addDays(startOfDay(startsAt), 1).getTime();
+
+                        if (isDragging) {
+                          return null;
+                        }
+
+                        const handleHeight = isSelected ? 16 : RESIZE_HANDLE_PX;
+
+                        return (
+                          <div
+                            key={`${entry.id}-${dayIndex}`}
+                            data-block
+                            className={cn(
+                              "absolute inset-x-1 z-10 overflow-hidden rounded-md border border-red-300 bg-red-200/90 text-xs text-red-950 shadow-sm",
+                              isSelected && "ring-2 ring-red-500",
+                            )}
+                            style={style}
+                            onPointerDown={(event) => {
+                              event.stopPropagation();
+                              if (event.button !== 0 || interaction) {
+                                return;
+                              }
+                              setSelectedId(entry.id);
+                              if (!position.wholePeriod) {
+                                return;
+                              }
+                              const target = event.target as HTMLElement;
+                              if (target.dataset.handle === "start") {
+                                beginInteraction(event, () =>
+                                  setInteraction({
+                                    type: "resize-start",
+                                    id: entry.id,
+                                    dayIndex,
+                                    endSlot: position.endSlot,
+                                    currentSlot: position.startSlot,
+                                  }),
+                                );
+                                return;
+                              }
+                              if (target.dataset.handle === "end") {
+                                beginInteraction(event, () =>
+                                  setInteraction({
+                                    type: "resize-end",
+                                    id: entry.id,
+                                    dayIndex,
+                                    startSlot: position.startSlot,
+                                    currentSlot: position.endSlot,
+                                  }),
+                                );
+                                return;
+                              }
+                              const slot = pointerToSlot(event.clientY, dayIndex);
+                              if (slot === null) {
+                                return;
+                              }
+                              beginInteraction(event, () =>
+                                startMove(
+                                  entry.id,
+                                  dayIndex,
+                                  slot,
+                                  position.startSlot,
+                                  durationSlots,
+                                ),
+                              );
+                            }}
+                          >
+                            {position.wholePeriod && (
+                              <div
+                                data-handle="start"
+                                className="absolute inset-x-0 top-0 cursor-ns-resize bg-red-400/40"
+                                style={{ height: handleHeight }}
+                              />
+                            )}
+                            <div className="pointer-events-none px-2 py-1">
+                              <p className="font-medium">
+                                {isFullDay
+                                  ? t("allDay")
+                                  : `${formatTime(startsAt)} – ${formatTime(endsAt)}`}
+                              </p>
+                            </div>
+                            {position.wholePeriod && (
+                              <div
+                                data-handle="end"
+                                className="absolute inset-x-0 bottom-0 cursor-ns-resize bg-red-400/40"
+                                style={{ height: handleHeight }}
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {dayDraft.map((block, index) => (
+                        <div
+                          key={`draft-${index}`}
+                          className="pointer-events-none absolute inset-x-1 z-20 rounded-md border border-dashed border-red-400 bg-red-100/80"
+                          style={{ top: block.top, height: block.height }}
+                        />
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

@@ -84,6 +84,7 @@ export function SchedulingTool({
   const [days, setDays] = useState<string[]>(() => [...nextWeekendDayKeys()]);
   const [dayToAdd, setDayToAdd] = useState(todayDateInputValue());
   const [locationIds, setLocationIds] = useState<string[]>(() => locations.map((location) => location.id));
+  const [preferredLocationIds, setPreferredLocationIds] = useState<string[]>([]);
   const [locationUnavailabilities, setLocationUnavailabilities] = useState<
     Array<LocationUnavailability & { id: string }>
   >([]);
@@ -125,6 +126,15 @@ export function SchedulingTool({
         ? current.filter((id) => id !== locationId)
         : [...current, locationId],
     );
+    setPreferredLocationIds((current) => current.filter((id) => id !== locationId));
+  }
+
+  function togglePreferredLocation(locationId: string) {
+    setPreferredLocationIds((current) =>
+      current.includes(locationId)
+        ? current.filter((id) => id !== locationId)
+        : [...current, locationId],
+    );
   }
 
   function buildRequest(): SchedulingRequest {
@@ -132,6 +142,7 @@ export function SchedulingTool({
       items,
       days,
       locationIds,
+      preferredLocationIds: preferredLocationIds.filter((id) => locationIds.includes(id)),
       locationUnavailabilities: locationUnavailabilities
         .filter((entry) => locationIds.includes(entry.locationId) && days.includes(entry.day))
         .map((entry) => ({
@@ -410,19 +421,35 @@ export function SchedulingTool({
             {locations.length === 0 ? (
               <p className="text-sm text-stone-500">{t("addLocationsFirst")}</p>
             ) : (
-              <div className="space-y-2">
-                {locations.map((location) => (
-                  <label key={location.id} className="flex cursor-pointer items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={locationIds.includes(location.id)}
-                      onChange={() => toggleLocation(location.id)}
-                      className="rounded border-stone-300"
-                    />
-                    {location.name}
-                  </label>
-                ))}
-              </div>
+              <>
+                <div className="space-y-2">
+                  {locations.map((location) => (
+                    <div key={location.id} className="flex flex-wrap items-center gap-x-6 gap-y-1">
+                      <label className="flex cursor-pointer items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={locationIds.includes(location.id)}
+                          onChange={() => toggleLocation(location.id)}
+                          className="rounded border-stone-300"
+                        />
+                        {location.name}
+                      </label>
+                      {locationIds.includes(location.id) && (
+                        <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-600">
+                          <input
+                            type="checkbox"
+                            checked={preferredLocationIds.includes(location.id)}
+                            onChange={() => togglePreferredLocation(location.id)}
+                            className="rounded border-stone-300"
+                          />
+                          {t("preferLocation")}
+                        </label>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-stone-500">{t("preferLocationHelp")}</p>
+              </>
             )}
           </div>
 
