@@ -147,8 +147,10 @@ const rangeOptions: UpcomingEventRange[] = ["all", "week", "month"];
 
 export function UpcomingEventsList({
   events,
+  categoriesFiltered = false,
 }: {
   events: SerializedScheduleEvent[];
+  categoriesFiltered?: boolean;
 }) {
   const t = useTranslations("Components");
   const [range, setRange] = useState<UpcomingEventRange>("all");
@@ -161,7 +163,7 @@ export function UpcomingEventsList({
     [events, range, hideNonParticipating],
   );
 
-  const filtersActive = range !== "all" || hideNonParticipating;
+  const filtersActive = range !== "all" || hideNonParticipating || categoriesFiltered;
 
   return (
     <section>
@@ -197,7 +199,7 @@ export function UpcomingEventsList({
         </div>
       </div>
 
-      {events.length === 0 ? (
+      {events.length === 0 && !filtersActive ? (
         <Card>
           <p className="text-stone-600">{t("noUpcomingEvents")}</p>
         </Card>

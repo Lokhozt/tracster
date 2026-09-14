@@ -1,25 +1,38 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { EventsList } from "@/components/EventsList";
 import { getCurrentUser } from "@/lib/auth";
 import { canEditEvent, getUserEvents, serializeEvent } from "@/lib/events";
+import {
+  EVENT_TYPE_FILTER_COOKIE,
+  parseHiddenEventTypeIds,
+} from "@/lib/event-category-filter";
+import { getEventTypes } from "@/lib/event-types";
 import { hasGlobalAccess } from "@/lib/roles";
 import { canCreateEvent } from "@/lib/site-settings";
 
 export default async function EventsPage() {
-  const [user, t] = await Promise.all([
+  const [user, t, cookieStore] = await Promise.all([
     getCurrentUser(),
     getTranslations("Pages.Events"),
+    cookies(),
   ]);
   if (!user) {
     redirect("/login");
   }
 
-  const events = await getUserEvents(user.id);
-  const globalAccess = await hasGlobalAccess(user.id);
-  const canCreate = await canCreateEvent(user.id);
+  const [events, globalAccess, canCreate, eventTypes] = await Promise.all([
+    getUserEvents(user.id),
+    hasGlobalAccess(user.id),
+    canCreateEvent(user.id),
+    getEventTypes(),
+  ]);
+  const hiddenTypeIds = parseHiddenEventTypeIds(
+    cookieStore.get(EVENT_TYPE_FILTER_COOKIE)?.value,
+  );
 
   const eventItems = await Promise.all(
     events.map(async (entry) => ({
@@ -66,7 +79,11 @@ export default async function EventsPage() {
           {canCreate ? t("emptyCreate") : t("empty")}
         </p>
       ) : (
-        <EventsList events={eventItems} />
+        <EventsList
+          events={eventItems}
+          eventTypes={eventTypes}
+          initialHiddenTypeIds={hiddenTypeIds}
+        />
       )}
     </AppShell>
   );

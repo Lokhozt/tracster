@@ -1,12 +1,17 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
-import { RehearsalCalendar } from "@/components/RehearsalCalendar";
-import { UpcomingEventsList } from "@/components/UpcomingEventsList";
+import { ScheduleOverview } from "@/components/ScheduleOverview";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { FollowAssociationCalendarLink } from "@/components/FollowAssociationCalendarLink";
 import { associationCalendarFollowUrl } from "@/lib/google-calendar";
+import {
+  EVENT_TYPE_FILTER_COOKIE,
+  parseHiddenEventTypeIds,
+} from "@/lib/event-category-filter";
+import { getEventTypes } from "@/lib/event-types";
 import { getUpcomingScheduleEvents, getUserScheduleEvents } from "@/lib/schedule";
 import { APP_LOGO_SRC, isS3Configured } from "@/lib/s3";
 import { formatBirthdayGreeting, isBirthdayOnDate } from "@/lib/users";
@@ -25,10 +30,11 @@ async function getUsersWithBirthdayToday(now = new Date()) {
 }
 
 export default async function HomePage() {
-  const [user, t, tCommon] = await Promise.all([
+  const [user, t, tCommon, cookieStore] = await Promise.all([
     getCurrentUser(),
     getTranslations("Pages.Home"),
     getTranslations("Common"),
+    cookies(),
   ]);
   const logoSrc = isS3Configured() ? APP_LOGO_SRC : null;
   const features = [
@@ -112,11 +118,15 @@ export default async function HomePage() {
   ];
 
   if (user) {
-    const [events, birthdayUsers] = await Promise.all([
+    const [events, birthdayUsers, eventTypes] = await Promise.all([
       getUserScheduleEvents(user.id),
       getUsersWithBirthdayToday(),
+      getEventTypes(),
     ]);
     const upcoming = getUpcomingScheduleEvents(events);
+    const hiddenTypeIds = parseHiddenEventTypeIds(
+      cookieStore.get(EVENT_TYPE_FILTER_COOKIE)?.value,
+    );
     const birthdayGreeting = formatBirthdayGreeting(birthdayUsers);
     const associationCalendarUrl = associationCalendarFollowUrl();
 
@@ -132,8 +142,12 @@ export default async function HomePage() {
             <FollowAssociationCalendarLink href={associationCalendarUrl} />
           </p>
         )}
-        <RehearsalCalendar events={events} />
-        <UpcomingEventsList events={upcoming} />
+        <ScheduleOverview
+          events={events}
+          upcoming={upcoming}
+          eventTypes={eventTypes}
+          initialHiddenTypeIds={hiddenTypeIds}
+        />
       </AppShell>
     );
   }

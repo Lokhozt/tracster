@@ -5,10 +5,13 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EditIconLink } from "@/components/EditIconLink";
+import { EventTypeFilter } from "@/components/EventTypeFilter";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
 import { LeaveEventButton } from "@/components/LeaveEventButton";
 import { ParticipatingCheck } from "@/components/ParticipatingCheck";
 import { Card, Input, Label } from "@/components/ui";
+import { persistHiddenEventTypeIds } from "@/lib/event-category-filter";
+import type { SerializedEventType } from "@/lib/event-type-helpers";
 import { isGenericEventKind } from "@/lib/event-type-helpers";
 import { isPastDate, matchesSearch } from "@/lib/search";
 import type { SerializedEvent } from "@/lib/events";
@@ -39,7 +42,15 @@ function matchesEventSearch(item: EventListItem, query: string): boolean {
   );
 }
 
-export function EventsList({ events }: { events: EventListItem[] }) {
+export function EventsList({
+  events,
+  eventTypes,
+  initialHiddenTypeIds,
+}: {
+  events: EventListItem[];
+  eventTypes: SerializedEventType[];
+  initialHiddenTypeIds: string[];
+}) {
   const t = useTranslations("Components");
   const locale = useLocale();
   const dateFormatter = new Intl.DateTimeFormat(locale, {
@@ -49,9 +60,13 @@ export function EventsList({ events }: { events: EventListItem[] }) {
   const [search, setSearch] = useState("");
   const [hideNonParticipating, setHideNonParticipating] = useState(false);
   const [showPast, setShowPast] = useState(false);
+  const [hiddenTypeIds, setHiddenTypeIds] = useState(initialHiddenTypeIds);
 
   const filteredEvents = useMemo(() => {
     return events.filter((item) => {
+      if (hiddenTypeIds.includes(item.event.type.id)) {
+        return false;
+      }
       if (hideNonParticipating && !item.isParticipating) {
         return false;
       }
@@ -60,7 +75,12 @@ export function EventsList({ events }: { events: EventListItem[] }) {
       }
       return matchesEventSearch(item, search);
     });
-  }, [events, search, hideNonParticipating, showPast]);
+  }, [events, search, hideNonParticipating, showPast, hiddenTypeIds]);
+
+  function updateHiddenTypeIds(ids: string[]) {
+    setHiddenTypeIds(ids);
+    persistHiddenEventTypeIds(ids);
+  }
 
   return (
     <div className="space-y-4">
@@ -97,6 +117,13 @@ export function EventsList({ events }: { events: EventListItem[] }) {
               {t("showPastEvents")}
             </label>
           </div>
+        </div>
+        <div className="mt-4 border-t border-stone-100 pt-4">
+          <EventTypeFilter
+            eventTypes={eventTypes}
+            hiddenTypeIds={hiddenTypeIds}
+            onChange={updateHiddenTypeIds}
+          />
         </div>
         <p className="mt-3 text-sm text-stone-500">
           {filteredEvents.length} of {events.length} events

@@ -293,31 +293,7 @@ export function RehearsalCalendar({
   return (
     <Card className="mb-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">{t("calendar")}</h2>
-          <div className="mt-1 flex flex-wrap gap-3 text-xs text-stone-500">
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded bg-stone-200" />
-              {t("rehearsal")}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded bg-amber-200" />
-              {t("representation")}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded bg-sky-200" />
-              {t("event")}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded bg-violet-200" />
-              {t("competition")}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded bg-rose-200" />
-              {t("festival")}
-            </span>
-          </div>
-        </div>
+        <h2 className="text-lg font-semibold">{t("calendar")}</h2>
 
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           <div className="flex flex-wrap items-center gap-2">

@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.0.2 - 2026-09-14
+
+### Added
+
+- The schedule and events pages have colored event-type filters with select-all and deselect-all controls. Hidden categories are stored in a cookie and stay synchronized between both pages.
+
+
 ## 1.0.1 - 2026-09-09
 
 ### Added
@@ -13,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scheduling tool: an optional final edit step lets admins drag generated rehearsals to another time, day, or location. Participant unavailability and overlapping-rehearsal conflicts are recalculated after every move.
 - Admins and the owner can edit any member's unavailability from the unavailability page by choosing that person in a dropdown.
 - Admins and the owner can generate a one-time password reset link for a member from that member's page. The link expires after 1 hour, 24 hours, or 7 days, and creating a new one or revoking it invalidates the previous link.
+
 
 ### Fixed
 
