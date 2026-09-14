@@ -119,7 +119,6 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
         (participant) => participant.userId === userId,
       );
       const isParticipating =
-        event.createdById === userId ||
         isEventParticipant ||
         (kind === "REHEARSAL" && rehearsalMember) ||
         (eventKindAllowsChoreographyLinks(kind) && involvedInLinkedChoreography);
