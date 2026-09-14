@@ -28,6 +28,8 @@
       "Invalid email or password.": "Invalid email or password.",
       "This password reset link is invalid or has expired.": "This password reset link is invalid or has expired.",
       "Choose a different user to transfer ownership to.": "Choose a different user to transfer ownership to.",
+      "You cannot delete your own account.": "You cannot delete your own account.",
+      "The owner account cannot be deleted. Transfer ownership first.": "The owner account cannot be deleted. Transfer ownership first.",
       "A location with this name already exists.": "A location with this name already exists.",
       "An event type with this name already exists.": "An event type with this name already exists.",
       "Built-in event types cannot be edited.": "Built-in event types cannot be edited.",

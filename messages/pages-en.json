@@ -112,7 +112,9 @@
       "role": "Role",
       "resetPassword": "Reset password",
       "transferOwnership": "Transfer ownership",
-      "transferOwnershipIntro": "Transfer the owner role to another user. You will become a regular user. This is the only way to change who holds the owner role."
+      "transferOwnershipIntro": "Transfer the owner role to another user. You will become a regular user. This is the only way to change who holds the owner role.",
+      "deleteUser": "Delete user",
+      "deleteUserIntro": "Remove this person from the association. They leave every event and choreography. Pieces and events they created are kept and reassigned to you when needed."
     }
   }
 }

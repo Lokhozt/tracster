@@ -2,9 +2,10 @@ import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
-import { canEditUserProfile } from "@/lib/roles";
+import { canDeleteUser, canEditUserProfile } from "@/lib/roles";
 import { updateUserSchema } from "@/lib/validations";
 import { adminUserSelect, serializeAdminUser } from "@/lib/users";
+import { deleteManagedUser } from "@/lib/delete-user";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -81,4 +82,33 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   });
 
   return Response.json({ user: serializeAdminUser(updated) });
+}
+
+export async function DELETE(_request: NextRequest, context: RouteContext) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return unauthorized();
+  }
+
+  const { id } = await context.params;
+  const target = await prisma.user.findUnique({
+    where: { id },
+    select: { id: true, role: true },
+  });
+  if (!target) {
+    return notFound("User");
+  }
+
+  if (user.id === id) {
+    return jsonError("You cannot delete your own account.", 400);
+  }
+  if (target.role === "OWNER") {
+    return jsonError("The owner account cannot be deleted. Transfer ownership first.", 400);
+  }
+  if (!(await canDeleteUser(user.id, id))) {
+    return forbidden();
+  }
+
+  await deleteManagedUser(id, user.id);
+  return Response.json({ ok: true });
 }

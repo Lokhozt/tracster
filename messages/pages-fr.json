@@ -112,7 +112,9 @@
       "role": "Rôle",
       "resetPassword": "Réinitialiser le mot de passe",
       "transferOwnership": "Transférer la propriété",
-      "transferOwnershipIntro": "Transférez le rôle de propriétaire à un autre utilisateur. Vous deviendrez un utilisateur standard. C’est la seule manière de changer de propriétaire."
+      "transferOwnershipIntro": "Transférez le rôle de propriétaire à un autre utilisateur. Vous deviendrez un utilisateur standard. C’est la seule manière de changer de propriétaire.",
+      "deleteUser": "Supprimer l’utilisateur",
+      "deleteUserIntro": "Retirez cette personne de l’association. Elle quitte tous les événements et chorégraphies. Les pièces et événements qu’elle a créés sont conservés et vous sont réattribués si besoin."
     }
   }
 }

@@ -10,6 +10,7 @@ import {
 } from "@/components/UserForms";
 import { Card } from "@/components/ui";
 import { PasswordResetLinkControls } from "@/components/PasswordResetLinkControls";
+import { DeleteUserButton } from "@/components/DeleteUserButton";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canManageUsers, isOwner } from "@/lib/roles";
@@ -89,6 +90,20 @@ export default async function UserDetailPage({ params }: PageProps) {
               <TransferOwnershipForm
                 users={serializedUsers}
                 currentUserId={currentUser.id}
+              />
+            </Card>
+          )}
+
+          {user.id !== currentUser.id && user.role !== "OWNER" && (
+            <Card>
+              <h2 className="mb-2 text-lg font-semibold">{t("deleteUser")}</h2>
+              <p className="mb-4 text-sm text-stone-600">
+                {t("deleteUserIntro")}
+              </p>
+              <DeleteUserButton
+                userId={user.id}
+                userName={user.name}
+                redirectTo="/settings"
               />
             </Card>
           )}

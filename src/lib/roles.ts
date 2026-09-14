@@ -111,3 +111,20 @@ export async function canChangeUserRole(
 
   return canAssignRole(actor.role, target.role, newRole);
 }
+
+export async function canDeleteUser(actorId: string, targetId: string): Promise<boolean> {
+  if (actorId === targetId) {
+    return false;
+  }
+
+  if (!(await isAdmin(actorId))) {
+    return false;
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { id: targetId },
+    select: { role: true },
+  });
+
+  return Boolean(target && target.role !== "OWNER");
+}
