@@ -8,6 +8,8 @@ import { ChoreographerBadge } from "@/components/CrownIcon";
 import { Card, Label, Select } from "@/components/ui";
 import { useLocale } from "next-intl";
 
+import { persistChoreographyRepresentationFilter } from "@/lib/choreography-list-filter";
+
 export type ChoreographyListItem = {
   id: string;
   title: string;
@@ -31,14 +33,16 @@ export function ChoreographiesList({
   choreographies,
   representations,
   canCreate,
+  initialRepresentationId,
 }: {
   choreographies: ChoreographyListItem[];
   representations: RepresentationFilterOption[];
   canCreate: boolean;
+  initialRepresentationId: string;
 }) {
   const t = useTranslations("Components");
   const [showAll, setShowAll] = useState(false);
-  const [representationId, setRepresentationId] = useState("");
+  const [representationId, setRepresentationId] = useState(initialRepresentationId);
   const locale = useLocale();
   const dateFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
   const representationDateFormatter = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
@@ -61,6 +65,11 @@ export function ChoreographiesList({
     [matchingRepresentation, showAll],
   );
 
+  function updateRepresentationId(id: string) {
+    setRepresentationId(id);
+    persistChoreographyRepresentationFilter(id);
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
@@ -80,7 +89,7 @@ export function ChoreographiesList({
               id="representation-filter"
               className="w-full"
               value={representationId}
-              onChange={(event) => setRepresentationId(event.target.value)}
+              onChange={(event) => updateRepresentationId(event.target.value)}
             >
               <option value="">{t("allRepresentations")}</option>
               {representations.map((representation) => (

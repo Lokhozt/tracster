@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- The choreographies page can be filtered to pieces linked to a selected representation.
+- The choreographies page can be filtered to pieces linked to a selected representation. The choice is stored in a cookie.
 - The events and planning pages remember the “hide events I’m not in” filter in a cookie. 
 
 ### Fixed

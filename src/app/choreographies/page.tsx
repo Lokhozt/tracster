@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
@@ -9,6 +10,10 @@ import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { defaultEventTitle, type EventKind } from "@/lib/event-type-helpers";
 import { eventTypeLabel, getServerTranslator } from "@/i18n/server";
 import { listedChoreographyWhere } from "@/lib/participation";
+import {
+  CHOREOGRAPHY_REPRESENTATION_FILTER_COOKIE,
+  parseChoreographyRepresentationFilter,
+} from "@/lib/choreography-list-filter";
 import { hasGlobalAccess } from "@/lib/roles";
 import { canCreateChoreography } from "@/lib/site-settings";
 import { basicUserSelect, formatUserName } from "@/lib/users";
@@ -61,10 +66,11 @@ function representationOptions(
 }
 
 export default async function ChoreographiesPage() {
-  const [user, t, translator] = await Promise.all([
+  const [user, t, translator, cookieStore] = await Promise.all([
     getCurrentUser(),
     getTranslations("Pages.Choreographies"),
     getServerTranslator(),
+    cookies(),
   ]);
   if (!user) {
     redirect("/login");
@@ -103,6 +109,19 @@ export default async function ChoreographiesPage() {
     orderBy: { updatedAt: "desc" },
   });
 
+  const representations = representationOptions(
+    choreographies.flatMap((choreography) => choreography.eventLinks),
+    translator,
+  );
+  const savedRepresentationId = parseChoreographyRepresentationFilter(
+    cookieStore.get(CHOREOGRAPHY_REPRESENTATION_FILTER_COOKIE)?.value,
+  );
+  const initialRepresentationId = representations.some(
+    (representation) => representation.id === savedRepresentationId,
+  )
+    ? savedRepresentationId
+    : "";
+
   return (
     <AppShell title={t("title")}>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -121,10 +140,8 @@ export default async function ChoreographiesPage() {
 
       <ChoreographiesList
         canCreate={canCreate}
-        representations={representationOptions(
-          choreographies.flatMap((choreography) => choreography.eventLinks),
-          translator,
-        )}
+        representations={representations}
+        initialRepresentationId={initialRepresentationId}
         choreographies={choreographies.map((choreography) => {
           const isChoreographer = isUserChoreographer(choreography, user.id);
           return {
