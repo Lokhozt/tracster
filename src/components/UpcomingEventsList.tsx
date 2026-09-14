@@ -10,6 +10,7 @@ import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControl
 import { ParticipatingCheck } from "@/components/ParticipatingCheck";
 import { EventCard } from "@/components/EventCard";
 import { Card, Button } from "@/components/ui";
+import { persistHideNonParticipating } from "@/lib/event-category-filter";
 import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 
 import {
@@ -149,15 +150,19 @@ const rangeOptions: UpcomingEventRange[] = ["all", "week", "month"];
 export function UpcomingEventsList({
   events,
   categoriesFiltered = false,
+  initialHideNonParticipating = false,
 }: {
   events: SerializedScheduleEvent[];
   categoriesFiltered?: boolean;
+  initialHideNonParticipating?: boolean;
 }) {
   const t = useTranslations("Components");
   const [range, setRange] = useState<UpcomingEventRange>("all");
   const locale = useLocale();
   const dateFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
-  const [hideNonParticipating, setHideNonParticipating] = useState(false);
+  const [hideNonParticipating, setHideNonParticipating] = useState(
+    initialHideNonParticipating,
+  );
 
   const filteredEvents = useMemo(
     () => filterUpcomingScheduleEvents(events, { range, hideNonParticipating }),
@@ -165,6 +170,11 @@ export function UpcomingEventsList({
   );
 
   const filtersActive = range !== "all" || hideNonParticipating || categoriesFiltered;
+
+  function updateHideNonParticipating(value: boolean) {
+    setHideNonParticipating(value);
+    persistHideNonParticipating(value);
+  }
 
   return (
     <section>
@@ -192,7 +202,7 @@ export function UpcomingEventsList({
             <input
               type="checkbox"
               checked={hideNonParticipating}
-              onChange={(event) => setHideNonParticipating(event.target.checked)}
+              onChange={(event) => updateHideNonParticipating(event.target.checked)}
               className="rounded border-stone-300"
             />
             {t("hideNonParticipatingEvents")}

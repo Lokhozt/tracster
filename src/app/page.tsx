@@ -9,7 +9,9 @@ import { FollowAssociationCalendarLink } from "@/components/FollowAssociationCal
 import { associationCalendarFollowUrl } from "@/lib/google-calendar";
 import {
   EVENT_TYPE_FILTER_COOKIE,
+  HIDE_NON_PARTICIPATING_COOKIE,
   parseHiddenEventTypeIds,
+  parseHideNonParticipating,
 } from "@/lib/event-category-filter";
 import { getEventTypes } from "@/lib/event-types";
 import { getUpcomingScheduleEvents, getUserScheduleEvents } from "@/lib/schedule";
@@ -127,6 +129,9 @@ export default async function HomePage() {
     const hiddenTypeIds = parseHiddenEventTypeIds(
       cookieStore.get(EVENT_TYPE_FILTER_COOKIE)?.value,
     );
+    const hideNonParticipating = parseHideNonParticipating(
+      cookieStore.get(HIDE_NON_PARTICIPATING_COOKIE)?.value,
+    );
     const birthdayGreeting = formatBirthdayGreeting(birthdayUsers);
     const associationCalendarUrl = associationCalendarFollowUrl();
 
@@ -147,6 +152,7 @@ export default async function HomePage() {
           upcoming={upcoming}
           eventTypes={eventTypes}
           initialHiddenTypeIds={hiddenTypeIds}
+          initialHideNonParticipating={hideNonParticipating}
         />
       </AppShell>
     );

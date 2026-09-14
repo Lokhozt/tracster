@@ -14,11 +14,13 @@ export function ScheduleOverview({
   upcoming,
   eventTypes,
   initialHiddenTypeIds,
+  initialHideNonParticipating,
 }: {
   events: SerializedScheduleEvent[];
   upcoming: SerializedScheduleEvent[];
   eventTypes: SerializedEventType[];
   initialHiddenTypeIds: string[];
+  initialHideNonParticipating: boolean;
 }) {
   const [hiddenTypeIds, setHiddenTypeIds] = useState(initialHiddenTypeIds);
   const hidden = useMemo(() => new Set(hiddenTypeIds), [hiddenTypeIds]);
@@ -38,6 +40,7 @@ export function ScheduleOverview({
 
   return (
     <>
+      <RehearsalCalendar events={filteredEvents} />
       <Card className="mb-4">
         <EventTypeFilter
           eventTypes={eventTypes}
@@ -45,10 +48,10 @@ export function ScheduleOverview({
           onChange={updateHiddenTypeIds}
         />
       </Card>
-      <RehearsalCalendar events={filteredEvents} />
       <UpcomingEventsList
         events={filteredUpcoming}
         categoriesFiltered={hiddenTypeIds.length > 0}
+        initialHideNonParticipating={initialHideNonParticipating}
       />
     </>
   );
