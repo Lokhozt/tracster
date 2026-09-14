@@ -8,7 +8,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { canEditEvent, getUserEvents, serializeEvent } from "@/lib/events";
 import {
   EVENT_TYPE_FILTER_COOKIE,
+  HIDE_NON_PARTICIPATING_COOKIE,
   parseHiddenEventTypeIds,
+  parseHideNonParticipating,
 } from "@/lib/event-category-filter";
 import { getEventTypes } from "@/lib/event-types";
 import { hasGlobalAccess } from "@/lib/roles";
@@ -32,6 +34,9 @@ export default async function EventsPage() {
   ]);
   const hiddenTypeIds = parseHiddenEventTypeIds(
     cookieStore.get(EVENT_TYPE_FILTER_COOKIE)?.value,
+  );
+  const hideNonParticipating = parseHideNonParticipating(
+    cookieStore.get(HIDE_NON_PARTICIPATING_COOKIE)?.value,
   );
 
   const eventItems = await Promise.all(
@@ -83,6 +88,7 @@ export default async function EventsPage() {
           events={eventItems}
           eventTypes={eventTypes}
           initialHiddenTypeIds={hiddenTypeIds}
+          initialHideNonParticipating={hideNonParticipating}
         />
       )}
     </AppShell>

@@ -1,6 +1,7 @@
 import type { EventKind } from "@/lib/event-type-helpers";
 
 export const EVENT_TYPE_FILTER_COOKIE = "tracster_hidden_event_types";
+export const HIDE_NON_PARTICIPATING_COOKIE = "tracster_hide_non_participating";
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
 export function parseHiddenEventTypeIds(value?: string): string[] {
@@ -20,6 +21,14 @@ export function parseHiddenEventTypeIds(value?: string): string[] {
 
 export function persistHiddenEventTypeIds(ids: string[]) {
   document.cookie = `${EVENT_TYPE_FILTER_COOKIE}=${encodeURIComponent(ids.join(","))}; Path=/; Max-Age=${COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`;
+}
+
+export function parseHideNonParticipating(value?: string): boolean {
+  return value === "1";
+}
+
+export function persistHideNonParticipating(value: boolean) {
+  document.cookie = `${HIDE_NON_PARTICIPATING_COOKIE}=${value ? "1" : "0"}; Path=/; Max-Age=${COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`;
 }
 
 /** Light tint for event cards, matching the category chip colors at a readable contrast. */

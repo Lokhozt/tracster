@@ -11,7 +11,10 @@ import { LeaveEventButton } from "@/components/LeaveEventButton";
 import { ParticipatingCheck } from "@/components/ParticipatingCheck";
 import { EventCard } from "@/components/EventCard";
 import { Card, Input, Label } from "@/components/ui";
-import { persistHiddenEventTypeIds } from "@/lib/event-category-filter";
+import {
+  persistHiddenEventTypeIds,
+  persistHideNonParticipating,
+} from "@/lib/event-category-filter";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
 import { isGenericEventKind } from "@/lib/event-type-helpers";
 import { isPastDate, matchesSearch } from "@/lib/search";
@@ -47,10 +50,12 @@ export function EventsList({
   events,
   eventTypes,
   initialHiddenTypeIds,
+  initialHideNonParticipating,
 }: {
   events: EventListItem[];
   eventTypes: SerializedEventType[];
   initialHiddenTypeIds: string[];
+  initialHideNonParticipating: boolean;
 }) {
   const t = useTranslations("Components");
   const locale = useLocale();
@@ -59,7 +64,9 @@ export function EventsList({
     timeStyle: "short",
   });
   const [search, setSearch] = useState("");
-  const [hideNonParticipating, setHideNonParticipating] = useState(false);
+  const [hideNonParticipating, setHideNonParticipating] = useState(
+    initialHideNonParticipating,
+  );
   const [showPast, setShowPast] = useState(false);
   const [hiddenTypeIds, setHiddenTypeIds] = useState(initialHiddenTypeIds);
 
@@ -83,6 +90,11 @@ export function EventsList({
     persistHiddenEventTypeIds(ids);
   }
 
+  function updateHideNonParticipating(value: boolean) {
+    setHideNonParticipating(value);
+    persistHideNonParticipating(value);
+  }
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
@@ -103,7 +115,7 @@ export function EventsList({
               <input
                 type="checkbox"
                 checked={hideNonParticipating}
-                onChange={(event) => setHideNonParticipating(event.target.checked)}
+                onChange={(event) => updateHideNonParticipating(event.target.checked)}
                 className="rounded border-stone-300"
               />
               {t("hideEventsNotIn")}
