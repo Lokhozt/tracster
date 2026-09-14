@@ -75,6 +75,14 @@ npm run db:seed
 npm run dev
 ```
 
+To load a production SQL dump instead of seed data (this **replaces** the local database):
+
+```bash
+make db-from-dump DUMP=/path/to/dump.sql
+```
+
+Do not run `npm run db:seed` afterward. Sign in with accounts from the dump, not the demo users.
+
 Open [http://localhost:3000](http://localhost:3000).
 
 ### Demo accounts
@@ -262,6 +270,7 @@ Possible future extensions:
 | `npm run db:generate` | Generate Prisma client |
 | `npm run db:seed` | Load demo data |
 | `npm run db:studio` | Open Prisma Studio |
+| `make db-from-dump DUMP=/path/to/dump.sql` | Replace the local Docker database with a SQL dump |
 
 ## Troubleshooting
 
