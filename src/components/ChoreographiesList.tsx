@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChoreographerBadge } from "@/components/CrownIcon";
-import { Card } from "@/components/ui";
+import { Card, Label, Select } from "@/components/ui";
 import { useLocale } from "next-intl";
 
 export type ChoreographyListItem = {
@@ -16,50 +16,93 @@ export type ChoreographyListItem = {
   updatedAt: string;
   memberCount: number;
   rehearsalCount: number;
+  representationIds: string[];
   isChoreographer: boolean;
   isInvolved: boolean;
 };
 
+export type RepresentationFilterOption = {
+  id: string;
+  title: string;
+  startsAt: string;
+};
+
 export function ChoreographiesList({
   choreographies,
+  representations,
   canCreate,
 }: {
   choreographies: ChoreographyListItem[];
+  representations: RepresentationFilterOption[];
   canCreate: boolean;
 }) {
   const t = useTranslations("Components");
   const [showAll, setShowAll] = useState(false);
+  const [representationId, setRepresentationId] = useState("");
   const locale = useLocale();
   const dateFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
+  const representationDateFormatter = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
+
+  const matchingRepresentation = useMemo(
+    () =>
+      representationId
+        ? choreographies.filter((choreography) =>
+            choreography.representationIds.includes(representationId),
+          )
+        : choreographies,
+    [choreographies, representationId],
+  );
 
   const visible = useMemo(
     () =>
       showAll
-        ? choreographies
-        : choreographies.filter((choreography) => choreography.isInvolved),
-    [choreographies, showAll],
+        ? matchingRepresentation
+        : matchingRepresentation.filter((choreography) => choreography.isInvolved),
+    [matchingRepresentation, showAll],
   );
 
   return (
     <div className="space-y-4">
-      <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700">
-        <input
-          type="checkbox"
-          checked={showAll}
-          onChange={(event) => setShowAll(event.target.checked)}
-          className="rounded border-stone-300"
-        />
-        {t("displayAllChoreographies")}
-      </label>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700">
+          <input
+            type="checkbox"
+            checked={showAll}
+            onChange={(event) => setShowAll(event.target.checked)}
+            className="rounded border-stone-300"
+          />
+          {t("displayAllChoreographies")}
+        </label>
+        {representations.length > 0 && (
+          <div className="sm:min-w-64">
+            <Label htmlFor="representation-filter">{t("filterByRepresentation")}</Label>
+            <Select
+              id="representation-filter"
+              className="w-full"
+              value={representationId}
+              onChange={(event) => setRepresentationId(event.target.value)}
+            >
+              <option value="">{t("allRepresentations")}</option>
+              {representations.map((representation) => (
+                <option key={representation.id} value={representation.id}>
+                  {representation.title} · {representationDateFormatter.format(new Date(representation.startsAt))}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
+      </div>
 
       {visible.length === 0 ? (
         <Card>
           <p className="text-stone-600">
-            {showAll
-              ? canCreate
-                ? t("noChoreographiesCreate")
-                : t("noChoreographies")
-              : t("noOwnChoreographies")}
+            {representationId && matchingRepresentation.length === 0
+              ? t("noChoreographiesForRepresentation")
+              : showAll
+                ? canCreate
+                  ? t("noChoreographiesCreate")
+                  : t("noChoreographies")
+                : t("noOwnChoreographies")}
           </p>
         </Card>
       ) : (

@@ -6,6 +6,8 @@ import { ChoreographiesList } from "@/components/ChoreographiesList";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { visibleChoreographyWhere } from "@/lib/choreographies";
+import { defaultEventTitle, type EventKind } from "@/lib/event-type-helpers";
+import { eventTypeLabel, getServerTranslator } from "@/i18n/server";
 import { listedChoreographyWhere } from "@/lib/participation";
 import { hasGlobalAccess } from "@/lib/roles";
 import { canCreateChoreography } from "@/lib/site-settings";
@@ -24,10 +26,45 @@ function isUserChoreographer(
   );
 }
 
+function representationOptions(
+  links: Array<{
+    event: {
+      id: string;
+      title: string;
+      startsAt: Date;
+      type: { name: string; kind: EventKind | null };
+    };
+  }>,
+  translator: Awaited<ReturnType<typeof getServerTranslator>>,
+) {
+  const byId = new Map<string, { id: string; title: string; startsAt: string }>();
+  for (const link of links) {
+    if (byId.has(link.event.id)) {
+      continue;
+    }
+    byId.set(link.event.id, {
+      id: link.event.id,
+      title: defaultEventTitle(
+        {
+          name: eventTypeLabel(translator, link.event.type.kind, link.event.type.name),
+          kind: link.event.type.kind,
+        },
+        link.event.title,
+      ),
+      startsAt: link.event.startsAt.toISOString(),
+    });
+  }
+  return [...byId.values()].sort((a, b) => {
+    const byDate = a.startsAt.localeCompare(b.startsAt);
+    return byDate !== 0 ? byDate : a.title.localeCompare(b.title);
+  });
+}
+
 export default async function ChoreographiesPage() {
-  const [user, t] = await Promise.all([
+  const [user, t, translator] = await Promise.all([
     getCurrentUser(),
     getTranslations("Pages.Choreographies"),
+    getServerTranslator(),
   ]);
   if (!user) {
     redirect("/login");
@@ -47,6 +84,19 @@ export default async function ChoreographiesPage() {
       members: {
         where: { userId: user.id },
         select: { userId: true },
+      },
+      eventLinks: {
+        where: { event: { type: { kind: "REPRESENTATION" } } },
+        select: {
+          event: {
+            select: {
+              id: true,
+              title: true,
+              startsAt: true,
+              type: { select: { name: true, kind: true } },
+            },
+          },
+        },
       },
       _count: { select: { members: true, rehearsals: true } },
     },
@@ -71,6 +121,10 @@ export default async function ChoreographiesPage() {
 
       <ChoreographiesList
         canCreate={canCreate}
+        representations={representationOptions(
+          choreographies.flatMap((choreography) => choreography.eventLinks),
+          translator,
+        )}
         choreographies={choreographies.map((choreography) => {
           const isChoreographer = isUserChoreographer(choreography, user.id);
           return {
@@ -81,6 +135,7 @@ export default async function ChoreographiesPage() {
             updatedAt: choreography.updatedAt.toISOString(),
             memberCount: choreography._count.members,
             rehearsalCount: choreography._count.rehearsals,
+            representationIds: choreography.eventLinks.map((link) => link.event.id),
             isChoreographer,
             isInvolved:
               isChoreographer ||
