@@ -22,6 +22,26 @@ export function persistHiddenEventTypeIds(ids: string[]) {
   document.cookie = `${EVENT_TYPE_FILTER_COOKIE}=${encodeURIComponent(ids.join(","))}; Path=/; Max-Age=${COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`;
 }
 
+/** Light tint for event cards, matching the category chip colors at a readable contrast. */
+export function eventCardClassName(kind: EventKind | null): string {
+  if (kind === "REHEARSAL") {
+    return "border-stone-200 bg-stone-50 hover:border-stone-400";
+  }
+  if (kind === "REPRESENTATION") {
+    return "border-amber-200 bg-amber-50 hover:border-amber-400";
+  }
+  if (kind === "COMPETITION") {
+    return "border-violet-200 bg-violet-50 hover:border-violet-400";
+  }
+  if (kind === "DEMONSTRATION") {
+    return "border-teal-200 bg-teal-50 hover:border-teal-400";
+  }
+  if (kind === "FESTIVAL") {
+    return "border-rose-200 bg-rose-50 hover:border-rose-400";
+  }
+  return "border-sky-200 bg-sky-50 hover:border-sky-400";
+}
+
 export function eventCategoryClassName(kind: EventKind | null): string {
   if (kind === "REHEARSAL") {
     return "border-stone-300 bg-stone-100 text-stone-800";

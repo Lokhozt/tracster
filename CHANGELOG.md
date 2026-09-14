@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The schedule and events pages have colored event-type filters with select-all and deselect-all controls. Hidden categories are stored in a cookie and stay synchronized between both pages.
 
+### Changed
+
+- Event cards on the schedule and events pages are tinted with their event-type color, matching the filter chips and the calendar.
+
 
 ## 1.0.1 - 2026-09-09
 

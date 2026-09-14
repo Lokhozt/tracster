@@ -9,6 +9,7 @@ import { EventTypeFilter } from "@/components/EventTypeFilter";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
 import { LeaveEventButton } from "@/components/LeaveEventButton";
 import { ParticipatingCheck } from "@/components/ParticipatingCheck";
+import { EventCard } from "@/components/EventCard";
 import { Card, Input, Label } from "@/components/ui";
 import { persistHiddenEventTypeIds } from "@/lib/event-category-filter";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
@@ -137,12 +138,10 @@ export function EventsList({
       ) : (
         <div className="grid gap-4">
           {filteredEvents.map(({ event, canEdit, isParticipating, isEventParticipant, hasPendingJoinRequest }) => (
-            <Card
+            <EventCard
               key={event.id}
-              className={cn(
-                "relative transition hover:border-stone-400",
-                isEventParticipant && "pb-10",
-              )}
+              kind={event.type.kind}
+              className={cn("relative", isEventParticipant && "pb-10")}
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
@@ -209,7 +208,7 @@ export function EventsList({
                   className="absolute right-2 bottom-2 z-10"
                 />
               )}
-            </Card>
+            </EventCard>
           ))}
         </div>
       )}

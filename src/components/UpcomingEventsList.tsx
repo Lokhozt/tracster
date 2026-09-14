@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { EditIconLink } from "@/components/EditIconLink";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
 import { ParticipatingCheck } from "@/components/ParticipatingCheck";
+import { EventCard } from "@/components/EventCard";
 import { Card, Button } from "@/components/ui";
 import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 
@@ -214,7 +215,7 @@ export function UpcomingEventsList({
       ) : (
         <div className="space-y-3">
           {filteredEvents.map((event) => (
-            <Card key={event.id} className="relative transition hover:border-stone-400">
+            <EventCard key={event.id} kind={event.typeKind} className="relative">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -280,7 +281,7 @@ export function UpcomingEventsList({
                   />
                 </div>
               )}
-            </Card>
+            </EventCard>
           ))}
         </div>
       )}
