@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     return forbidden();
   }
 
-  const { firstName, lastName, email, phone, dateOfBirth, password } = parsed.data;
+  const { firstName, lastName, email, phone, dateOfBirth, password, isCompetitor } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
       passwordHash,
       role,
+      isCompetitor: isCompetitor ?? false,
     },
     select: adminUserSelect,
   });

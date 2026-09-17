@@ -3,6 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { AccountProfileForm } from "@/components/AccountProfileForm";
 import { AdminPrivilegesToggle } from "@/components/AdminPrivilegesToggle";
+import { CompetitorStatusToggle } from "@/components/CompetitorStatusToggle";
 import { GoogleCalendarConnectionCard } from "@/components/GoogleCalendarConnectionCard";
 import { LogoutButton } from "@/components/LogoutButton";
 import { Card } from "@/components/ui";
@@ -49,6 +50,7 @@ export default async function AccountPage({ searchParams }: PageProps) {
             displayLanguage: locale === "en" ? "english" : "french",
           }}
         />
+        <CompetitorStatusToggle userId={user.id} isCompetitor={user.isCompetitor} forSelf />
         {canHoldAdminPrivileges(user.role) && (
           <AdminPrivilegesToggle enabled={user.adminPrivilegesEnabled} />
         )}

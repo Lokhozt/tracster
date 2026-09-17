@@ -28,6 +28,7 @@ model User {
   role                   UserRole         @default(USER)
   displayLanguage        DisplayLanguage?
   adminPrivilegesEnabled Boolean          @default(true)
+  isCompetitor           Boolean          @default(false)
   passwordHash           String
   createdAt              DateTime         @default(now())
   updatedAt              DateTime         @updatedAt

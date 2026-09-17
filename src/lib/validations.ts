@@ -11,6 +11,7 @@ export const registerSchema = z.object({
 
 export const createUserSchema = registerSchema.extend({
   role: z.enum(["USER", "ADMIN"]).optional(),
+  isCompetitor: z.boolean().optional(),
 });
 
 export const updateUserSchema = z.object({
@@ -23,6 +24,10 @@ export const updateUserSchema = z.object({
 
 export const adminPrivilegesSchema = z.object({
   enabled: z.boolean(),
+});
+
+export const competitorStatusSchema = z.object({
+  isCompetitor: z.boolean(),
 });
 
 export const updateOwnProfileSchema = z.object({

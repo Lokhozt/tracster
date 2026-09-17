@@ -45,6 +45,7 @@ export const adminUserSelect = {
   phone: true,
   dateOfBirth: true,
   role: true,
+  isCompetitor: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -61,6 +62,7 @@ export type AdminUser = BasicUser & {
   phone: string | null;
   dateOfBirth: string | null;
   role: UserRole;
+  isCompetitor: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -88,6 +90,7 @@ export function serializeAdminUser(user: {
   phone: string | null;
   dateOfBirth: Date | null;
   role: UserRole;
+  isCompetitor: boolean;
   createdAt: Date;
   updatedAt: Date;
 }): AdminUser {
@@ -96,6 +99,7 @@ export function serializeAdminUser(user: {
     phone: user.phone,
     dateOfBirth: user.dateOfBirth?.toISOString() ?? null,
     role: user.role,
+    isCompetitor: user.isCompetitor,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
   };

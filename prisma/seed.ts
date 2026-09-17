@@ -58,6 +58,7 @@ async function main() {
       lastName: "Bernard",
       phone: "+33 6 99 88 77 66",
       dateOfBirth: new Date("1995-11-08"),
+      isCompetitor: true,
     },
     create: {
       firstName: "Claire",
@@ -65,6 +66,7 @@ async function main() {
       email: "claire@example.com",
       phone: "+33 6 99 88 77 66",
       dateOfBirth: new Date("1995-11-08"),
+      isCompetitor: true,
       passwordHash,
     },
   });

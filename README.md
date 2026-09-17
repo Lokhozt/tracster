@@ -11,7 +11,7 @@ Tracster is a web application for dance and performance associations to plan reh
 
 ## Features
 
-- **Users & roles** — `USER`, `ADMIN`, and `OWNER`. Admins and owners can manage members; only the owner can transfer ownership.
+- **Users & roles** — `USER`, `ADMIN`, and `OWNER`. Admins and owners can manage members; only the owner can transfer ownership. A member can also be marked as a **competitor**; this is a status, not a role, and can be turned on or off in account or user settings.
 - **Choreographies** — create pieces, assign choreographers and participants, and optionally split participants into **groups**.
 - **Rehearsals** — schedule rehearsals for a whole choreography or a specific group.
 - **Representations** — schedule performances and attach choreographies to them (shown on the schedule).
@@ -23,7 +23,7 @@ Tracster is a web application for dance and performance associations to plan reh
 - **Unavailability** — members record personal timeframes they cannot attend; the calendar selection is date-accurate.
 - **Conflict warnings** — when scheduling a rehearsal, choreographers are warned if participants are already engaged or marked unavailable.
 - **Join & visibility** — choreographies and events can allow free join, join requests (accept/decline), and hiding from non-participants.
-- **Account** — members can update their name and phone, and connect a personal Google calendar for rehearsals.
+- **Account** — members can update their name, phone, and competitor status, and connect a personal Google calendar for rehearsals.
 - **Google Calendar** — one-way sync from Tracster. Shared association events (everything except rehearsals) go to one Google calendar; each member can copy their own rehearsals to a personal calendar. Unavailability stays in the app.
 
 ## Core workflow
@@ -35,7 +35,7 @@ Tracster is a web application for dance and performance associations to plan reh
 5. Assigned participants respond with **availability** (available, unavailable, maybe) and can maintain a personal **unavailability** calendar.
 6. Choreographers (or admins) schedule **representations** and **demonstrations** and attach choreographies, and can also create **competitions**, **festivals**, and standalone **events**.
 7. The home **schedule** shows rehearsals, representations, and events the user is involved in.
-8. Members can update their **name and phone** and connect a personal Google calendar on **Account**. The owner connects the association calendar in **Settings**.
+8. Members can update their **name, phone, and competitor status** and connect a personal Google calendar on **Account**. The owner connects the association calendar in **Settings**.
 
 ## Getting started
 
@@ -201,6 +201,7 @@ prisma/
 | GET / POST | `/api/users` | List users / create user (admin) |
 | GET / PATCH | `/api/users/:id` | User details / update (admin) |
 | GET / PATCH | `/api/users/me` | Current user profile / update name and phone |
+| PATCH | `/api/users/:id/competitor` | Set or unset competitor status (self or admin) |
 | PATCH | `/api/users/:id/role` | Change role |
 | POST | `/api/users/transfer-ownership` | Transfer owner role |
 | GET / POST | `/api/choreographies` | List / create choreographies |

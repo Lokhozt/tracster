@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
+import { CompetitorStatusToggle } from "@/components/CompetitorStatusToggle";
 import {
+  CompetitorBadge,
   EditUserForm,
   RoleBadge,
   TransferOwnershipForm,
@@ -62,6 +64,7 @@ export default async function UserDetailPage({ params }: PageProps) {
 
       <div className="mb-4 flex items-center gap-2">
         <RoleBadge role={user.role} />
+        {user.isCompetitor && <CompetitorBadge />}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -71,6 +74,16 @@ export default async function UserDetailPage({ params }: PageProps) {
         </Card>
 
         <div className="space-y-6">
+          <Card>
+            <h2 className="mb-4 text-lg font-semibold">{t("status")}</h2>
+            <CompetitorStatusToggle
+              userId={user.id}
+              isCompetitor={user.isCompetitor}
+              variant="plain"
+              forSelf={user.id === currentUser.id}
+            />
+          </Card>
+
           <Card>
             <h2 className="mb-4 text-lg font-semibold">{t("role")}</h2>
             <UserRoleForm user={user} actorRole={currentUser.role} />

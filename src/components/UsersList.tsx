@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { RoleBadge } from "@/components/UserForms";
+import { CompetitorBadge, RoleBadge } from "@/components/UserForms";
 import { Card, Input, Label, Select } from "@/components/ui";
 import type { UserRole } from "@/generated/prisma/client";
 import { type AdminUser } from "@/lib/users";
@@ -46,15 +46,22 @@ export function UsersList({ users }: { users: AdminUser[] }) {
   const locale = useLocale();
   const dateTimeFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
   const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
+  const [competitorFilter, setCompetitorFilter] = useState<"ALL" | "YES" | "NO">("ALL");
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
       if (roleFilter !== "ALL" && user.role !== roleFilter) {
         return false;
       }
+      if (competitorFilter === "YES" && !user.isCompetitor) {
+        return false;
+      }
+      if (competitorFilter === "NO" && user.isCompetitor) {
+        return false;
+      }
       return matchesSearch(user, search);
     });
-  }, [users, search, roleFilter]);
+  }, [users, search, roleFilter, competitorFilter]);
 
   return (
     <Card>
@@ -73,7 +80,7 @@ export function UsersList({ users }: { users: AdminUser[] }) {
         </Link>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-[1fr_180px]">
+      <div className="grid gap-4 sm:grid-cols-[1fr_180px_180px]">
         <div>
           <Label htmlFor="user-search">{t("search")}</Label>
           <Input
@@ -101,6 +108,21 @@ export function UsersList({ users }: { users: AdminUser[] }) {
             <option value="OWNER">{t("roleOWNER")}</option>
           </Select>
         </div>
+        <div>
+          <Label htmlFor="user-competitor-filter">{t("competitorStatus")}</Label>
+          <Select
+            id="user-competitor-filter"
+            value={competitorFilter}
+            onChange={(event) =>
+              setCompetitorFilter(event.target.value as "ALL" | "YES" | "NO")
+            }
+            className="w-full"
+          >
+            <option value="ALL">{t("allCompetitorStatuses")}</option>
+            <option value="YES">{t("competitorsOnly")}</option>
+            <option value="NO">{t("nonCompetitorsOnly")}</option>
+          </Select>
+        </div>
       </div>
       <p className="mt-3 text-sm text-stone-500">
         {t("usersShown", {shown: filteredUsers.length, total: users.length})}
@@ -122,6 +144,7 @@ export function UsersList({ users }: { users: AdminUser[] }) {
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-medium">{entry.name}</p>
                         <RoleBadge role={entry.role} />
+                        {entry.isCompetitor && <CompetitorBadge />}
                       </div>
                       <p className="mt-1 text-sm text-stone-600">{entry.email}</p>
                       {entry.phone && (

@@ -109,6 +109,7 @@
     "UserDetail": {
       "backToSettings": "← Retour aux paramètres",
       "profile": "Profil",
+      "status": "Statut",
       "role": "Rôle",
       "resetPassword": "Réinitialiser le mot de passe",
       "transferOwnership": "Transférer la propriété",

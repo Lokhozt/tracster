@@ -18,6 +18,7 @@ export type AuthUser = {
   role: UserRole;
   displayLanguage: DisplayLanguage | null;
   adminPrivilegesEnabled: boolean;
+  isCompetitor: boolean;
 };
 
 function serializeAuthUser(user: {
@@ -30,6 +31,7 @@ function serializeAuthUser(user: {
   role: UserRole;
   displayLanguage: DisplayLanguage | null;
   adminPrivilegesEnabled: boolean;
+  isCompetitor: boolean;
 }): AuthUser {
   return {
     id: user.id,
@@ -42,6 +44,7 @@ function serializeAuthUser(user: {
     role: user.role,
     displayLanguage: user.displayLanguage,
     adminPrivilegesEnabled: user.adminPrivilegesEnabled,
+    isCompetitor: user.isCompetitor,
   };
 }
 
@@ -97,6 +100,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
           role: true,
           displayLanguage: true,
           adminPrivilegesEnabled: true,
+          isCompetitor: true,
         },
       },
     },

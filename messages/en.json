@@ -36,7 +36,7 @@
   },
   "Account": {
     "title": "Account",
-    "intro": "Update your contact details, display language, and personal Google Calendar connection.",
+    "intro": "Update your contact details, competitor status, display language, and personal Google Calendar connection.",
     "profile": "Profile",
     "firstName": "First name",
     "lastName": "Last name",

@@ -48,6 +48,7 @@ export async function PATCH(request: NextRequest) {
       dateOfBirth: true,
       role: true,
       displayLanguage: true,
+      isCompetitor: true,
     },
   });
 
@@ -71,6 +72,7 @@ export async function PATCH(request: NextRequest) {
       dateOfBirth: updated.dateOfBirth?.toISOString() ?? null,
       role: updated.role,
       displayLanguage: updated.displayLanguage,
+      isCompetitor: updated.isCompetitor,
     },
   });
 }

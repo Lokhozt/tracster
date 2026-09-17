@@ -282,6 +282,16 @@ export function RoleBadge({ role }: { role: UserRole }) {
   );
 }
 
+export function CompetitorBadge() {
+  const t = useTranslations("Components");
+
+  return (
+    <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-900">
+      {t("competitor")}
+    </span>
+  );
+}
+
 export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
   const t = useTranslations("Components");
   const router = useRouter();
@@ -294,6 +304,7 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"USER" | "ADMIN">("USER");
+  const [isCompetitor, setIsCompetitor] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -311,6 +322,7 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
         dateOfBirth: dateOfBirth || undefined,
         password,
         role,
+        isCompetitor,
       }),
     });
 
@@ -408,6 +420,18 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
           </p>
         )}
       </div>
+      <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
+        <input
+          type="checkbox"
+          checked={isCompetitor}
+          onChange={(event) => setIsCompetitor(event.target.checked)}
+          className="mt-0.5 rounded border-stone-300"
+        />
+        <span>
+          <span className="font-medium">{t("competitorStatusLabel")}</span>
+          <span className="mt-0.5 block text-stone-500">{t("competitorStatusHelp")}</span>
+        </span>
+      </label>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <Button type="submit" disabled={loading}>
         {loading ? t("creating") : t("createUser")}
