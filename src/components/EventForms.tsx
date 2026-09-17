@@ -28,6 +28,7 @@ import {
 } from "@/lib/datetime";
 import {
   eventKindAllowsChoreographyLinks,
+  eventKindRestrictedToCompetitors,
   isGenericEventKind,
   type SerializedEventType,
 } from "@/lib/event-type-helpers";
@@ -38,7 +39,7 @@ import {
 } from "@/lib/participation";
 import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 
-type UserOption = { id: string; name: string; email: string };
+type UserOption = { id: string; name: string; email: string; isCompetitor?: boolean };
 
 function validateSchedule(start: DateTimeParts, end: DateTimeParts, startRequired: string, endAfterStart: string): string | null {
   const startsAt = dateTimePartsToDate(start);
@@ -144,6 +145,21 @@ export function CreateEventForm({
   const generic = isGenericEventKind(eventType?.kind ?? null);
   const allowsChoreographyLinks = eventKindAllowsChoreographyLinks(eventType?.kind ?? null);
   const groupOptions = groups.length > 0 ? groups : fetchedGroups;
+  const participantChoices = eventKindRestrictedToCompetitors(eventType?.kind ?? null)
+    ? (participantOptions ?? []).filter((user) => user.isCompetitor)
+    : participantOptions;
+
+  useEffect(() => {
+    if (!eventKindRestrictedToCompetitors(eventType?.kind ?? null)) {
+      return;
+    }
+    const allowed = new Set(
+      (participantOptions ?? [])
+        .filter((user) => user.isCompetitor)
+        .map((user) => user.id),
+    );
+    setSelectedParticipantIds((current) => current.filter((id) => allowed.has(id)));
+  }, [eventType?.kind, participantOptions]);
 
   useEffect(() => {
     if (eventType?.kind !== "REHEARSAL" || !choreographyId || groups.length > 0) {
@@ -344,12 +360,12 @@ export function CreateEventForm({
           placeholder={generic ? t("optionalEventDetails") : t("optionalNotes")}
         />
       </div>
-      {generic && participantOptions && participantOptions.length > 0 && (
+      {generic && participantChoices && participantChoices.length > 0 && (
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium text-stone-700">
             {t("participantsOptional")}
           </legend>
-          {participantOptions.map((user) => (
+          {participantChoices.map((user) => (
             <label key={user.id} className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"

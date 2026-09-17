@@ -2,9 +2,10 @@ import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { forbidden, jsonError, unauthorized } from "@/lib/api";
-import { canManageSettings } from "@/lib/roles";
+import { canManageSettings, hasGlobalAccess } from "@/lib/roles";
 import { eventTypeSchema } from "@/lib/validations";
 import { getEventTypes } from "@/lib/event-types";
+import { filterEventTypesForViewer } from "@/lib/event-type-helpers";
 import { getServerTranslator, localizeEventType } from "@/i18n/server";
 
 export async function GET() {
@@ -13,8 +14,16 @@ export async function GET() {
     return unauthorized();
   }
 
-  const eventTypes = await getEventTypes(await getServerTranslator(user.displayLanguage));
-  return Response.json({ eventTypes });
+  const [eventTypes, seesAllEvents] = await Promise.all([
+    getEventTypes(await getServerTranslator(user.displayLanguage)),
+    hasGlobalAccess(user.id),
+  ]);
+  return Response.json({
+    eventTypes: filterEventTypesForViewer(eventTypes, {
+      isCompetitor: user.isCompetitor,
+      seesAllEvents,
+    }),
+  });
 }
 
 export async function POST(request: NextRequest) {

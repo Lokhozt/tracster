@@ -15,6 +15,8 @@ import {
 } from "@/lib/event-category-filter";
 import { getEventTypes } from "@/lib/event-types";
 import { getUpcomingScheduleEvents, getUserScheduleEvents } from "@/lib/schedule";
+import { filterEventTypesForViewer } from "@/lib/event-type-helpers";
+import { hasGlobalAccess } from "@/lib/roles";
 import { APP_LOGO_SRC, isS3Configured } from "@/lib/s3";
 import { formatBirthdayGreeting, isBirthdayOnDate } from "@/lib/users";
 
@@ -120,11 +122,16 @@ export default async function HomePage() {
   ];
 
   if (user) {
-    const [events, birthdayUsers, eventTypes] = await Promise.all([
+    const [events, birthdayUsers, eventTypes, seesAllEvents] = await Promise.all([
       getUserScheduleEvents(user.id),
       getUsersWithBirthdayToday(),
       getEventTypes(),
+      hasGlobalAccess(user.id),
     ]);
+    const visibleEventTypes = filterEventTypesForViewer(eventTypes, {
+      isCompetitor: user.isCompetitor,
+      seesAllEvents,
+    });
     const upcoming = getUpcomingScheduleEvents(events);
     const hiddenTypeIds = parseHiddenEventTypeIds(
       cookieStore.get(EVENT_TYPE_FILTER_COOKIE)?.value,
@@ -150,7 +157,7 @@ export default async function HomePage() {
         <ScheduleOverview
           events={events}
           upcoming={upcoming}
-          eventTypes={eventTypes}
+          eventTypes={visibleEventTypes}
           initialHiddenTypeIds={hiddenTypeIds}
           initialHideNonParticipating={hideNonParticipating}
         />

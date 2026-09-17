@@ -136,6 +136,9 @@ function eventCellClassName(kind: SerializedScheduleEvent["typeKind"]): string {
   if (kind === "FESTIVAL") {
     return "bg-rose-100 text-rose-900 hover:bg-rose-200";
   }
+  if (kind === "TRAINING") {
+    return "bg-orange-100 text-orange-900 hover:bg-orange-200";
+  }
   if (kind === "EVENT" || kind === null) {
     return "bg-sky-100 text-sky-900 hover:bg-sky-200";
   }

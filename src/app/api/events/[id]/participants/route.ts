@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { assignUserSchema } from "@/lib/validations";
 import { canEditEvent } from "@/lib/events";
+import { eventKindRestrictedToCompetitors } from "@/lib/event-type-helpers";
 import { basicUserSelect } from "@/lib/users";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -20,7 +21,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return forbidden();
   }
 
-  const event = await prisma.event.findUnique({ where: { id } });
+  const event = await prisma.event.findUnique({
+    where: { id },
+    select: { type: { select: { kind: true } } },
+  });
   if (!event) {
     return notFound("Event");
   }
@@ -33,9 +37,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const targetUser = await prisma.user.findUnique({
     where: { id: parsed.data.userId },
+    select: { id: true, isCompetitor: true },
   });
   if (!targetUser) {
     return notFound("User");
+  }
+  if (eventKindRestrictedToCompetitors(event.type.kind) && !targetUser.isCompetitor) {
+    return jsonError("Only competitors can be added to training events.");
   }
 
   const participant = await prisma.eventParticipant.upsert({

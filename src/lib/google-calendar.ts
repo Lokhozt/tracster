@@ -2,7 +2,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypt
 import { appOrigin, type OriginRequest } from "@/lib/app-url";
 import { prisma } from "@/lib/db";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
-import { defaultEventTitle } from "@/lib/event-type-helpers";
+import { defaultEventTitle, eventKindCopiesToAssociationCalendar } from "@/lib/event-type-helpers";
 import {
   createServerTranslator,
   eventTypeLabel,
@@ -450,7 +450,7 @@ export async function syncGoogleEvent(eventId: string) {
     return;
   }
 
-  if (event.type.kind !== "REHEARSAL") {
+  if (eventKindCopiesToAssociationCalendar(event.type.kind)) {
     const connection = await prisma.googleCalendarConnection.findUnique({
       where: { id: ASSOCIATION_CONNECTION_ID },
       include: { user: { select: { displayLanguage: true } } },
@@ -469,6 +469,15 @@ export async function syncGoogleEvent(eventId: string) {
       include: { connection: true },
     });
     await Promise.all(userMappings.map(deleteMapping));
+    return;
+  }
+
+  if (event.type.kind !== "REHEARSAL") {
+    const mappings = await prisma.googleCalendarEvent.findMany({
+      where: { eventId },
+      include: { connection: true },
+    });
+    await Promise.all(mappings.map(deleteMapping));
     return;
   }
 
@@ -519,7 +528,10 @@ export async function syncGoogleConnection(connectionId: string) {
     const events =
       connection.kind === "ASSOCIATION"
         ? await prisma.event.findMany({
-            where: { startsAt: { gte: now }, type: { kind: { not: "REHEARSAL" } } },
+            where: {
+              startsAt: { gte: now },
+              type: { kind: { notIn: ["REHEARSAL", "TRAINING"] } },
+            },
             select: { id: true },
           })
         : await prisma.event.findMany({

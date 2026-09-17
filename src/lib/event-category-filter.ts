@@ -48,6 +48,9 @@ export function eventCardClassName(kind: EventKind | null): string {
   if (kind === "FESTIVAL") {
     return "border-rose-200 bg-rose-50 hover:border-rose-400";
   }
+  if (kind === "TRAINING") {
+    return "border-orange-200 bg-orange-50 hover:border-orange-400";
+  }
   return "border-sky-200 bg-sky-50 hover:border-sky-400";
 }
 
@@ -66,6 +69,9 @@ export function eventCategoryClassName(kind: EventKind | null): string {
   }
   if (kind === "FESTIVAL") {
     return "border-rose-300 bg-rose-100 text-rose-900";
+  }
+  if (kind === "TRAINING") {
+    return "border-orange-300 bg-orange-100 text-orange-900";
   }
   return "border-sky-300 bg-sky-100 text-sky-900";
 }

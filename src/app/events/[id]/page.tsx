@@ -16,7 +16,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/datetime";
 import { canEditEvent, canViewEvent, serializeEvent } from "@/lib/events";
-import { getEventTypes, eventKindAllowsChoreographyLinks, isGenericEventKind } from "@/lib/event-types";
+import { getEventTypes, eventKindAllowsChoreographyLinks, eventKindRestrictedToCompetitors, isGenericEventKind } from "@/lib/event-types";
 import { getRehearsalAudience, isRehearsalParticipant } from "@/lib/groups";
 import { listedLocationInclude } from "@/lib/locations";
 import { canEditChoreography } from "@/lib/permissions";
@@ -326,7 +326,11 @@ export default async function EventDetailPage({ params }: PageProps) {
             <div className="mt-6 border-t border-stone-100 pt-6">
               <AssignEventParticipantForm
                 eventId={id}
-                users={users}
+                users={
+                  eventKindRestrictedToCompetitors(event.type.kind)
+                    ? users.filter((candidate) => candidate.isCompetitor)
+                    : users
+                }
                 assignedUserIds={event.participants.map((p) => p.id)}
               />
             </div>

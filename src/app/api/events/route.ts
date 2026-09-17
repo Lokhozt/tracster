@@ -5,6 +5,7 @@ import { forbidden, jsonError, unauthorized } from "@/lib/api";
 import { eventSchema } from "@/lib/validations";
 import {
   canCreateEventOfType,
+  competitorParticipantsAllowed,
   getUserEvents,
   validateEventTypeFields,
 } from "@/lib/events";
@@ -55,6 +56,14 @@ export async function POST(request: NextRequest) {
   });
   if (fieldError) {
     return jsonError(fieldError);
+  }
+
+  const participantError = await competitorParticipantsAllowed(
+    eventType.kind,
+    parsed.data.participantIds ?? [],
+  );
+  if (participantError) {
+    return jsonError(participantError);
   }
 
   const canCreateGeneric = await canCreateEvent(user.id);

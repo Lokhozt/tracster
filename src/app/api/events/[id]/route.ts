@@ -4,7 +4,8 @@ import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { eventSchema } from "@/lib/validations";
 import { canEditEvent, canViewEvent, validateEventTypeFields } from "@/lib/events";
-import { getEventType, eventKindAllowsChoreographyLinks, isGenericEventKind } from "@/lib/event-types";
+import { getEventType, eventKindAllowsChoreographyLinks, eventKindRestrictedToCompetitors, isGenericEventKind } from "@/lib/event-types";
+import { hasGlobalAccess } from "@/lib/roles";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
 import { getServerTranslator, localizeEventType } from "@/i18n/server";
@@ -82,6 +83,14 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return jsonError("Selected event type was not found.");
   }
 
+  if (
+    eventKindRestrictedToCompetitors(eventType.kind) &&
+    !user.isCompetitor &&
+    !(await hasGlobalAccess(user.id))
+  ) {
+    return forbidden();
+  }
+
   const fieldError = await validateEventTypeFields({
     type: eventType,
     title: parsed.data.title,
@@ -101,6 +110,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   const isGeneric = isGenericEventKind(eventType.kind);
   const updated = await prisma.$transaction(async (tx) => {
     await tx.eventChoreography.deleteMany({ where: { eventId: id } });
+    if (eventKindRestrictedToCompetitors(eventType.kind)) {
+      await tx.eventParticipant.deleteMany({
+        where: { eventId: id, user: { isCompetitor: false } },
+      });
+    }
 
     return tx.event.update({
       where: { id },

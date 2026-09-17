@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Admins can delete a member from that person’s page. Deleted people are removed from every event and choreography; pieces and events they created are kept.
 - Members can be marked as competitors. This is a status, not a role, and can be set or unset from Account or that person’s settings page.
+- Training is a built-in event type visible only to competitors (and to admins managing the calendar).
 - `make db-from-dump DUMP=/path/to/dump.sql` replaces the local Docker database with a SQL dump.
 
 ## 1.0.2 - 2026-09-14

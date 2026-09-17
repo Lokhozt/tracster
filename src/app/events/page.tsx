@@ -13,6 +13,7 @@ import {
   parseHideNonParticipating,
 } from "@/lib/event-category-filter";
 import { getEventTypes } from "@/lib/event-types";
+import { filterEventTypesForViewer } from "@/lib/event-type-helpers";
 import { hasGlobalAccess } from "@/lib/roles";
 import { canCreateEvent } from "@/lib/site-settings";
 
@@ -32,6 +33,10 @@ export default async function EventsPage() {
     canCreateEvent(user.id),
     getEventTypes(),
   ]);
+  const visibleEventTypes = filterEventTypesForViewer(eventTypes, {
+    isCompetitor: user.isCompetitor,
+    seesAllEvents: globalAccess,
+  });
   const hiddenTypeIds = parseHiddenEventTypeIds(
     cookieStore.get(EVENT_TYPE_FILTER_COOKIE)?.value,
   );
@@ -86,7 +91,7 @@ export default async function EventsPage() {
       ) : (
         <EventsList
           events={eventItems}
-          eventTypes={eventTypes}
+          eventTypes={visibleEventTypes}
           initialHiddenTypeIds={hiddenTypeIds}
           initialHideNonParticipating={hideNonParticipating}
         />

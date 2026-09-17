@@ -94,7 +94,8 @@
       "REPRESENTATION": "Representation",
       "COMPETITION": "Competition",
       "DEMONSTRATION": "Demonstration",
-      "FESTIVAL": "Festival"
+      "FESTIVAL": "Festival",
+      "TRAINING": "Training"
     },
     "roles": {
       "USER": "User",

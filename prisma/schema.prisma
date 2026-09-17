@@ -250,6 +250,7 @@ enum EventKind {
   COMPETITION
   DEMONSTRATION
   FESTIVAL
+  TRAINING
 }
 
 enum ChoreographyResourceType {

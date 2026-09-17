@@ -5,7 +5,8 @@ export type EventKind =
   | "REPRESENTATION"
   | "COMPETITION"
   | "DEMONSTRATION"
-  | "FESTIVAL";
+  | "FESTIVAL"
+  | "TRAINING";
 
 export const BUILTIN_EVENT_TYPE_IDS = {
   EVENT: "event-type-event",
@@ -14,6 +15,7 @@ export const BUILTIN_EVENT_TYPE_IDS = {
   COMPETITION: "event-type-competition",
   DEMONSTRATION: "event-type-demonstration",
   FESTIVAL: "event-type-festival",
+  TRAINING: "event-type-training",
 } as const;
 
 export const BUILTIN_EVENT_TYPES = [
@@ -33,6 +35,7 @@ export const BUILTIN_EVENT_TYPES = [
     sortOrder: 4,
   },
   { id: BUILTIN_EVENT_TYPE_IDS.FESTIVAL, name: "Festival", kind: "FESTIVAL" as const, sortOrder: 5 },
+  { id: BUILTIN_EVENT_TYPE_IDS.TRAINING, name: "Training", kind: "TRAINING" as const, sortOrder: 6 },
 ] as const;
 
 export type SerializedEventType = {
@@ -69,6 +72,24 @@ export function eventKindAllowsChoreographyLinks(kind: EventKind | null): boolea
 
 export function eventKindSkipsGenericCreatePermission(kind: EventKind | null): boolean {
   return kind === "REHEARSAL" || eventKindAllowsChoreographyLinks(kind);
+}
+
+export function eventKindRestrictedToCompetitors(kind: EventKind | null): boolean {
+  return kind === "TRAINING";
+}
+
+export function eventKindCopiesToAssociationCalendar(kind: EventKind | null): boolean {
+  return kind !== "REHEARSAL" && kind !== "TRAINING";
+}
+
+export function filterEventTypesForViewer(
+  types: SerializedEventType[],
+  viewer: { isCompetitor: boolean; seesAllEvents: boolean },
+): SerializedEventType[] {
+  if (viewer.seesAllEvents || viewer.isCompetitor) {
+    return types;
+  }
+  return types.filter((type) => !eventKindRestrictedToCompetitors(type.kind));
 }
 
 export function defaultEventTitle(

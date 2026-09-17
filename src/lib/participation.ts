@@ -54,6 +54,26 @@ export function listedEventWhere(userId: string) {
   };
 }
 
+export function visibleEventWhere(
+  userId: string,
+  viewer: { globalAccess: boolean; isCompetitor: boolean },
+) {
+  if (viewer.globalAccess) {
+    return undefined;
+  }
+
+  if (viewer.isCompetitor) {
+    return listedEventWhere(userId);
+  }
+
+  return {
+    AND: [
+      listedEventWhere(userId),
+      { NOT: { type: { kind: "TRAINING" as const } } },
+    ],
+  };
+}
+
 export function canOpenListedOrJoinableChoreography(
   choreography: {
     createdById: string;

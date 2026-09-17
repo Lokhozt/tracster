@@ -9,7 +9,11 @@ import { getEventTypeByKind, getEventTypes, eventKindSkipsGenericCreatePermissio
 import { canCreateEvent } from "@/lib/site-settings";
 import { basicUserSelect, serializeBasicUser } from "@/lib/users";
 import { canEditChoreography } from "@/lib/permissions";
-import type { EventKind } from "@/lib/event-type-helpers";
+import { hasGlobalAccess } from "@/lib/roles";
+import {
+  filterEventTypesForViewer,
+  type EventKind,
+} from "@/lib/event-type-helpers";
 
 type PageProps = {
   searchParams: Promise<{ type?: string; choreographyId?: string }>;
@@ -23,6 +27,7 @@ const kindAliases: Record<string, EventKind> = {
   competition: "COMPETITION",
   demonstration: "DEMONSTRATION",
   festival: "FESTIVAL",
+  training: "TRAINING",
 };
 
 export default async function NewEventPage({ searchParams }: PageProps) {
@@ -35,11 +40,20 @@ export default async function NewEventPage({ searchParams }: PageProps) {
   }
 
   const params = await searchParams;
-  const eventTypes = await getEventTypes();
+  const [eventTypes, seesAllEvents] = await Promise.all([
+    getEventTypes(),
+    hasGlobalAccess(user.id),
+  ]);
+  const visibleEventTypes = filterEventTypesForViewer(eventTypes, {
+    isCompetitor: user.isCompetitor,
+    seesAllEvents,
+  });
   const requestedKind = params.type ? kindAliases[params.type.toLowerCase()] : undefined;
   const requestedType =
-    (params.type ? eventTypes.find((type) => type.id === params.type) : undefined) ??
-    (requestedKind ? await getEventTypeByKind(requestedKind) : undefined);
+    (params.type ? visibleEventTypes.find((type) => type.id === params.type) : undefined) ??
+    (requestedKind && visibleEventTypes.some((type) => type.kind === requestedKind)
+      ? await getEventTypeByKind(requestedKind)
+      : undefined);
 
   const needsGenericCreate = !eventKindSkipsGenericCreatePermission(requestedType?.kind ?? null);
   if (needsGenericCreate && !(await canCreateEvent(user.id))) {
@@ -77,7 +91,7 @@ export default async function NewEventPage({ searchParams }: PageProps) {
     <AppShell title={t("title")}>
       <Card className="max-w-xl">
         <CreateEventForm
-          eventTypes={eventTypes}
+          eventTypes={visibleEventTypes}
           participantOptions={users.map(serializeBasicUser)}
           choreographyOptions={editableChoreographies}
           defaultTypeId={requestedType?.id}

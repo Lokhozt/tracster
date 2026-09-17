@@ -1,4 +1,4 @@
-import { listedEventWhere } from "@/lib/participation";
+import { visibleEventWhere } from "@/lib/participation";
 import { prisma } from "@/lib/db";
 import { canEditEvent } from "@/lib/events";
 import { eventKindAllowsChoreographyLinks } from "@/lib/event-type-helpers";
@@ -34,11 +34,20 @@ function uniqueSortedNames(users: Array<{ id: string } & UserNameFields>) {
 }
 
 export async function getUserScheduleEvents(userId: string, t?: ServerTranslator) {
-  const globalAccess = await hasGlobalAccess(userId);
-  const translator = t ?? await getServerTranslator();
+  const [globalAccess, viewer, translator] = await Promise.all([
+    hasGlobalAccess(userId),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { isCompetitor: true },
+    }),
+    t ? Promise.resolve(t) : getServerTranslator(),
+  ]);
 
   const records = await prisma.event.findMany({
-    where: globalAccess ? undefined : listedEventWhere(userId),
+    where: visibleEventWhere(userId, {
+      globalAccess,
+      isCompetitor: Boolean(viewer?.isCompetitor),
+    }),
     include: {
       ...listedLocationInclude,
       type: { select: { id: true, name: true, kind: true } },

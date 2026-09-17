@@ -35,6 +35,7 @@ export const basicUserSelect = {
   firstName: true,
   lastName: true,
   email: true,
+  isCompetitor: true,
 } as const;
 
 export const adminUserSelect = {
@@ -56,6 +57,7 @@ export type BasicUser = {
   lastName: string;
   email: string;
   name: string;
+  isCompetitor: boolean;
 };
 
 export type AdminUser = BasicUser & {
@@ -72,6 +74,7 @@ export function serializeBasicUser(user: {
   firstName: string;
   lastName: string;
   email: string;
+  isCompetitor: boolean;
 }): BasicUser {
   return {
     id: user.id,
@@ -79,6 +82,7 @@ export function serializeBasicUser(user: {
     lastName: user.lastName,
     email: user.email,
     name: formatUserName(user),
+    isCompetitor: user.isCompetitor,
   };
 }
 

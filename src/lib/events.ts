@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/db";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
-import { canOpenListedOrJoinableEvent, listedEventWhere } from "@/lib/participation";
+import { canOpenListedOrJoinableEvent, visibleEventWhere } from "@/lib/participation";
 import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
 import { hasGlobalAccess } from "@/lib/roles";
 import {
   defaultEventTitle,
-  isGenericEventKind,
   eventKindAllowsChoreographyLinks,
+  eventKindRestrictedToCompetitors,
+  isGenericEventKind,
   type SerializedEventType,
   serializeEventType,
 } from "@/lib/event-type-helpers";
@@ -74,14 +75,32 @@ async function getEventAccessRecord(eventId: string) {
   });
 }
 
-export async function canViewEvent(eventId: string, userId: string): Promise<boolean> {
+async function viewerCanSeeCompetitorOnlyEvents(userId: string): Promise<boolean> {
   if (await hasGlobalAccess(userId)) {
     return true;
   }
 
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isCompetitor: true },
+  });
+  return Boolean(user?.isCompetitor);
+}
+
+export async function canViewEvent(eventId: string, userId: string): Promise<boolean> {
   const event = await getEventAccessRecord(eventId);
   if (!event) {
     return false;
+  }
+
+  if (eventKindRestrictedToCompetitors(event.type.kind)) {
+    if (!(await viewerCanSeeCompetitorOnlyEvents(userId))) {
+      return false;
+    }
+  }
+
+  if (await hasGlobalAccess(userId)) {
+    return true;
   }
 
   if (event.createdById === userId) {
@@ -110,13 +129,19 @@ export async function canViewEvent(eventId: string, userId: string): Promise<boo
 }
 
 export async function canEditEvent(eventId: string, userId: string): Promise<boolean> {
-  if (await hasGlobalAccess(userId)) {
-    return true;
-  }
-
   const event = await getEventAccessRecord(eventId);
   if (!event) {
     return false;
+  }
+
+  if (eventKindRestrictedToCompetitors(event.type.kind)) {
+    if (!(await viewerCanSeeCompetitorOnlyEvents(userId))) {
+      return false;
+    }
+  }
+
+  if (await hasGlobalAccess(userId)) {
+    return true;
   }
 
   if (event.createdById === userId) {
@@ -139,11 +164,20 @@ export async function canEditEvent(eventId: string, userId: string): Promise<boo
 }
 
 export async function getUserEvents(userId: string, t?: ServerTranslator) {
-  const globalAccess = await hasGlobalAccess(userId);
-  const translator = t ?? await getServerTranslator();
+  const [globalAccess, viewer, translator] = await Promise.all([
+    hasGlobalAccess(userId),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { isCompetitor: true },
+    }),
+    t ? Promise.resolve(t) : getServerTranslator(),
+  ]);
 
   const events = await prisma.event.findMany({
-    where: globalAccess ? undefined : listedEventWhere(userId),
+    where: visibleEventWhere(userId, {
+      globalAccess,
+      isCompetitor: Boolean(viewer?.isCompetitor),
+    }),
     include: eventListInclude,
     orderBy: { startsAt: "asc" },
   });
@@ -236,6 +270,12 @@ export async function canCreateEventOfType(options: {
   choreographyIds?: string[];
   canCreateGeneric: boolean;
 }): Promise<boolean> {
+  if (eventKindRestrictedToCompetitors(options.kind)) {
+    if (!(await viewerCanSeeCompetitorOnlyEvents(options.userId))) {
+      return false;
+    }
+  }
+
   if (options.kind === "REHEARSAL" && options.choreographyId) {
     return canEditChoreography(options.choreographyId, options.userId);
   }
@@ -292,5 +332,23 @@ export async function validateEventTypeFields(options: {
     return "Only representation and demonstration events can be attached to choreographies.";
   }
 
+  return null;
+}
+
+export async function competitorParticipantsAllowed(
+  kind: SerializedEventType["kind"],
+  participantIds: string[],
+): Promise<string | null> {
+  if (!eventKindRestrictedToCompetitors(kind) || participantIds.length === 0) {
+    return null;
+  }
+
+  const uniqueIds = [...new Set(participantIds)];
+  const competitors = await prisma.user.count({
+    where: { id: { in: uniqueIds }, isCompetitor: true },
+  });
+  if (competitors !== uniqueIds.length) {
+    return "Only competitors can be added to training events.";
+  }
   return null;
 }

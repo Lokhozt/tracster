@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       passwordHash,
       displayLanguage: preferenceFromLanguage(language),
     },
-    select: { id: true, firstName: true, lastName: true, email: true },
+    select: { id: true, firstName: true, lastName: true, email: true, isCompetitor: true },
   });
 
   await createSession(user.id);

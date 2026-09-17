@@ -17,6 +17,7 @@ Tracster is a web application for dance and performance associations to plan reh
 - **Representations** — schedule performances and attach choreographies to them (shown on the schedule).
 - **Demonstrations** — schedule showcases linked to choreographies, with their own participant lists.
 - **Competitions** — schedule competitions with their own participant lists.
+- **Trainings** — competitor-only sessions with their own participant lists. Members who are not competitors cannot see them.
 - **Festivals** — schedule festivals with their own participant lists, not linked to choreographies.
 - **Events** — general association events with their own participant lists.
 - **Availability** — participants mark each rehearsal as available, unavailable, or maybe.
@@ -24,7 +25,7 @@ Tracster is a web application for dance and performance associations to plan reh
 - **Conflict warnings** — when scheduling a rehearsal, choreographers are warned if participants are already engaged or marked unavailable.
 - **Join & visibility** — choreographies and events can allow free join, join requests (accept/decline), and hiding from non-participants.
 - **Account** — members can update their name, phone, and competitor status, and connect a personal Google calendar for rehearsals.
-- **Google Calendar** — one-way sync from Tracster. Shared association events (everything except rehearsals) go to one Google calendar; each member can copy their own rehearsals to a personal calendar. Unavailability stays in the app.
+- **Google Calendar** — one-way sync from Tracster. Shared association events (everything except rehearsals and competitor-only trainings) go to one Google calendar; each member can copy their own rehearsals to a personal calendar. Unavailability stays in the app.
 
 ## Core workflow
 
@@ -33,7 +34,7 @@ Tracster is a web application for dance and performance associations to plan reh
 3. They can let others **join** or **request to join**, and choose whether the piece is hidden from non-participants.
 4. A choreographer schedules a **rehearsal** (date, time, optional location and group). Conflict warnings appear if the audience is already booked or unavailable.
 5. Assigned participants respond with **availability** (available, unavailable, maybe) and can maintain a personal **unavailability** calendar.
-6. Choreographers (or admins) schedule **representations** and **demonstrations** and attach choreographies, and can also create **competitions**, **festivals**, and standalone **events**.
+6. Choreographers (or admins) schedule **representations** and **demonstrations** and attach choreographies, and can also create **competitions**, **festivals**, **trainings**, and standalone **events**.
 7. The home **schedule** shows rehearsals, representations, and events the user is involved in.
 8. Members can update their **name, phone, and competitor status** and connect a personal Google calendar on **Account**. The owner connects the association calendar in **Settings**.
 
@@ -245,7 +246,7 @@ prisma/
 - **RehearsalEvent** — a scheduled rehearsal
 - **AvailabilityResponse** — participant response per rehearsal
 - **UserUnavailability** — personal unavailable timeframes
-- **EventType** — includes immutable kinds: Event, Rehearsal, Representation, Competition, Demonstration, Festival
+- **EventType** — includes immutable kinds: Event, Rehearsal, Representation, Competition, Demonstration, Festival, Training
 - **Event** / **EventChoreography** / **EventParticipant** / **EventJoinRequest** — scheduled items, linked pieces, and attendance
 - **GoogleCalendarConnection** — association or per-user OAuth tokens and destination calendar
 - **GoogleCalendarEvent** — mapping from a Tracster event to a Google event on a connection
