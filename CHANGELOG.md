@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - In the scheduling tool, possibility to export the planning as an image before generating the repetitions.
 - `make db-from-dump DUMP=/path/to/dump.sql` replaces the local Docker database with a SQL dump.
 
+### Changed
+
+- The settings page lists its categories (site settings, association calendar, event types, locations, members) in a side menu and shows only the selected one instead of stacking every section. On small screens the categories fill the width and give way to the chosen one, with a link back to the list.
+
 ## 1.0.2 - 2026-09-14
 
 ### Added

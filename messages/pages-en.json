@@ -85,7 +85,9 @@
     },
     "Settings": {
       "title": "Settings",
-      "intro": "Configure association-wide options, listed locations, and members."
+      "intro": "Configure association-wide options, listed locations, and members.",
+      "categories": "Setting categories",
+      "backToCategories": "All settings"
     },
     "Choreographies": {
       "title": "Choreographies",

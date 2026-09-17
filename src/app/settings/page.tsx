@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { EventTypesManager } from "@/components/EventTypesManager";
 import { LocationsManager } from "@/components/LocationsManager";
+import { SettingsSections, type SettingsSection } from "@/components/SettingsSections";
 import { SiteSettingsForm } from "@/components/SiteSettingsForm";
 import { GoogleCalendarConnectionCard } from "@/components/GoogleCalendarConnectionCard";
 import { UsersList } from "@/components/UsersList";
@@ -24,9 +25,10 @@ type PageProps = {
 };
 
 export default async function SettingsPage({ searchParams }: PageProps) {
-  const [user, t] = await Promise.all([
+  const [user, t, tc] = await Promise.all([
     getCurrentUser(),
     getTranslations("Pages.Settings"),
+    getTranslations("Components"),
   ]);
   if (!user) {
     redirect("/login");
@@ -57,26 +59,54 @@ export default async function SettingsPage({ searchParams }: PageProps) {
     searchParams,
   ]);
 
+  const sections: SettingsSection[] = [
+    {
+      id: "general",
+      label: tc("siteSettings"),
+      content: <SiteSettingsForm settings={settings} />,
+    },
+    ...(showAssociationCalendar
+      ? [
+          {
+            id: "calendar",
+            label: tc("associationCalendar"),
+            content: (
+              <GoogleCalendarConnectionCard
+                kind="association"
+                connection={serializeGoogleConnection(googleConnection)}
+                configured={isGoogleCalendarConfigured()}
+                result={query.googleCalendar}
+                followUrl={associationCalendarFollowUrl()}
+              />
+            ),
+          },
+        ]
+      : []),
+    {
+      id: "event-types",
+      label: tc("eventTypes"),
+      content: <EventTypesManager eventTypes={eventTypes} />,
+    },
+    {
+      id: "locations",
+      label: tc("locations"),
+      content: <LocationsManager locations={locations} />,
+    },
+    {
+      id: "members",
+      label: tc("users"),
+      content: <UsersList users={users.map(serializeAdminUser)} />,
+    },
+  ];
+
   return (
     <AppShell title={t("title")}>
-      <p className="mb-6 text-stone-600">
-        {t("intro")}
-      </p>
-      <div className="space-y-8">
-        <SiteSettingsForm settings={settings} />
-        {showAssociationCalendar && (
-          <GoogleCalendarConnectionCard
-            kind="association"
-            connection={serializeGoogleConnection(googleConnection)}
-            configured={isGoogleCalendarConfigured()}
-            result={query.googleCalendar}
-            followUrl={associationCalendarFollowUrl()}
-          />
-        )}
-        <EventTypesManager eventTypes={eventTypes} />
-        <LocationsManager locations={locations} />
-        <UsersList users={users.map(serializeAdminUser)} />
-      </div>
+      <SettingsSections
+        sections={sections}
+        intro={t("intro")}
+        // Returning from the Google consent screen should land on the calendar category.
+        initialSectionId={query.googleCalendar ? "calendar" : undefined}
+      />
     </AppShell>
   );
 }
