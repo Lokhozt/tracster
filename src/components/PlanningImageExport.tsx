@@ -408,11 +408,15 @@ async function downloadPlanningImage({
               font: "10px system-ui, sans-serif",
               maxLines: 1,
             },
-            {
-              text: segment.entry.locationName,
-              font: "10px system-ui, sans-serif",
-              maxLines: 1,
-            },
+            ...(segment.entry.locationName
+              ? [
+                  {
+                    text: segment.entry.locationName,
+                    font: "10px system-ui, sans-serif",
+                    maxLines: 1,
+                  },
+                ]
+              : []),
           ],
         });
       }
@@ -570,7 +574,7 @@ export function PlanningImageExportButton({
       startsAt: event.startsAt,
       endsAt: event.endsAt,
       locationKey: event.location ?? "__none__",
-      locationName: event.location ?? t("noLocation"),
+      locationName: event.location ?? "",
       colorKey: event.choreographyId ?? event.typeId,
     }));
     const rangeEntries = entries.filter((entry) => {

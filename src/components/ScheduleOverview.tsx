@@ -9,6 +9,7 @@ import { UpcomingEventsList } from "@/components/UpcomingEventsList";
 import { Card } from "@/components/ui";
 import { persistHiddenEventTypeIds } from "@/lib/event-category-filter";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
+import { isBirthdayScheduleEvent } from "@/lib/schedule-birthdays";
 import type { SerializedScheduleEvent } from "@/lib/schedule-filters";
 
 export function ScheduleOverview({
@@ -34,8 +35,15 @@ export function ScheduleOverview({
     () => events.filter((event) => !hidden.has(event.typeId)),
     [events, hidden],
   );
+  const exportEvents = useMemo(
+    () => filteredEvents.filter((event) => !isBirthdayScheduleEvent(event)),
+    [filteredEvents],
+  );
   const filteredUpcoming = useMemo(
-    () => upcoming.filter((event) => !hidden.has(event.typeId)),
+    () =>
+      upcoming.filter(
+        (event) => !hidden.has(event.typeId) && !isBirthdayScheduleEvent(event),
+      ),
     [upcoming, hidden],
   );
 
@@ -51,7 +59,7 @@ export function ScheduleOverview({
           <FollowAssociationCalendarLink href={associationCalendarUrl} />
         )}
         <PlanningImageExportButton
-          events={filteredEvents}
+          events={exportEvents}
           startOfDayHour={startOfDayHour}
         />
       </div>

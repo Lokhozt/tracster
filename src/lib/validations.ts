@@ -113,6 +113,7 @@ export const siteSettingsSchema = z.object({
   allowUserCreateChoreographies: z.boolean(),
   allowUserCreateEvents: z.boolean(),
   startOfDayHour: z.number().int().min(0).max(23),
+  showBirthdaysOnPlanning: z.boolean(),
 });
 
 export const rehearsalSchema = z.object({

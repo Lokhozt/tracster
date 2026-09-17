@@ -96,6 +96,7 @@ async function main() {
       allowUserCreateChoreographies: true,
       allowUserCreateEvents: true,
       startOfDayHour: 8,
+      showBirthdaysOnPlanning: true,
     },
   });
 

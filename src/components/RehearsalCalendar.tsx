@@ -28,6 +28,7 @@ import {
   withParticipantTooltip,
   type SerializedScheduleEvent,
 } from "@/lib/schedule-filters";
+import { isBirthdayScheduleEvent } from "@/lib/schedule-birthdays";
 
 type CalendarView = "month" | "week" | "threeDay";
 
@@ -123,23 +124,26 @@ function eventCellTitle(event: SerializedScheduleEvent): string {
   );
 }
 
-function eventCellClassName(kind: SerializedScheduleEvent["typeKind"]): string {
-  if (kind === "REPRESENTATION") {
+function eventCellClassName(event: SerializedScheduleEvent): string {
+  if (isBirthdayScheduleEvent(event)) {
+    return "bg-pink-100 text-pink-900";
+  }
+  if (event.typeKind === "REPRESENTATION") {
     return "bg-amber-100 text-amber-900 hover:bg-amber-200";
   }
-  if (kind === "COMPETITION") {
+  if (event.typeKind === "COMPETITION") {
     return "bg-violet-100 text-violet-900 hover:bg-violet-200";
   }
-  if (kind === "DEMONSTRATION") {
+  if (event.typeKind === "DEMONSTRATION") {
     return "bg-teal-100 text-teal-900 hover:bg-teal-200";
   }
-  if (kind === "FESTIVAL") {
+  if (event.typeKind === "FESTIVAL") {
     return "bg-rose-100 text-rose-900 hover:bg-rose-200";
   }
-  if (kind === "TRAINING") {
+  if (event.typeKind === "TRAINING") {
     return "bg-orange-100 text-orange-900 hover:bg-orange-200";
   }
-  if (kind === "EVENT" || kind === null) {
+  if (event.typeKind === "EVENT" || event.typeKind === null) {
     return "bg-sky-100 text-sky-900 hover:bg-sky-200";
   }
   return "bg-stone-100 text-stone-800 hover:bg-stone-200";
@@ -177,21 +181,39 @@ function DayCell({
         {format(day, "d")}
       </div>
       <div className="space-y-1">
-        {events.map((event) => (
-          <Link
-            key={event.id}
-            href={event.href}
-            className={cn(
-              "rounded px-1.5 py-0.5 text-xs break-words hover:opacity-90",
-              wrapLabels ? "block" : "line-clamp-2",
-              eventCellClassName(event.typeKind),
-            )}
-            title={eventCellTitle(event)}
-          >
-            <span className="font-medium">{eventTimeLabel(event, day, t("allDay"))}</span>{" "}
-            {eventCellLabel(event)}
-          </Link>
-        ))}
+        {events.map((event) => {
+          const className = cn(
+            "rounded px-1.5 py-0.5 text-xs break-words",
+            wrapLabels ? "block" : "line-clamp-2",
+            eventCellClassName(event),
+            event.href && "hover:opacity-90",
+          );
+          const content = (
+            <>
+              <span className="font-medium">{eventTimeLabel(event, day, t("allDay"))}</span>{" "}
+              {eventCellLabel(event)}
+            </>
+          );
+
+          if (!event.href) {
+            return (
+              <span key={event.id} className={className} title={eventCellTitle(event)}>
+                {content}
+              </span>
+            );
+          }
+
+          return (
+            <Link
+              key={event.id}
+              href={event.href}
+              className={className}
+              title={eventCellTitle(event)}
+            >
+              {content}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

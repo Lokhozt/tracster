@@ -14,30 +14,31 @@ import {
 } from "@/lib/event-category-filter";
 import { getEventTypes } from "@/lib/event-types";
 import { getUpcomingScheduleEvents, getUserScheduleEvents } from "@/lib/schedule";
+import { planningBirthdayEvents } from "@/lib/schedule-birthdays";
 import { filterEventTypesForViewer } from "@/lib/event-type-helpers";
 import { hasGlobalAccess } from "@/lib/roles";
 import { APP_LOGO_SRC, isS3Configured } from "@/lib/s3";
 import { getSiteSettings } from "@/lib/site-settings";
 import { formatBirthdayGreeting, isBirthdayOnDate } from "@/lib/users";
 
-async function getUsersWithBirthdayToday(now = new Date()) {
+async function getUsersWithBirthdays() {
   const users = await prisma.user.findMany({
     where: { dateOfBirth: { not: null } },
-    select: { firstName: true, lastName: true, dateOfBirth: true },
+    select: { id: true, firstName: true, lastName: true, dateOfBirth: true },
     orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
   });
 
   return users.filter(
-    (user): user is typeof user & { dateOfBirth: Date } =>
-      user.dateOfBirth !== null && isBirthdayOnDate(user.dateOfBirth, now),
+    (user): user is typeof user & { dateOfBirth: Date } => user.dateOfBirth !== null,
   );
 }
 
 export default async function HomePage() {
-  const [user, t, tCommon, cookieStore] = await Promise.all([
+  const [user, t, tCommon, tComponents, cookieStore] = await Promise.all([
     getCurrentUser(),
     getTranslations("Pages.Home"),
     getTranslations("Common"),
+    getTranslations("Components"),
     cookies(),
   ]);
   const logoSrc = isS3Configured() ? APP_LOGO_SRC : null;
@@ -122,25 +123,32 @@ export default async function HomePage() {
   ];
 
   if (user) {
-    const [events, birthdayUsers, eventTypes, seesAllEvents, settings] = await Promise.all([
+    const [scheduleEvents, birthdayUsers, eventTypes, seesAllEvents, settings] = await Promise.all([
       getUserScheduleEvents(user.id),
-      getUsersWithBirthdayToday(),
+      getUsersWithBirthdays(),
       getEventTypes(),
       hasGlobalAccess(user.id),
       getSiteSettings(),
     ]);
+    const events = settings.showBirthdaysOnPlanning
+      ? [...scheduleEvents, ...planningBirthdayEvents(birthdayUsers, tComponents("birthday"))]
+      : scheduleEvents;
     const visibleEventTypes = filterEventTypesForViewer(eventTypes, {
       isCompetitor: user.isCompetitor,
       seesAllEvents,
     });
-    const upcoming = getUpcomingScheduleEvents(events);
+    const upcoming = getUpcomingScheduleEvents(scheduleEvents);
     const hiddenTypeIds = parseHiddenEventTypeIds(
       cookieStore.get(EVENT_TYPE_FILTER_COOKIE)?.value,
     );
     const hideNonParticipating = parseHideNonParticipating(
       cookieStore.get(HIDE_NON_PARTICIPATING_COOKIE)?.value,
     );
-    const birthdayGreeting = formatBirthdayGreeting(birthdayUsers);
+    const birthdayGreeting = settings.showBirthdaysOnPlanning
+      ? formatBirthdayGreeting(
+          birthdayUsers.filter((birthdayUser) => isBirthdayOnDate(birthdayUser.dateOfBirth, new Date())),
+        )
+      : null;
     const associationCalendarUrl = associationCalendarFollowUrl();
 
     return (

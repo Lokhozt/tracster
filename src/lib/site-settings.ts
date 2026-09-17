@@ -8,12 +8,14 @@ export type SiteSettingsRecord = {
   allowUserCreateChoreographies: boolean;
   allowUserCreateEvents: boolean;
   startOfDayHour: number;
+  showBirthdaysOnPlanning: boolean;
 };
 
 const settingsSelect = {
   allowUserCreateChoreographies: true,
   allowUserCreateEvents: true,
   startOfDayHour: true,
+  showBirthdaysOnPlanning: true,
 } as const;
 
 export function serializeSiteSettings(settings: SiteSettingsRecord): SiteSettingsRecord {
@@ -21,6 +23,7 @@ export function serializeSiteSettings(settings: SiteSettingsRecord): SiteSetting
     allowUserCreateChoreographies: settings.allowUserCreateChoreographies,
     allowUserCreateEvents: settings.allowUserCreateEvents,
     startOfDayHour: settings.startOfDayHour,
+    showBirthdaysOnPlanning: settings.showBirthdaysOnPlanning,
   };
 }
 
@@ -41,6 +44,7 @@ export async function getSiteSettings(): Promise<SiteSettingsRecord> {
         allowUserCreateChoreographies: true,
         allowUserCreateEvents: true,
         startOfDayHour: DEFAULT_START_OF_DAY_HOUR,
+        showBirthdaysOnPlanning: true,
       },
       select: settingsSelect,
     }),

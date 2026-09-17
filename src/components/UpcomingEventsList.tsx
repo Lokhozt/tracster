@@ -17,6 +17,7 @@ import {
   filterUpcomingScheduleEvents,
   type UpcomingEventRange,
 } from "@/lib/schedule-filters";
+import { isBirthdayScheduleEvent } from "@/lib/schedule-birthdays";
 import {
   isGenericScheduleEvent,
   isRehearsalScheduleEvent,
@@ -27,23 +28,26 @@ import {
 type AvailabilityStatus = "AVAILABLE" | "UNAVAILABLE";
 
 
-function eventKindClassName(kind: SerializedScheduleEvent["typeKind"]) {
-  if (kind === "REPRESENTATION") {
+function eventKindClassName(event: SerializedScheduleEvent) {
+  if (isBirthdayScheduleEvent(event)) {
+    return "bg-pink-100 text-pink-900";
+  }
+  if (event.typeKind === "REPRESENTATION") {
     return "bg-amber-100 text-amber-900";
   }
-  if (kind === "COMPETITION") {
+  if (event.typeKind === "COMPETITION") {
     return "bg-violet-100 text-violet-900";
   }
-  if (kind === "DEMONSTRATION") {
+  if (event.typeKind === "DEMONSTRATION") {
     return "bg-teal-100 text-teal-900";
   }
-  if (kind === "FESTIVAL") {
+  if (event.typeKind === "FESTIVAL") {
     return "bg-rose-100 text-rose-900";
   }
-  if (kind === "TRAINING") {
+  if (event.typeKind === "TRAINING") {
     return "bg-orange-100 text-orange-900";
   }
-  if (kind === "REHEARSAL") {
+  if (event.typeKind === "REHEARSAL") {
     return "bg-stone-100 text-stone-700";
   }
   return "bg-sky-100 text-sky-900";
@@ -51,7 +55,7 @@ function eventKindClassName(kind: SerializedScheduleEvent["typeKind"]) {
 
 function EventTypeBadge({ event }: { event: SerializedScheduleEvent }) {
   return (
-    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", eventKindClassName(event.typeKind))}>
+    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", eventKindClassName(event))}>
       {event.typeName}
     </span>
   );
@@ -240,13 +244,19 @@ export function UpcomingEventsList({
                     <EventTypeBadge event={event} />
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <Link
-                      href={event.href}
-                      className={cn("text-base font-semibold hover:underline", cardLink)}
-                    >
-                      {defaultEventTitle(event)}
-                    </Link>
-                    {event.isParticipating && <ParticipatingCheck />}
+                    {event.href ? (
+                      <Link
+                        href={event.href}
+                        className={cn("text-base font-semibold hover:underline", cardLink)}
+                      >
+                        {defaultEventTitle(event)}
+                      </Link>
+                    ) : (
+                      <span className="text-base font-semibold">{defaultEventTitle(event)}</span>
+                    )}
+                    {event.isParticipating && !isBirthdayScheduleEvent(event) && (
+                      <ParticipatingCheck />
+                    )}
                   </div>
                   <p className="text-sm text-stone-600">
                     {dateFormatter.format(new Date(event.startsAt))}

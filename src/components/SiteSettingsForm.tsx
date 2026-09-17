@@ -18,6 +18,9 @@ export function SiteSettingsForm({ settings }: { settings: SiteSettingsRecord })
     settings.allowUserCreateEvents,
   );
   const [startOfDayHour, setStartOfDayHour] = useState(String(settings.startOfDayHour).padStart(2, "0"));
+  const [showBirthdaysOnPlanning, setShowBirthdaysOnPlanning] = useState(
+    settings.showBirthdaysOnPlanning,
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -35,6 +38,7 @@ export function SiteSettingsForm({ settings }: { settings: SiteSettingsRecord })
         allowUserCreateChoreographies,
         allowUserCreateEvents,
         startOfDayHour: Number(startOfDayHour),
+        showBirthdaysOnPlanning,
       }),
     });
     const data = await response.json();
@@ -99,6 +103,20 @@ export function SiteSettingsForm({ settings }: { settings: SiteSettingsRecord })
             {t("startDayHelp")}
           </p>
         </div>
+        <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
+          <input
+            type="checkbox"
+            checked={showBirthdaysOnPlanning}
+            onChange={(event) => setShowBirthdaysOnPlanning(event.target.checked)}
+            className="mt-0.5 rounded border-stone-300"
+          />
+          <span>
+            <span className="font-medium">{t("showBirthdaysOnPlanning")}</span>
+            <span className="mt-0.5 block text-stone-500">
+              {t("showBirthdaysOnPlanningHelp")}
+            </span>
+          </span>
+        </label>
         {error && <p className="text-sm text-red-600">{error}</p>}
         {saved && !error && <p className="text-sm text-stone-600">{t("settingsSaved")}</p>}
         <Button type="submit" disabled={saving}>

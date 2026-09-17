@@ -200,6 +200,7 @@ model SiteSettings {
   allowUserCreateChoreographies Boolean  @default(true)
   allowUserCreateEvents         Boolean  @default(true)
   startOfDayHour                Int      @default(8)
+  showBirthdaysOnPlanning       Boolean  @default(true)
   updatedAt                     DateTime @updatedAt
 }
 
