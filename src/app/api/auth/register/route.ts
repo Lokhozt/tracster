@@ -12,6 +12,7 @@ import {
   LANGUAGE_COOKIE,
   preferenceFromLanguage,
 } from "@/i18n/config";
+import { registrationPasswordMatches } from "@/lib/registering-password";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -19,6 +20,10 @@ export async function POST(request: NextRequest) {
 
   if (!parsed.success) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
+  }
+
+  if (!registrationPasswordMatches(body.registrationPassword)) {
+    return jsonError("Incorrect registration password.", 403);
   }
 
   const { firstName, lastName, email, phone, dateOfBirth, password } = parsed.data;

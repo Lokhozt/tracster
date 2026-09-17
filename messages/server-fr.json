@@ -26,6 +26,7 @@
       "Unavailability must be at least 30 minutes.": "Une indisponibilité doit durer au moins 30 minutes.",
       "An account with this email already exists.": "Un compte associé à cette adresse e-mail existe déjà.",
       "Invalid email or password.": "Adresse e-mail ou mot de passe incorrect.",
+      "Incorrect registration password.": "Mot de passe d’inscription incorrect.",
       "This password reset link is invalid or has expired.": "Ce lien de réinitialisation est invalide ou a expiré.",
       "Choose a different user to transfer ownership to.": "Choisissez un autre utilisateur pour le transfert de propriété.",
       "You cannot delete your own account.": "Vous ne pouvez pas supprimer votre propre compte.",

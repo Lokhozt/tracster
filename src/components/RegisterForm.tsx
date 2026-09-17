@@ -7,11 +7,41 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button, Input, Label } from "@/components/ui";
 
-export function RegisterForm() {
+export function RegisterForm({
+  requiresRegistrationPassword,
+}: {
+  requiresRegistrationPassword: boolean;
+}) {
   const t = useTranslations("Components");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [unlocked, setUnlocked] = useState(!requiresRegistrationPassword);
+  const [registrationPassword, setRegistrationPassword] = useState("");
+
+  async function handleUnlock(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const formData = new FormData(event.currentTarget);
+    const password = String(formData.get("registrationPassword") ?? "");
+    const response = await fetch("/api/auth/register/unlock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    const data = await response.json();
+    setLoading(false);
+
+    if (!response.ok) {
+      setError(data.error ?? t("registerError"));
+      return;
+    }
+
+    setRegistrationPassword(password);
+    setUnlocked(true);
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -29,6 +59,7 @@ export function RegisterForm() {
         phone: formData.get("phone") || undefined,
         dateOfBirth: formData.get("dateOfBirth") || undefined,
         password: formData.get("password"),
+        ...(requiresRegistrationPassword ? { registrationPassword } : {}),
       }),
     });
 
@@ -42,6 +73,34 @@ export function RegisterForm() {
 
     router.push("/");
     router.refresh();
+  }
+
+  if (!unlocked) {
+    return (
+      <form onSubmit={handleUnlock} className="space-y-4">
+        <p className="text-sm text-stone-600">{t("registrationPasswordHelp")}</p>
+        <div>
+          <Label htmlFor="registrationPassword">{t("registrationPassword")}</Label>
+          <Input
+            id="registrationPassword"
+            name="registrationPassword"
+            type="password"
+            required
+            autoComplete="off"
+          />
+        </div>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        <Button type="submit" disabled={loading} className="w-full">
+          {loading ? t("checking") : t("continue")}
+        </Button>
+        <p className="text-center text-sm text-stone-600">
+          {t("alreadyAccount")}{" "}
+          <Link href="/login" className="font-medium text-stone-900">
+            {t("signIn")}
+          </Link>
+        </p>
+      </form>
+    );
   }
 
   return (

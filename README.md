@@ -117,9 +117,13 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 GOOGLE_CALENDAR_CLIENT_ID="..."
 GOOGLE_CALENDAR_CLIENT_SECRET="..."
 SESSION_SECRET="a-long-random-production-secret"
+REGISTERING_PASSWORD=""
 GOOGLE_ASSOCIATION_CALENDAR_ID="...@group.calendar.google.com"
 GOOGLE_ASSOCIATION_CALENDAR_TIMEZONE="Europe/Paris"
 ```
+
+Leave `REGISTERING_PASSWORD` empty (or unset) for open registration. When it has a value, `/register`
+asks for that password first, and the register API rejects accounts that skip it.
 
 `GOOGLE_ASSOCIATION_CALENDAR_ID` is the public calendar shown by **Follow association's calendar**
 on the schedule, account, and settings pages (a calendar id, or a full Google embed URL). Make that
@@ -196,6 +200,7 @@ prisma/
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/auth/register` | Create account |
+| POST | `/api/auth/register/unlock` | Check the optional registration password |
 | POST | `/api/auth/login` | Sign in |
 | POST | `/api/auth/logout` | Sign out |
 | GET | `/api/auth/me` | Current user |
