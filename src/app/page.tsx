@@ -5,7 +5,6 @@ import { AppShell } from "@/components/AppShell";
 import { ScheduleOverview } from "@/components/ScheduleOverview";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { FollowAssociationCalendarLink } from "@/components/FollowAssociationCalendarLink";
 import { associationCalendarFollowUrl } from "@/lib/google-calendar";
 import {
   EVENT_TYPE_FILTER_COOKIE,
@@ -18,6 +17,7 @@ import { getUpcomingScheduleEvents, getUserScheduleEvents } from "@/lib/schedule
 import { filterEventTypesForViewer } from "@/lib/event-type-helpers";
 import { hasGlobalAccess } from "@/lib/roles";
 import { APP_LOGO_SRC, isS3Configured } from "@/lib/s3";
+import { getSiteSettings } from "@/lib/site-settings";
 import { formatBirthdayGreeting, isBirthdayOnDate } from "@/lib/users";
 
 async function getUsersWithBirthdayToday(now = new Date()) {
@@ -122,11 +122,12 @@ export default async function HomePage() {
   ];
 
   if (user) {
-    const [events, birthdayUsers, eventTypes, seesAllEvents] = await Promise.all([
+    const [events, birthdayUsers, eventTypes, seesAllEvents, settings] = await Promise.all([
       getUserScheduleEvents(user.id),
       getUsersWithBirthdayToday(),
       getEventTypes(),
       hasGlobalAccess(user.id),
+      getSiteSettings(),
     ]);
     const visibleEventTypes = filterEventTypesForViewer(eventTypes, {
       isCompetitor: user.isCompetitor,
@@ -149,17 +150,14 @@ export default async function HomePage() {
             {birthdayGreeting}
           </p>
         )}
-        {associationCalendarUrl && (
-          <p className="mb-4">
-            <FollowAssociationCalendarLink href={associationCalendarUrl} />
-          </p>
-        )}
         <ScheduleOverview
           events={events}
           upcoming={upcoming}
           eventTypes={visibleEventTypes}
           initialHiddenTypeIds={hiddenTypeIds}
           initialHideNonParticipating={hideNonParticipating}
+          associationCalendarUrl={associationCalendarUrl}
+          startOfDayHour={settings.startOfDayHour}
         />
       </AppShell>
     );

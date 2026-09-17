@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { EventTypeFilter } from "@/components/EventTypeFilter";
+import { FollowAssociationCalendarLink } from "@/components/FollowAssociationCalendarLink";
+import { PlanningImageExportButton } from "@/components/PlanningImageExport";
 import { RehearsalCalendar } from "@/components/RehearsalCalendar";
 import { UpcomingEventsList } from "@/components/UpcomingEventsList";
 import { Card } from "@/components/ui";
@@ -15,12 +17,16 @@ export function ScheduleOverview({
   eventTypes,
   initialHiddenTypeIds,
   initialHideNonParticipating,
+  associationCalendarUrl,
+  startOfDayHour,
 }: {
   events: SerializedScheduleEvent[];
   upcoming: SerializedScheduleEvent[];
   eventTypes: SerializedEventType[];
   initialHiddenTypeIds: string[];
   initialHideNonParticipating: boolean;
+  associationCalendarUrl?: string | null;
+  startOfDayHour: number;
 }) {
   const [hiddenTypeIds, setHiddenTypeIds] = useState(initialHiddenTypeIds);
   const hidden = useMemo(() => new Set(hiddenTypeIds), [hiddenTypeIds]);
@@ -40,6 +46,15 @@ export function ScheduleOverview({
 
   return (
     <>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {associationCalendarUrl && (
+          <FollowAssociationCalendarLink href={associationCalendarUrl} />
+        )}
+        <PlanningImageExportButton
+          events={filteredEvents}
+          startOfDayHour={startOfDayHour}
+        />
+      </div>
       <RehearsalCalendar events={filteredEvents} />
       <Card className="mb-4">
         <EventTypeFilter

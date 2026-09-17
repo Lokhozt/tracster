@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
 import { DateTime24Input } from "@/components/DateTime24Input";
+import { SchedulingImageExportButton } from "@/components/PlanningImageExport";
 import { SchedulingCandidateCalendar } from "@/components/SchedulingCandidateCalendar";
 import { SchedulingPlanEditor } from "@/components/SchedulingPlanEditor";
 import { Button, Card, Input, Label, Select } from "@/components/ui";
@@ -131,6 +132,7 @@ export function SchedulingTool({
   const conflictRequestId = useRef(0);
 
   const selectedChoreography = choreographies.find((entry) => entry.id === selectedChoreographyId);
+  const selectedCandidate = candidates.find((entry) => entry.id === selectedCandidateId);
 
   function addItem() {
     if (!selectedChoreographyId) {
@@ -334,12 +336,11 @@ export function SchedulingTool({
   }
 
   async function applySelected() {
-    const candidate = candidates.find((entry) => entry.id === selectedCandidateId);
-    if (!candidate) {
+    if (!selectedCandidate) {
       setError(t("selectCandidate"));
       return;
     }
-    await applyPlacements(candidate.placements);
+    await applyPlacements(selectedCandidate.placements);
   }
 
   async function applyPlacements(placements: SchedulePlacement[]) {
@@ -412,12 +413,11 @@ export function SchedulingTool({
   }
 
   function startEditing() {
-    const candidate = candidates.find((entry) => entry.id === selectedCandidateId);
-    if (!candidate) {
+    if (!selectedCandidate) {
       setError(t("selectCandidate"));
       return;
     }
-    const placements = candidate.placements.map((placement) => ({ ...placement }));
+    const placements = selectedCandidate.placements.map((placement) => ({ ...placement }));
     setEditedPlacements(placements);
     setPlacementConflicts({});
     setConflictError(null);
@@ -861,6 +861,11 @@ export function SchedulingTool({
             >
               {t("editSelectedSchedule")}
             </Button>
+            {selectedCandidate && (
+              <SchedulingImageExportButton
+                placements={selectedCandidate.placements}
+              />
+            )}
           </div>
         </div>
       )}
@@ -876,13 +881,20 @@ export function SchedulingTool({
             conflictError={conflictError}
             onMove={moveEditedPlacement}
           />
-          <Button
-            type="button"
-            onClick={() => applyPlacements(editedPlacements)}
-            disabled={applying || editedPlacements.length === 0}
-          >
-            {applying ? t("creatingRehearsals") : t("createEditedRehearsals")}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              onClick={() => applyPlacements(editedPlacements)}
+              disabled={applying || editedPlacements.length === 0}
+            >
+              {applying ? t("creatingRehearsals") : t("createEditedRehearsals")}
+            </Button>
+            <SchedulingImageExportButton
+              placements={editedPlacements}
+              days={days}
+              locations={locations.filter((location) => locationIds.includes(location.id))}
+            />
+          </div>
         </div>
       )}
 
