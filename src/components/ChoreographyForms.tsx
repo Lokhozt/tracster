@@ -35,6 +35,7 @@ export type RehearsalDetailItem = {
   location: string | null;
   locationId: string | null;
   notes: string | null;
+  hasUpcomingSeriesEvents?: boolean;
 };
 
 type UserOption = { id: string; name: string; email: string };
@@ -263,6 +264,9 @@ export function EditRehearsalForm({ rehearsal }: { rehearsal: RehearsalDetailIte
       return;
     }
 
+    const applyToUpcoming =
+      Boolean(rehearsal.hasUpcomingSeriesEvents) && confirm(t("updateUpcomingRepeatsConfirm"));
+
     const response = await fetch(`/api/rehearsals/${rehearsal.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -272,6 +276,7 @@ export function EditRehearsalForm({ rehearsal }: { rehearsal: RehearsalDetailIte
         endsAt: endsAt?.toISOString(),
         ...locationPayload(locationSelection),
         notes: notes || undefined,
+        applyToUpcoming,
       }),
     });
 

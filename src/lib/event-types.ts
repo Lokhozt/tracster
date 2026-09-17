@@ -12,6 +12,7 @@ export {
   BUILTIN_EVENT_TYPES,
   defaultEventTitle,
   eventKindAllowsChoreographyLinks,
+  eventKindAllowsRepeat,
   eventKindCopiesToAssociationCalendar,
   eventKindRestrictedToCompetitors,
   eventKindSkipsGenericCreatePermission,

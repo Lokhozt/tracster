@@ -12,6 +12,7 @@ import {
   serializeEventType,
 } from "@/lib/event-type-helpers";
 import { visibleChoreographyWhere } from "@/lib/choreographies";
+import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series";
 import { getGroupForChoreography } from "@/lib/groups";
 import { getServerTranslator, type ServerTranslator } from "@/i18n/server";
 
@@ -181,9 +182,11 @@ export async function getUserEvents(userId: string, t?: ServerTranslator) {
     include: eventListInclude,
     orderBy: { startsAt: "asc" },
   });
+  const siblings = await loadSeriesSiblings(events);
   return events.map((event) => ({
     ...event,
     type: serializeEventType(event.type, translator),
+    hasUpcomingSeriesEvents: hasUpcomingSeriesEvents(event, siblings),
   }));
 }
 
@@ -205,6 +208,8 @@ export type SerializedEvent = {
   choreographyTitle: string | null;
   groupId: string | null;
   groupName: string | null;
+  seriesId: string | null;
+  hasUpcomingSeriesEvents: boolean;
   choreographies: { id: string; title: string }[];
   participants: { id: string; name: string; email: string }[];
 };
@@ -223,6 +228,8 @@ export function serializeEvent(event: {
   type: SerializedEventType;
   choreographyId: string | null;
   groupId: string | null;
+  seriesId?: string | null;
+  hasUpcomingSeriesEvents?: boolean;
   choreography: { id: string; title: string } | null;
   group: { id: string; name: string } | null;
   listedLocation?: { id?: string; name: string } | null;
@@ -251,6 +258,8 @@ export function serializeEvent(event: {
     choreographyTitle: event.choreography?.title ?? null,
     groupId: event.groupId,
     groupName: event.group?.name ?? null,
+    seriesId: event.seriesId ?? null,
+    hasUpcomingSeriesEvents: event.hasUpcomingSeriesEvents ?? false,
     choreographies: event.choreographies.map((link) => ({
       id: link.choreography.id,
       title: link.choreography.title,

@@ -19,7 +19,7 @@ Tracster is a web application for dance and performance associations to plan reh
 - **Competitions** — schedule competitions with their own participant lists.
 - **Trainings** — competitor-only sessions with their own participant lists. Members who are not competitors cannot see them.
 - **Festivals** — schedule festivals with their own participant lists, not linked to choreographies.
-- **Events** — general association events with their own participant lists.
+- **Events** — general association events with their own participant lists. Events, rehearsals, trainings, and custom types can be repeated weekly; representations, festivals, competitions, and demonstrations cannot.
 - **Availability** — participants mark each rehearsal as available, unavailable, or maybe.
 - **Unavailability** — members record personal timeframes they cannot attend; the calendar selection is date-accurate.
 - **Conflict warnings** — when scheduling a rehearsal, choreographers are warned if participants are already engaged or marked unavailable.
@@ -247,7 +247,7 @@ prisma/
 - **AvailabilityResponse** — participant response per rehearsal
 - **UserUnavailability** — personal unavailable timeframes
 - **EventType** — includes immutable kinds: Event, Rehearsal, Representation, Competition, Demonstration, Festival, Training
-- **Event** / **EventChoreography** / **EventParticipant** / **EventJoinRequest** — scheduled items, linked pieces, and attendance
+- **Event** / **EventSeries** / **EventChoreography** / **EventParticipant** / **EventJoinRequest** — scheduled items (optionally linked as a weekly series), linked pieces, and attendance
 - **GoogleCalendarConnection** — association or per-user OAuth tokens and destination calendar
 - **GoogleCalendarEvent** — mapping from a Tracster event to a Google event on a connection
 
@@ -257,7 +257,6 @@ Possible future extensions:
 
 - Stronger rehearsal scheduling tools
 - Email notifications for new rehearsals
-- Recurring rehearsals
 - Mobile-friendly push reminders
 
 ## Scripts

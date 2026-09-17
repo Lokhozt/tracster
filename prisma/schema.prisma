@@ -281,6 +281,13 @@ model EventType {
   events Event[]
 }
 
+model EventSeries {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  events Event[]
+}
+
 model Event {
   id                      String    @id @default(cuid())
   typeId                  String
@@ -297,6 +304,7 @@ model Event {
   hideFromNonParticipants Boolean   @default(true)
   choreographyId          String?
   groupId                 String?
+  seriesId                String?
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
@@ -305,6 +313,7 @@ model Event {
   createdBy              User                   @relation("EventCreator", fields: [createdById], references: [id])
   choreography           Choreography?          @relation("EventRehearsalChoreography", fields: [choreographyId], references: [id], onDelete: Cascade)
   group                  ChoreographyGroup?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  series                 EventSeries?           @relation(fields: [seriesId], references: [id], onDelete: SetNull)
   choreographies         EventChoreography[]
   participants           EventParticipant[]
   joinRequests           EventJoinRequest[]
@@ -315,6 +324,7 @@ model Event {
   @@index([locationId])
   @@index([choreographyId])
   @@index([groupId])
+  @@index([seriesId])
 }
 
 model ChoreographyResource {

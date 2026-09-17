@@ -7,6 +7,12 @@ import { rehearsalSchema } from "@/lib/validations";
 import { basicUserSelect } from "@/lib/users";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
+import {
+  deleteEventsAndSync,
+  loadSeriesOrigin,
+  loadUpcomingSeriesTargets,
+  shiftedOccurrence,
+} from "@/lib/event-series";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -81,23 +87,59 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return jsonError(location.error);
   }
 
-  const updated = await prisma.event.update({
-    where: { id },
-    data: {
-      title: parsed.data.title ?? "",
-      startsAt: new Date(parsed.data.startsAt),
-      endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
-      locationId: location.locationId,
-      location: location.location,
-      notes: parsed.data.notes,
-    },
+  const origin = await loadSeriesOrigin(id);
+  if (!origin) {
+    return notFound("Rehearsal");
+  }
+
+  const applyToUpcoming = Boolean(parsed.data.applyToUpcoming);
+  const targets = await loadUpcomingSeriesTargets(origin, applyToUpcoming);
+  for (const target of targets) {
+    if (!(await canEditEvent(target.id, user.id))) {
+      return forbidden();
+    }
+  }
+
+  const nextStartsAt = new Date(parsed.data.startsAt);
+  const nextEndsAt = parsed.data.endsAt ? new Date(parsed.data.endsAt) : null;
+
+  const updated = await prisma.$transaction(async (tx) => {
+    let current = null;
+    for (const target of targets) {
+      const schedule = shiftedOccurrence(
+        origin.startsAt,
+        nextStartsAt,
+        nextEndsAt,
+        target.startsAt,
+      );
+      const event = await tx.event.update({
+        where: { id: target.id },
+        data: {
+          title: parsed.data.title ?? "",
+          startsAt: schedule.startsAt,
+          endsAt: schedule.endsAt,
+          locationId: location.locationId,
+          location: location.location,
+          notes: parsed.data.notes,
+        },
+      });
+      if (event.id === id) {
+        current = event;
+      }
+    }
+    return current;
   });
-  await syncGoogleEventBestEffort(id);
+
+  if (!updated) {
+    return notFound("Rehearsal");
+  }
+
+  await Promise.all(targets.map((target) => syncGoogleEventBestEffort(target.id)));
 
   return Response.json({ rehearsal: updated, event: updated });
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   const user = await getCurrentUser();
   if (!user) {
     return unauthorized();
@@ -114,8 +156,23 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return forbidden();
   }
 
-  await prisma.event.delete({ where: { id } });
-  await syncGoogleEventBestEffort(id);
+  const origin = await loadSeriesOrigin(id);
+  if (!origin) {
+    return notFound("Rehearsal");
+  }
+
+  const applyToUpcoming = request.nextUrl.searchParams.get("upcoming") === "1";
+  const targets = await loadUpcomingSeriesTargets(origin, applyToUpcoming);
+  for (const target of targets) {
+    if (!(await canEditEvent(target.id, user.id))) {
+      return forbidden();
+    }
+  }
+
+  await deleteEventsAndSync(
+    targets.map((target) => target.id),
+    origin.seriesId,
+  );
 
   return Response.json({ ok: true });
 }

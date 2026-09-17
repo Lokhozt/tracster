@@ -28,10 +28,16 @@ import {
 } from "@/lib/datetime";
 import {
   eventKindAllowsChoreographyLinks,
+  eventKindAllowsRepeat,
   eventKindRestrictedToCompetitors,
   isGenericEventKind,
   type SerializedEventType,
 } from "@/lib/event-type-helpers";
+import {
+  MAX_REPEAT_WEEKS,
+  MIN_REPEAT_WEEKS,
+  WEEKDAY_SELECT_ORDER,
+} from "@/lib/event-recurrence";
 import type { SerializedEvent } from "@/lib/events";
 import {
   defaultParticipationSettings,
@@ -90,6 +96,56 @@ function EventScheduleFields({
 
 type ChoreographyOption = { id: string; title: string };
 
+function weekdayFromParts(parts: DateTimeParts): number {
+  const date = dateTimePartsToDate(parts);
+  return date ? date.getDay() : 1;
+}
+
+function EventRepeatFields({
+  weekday,
+  weeks,
+  onWeekdayChange,
+  onWeeksChange,
+}: {
+  weekday: number;
+  weeks: number;
+  onWeekdayChange: (value: number) => void;
+  onWeeksChange: (value: number) => void;
+}) {
+  const t = useTranslations("Components");
+  return (
+    <div className="flex flex-wrap items-end gap-3">
+      <div>
+        <Label htmlFor="event-repeat-weekday">{t("repeatEvery")}</Label>
+        <Select
+          id="event-repeat-weekday"
+          className="mt-1 block min-w-40"
+          value={String(weekday)}
+          onChange={(event) => onWeekdayChange(Number(event.target.value))}
+        >
+          {WEEKDAY_SELECT_ORDER.map((day) => (
+            <option key={day} value={day}>
+              {t(`weekday${day}`)}
+            </option>
+          ))}
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="event-repeat-weeks">{t("repeatFor")}</Label>
+        <Input
+          id="event-repeat-weeks"
+          type="number"
+          min={MIN_REPEAT_WEEKS}
+          max={MAX_REPEAT_WEEKS}
+          className="mt-1 w-24"
+          value={weeks}
+          onChange={(event) => onWeeksChange(Number(event.target.value))}
+        />
+      </div>
+    </div>
+  );
+}
+
 function selectedEventType(eventTypes: SerializedEventType[], typeId: string) {
   return eventTypes.find((type) => type.id === typeId) ?? eventTypes[0];
 }
@@ -140,9 +196,13 @@ export function CreateEventForm({
   );
   const [start, setStart] = useState<DateTimeParts>(defaultStartDateTime);
   const [end, setEnd] = useState<DateTimeParts>(() => addOneHour(defaultStartDateTime()));
+  const [repeat, setRepeat] = useState(false);
+  const [repeatWeekday, setRepeatWeekday] = useState(() => weekdayFromParts(defaultStartDateTime()));
+  const [repeatWeeks, setRepeatWeeks] = useState(4);
 
   const eventType = selectedEventType(eventTypes, typeId);
   const generic = isGenericEventKind(eventType?.kind ?? null);
+  const allowsRepeat = eventKindAllowsRepeat(eventType?.kind ?? null);
   const allowsChoreographyLinks = eventKindAllowsChoreographyLinks(eventType?.kind ?? null);
   const groupOptions = groups.length > 0 ? groups : fetchedGroups;
   const participantChoices = eventKindRestrictedToCompetitors(eventType?.kind ?? null)
@@ -190,6 +250,7 @@ export function CreateEventForm({
   function handleStartChange(nextStart: DateTimeParts) {
     setStart(nextStart);
     setEnd(addOneHour(nextStart));
+    setRepeatWeekday(weekdayFromParts(nextStart));
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -200,6 +261,18 @@ export function CreateEventForm({
     const validationError = validateSchedule(start, end, t("startRequired"), t("endAfterStart"));
     if (validationError) {
       setError(validationError);
+      setLoading(false);
+      return;
+    }
+
+    if (
+      allowsRepeat &&
+      repeat &&
+      (!Number.isInteger(repeatWeeks) ||
+        repeatWeeks < MIN_REPEAT_WEEKS ||
+        repeatWeeks > MAX_REPEAT_WEEKS)
+    ) {
+      setError(t("repeatWeeksInvalid"));
       setLoading(false);
       return;
     }
@@ -227,6 +300,9 @@ export function CreateEventForm({
         choreographyIds: allowsChoreographyLinks ? selectedChoreographyIds : undefined,
         groupId: eventType?.kind === "REHEARSAL" ? audience || undefined : undefined,
         ...(generic ? participation : {}),
+        ...(allowsRepeat && repeat
+          ? { repeatWeekday, repeatWeeks }
+          : {}),
       }),
     });
 
@@ -281,6 +357,27 @@ export function CreateEventForm({
         onStartChange={handleStartChange}
         onEndChange={setEnd}
       />
+      {allowsRepeat && (
+        <div className="space-y-3">
+          <label className="flex items-center gap-2 text-sm text-stone-700">
+            <input
+              type="checkbox"
+              checked={repeat}
+              onChange={(event) => setRepeat(event.target.checked)}
+              className="rounded border-stone-300"
+            />
+            {t("repeatEvent")}
+          </label>
+          {repeat && (
+            <EventRepeatFields
+              weekday={repeatWeekday}
+              weeks={repeatWeeks}
+              onWeekdayChange={setRepeatWeekday}
+              onWeeksChange={setRepeatWeeks}
+            />
+          )}
+        </div>
+      )}
       <LocationPicker
         id="event-location"
         value={locationSelection}
@@ -449,15 +546,18 @@ export function EditEventForm({
 
   async function handleSubmit(formEvent: React.FormEvent) {
     formEvent.preventDefault();
-    setLoading(true);
-    setError(null);
 
     const validationError = validateSchedule(start, end, t("startRequired"), t("endAfterStart"));
     if (validationError) {
       setError(validationError);
-      setLoading(false);
       return;
     }
+
+    const applyToUpcoming =
+      event.hasUpcomingSeriesEvents && confirm(t("updateUpcomingRepeatsConfirm"));
+
+    setLoading(true);
+    setError(null);
 
     const startsAt = dateTimePartsToDate(start)!;
     const endsAt = dateTimePartsToDate(end);
@@ -476,6 +576,7 @@ export function EditEventForm({
         choreographyId: eventType?.kind === "REHEARSAL" ? choreographyId || null : null,
         choreographyIds: allowsChoreographyLinks ? selectedChoreographyIds : undefined,
         ...(generic ? participation : {}),
+        applyToUpcoming,
       }),
     });
 
@@ -600,6 +701,8 @@ export function EditEventForm({
         <DeleteEventButton
           deleteUrl={`/api/events/${event.id}`}
           confirmMessage={t("deleteEventConfirm")}
+          upcomingConfirmMessage={t("deleteUpcomingRepeatsConfirm")}
+          hasUpcomingSeries={event.hasUpcomingSeriesEvents}
           redirectTo="/events"
         />
       </div>

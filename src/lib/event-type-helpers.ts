@@ -82,6 +82,15 @@ export function eventKindCopiesToAssociationCalendar(kind: EventKind | null): bo
   return kind !== "REHEARSAL" && kind !== "TRAINING";
 }
 
+export function eventKindAllowsRepeat(kind: EventKind | null): boolean {
+  return (
+    kind !== "REPRESENTATION" &&
+    kind !== "FESTIVAL" &&
+    kind !== "COMPETITION" &&
+    kind !== "DEMONSTRATION"
+  );
+}
+
 export function filterEventTypesForViewer(
   types: SerializedEventType[],
   viewer: { isCompetitor: boolean; seesAllEvents: boolean },

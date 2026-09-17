@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_REPEAT_WEEKS, MIN_REPEAT_WEEKS } from "@/lib/event-recurrence";
 
 export const registerSchema = z.object({
   firstName: z.string().trim().min(1).max(50),
@@ -121,6 +122,7 @@ export const rehearsalSchema = z.object({
   ...locationFieldsSchema,
   notes: z.string().trim().max(1000).optional(),
   groupId: z.string().min(1).optional(),
+  applyToUpcoming: z.boolean().optional(),
 }).superRefine(refineExclusiveLocation);
 
 export const rehearsalConflictSchema = z.object({
@@ -184,11 +186,20 @@ export const eventSchema = z.object({
   allowParticipantJoin: z.boolean().optional(),
   allowJoinRequests: z.boolean().optional(),
   hideFromNonParticipants: z.boolean().optional(),
+  repeatWeekday: z.number().int().min(0).max(6).optional(),
+  repeatWeeks: z.number().int().min(MIN_REPEAT_WEEKS).max(MAX_REPEAT_WEEKS).optional(),
+  applyToUpcoming: z.boolean().optional(),
 }).superRefine((value, context) => {
   if (value.allowParticipantJoin && value.allowJoinRequests) {
     context.addIssue({
       code: "custom",
       message: "Participants cannot both join freely and request to join.",
+    });
+  }
+  if ((value.repeatWeekday != null) !== (value.repeatWeeks != null)) {
+    context.addIssue({
+      code: "custom",
+      message: "Repeat weekday and number of weeks are both required.",
     });
   }
   refineExclusiveLocation(value, context);

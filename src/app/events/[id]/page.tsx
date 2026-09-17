@@ -16,6 +16,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/datetime";
 import { canEditEvent, canViewEvent, serializeEvent } from "@/lib/events";
+import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series";
 import { getEventTypes, eventKindAllowsChoreographyLinks, eventKindRestrictedToCompetitors, isGenericEventKind } from "@/lib/event-types";
 import { getRehearsalAudience, isRehearsalParticipant } from "@/lib/groups";
 import { listedLocationInclude } from "@/lib/locations";
@@ -121,7 +122,16 @@ export default async function EventDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const event = serializeEvent(eventRecord, serverT);
+  const event = serializeEvent(
+    {
+      ...eventRecord,
+      hasUpcomingSeriesEvents: hasUpcomingSeriesEvents(
+        eventRecord,
+        await loadSeriesSiblings([eventRecord]),
+      ),
+    },
+    serverT,
+  );
   const generic = isGenericEventKind(event.type.kind);
   const isParticipant = eventRecord.participants.some(
     (participant) => participant.userId === user.id,

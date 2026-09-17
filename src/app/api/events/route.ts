@@ -10,7 +10,8 @@ import {
   validateEventTypeFields,
 } from "@/lib/events";
 import { getEventType } from "@/lib/event-types";
-import { eventKindAllowsChoreographyLinks, isGenericEventKind } from "@/lib/event-type-helpers";
+import { eventKindAllowsChoreographyLinks, eventKindAllowsRepeat, isGenericEventKind } from "@/lib/event-type-helpers";
+import { expandWeeklyOccurrences } from "@/lib/event-recurrence";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { canCreateEvent } from "@/lib/site-settings";
 import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
@@ -84,55 +85,89 @@ export async function POST(request: NextRequest) {
     return jsonError(location.error);
   }
 
-  const isGeneric = isGenericEventKind(eventType.kind);
-  const event = await prisma.event.create({
-    data: {
-      typeId: eventType.id,
-      title: parsed.data.title?.trim() ?? "",
-      description: isGeneric ? parsed.data.description : null,
-      notes: isGeneric ? null : parsed.data.notes,
-      startsAt: new Date(parsed.data.startsAt),
-      endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
-      locationId: location.locationId,
-      location: location.location,
-      createdById: user.id,
-      allowParticipantJoin: isGeneric ? (parsed.data.allowParticipantJoin ?? false) : false,
-      allowJoinRequests: isGeneric ? (parsed.data.allowJoinRequests ?? false) : false,
-      hideFromNonParticipants: isGeneric
-        ? (parsed.data.hideFromNonParticipants ?? true)
-        : true,
-      choreographyId: eventType.kind === "REHEARSAL" ? parsed.data.choreographyId ?? null : null,
-      groupId: eventType.kind === "REHEARSAL" ? parsed.data.groupId ?? null : null,
-      participants:
-        isGeneric && parsed.data.participantIds?.length
-          ? {
-              create: parsed.data.participantIds.map((userId) => ({ userId })),
-            }
-          : undefined,
-      choreographies:
-        eventKindAllowsChoreographyLinks(eventType.kind) && parsed.data.choreographyIds?.length
-          ? {
-              create: parsed.data.choreographyIds.map((choreographyId) => ({
-                choreographyId,
-              })),
-            }
-          : undefined,
-    },
-    include: {
-      type: true,
-      participants: {
-        include: {
-          user: { select: { id: true, firstName: true, lastName: true, email: true } },
-        },
-      },
-    },
-  });
-  await syncGoogleEventBestEffort(event.id);
+  const startsAt = new Date(parsed.data.startsAt);
+  const endsAt = parsed.data.endsAt ? new Date(parsed.data.endsAt) : null;
+  const repeating =
+    parsed.data.repeatWeekday != null && parsed.data.repeatWeeks != null;
 
+  if (repeating && !eventKindAllowsRepeat(eventType.kind)) {
+    return jsonError("This event type cannot be repeated.");
+  }
+
+  const occurrences = repeating
+    ? expandWeeklyOccurrences(
+        startsAt,
+        endsAt,
+        parsed.data.repeatWeekday!,
+        parsed.data.repeatWeeks!,
+      )
+    : [{ startsAt, endsAt }];
+
+  const isGeneric = isGenericEventKind(eventType.kind);
+  const created = await prisma.$transaction(async (tx) => {
+    const series =
+      occurrences.length > 1 ? await tx.eventSeries.create({ data: {} }) : null;
+
+    const events = [];
+    for (const occurrence of occurrences) {
+      events.push(
+        await tx.event.create({
+          data: {
+            typeId: eventType.id,
+            title: parsed.data.title?.trim() ?? "",
+            description: isGeneric ? parsed.data.description : null,
+            notes: isGeneric ? null : parsed.data.notes,
+            startsAt: occurrence.startsAt,
+            endsAt: occurrence.endsAt,
+            locationId: location.locationId,
+            location: location.location,
+            createdById: user.id,
+            allowParticipantJoin: isGeneric ? (parsed.data.allowParticipantJoin ?? false) : false,
+            allowJoinRequests: isGeneric ? (parsed.data.allowJoinRequests ?? false) : false,
+            hideFromNonParticipants: isGeneric
+              ? (parsed.data.hideFromNonParticipants ?? true)
+              : true,
+            choreographyId: eventType.kind === "REHEARSAL" ? parsed.data.choreographyId ?? null : null,
+            groupId: eventType.kind === "REHEARSAL" ? parsed.data.groupId ?? null : null,
+            seriesId: series?.id ?? null,
+            participants:
+              isGeneric && parsed.data.participantIds?.length
+                ? {
+                    create: parsed.data.participantIds.map((userId) => ({ userId })),
+                  }
+                : undefined,
+            choreographies:
+              eventKindAllowsChoreographyLinks(eventType.kind) && parsed.data.choreographyIds?.length
+                ? {
+                    create: parsed.data.choreographyIds.map((choreographyId) => ({
+                      choreographyId,
+                    })),
+                  }
+                : undefined,
+          },
+          include: {
+            type: true,
+            participants: {
+              include: {
+                user: { select: { id: true, firstName: true, lastName: true, email: true } },
+              },
+            },
+          },
+        }),
+      );
+    }
+
+    return events;
+  });
+
+  await Promise.all(created.map((event) => syncGoogleEventBestEffort(event.id)));
+
+  const translator = await getServerTranslator(user.displayLanguage);
+  const event = created[0];
   return Response.json({
     event: {
       ...event,
-      type: localizeEventType(event.type, await getServerTranslator(user.displayLanguage)),
+      type: localizeEventType(event.type, translator),
     },
   }, { status: 201 });
 }

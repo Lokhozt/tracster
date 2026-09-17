@@ -31,12 +31,16 @@ function TrashIcon({ className }: { className?: string }) {
 export function DeleteEventButton({
   deleteUrl,
   confirmMessage,
+  upcomingConfirmMessage,
+  hasUpcomingSeries,
   deleteBody,
   redirectTo,
   className,
 }: {
   deleteUrl: string;
   confirmMessage: string;
+  upcomingConfirmMessage?: string;
+  hasUpcomingSeries?: boolean;
   deleteBody?: Record<string, string>;
   redirectTo?: string;
   className?: string;
@@ -51,10 +55,19 @@ export function DeleteEventButton({
       return;
     }
 
+    const applyToUpcoming =
+      Boolean(hasUpcomingSeries && upcomingConfirmMessage) &&
+      confirm(upcomingConfirmMessage ?? "");
+
     setLoading(true);
     setError(null);
 
-    const response = await fetch(deleteUrl, {
+    const url =
+      applyToUpcoming && !deleteBody
+        ? `${deleteUrl}${deleteUrl.includes("?") ? "&" : "?"}upcoming=1`
+        : deleteUrl;
+
+    const response = await fetch(url, {
       method: "DELETE",
       headers: deleteBody ? { "Content-Type": "application/json" } : undefined,
       body: deleteBody ? JSON.stringify(deleteBody) : undefined,

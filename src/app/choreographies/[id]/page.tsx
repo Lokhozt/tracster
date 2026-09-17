@@ -25,6 +25,7 @@ import { isAdmin } from "@/lib/roles";
 import { getChoreographyGroups, serializeGroup } from "@/lib/groups";
 import { getEventTypes } from "@/lib/event-types";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
+import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series";
 import { basicUserSelect, formatUserName, serializeBasicUser } from "@/lib/users";
 import { getVisibleChoreographyResources } from "@/lib/choreography-resources";
 
@@ -110,6 +111,8 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
   if (!choreography || choreography.archivedAt) {
     notFound();
   }
+
+  const rehearsalSeriesSiblings = await loadSeriesSiblings(choreography.rehearsals);
 
   const isMember = choreography.members.some((member) => member.userId === user.id);
   const hasPendingRequest = choreography.joinRequests.some(
@@ -272,6 +275,10 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
             unavailableNames: targetAvailabilities
               .filter((item) => item.status === "UNAVAILABLE")
               .map((item) => formatUserName(item.user)),
+            hasUpcomingSeriesEvents: hasUpcomingSeriesEvents(
+              rehearsal,
+              rehearsalSeriesSiblings,
+            ),
           };
         })}
       />

@@ -18,6 +18,7 @@ export type RehearsalListItem = {
   groupName: string | null;
   availableNames: string[];
   unavailableNames: string[];
+  hasUpcomingSeriesEvents?: boolean;
 };
 
 export function RehearsalEventCard({
@@ -63,6 +64,8 @@ export function RehearsalEventCard({
               <DeleteEventButton
                 deleteUrl={`/api/events/${rehearsal.id}`}
                 confirmMessage={t("deleteRehearsalConfirm")}
+                upcomingConfirmMessage={t("deleteUpcomingRepeatsConfirm")}
+                hasUpcomingSeries={rehearsal.hasUpcomingSeriesEvents}
               />
             </>
           )}
