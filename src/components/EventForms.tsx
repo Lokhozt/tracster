@@ -864,7 +864,7 @@ function LinkedEventKindSection({
   const eventType = eventTypes.find((type) => type.kind === kind);
 
   return (
-    <section className="mt-8">
+    <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">{heading}</h2>
         {canEdit && !showAddForm && eventType && (

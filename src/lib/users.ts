@@ -11,6 +11,25 @@ export function formatUserName(user: UserNameFields): string {
   return `${user.firstName} ${user.lastName}`.trim();
 }
 
+export function compareUsersByName(
+  a: { firstName?: string; lastName?: string; name?: string },
+  b: { firstName?: string; lastName?: string; name?: string },
+): number {
+  const last = (a.lastName || a.name || "").localeCompare(b.lastName || b.name || "", undefined, {
+    sensitivity: "base",
+  });
+  if (last !== 0) {
+    return last;
+  }
+  return (a.firstName || "").localeCompare(b.firstName || "", undefined, { sensitivity: "base" });
+}
+
+export function sortUsersByName<T extends { firstName?: string; lastName?: string; name?: string }>(
+  users: T[],
+): T[] {
+  return [...users].sort(compareUsersByName);
+}
+
 export function isBirthdayOnDate(dateOfBirth: Date, date: Date): boolean {
   return (
     dateOfBirth.getUTCMonth() === date.getMonth() &&

@@ -4,28 +4,27 @@ import { useId, useState } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
-export type SettingsSection = {
+export type NavSection = {
   id: string;
   label: string;
   content: React.ReactNode;
 };
 
-/**
- * Categories on the left, the selected one on the right. Small screens get the same
- * data as a drill-down: the category list fills the width until one is picked, then it
- * gives way to that category alone. Sections stay mounted so switching keeps unsaved
- * form input.
- */
-export function SettingsSections({
+export type SettingsSection = NavSection;
+
+export function SectionNav({
   sections,
   intro,
   initialSectionId,
+  categoriesLabel,
+  backLabel,
 }: {
-  sections: SettingsSection[];
+  sections: NavSection[];
   intro?: string;
   initialSectionId?: string;
+  categoriesLabel: string;
+  backLabel: string;
 }) {
-  const t = useTranslations("Pages.Settings");
   const [openId, setOpenId] = useState<string | null>(
     sections.some((section) => section.id === initialSectionId) ? (initialSectionId ?? null) : null,
   );
@@ -39,7 +38,7 @@ export function SettingsSections({
       )}
       <div className="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start lg:gap-8">
         <nav
-          aria-label={t("categories")}
+          aria-label={categoriesLabel}
           className={cn("lg:sticky lg:top-24 lg:block", openId ? "hidden" : "block")}
         >
           <ul
@@ -60,8 +59,6 @@ export function SettingsSections({
                     aria-current={isActive ? "true" : undefined}
                     className={cn(
                       "flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left text-base font-medium transition lg:min-h-11 lg:rounded-lg lg:px-3 lg:py-2 lg:text-sm",
-                      // Below lg the list is a menu of unopened categories, so only the one
-                      // last opened is marked; from lg on, the highlight tracks the panel.
                       section.id === openId
                         ? "bg-stone-100 text-stone-900"
                         : "text-stone-700 hover:bg-stone-100 hover:text-stone-900",
@@ -86,7 +83,7 @@ export function SettingsSections({
             className="mb-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-stone-600 transition hover:text-stone-900 lg:hidden"
           >
             <ChevronLeftIcon />
-            {t("backToCategories")}
+            {backLabel}
           </button>
           {sections.map((section) => (
             <div key={section.id} className={cn(section.id !== activeId && "hidden")}>
@@ -96,6 +93,33 @@ export function SettingsSections({
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Categories on the left, the selected one on the right. Small screens get the same
+ * data as a drill-down: the category list fills the width until one is picked, then it
+ * gives way to that category alone. Sections stay mounted so switching keeps unsaved
+ * form input.
+ */
+export function SettingsSections({
+  sections,
+  intro,
+  initialSectionId,
+}: {
+  sections: SettingsSection[];
+  intro?: string;
+  initialSectionId?: string;
+}) {
+  const t = useTranslations("Pages.Settings");
+  return (
+    <SectionNav
+      sections={sections}
+      intro={intro}
+      initialSectionId={initialSectionId}
+      categoriesLabel={t("categories")}
+      backLabel={t("backToCategories")}
+    />
   );
 }
 

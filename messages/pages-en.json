@@ -98,11 +98,14 @@
       "title": "New choreography"
     },
     "ChoreographyDetail": {
-      "createdBy": "Created by {name}",
       "choreographers": "Choreographers",
       "participants": "Participants",
       "resources": "Resources",
-      "editChoreography": "Edit choreography"
+      "editChoreography": "Edit choreography",
+      "overview": "Overview",
+      "demonstrations": "Demonstrations",
+      "categories": "Choreography sections",
+      "backToSections": "All sections"
     },
     "NewUser": {
       "title": "New user",

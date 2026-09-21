@@ -73,7 +73,7 @@ export function ChoreographyLifecycleActions({
   }
 
   return (
-    <div className="mt-8 rounded-xl border border-red-200 bg-red-50 p-4 sm:p-5">
+    <div className="rounded-xl border border-red-200 bg-red-50 p-4 sm:p-5">
       <h2 className="mb-1 text-lg font-semibold text-red-950">{t("adminActions")}</h2>
       <p className="mb-4 text-sm text-red-800">
         {t("lifecycleHelp")}

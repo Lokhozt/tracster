@@ -520,7 +520,7 @@ export function ChoreographyResources({
 }) {
   const t = useTranslations("Components");
   return (
-    <Card className="mb-6">
+    <Card>
       <h2 className="mb-4 text-lg font-semibold">{t("choreographyResources")}</h2>
       {resources.length === 0 ? (
         <p className="text-sm text-stone-600">{t("noChoreographyResources")}</p>

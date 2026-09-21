@@ -3,7 +3,6 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card } from "@/components/ui";
 import { TagBubble } from "@/components/TagBubbles";
 import type { TagRecord } from "@/lib/tags";
 
@@ -34,11 +33,7 @@ export function ChoreographyTagsEditor({
     if (assignedTags.length === 0) {
       return null;
     }
-    return (
-      <div className="mb-6">
-        <TagList tags={assignedTags} />
-      </div>
-    );
+    return <TagList tags={assignedTags} />;
   }
 
   async function toggle(tagId: string) {
@@ -72,33 +67,31 @@ export function ChoreographyTagsEditor({
     router.refresh();
   }
 
+  if (allTags.length === 0) {
+    return <p className="text-sm text-stone-600">{t("noTagsDefined")}</p>;
+  }
+
   return (
-    <Card className="mb-6">
-      <h2 className="mb-2 text-lg font-semibold">{t("tags")}</h2>
-      <p className="mb-4 text-sm text-stone-500">{t("choreographyTagsHelp")}</p>
-      {allTags.length === 0 ? (
-        <p className="text-sm text-stone-600">{t("noTagsDefined")}</p>
-      ) : (
-        <div className="flex flex-wrap gap-2">
-          {allTags.map((tag) => {
-            const selected = selectedIds.includes(tag.id);
-            return (
-              <button
-                key={tag.id}
-                type="button"
-                aria-pressed={selected}
-                disabled={saving}
-                onClick={() => void toggle(tag.id)}
-                className="rounded-full transition hover:brightness-95 disabled:opacity-50"
-              >
-                <TagBubble tag={tag} selected={selected} />
-              </button>
-            );
-          })}
-        </div>
-      )}
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-    </Card>
+    <div>
+      <div className="flex flex-wrap gap-2">
+        {allTags.map((tag) => {
+          const selected = selectedIds.includes(tag.id);
+          return (
+            <button
+              key={tag.id}
+              type="button"
+              aria-pressed={selected}
+              disabled={saving}
+              onClick={() => void toggle(tag.id)}
+              className="rounded-full transition hover:brightness-95 disabled:opacity-50"
+            >
+              <TagBubble tag={tag} selected={selected} />
+            </button>
+          );
+        })}
+      </div>
+      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+    </div>
   );
 }
 

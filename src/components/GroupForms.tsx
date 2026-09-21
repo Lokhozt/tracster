@@ -6,8 +6,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Input, Label } from "@/components/ui";
 import type { SerializedGroup } from "@/lib/groups";
+import { compareUsersByName } from "@/lib/users";
 
-type MemberOption = { id: string; name: string; email: string };
+type MemberOption = { id: string; name: string; email: string; firstName?: string; lastName?: string };
 
 function GroupMemberCheckboxes({
   members,
@@ -19,6 +20,7 @@ function GroupMemberCheckboxes({
   onChange: (memberIds: string[]) => void;
 }) {
   const t = useTranslations("Components");
+  const ordered = [...members].sort(compareUsersByName);
   function toggleMember(memberId: string) {
     if (selectedMemberIds.includes(memberId)) {
       onChange(selectedMemberIds.filter((id) => id !== memberId));
@@ -34,7 +36,7 @@ function GroupMemberCheckboxes({
 
   return (
     <div className="space-y-2">
-      {members.map((member) => (
+      {ordered.map((member) => (
         <label
           key={member.id}
           className="flex cursor-pointer items-start gap-2 rounded-lg border border-stone-200 px-3 py-2 text-sm hover:bg-stone-50"
@@ -279,7 +281,7 @@ export function GroupsSection({
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
 
   return (
-    <section className="mt-8">
+    <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold">{t("groups")}</h2>

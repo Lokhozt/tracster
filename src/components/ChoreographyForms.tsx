@@ -20,6 +20,7 @@ import { type GroupOption } from "@/components/GroupForms";
 import { CreateEventForm } from "@/components/EventForms";
 import { matchesSearch } from "@/lib/search";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
+import { compareUsersByName } from "@/lib/users";
 import {
   addOneHour,
   dateTimePartsToDate,
@@ -38,7 +39,7 @@ export type RehearsalDetailItem = {
   hasUpcomingSeriesEvents?: boolean;
 };
 
-type UserOption = { id: string; name: string; email: string };
+type UserOption = { id: string; name: string; email: string; firstName?: string; lastName?: string };
 
 export function AssignMemberForm({
   choreographyId,
@@ -371,7 +372,7 @@ export function RehearsalsSection({
   }, [rehearsals, search]);
 
   return (
-    <section className="mt-8">
+    <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">{t("rehearsals")}</h2>
         {canEdit && !showAddForm && (
@@ -445,13 +446,14 @@ export function ParticipantsList({
   canEdit: boolean;
 }) {
   const t = useTranslations("Components");
-  if (members.length === 0) {
+  const ordered = [...members].sort(compareUsersByName);
+  if (ordered.length === 0) {
     return <p className="mb-4 text-sm text-stone-600">{t("noAssignedParticipants")}</p>;
   }
 
   return (
     <ul className="mb-4 space-y-2 text-sm">
-      {members.map((member) => (
+      {ordered.map((member) => (
         <li key={member.id} className="flex items-center justify-between gap-2">
           <span>{member.name}</span>
           {canEdit && (
@@ -477,11 +479,12 @@ export function ChoreographersList({
   canEdit: boolean;
 }) {
   const t = useTranslations("Components");
-  const canRemove = canEdit && choreographers.length > 1;
+  const ordered = [...choreographers].sort(compareUsersByName);
+  const canRemove = canEdit && ordered.length > 1;
 
   return (
     <ul className="mb-4 space-y-2 text-sm">
-      {choreographers.map((choreographer) => (
+      {ordered.map((choreographer) => (
         <li key={choreographer.id} className="flex items-center justify-between gap-2">
           <span>{choreographer.name}</span>
           {canRemove && (

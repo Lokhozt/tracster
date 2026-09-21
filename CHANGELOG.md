@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Choreographies can have tags. Admins manage tags in Settings. The creator of a piece or an admin can assign or remove them. Tags appear as bubbles on choreography cards and can filter the list. Admins can hide tags association-wide.
 
+### Changed
+
+- The choreography page uses a settings-style section menu. Overview shows the title, description, choreographers, participants (A–Z), and tags. Resources, groups, representations, demonstrations, rehearsals, editing, and admin actions each have their own section.
+
 ### Fixed
 - Fixed registering password leaking into the registering email field
 

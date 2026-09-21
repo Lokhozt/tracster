@@ -692,7 +692,7 @@ export function RepresentationsSection({
   const [addMode, setAddMode] = useState<"create" | "link">("create");
 
   return (
-    <section className="mt-8">
+    <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">{t("representations")}</h2>
         {canEdit && !showAddForm && (
