@@ -7,8 +7,7 @@ import { useMemo, useState } from "react";
 import { EditIconLink } from "@/components/EditIconLink";
 import { EventTypeFilter } from "@/components/EventTypeFilter";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
-import { LeaveEventButton } from "@/components/LeaveEventButton";
-import { ParticipatingCheck } from "@/components/ParticipatingCheck";
+import { ParticipationStatus } from "@/components/ParticipationStatus";
 import { EventCard } from "@/components/EventCard";
 import { Card, Input, Label } from "@/components/ui";
 import {
@@ -150,11 +149,7 @@ export function EventsList({
       ) : (
         <div className="grid gap-4">
           {filteredEvents.map(({ event, canEdit, isParticipating, isEventParticipant, hasPendingJoinRequest }) => (
-            <EventCard
-              key={event.id}
-              kind={event.type.kind}
-              className={cn("relative", isEventParticipant && "pb-10")}
-            >
+            <EventCard key={event.id} kind={event.type.kind} className="relative">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
@@ -167,7 +162,7 @@ export function EventsList({
                     >
                       <h2 className="text-lg font-semibold">{event.displayTitle}</h2>
                     </Link>
-                    {isParticipating && <ParticipatingCheck />}
+                    <ParticipationStatus participating={isParticipating} />
                   </div>
                   <p className="mt-1 text-sm text-stone-600">
                     {dateFormatter.format(new Date(event.startsAt))}
@@ -179,11 +174,6 @@ export function EventsList({
                   {event.description && (
                     <p className="mt-2 line-clamp-2 text-sm text-stone-600">
                       {event.description}
-                    </p>
-                  )}
-                  {!isParticipating && (
-                    <p className="mt-2 text-xs font-medium text-stone-500">
-                      {t("notParticipating")}
                     </p>
                   )}
                 </div>
@@ -198,8 +188,8 @@ export function EventsList({
                 </div>
               </div>
               {isGenericEventKind(event.type.kind) &&
-                !isEventParticipant &&
-                (event.allowParticipantJoin ||
+                (isEventParticipant ||
+                  event.allowParticipantJoin ||
                   event.allowJoinRequests ||
                   hasPendingJoinRequest) && (
                 <div className={cn("mt-4 border-t border-stone-100 pt-4", aboveCardLink)}>
@@ -208,17 +198,12 @@ export function EventsList({
                     requestUrl={`/api/events/${event.id}/join-requests`}
                     allowJoin={event.allowParticipantJoin}
                     allowRequest={event.allowJoinRequests}
+                    allowLeave
                     isParticipant={isEventParticipant}
                     hasPendingRequest={hasPendingJoinRequest}
+                    hasUpcomingSeries={event.hasUpcomingSeriesEvents}
                   />
                 </div>
-              )}
-              {isEventParticipant && (
-                <LeaveEventButton
-                  eventId={event.id}
-                  eventTitle={event.displayTitle}
-                  className="absolute right-2 bottom-2 z-10"
-                />
               )}
             </EventCard>
           ))}

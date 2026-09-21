@@ -31,6 +31,10 @@ export const competitorStatusSchema = z.object({
   isCompetitor: z.boolean(),
 });
 
+export const applyToUpcomingBodySchema = z.object({
+  applyToUpcoming: z.boolean().optional(),
+});
+
 export const updateOwnProfileSchema = z.object({
   firstName: z.string().trim().min(1).max(50),
   lastName: z.string().trim().min(1).max(50),

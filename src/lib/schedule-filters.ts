@@ -21,6 +21,7 @@ export type SerializedScheduleEvent = {
   allowParticipantJoin: boolean;
   allowJoinRequests: boolean;
   hasPendingJoinRequest: boolean;
+  hasUpcomingSeriesEvents: boolean;
   availabilityStatus: "AVAILABLE" | "UNAVAILABLE" | "MAYBE" | null;
   href: string;
   canEdit: boolean;

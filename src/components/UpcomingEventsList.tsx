@@ -7,10 +7,9 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { EditIconLink } from "@/components/EditIconLink";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
-import { ParticipatingCheck } from "@/components/ParticipatingCheck";
+import { ParticipationStatus } from "@/components/ParticipationStatus";
 import { EventCard } from "@/components/EventCard";
 import { Card, Button } from "@/components/ui";
-import { persistHideNonParticipating } from "@/lib/event-category-filter";
 import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 
 import {
@@ -157,31 +156,21 @@ const rangeOptions: UpcomingEventRange[] = ["all", "week", "month"];
 export function UpcomingEventsList({
   events,
   categoriesFiltered = false,
-  initialHideNonParticipating = false,
 }: {
   events: SerializedScheduleEvent[];
   categoriesFiltered?: boolean;
-  initialHideNonParticipating?: boolean;
 }) {
   const t = useTranslations("Components");
   const [range, setRange] = useState<UpcomingEventRange>("all");
   const locale = useLocale();
   const dateFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
-  const [hideNonParticipating, setHideNonParticipating] = useState(
-    initialHideNonParticipating,
-  );
 
   const filteredEvents = useMemo(
-    () => filterUpcomingScheduleEvents(events, { range, hideNonParticipating }),
-    [events, range, hideNonParticipating],
+    () => filterUpcomingScheduleEvents(events, { range, hideNonParticipating: false }),
+    [events, range],
   );
 
-  const filtersActive = range !== "all" || hideNonParticipating || categoriesFiltered;
-
-  function updateHideNonParticipating(value: boolean) {
-    setHideNonParticipating(value);
-    persistHideNonParticipating(value);
-  }
+  const filtersActive = range !== "all" || categoriesFiltered;
 
   return (
     <section>
@@ -205,15 +194,6 @@ export function UpcomingEventsList({
               </button>
             ))}
           </div>
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700">
-            <input
-              type="checkbox"
-              checked={hideNonParticipating}
-              onChange={(event) => updateHideNonParticipating(event.target.checked)}
-              className="rounded border-stone-300"
-            />
-            {t("hideNonParticipatingEvents")}
-          </label>
         </div>
       </div>
 
@@ -254,8 +234,8 @@ export function UpcomingEventsList({
                     ) : (
                       <span className="text-base font-semibold">{defaultEventTitle(event)}</span>
                     )}
-                    {event.isParticipating && !isBirthdayScheduleEvent(event) && (
-                      <ParticipatingCheck />
+                    {!isBirthdayScheduleEvent(event) && (
+                      <ParticipationStatus participating={event.isParticipating} />
                     )}
                   </div>
                   <p className="text-sm text-stone-600">
@@ -289,8 +269,8 @@ export function UpcomingEventsList({
                 </div>
               )}
               {isGenericScheduleEvent(event) &&
-                !event.isEventParticipant &&
-                (event.allowParticipantJoin ||
+                (event.isEventParticipant ||
+                  event.allowParticipantJoin ||
                   event.allowJoinRequests ||
                   event.hasPendingJoinRequest) && (
                 <div className={cn("mt-4 border-t border-stone-100 pt-4", aboveCardLink)}>
@@ -299,8 +279,10 @@ export function UpcomingEventsList({
                     requestUrl={`/api/events/${event.id}/join-requests`}
                     allowJoin={event.allowParticipantJoin}
                     allowRequest={event.allowJoinRequests}
+                    allowLeave
                     isParticipant={event.isEventParticipant}
                     hasPendingRequest={event.hasPendingJoinRequest}
+                    hasUpcomingSeries={event.hasUpcomingSeriesEvents}
                   />
                 </div>
               )}

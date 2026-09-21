@@ -1,6 +1,7 @@
 import { visibleEventWhere } from "@/lib/participation";
 import { prisma } from "@/lib/db";
 import { canEditEvent } from "@/lib/events";
+import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series";
 import { eventKindAllowsChoreographyLinks } from "@/lib/event-type-helpers";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { hasGlobalAccess } from "@/lib/roles";
@@ -109,6 +110,7 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
     },
     orderBy: { startsAt: "asc" },
   });
+  const siblings = await loadSeriesSiblings(records);
 
   const events: SerializedScheduleEvent[] = await Promise.all(
     records.map(async (event) => {
@@ -171,6 +173,7 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
         allowParticipantJoin: event.allowParticipantJoin,
         allowJoinRequests: event.allowJoinRequests,
         hasPendingJoinRequest: event.joinRequests.length > 0,
+        hasUpcomingSeriesEvents: hasUpcomingSeriesEvents(event, siblings),
         availabilityStatus:
           kind === "REHEARSAL" ? (event.availabilities[0]?.status ?? null) : null,
         href: `/events/${event.id}`,

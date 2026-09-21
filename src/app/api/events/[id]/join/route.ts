@@ -3,17 +3,42 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { canViewEvent } from "@/lib/events";
+import { loadSeriesOrigin, loadUpcomingSeriesTargets } from "@/lib/event-series";
 import { basicUserSelect } from "@/lib/users";
+import { applyToUpcomingBodySchema } from "@/lib/validations";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function POST(_request: NextRequest, context: RouteContext) {
+async function readApplyToUpcoming(request: NextRequest) {
+  const text = await request.text();
+  if (!text) {
+    return false;
+  }
+
+  try {
+    const parsed = applyToUpcomingBodySchema.safeParse(JSON.parse(text));
+    return Boolean(parsed.success && parsed.data.applyToUpcoming);
+  } catch {
+    return false;
+  }
+}
+
+async function participationTargets(eventId: string, applyToUpcoming: boolean) {
+  const origin = await loadSeriesOrigin(eventId);
+  if (!origin) {
+    return null;
+  }
+  return loadUpcomingSeriesTargets(origin, applyToUpcoming);
+}
+
+export async function POST(request: NextRequest, context: RouteContext) {
   const user = await getCurrentUser();
   if (!user) {
     return unauthorized();
   }
 
   const { id } = await context.params;
+  const applyToUpcoming = await readApplyToUpcoming(request);
 
   if (!(await canViewEvent(id, user.id))) {
     return forbidden();
@@ -35,40 +60,61 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     return forbidden();
   }
 
-  if (event.participants.length > 0) {
+  if (event.participants.length > 0 && !applyToUpcoming) {
     return jsonError("You are already a participant.");
   }
 
-  const participant = await prisma.eventParticipant.create({
-    data: {
-      eventId: id,
+  const targets = await participationTargets(id, applyToUpcoming);
+  if (!targets) {
+    return notFound("Event");
+  }
+
+  await prisma.eventParticipant.createMany({
+    data: targets.map((target) => ({
+      eventId: target.id,
       userId: user.id,
-    },
-    include: { user: { select: basicUserSelect } },
+    })),
+    skipDuplicates: true,
   });
 
   await prisma.eventJoinRequest.deleteMany({
-    where: { eventId: id, userId: user.id },
+    where: { eventId: { in: targets.map((target) => target.id) }, userId: user.id },
+  });
+
+  const participant = await prisma.eventParticipant.findUnique({
+    where: {
+      eventId_userId: {
+        eventId: id,
+        userId: user.id,
+      },
+    },
+    include: { user: { select: basicUserSelect } },
   });
 
   return Response.json({ participant }, { status: 201 });
 }
 
-export async function DELETE(_request: NextRequest, context: RouteContext) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   const user = await getCurrentUser();
   if (!user) {
     return unauthorized();
   }
 
   const { id } = await context.params;
+  const applyToUpcoming = await readApplyToUpcoming(request);
 
   if (!(await canViewEvent(id, user.id))) {
     return forbidden();
   }
 
+  const targets = await participationTargets(id, applyToUpcoming);
+  if (!targets) {
+    return notFound("Event");
+  }
+
   const removed = await prisma.eventParticipant.deleteMany({
     where: {
-      eventId: id,
+      eventId: { in: targets.map((target) => target.id) },
       userId: user.id,
     },
   });

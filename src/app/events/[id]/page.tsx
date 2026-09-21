@@ -194,8 +194,10 @@ export default async function EventDetailPage({ params }: PageProps) {
             requestUrl={`/api/events/${id}/join-requests`}
             allowJoin={eventRecord.allowParticipantJoin}
             allowRequest={eventRecord.allowJoinRequests}
+            allowLeave
             isParticipant={isParticipant}
             hasPendingRequest={hasPendingRequest}
+            hasUpcomingSeries={event.hasUpcomingSeriesEvents}
           />
         </div>
       )}
