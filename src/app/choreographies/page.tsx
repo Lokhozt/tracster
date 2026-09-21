@@ -12,9 +12,7 @@ import { eventTypeLabel, getServerTranslator } from "@/i18n/server";
 import { listedChoreographyWhere } from "@/lib/participation";
 import {
   CHOREOGRAPHY_REPRESENTATION_FILTER_COOKIE,
-  CHOREOGRAPHY_TAG_FILTER_COOKIE,
   parseChoreographyRepresentationFilter,
-  parseChoreographyTagFilter,
 } from "@/lib/choreography-list-filter";
 import { hasGlobalAccess } from "@/lib/roles";
 import { canCreateChoreography, getSiteSettings } from "@/lib/site-settings";
@@ -85,8 +83,7 @@ export default async function ChoreographiesPage() {
     getSiteSettings(),
   ]);
 
-  const [choreographies, tags] = await Promise.all([
-    prisma.choreography.findMany({
+  const choreographies = await prisma.choreography.findMany({
       where: globalAccess ? visibleChoreographyWhere : listedChoreographyWhere(user.id),
       include: {
         choreographers: {
@@ -122,12 +119,7 @@ export default async function ChoreographiesPage() {
         _count: { select: { members: true } },
       },
       orderBy: { updatedAt: "desc" },
-    }),
-    prisma.tag.findMany({
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, color: true },
-    }),
-  ]);
+    });
 
   const representations = representationOptions(
     choreographies.flatMap((choreography) => choreography.eventLinks),
@@ -141,12 +133,6 @@ export default async function ChoreographiesPage() {
   )
     ? savedRepresentationId
     : "";
-  const savedTagIds = parseChoreographyTagFilter(
-    cookieStore.get(CHOREOGRAPHY_TAG_FILTER_COOKIE)?.value,
-  );
-  const tagIdSet = new Set(tags.map((tag) => tag.id));
-  const initialTagIds = savedTagIds.filter((id) => tagIdSet.has(id));
-
   return (
     <AppShell title={t("title")}>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -166,10 +152,8 @@ export default async function ChoreographiesPage() {
       <ChoreographiesList
         canCreate={canCreate}
         representations={representations}
-        tags={settings.showChoreographyTags ? tags.map(serializeTag) : []}
         tagsVisible={settings.showChoreographyTags}
         initialRepresentationId={initialRepresentationId}
-        initialTagIds={settings.showChoreographyTags ? initialTagIds : []}
         choreographies={choreographies.map((choreography) => {
           const isChoreographer = isUserChoreographer(choreography, user.id);
           return {
@@ -183,6 +167,19 @@ export default async function ChoreographiesPage() {
             nextRehearsalAt: choreography.rehearsals[0]?.startsAt.toISOString() ?? null,
             memberCount: choreography._count.members,
             representationIds: choreography.eventLinks.map((link) => link.event.id),
+            representationNames: choreography.eventLinks.map((link) =>
+              defaultEventTitle(
+                {
+                  name: eventTypeLabel(
+                    translator,
+                    link.event.type.kind,
+                    link.event.type.name,
+                  ),
+                  kind: link.event.type.kind,
+                },
+                link.event.title,
+              ),
+            ),
             isChoreographer,
             isInvolved:
               isChoreographer ||

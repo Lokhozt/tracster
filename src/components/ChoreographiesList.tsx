@@ -5,11 +5,12 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChoreographerBadge } from "@/components/CrownIcon";
-import { Card, Label, Select } from "@/components/ui";
+import { Card, Input, Label, Select } from "@/components/ui";
 import { useLocale } from "next-intl";
 
-import { persistChoreographyRepresentationFilter, persistChoreographyTagFilter } from "@/lib/choreography-list-filter";
-import { TagBubble, TagBubbles } from "@/components/TagBubbles";
+import { persistChoreographyRepresentationFilter } from "@/lib/choreography-list-filter";
+import { TagBubbles } from "@/components/TagBubbles";
+import { matchesSearch } from "@/lib/search";
 import type { TagRecord } from "@/lib/tags";
 
 export type ChoreographyListItem = {
@@ -20,6 +21,7 @@ export type ChoreographyListItem = {
   nextRehearsalAt: string | null;
   memberCount: number;
   representationIds: string[];
+  representationNames: string[];
   isChoreographer: boolean;
   isInvolved: boolean;
   tags: TagRecord[];
@@ -34,24 +36,20 @@ export type RepresentationFilterOption = {
 export function ChoreographiesList({
   choreographies,
   representations,
-  tags,
   tagsVisible,
   canCreate,
   initialRepresentationId,
-  initialTagIds,
 }: {
   choreographies: ChoreographyListItem[];
   representations: RepresentationFilterOption[];
-  tags: TagRecord[];
   tagsVisible: boolean;
   canCreate: boolean;
   initialRepresentationId: string;
-  initialTagIds: string[];
 }) {
   const t = useTranslations("Components");
   const [showAll, setShowAll] = useState(false);
+  const [search, setSearch] = useState("");
   const [representationId, setRepresentationId] = useState(initialRepresentationId);
-  const [selectedTagIds, setSelectedTagIds] = useState(initialTagIds);
   const locale = useLocale();
   const dateFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
   const representationDateFormatter = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
@@ -66,22 +64,26 @@ export function ChoreographiesList({
     [choreographies, representationId],
   );
 
-  const matchingTags = useMemo(() => {
-    if (!tagsVisible || selectedTagIds.length === 0) {
-      return matchingRepresentation;
-    }
-    const selected = new Set(selectedTagIds);
-    return matchingRepresentation.filter((choreography) =>
-      choreography.tags.some((tag) => selected.has(tag.id)),
-    );
-  }, [matchingRepresentation, selectedTagIds, tagsVisible]);
+  const matchingSearch = useMemo(
+    () =>
+      matchingRepresentation.filter((choreography) =>
+        matchesSearch(
+          search,
+          choreography.title,
+          ...choreography.choreographerNames,
+          ...choreography.representationNames,
+          ...choreography.tags.map((tag) => tag.name),
+        ),
+      ),
+    [matchingRepresentation, search],
+  );
 
   const visible = useMemo(
     () =>
       showAll
-        ? matchingTags
-        : matchingTags.filter((choreography) => choreography.isInvolved),
-    [matchingTags, showAll],
+        ? matchingSearch
+        : matchingSearch.filter((choreography) => choreography.isInvolved),
+    [matchingSearch, showAll],
   );
 
   function updateRepresentationId(id: string) {
@@ -89,28 +91,22 @@ export function ChoreographiesList({
     persistChoreographyRepresentationFilter(id);
   }
 
-  function toggleTagFilter(tagId: string) {
-    const next = selectedTagIds.includes(tagId)
-      ? selectedTagIds.filter((id) => id !== tagId)
-      : [...selectedTagIds, tagId];
-    setSelectedTagIds(next);
-    persistChoreographyTagFilter(next);
-  }
-
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700">
-          <input
-            type="checkbox"
-            checked={showAll}
-            onChange={(event) => setShowAll(event.target.checked)}
-            className="rounded border-stone-300"
+      <div className="grid gap-3 sm:grid-cols-2 sm:items-end">
+        <div>
+          <Label htmlFor="choreography-search">{t("search")}</Label>
+          <Input
+            id="choreography-search"
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={t("choreographySearchPlaceholder")}
+            autoComplete="off"
           />
-          {t("displayAllChoreographies")}
-        </label>
+        </div>
         {representations.length > 0 && (
-          <div className="sm:min-w-64">
+          <div>
             <Label htmlFor="representation-filter">{t("filterByRepresentation")}</Label>
             <Select
               id="representation-filter"
@@ -129,39 +125,25 @@ export function ChoreographiesList({
         )}
       </div>
 
-      {tagsVisible && tags.length > 0 && (
-        <fieldset>
-          <legend className="mb-2 text-sm font-medium text-stone-700">{t("filterByTag")}</legend>
-          <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => {
-              const selected = selectedTagIds.includes(tag.id);
-              return (
-                <button
-                  key={tag.id}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => toggleTagFilter(tag.id)}
-                  className="rounded-full transition hover:brightness-95"
-                >
-                  <TagBubble
-                    tag={tag}
-                    selected={selected}
-                    className="min-h-9 px-3 py-1.5 text-sm"
-                  />
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-      )}
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700">
+          <input
+            type="checkbox"
+            checked={showAll}
+            onChange={(event) => setShowAll(event.target.checked)}
+            className="rounded border-stone-300"
+          />
+          {t("displayAllChoreographies")}
+        </label>
+      </div>
 
       {visible.length === 0 ? (
         <Card>
           <p className="text-stone-600">
             {representationId && matchingRepresentation.length === 0
               ? t("noChoreographiesForRepresentation")
-              : selectedTagIds.length > 0 && matchingTags.length === 0
-                ? t("noChoreographiesForTags")
+              : search.trim() && matchingSearch.length === 0
+                ? t("noMatchingChoreographies")
                 : showAll
                 ? canCreate
                   ? t("noChoreographiesCreate")

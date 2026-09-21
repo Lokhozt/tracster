@@ -2,7 +2,6 @@ const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
 export const CHOREOGRAPHY_REPRESENTATION_FILTER_COOKIE =
   "tracster_choreography_representation";
-export const CHOREOGRAPHY_TAG_FILTER_COOKIE = "tracster_choreography_tags";
 
 export function parseChoreographyRepresentationFilter(value?: string): string {
   if (!value) {
@@ -18,23 +17,4 @@ export function parseChoreographyRepresentationFilter(value?: string): string {
 
 export function persistChoreographyRepresentationFilter(id: string) {
   document.cookie = `${CHOREOGRAPHY_REPRESENTATION_FILTER_COOKIE}=${encodeURIComponent(id)}; Path=/; Max-Age=${COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`;
-}
-
-export function parseChoreographyTagFilter(value?: string): string[] {
-  if (!value) {
-    return [];
-  }
-
-  try {
-    return decodeURIComponent(value)
-      .split(",")
-      .map((id) => id.trim())
-      .filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-export function persistChoreographyTagFilter(ids: string[]) {
-  document.cookie = `${CHOREOGRAPHY_TAG_FILTER_COOKIE}=${encodeURIComponent(ids.join(","))}; Path=/; Max-Age=${COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`;
 }

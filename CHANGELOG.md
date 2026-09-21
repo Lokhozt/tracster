@@ -10,11 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Participants can mark themselves as not participating from event cards and the event page.
 - Joining or leaving a repeating event asks whether to apply that answer to all future occurrences.
+- The choreography page can be searched by choreography name, choreographer, representation, or tag.
 
 ### Changed
 
 - Hiding events you are not participating in also hides them on the planning calendar and omits them from the image export.
 - Event cards show a green “I'm participating” or red “I'm not participating” label instead of a checkmark.
+- The choreography tag filter has been removed.
 
 
 ## 1.0.4 - 21-09-2026
