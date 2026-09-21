@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed registering password leaking into the registering email field
+- The start and end times at the top of an event page no longer differ from the time that was set; they were formatted in the server's timezone instead of the reader's.
 - Linking an existing representation to a choreography no longer lists representations that have already ended.
 - The choreography representation filter no longer lists representations that have already ended.
 

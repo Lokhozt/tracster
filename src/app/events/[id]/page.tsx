@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { AvailabilityButtons } from "@/components/AvailabilityButtons";
 import {
@@ -10,11 +10,11 @@ import {
 } from "@/components/EventForms";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
 import { JoinRequestsList } from "@/components/JoinRequestsList";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { RepresentationChoreographiesSection } from "@/components/RepresentationForms";
 import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { formatDateTime } from "@/lib/datetime";
 import { canEditEvent, canViewEvent, serializeEvent } from "@/lib/events";
 import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series";
 import { getEventTypes, eventKindAllowsChoreographyLinks, eventKindRestrictedToCompetitors, isGenericEventKind } from "@/lib/event-types";
@@ -39,10 +39,9 @@ const statusStyles = {
 } as const;
 
 export default async function EventDetailPage({ params }: PageProps) {
-  const [user, t, locale, serverT] = await Promise.all([
+  const [user, t, serverT] = await Promise.all([
     getCurrentUser(),
     getTranslations("Pages.EventDetail"),
-    getLocale(),
     getServerTranslator(),
   ]);
   if (!user) {
@@ -212,12 +211,12 @@ export default async function EventDetailPage({ params }: PageProps) {
         <div className="grid gap-2 text-sm text-stone-600">
           <p>
             <span className="font-medium text-stone-900">{t("start")}:</span>{" "}
-            {formatDateTime(new Date(event.startsAt), locale as "en" | "fr")}
+            <LocalDateTime value={event.startsAt} />
           </p>
           {event.endsAt && (
             <p>
               <span className="font-medium text-stone-900">{t("end")}:</span>{" "}
-              {formatDateTime(new Date(event.endsAt), locale as "en" | "fr")}
+              <LocalDateTime value={event.endsAt} />
             </p>
           )}
           {event.location && (
