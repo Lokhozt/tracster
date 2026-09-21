@@ -88,6 +88,37 @@ async function main() {
     },
   });
 
+  const beginnerTag = await prisma.tag.upsert({
+    where: { name: "Beginner" },
+    update: { color: "#22c55e" },
+    create: { name: "Beginner", color: "#22c55e" },
+  });
+  const showcaseTag = await prisma.tag.upsert({
+    where: { name: "Showcase" },
+    update: { color: "#8b5cf6" },
+    create: { name: "Showcase", color: "#8b5cf6" },
+  });
+  await prisma.choreographyTag.upsert({
+    where: {
+      choreographyId_tagId: {
+        choreographyId: choreography.id,
+        tagId: beginnerTag.id,
+      },
+    },
+    update: {},
+    create: { choreographyId: choreography.id, tagId: beginnerTag.id },
+  });
+  await prisma.choreographyTag.upsert({
+    where: {
+      choreographyId_tagId: {
+        choreographyId: choreography.id,
+        tagId: showcaseTag.id,
+      },
+    },
+    update: {},
+    create: { choreographyId: choreography.id, tagId: showcaseTag.id },
+  });
+
   await prisma.siteSettings.upsert({
     where: { id: "default" },
     update: {},
@@ -97,6 +128,7 @@ async function main() {
       allowUserCreateEvents: true,
       startOfDayHour: 8,
       showBirthdaysOnPlanning: true,
+      showChoreographyTags: true,
     },
   });
 

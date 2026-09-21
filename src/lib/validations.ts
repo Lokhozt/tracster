@@ -109,11 +109,24 @@ export const locationSchema = z.object({
   name: z.string().trim().min(1).max(200),
 });
 
+export const tagSchema = z.object({
+  name: z.string().trim().min(1).max(40),
+  color: z
+    .string()
+    .trim()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a hex value such as #3b82f6."),
+});
+
+export const choreographyTagsSchema = z.object({
+  tagIds: z.array(z.string().min(1)).max(50),
+});
+
 export const siteSettingsSchema = z.object({
   allowUserCreateChoreographies: z.boolean(),
   allowUserCreateEvents: z.boolean(),
   startOfDayHour: z.number().int().min(0).max(23),
   showBirthdaysOnPlanning: z.boolean(),
+  showChoreographyTags: z.boolean(),
 });
 
 export const rehearsalSchema = z.object({

@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { EventTypesManager } from "@/components/EventTypesManager";
 import { LocationsManager } from "@/components/LocationsManager";
+import { TagsManager } from "@/components/TagsManager";
 import { SettingsSections, type SettingsSection } from "@/components/SettingsSections";
 import { SiteSettingsForm } from "@/components/SiteSettingsForm";
 import { GoogleCalendarConnectionCard } from "@/components/GoogleCalendarConnectionCard";
@@ -40,7 +41,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
 
   const showAssociationCalendar = await canManageAssociationGoogleCalendar(user.id);
 
-  const [locations, settings, users, eventTypes, googleConnection, query] = await Promise.all([
+  const [locations, settings, users, eventTypes, tags, googleConnection, query] = await Promise.all([
     prisma.location.findMany({
       orderBy: { name: "asc" },
       select: { id: true, name: true },
@@ -51,6 +52,10 @@ export default async function SettingsPage({ searchParams }: PageProps) {
       select: adminUserSelect,
     }),
     getEventTypes(),
+    prisma.tag.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, color: true },
+    }),
     showAssociationCalendar
       ? prisma.googleCalendarConnection.findUnique({
           where: { id: connectionIdFor("ASSOCIATION", user.id) },
@@ -86,6 +91,11 @@ export default async function SettingsPage({ searchParams }: PageProps) {
       id: "event-types",
       label: tc("eventTypes"),
       content: <EventTypesManager eventTypes={eventTypes} />,
+    },
+    {
+      id: "tags",
+      label: tc("tags"),
+      content: <TagsManager tags={tags} settings={settings} />,
     },
     {
       id: "locations",

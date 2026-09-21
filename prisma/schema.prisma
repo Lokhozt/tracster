@@ -96,6 +96,7 @@ model Choreography {
   joinRequests              ChoreographyJoinRequest[]
   resources                 ChoreographyResource[]
   schedulingCollectionItems SchedulingCollectionItem[]
+  tags                      ChoreographyTag[]
 }
 
 model ChoreographyChoreographer {
@@ -195,12 +196,35 @@ model Location {
   @@unique([name])
 }
 
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  choreographies ChoreographyTag[]
+}
+
+model ChoreographyTag {
+  choreographyId String
+  tagId          String
+  assignedAt     DateTime @default(now())
+
+  choreography Choreography @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
+  tag          Tag          @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([choreographyId, tagId])
+  @@index([tagId])
+}
+
 model SiteSettings {
   id                            String   @id
   allowUserCreateChoreographies Boolean  @default(true)
   allowUserCreateEvents         Boolean  @default(true)
   startOfDayHour                Int      @default(8)
   showBirthdaysOnPlanning       Boolean  @default(true)
+  showChoreographyTags          Boolean  @default(true)
   updatedAt                     DateTime @updatedAt
 }
 

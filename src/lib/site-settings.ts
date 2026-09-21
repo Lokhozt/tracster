@@ -9,6 +9,7 @@ export type SiteSettingsRecord = {
   allowUserCreateEvents: boolean;
   startOfDayHour: number;
   showBirthdaysOnPlanning: boolean;
+  showChoreographyTags: boolean;
 };
 
 const settingsSelect = {
@@ -16,6 +17,7 @@ const settingsSelect = {
   allowUserCreateEvents: true,
   startOfDayHour: true,
   showBirthdaysOnPlanning: true,
+  showChoreographyTags: true,
 } as const;
 
 export function serializeSiteSettings(settings: SiteSettingsRecord): SiteSettingsRecord {
@@ -24,6 +26,7 @@ export function serializeSiteSettings(settings: SiteSettingsRecord): SiteSetting
     allowUserCreateEvents: settings.allowUserCreateEvents,
     startOfDayHour: settings.startOfDayHour,
     showBirthdaysOnPlanning: settings.showBirthdaysOnPlanning,
+    showChoreographyTags: settings.showChoreographyTags,
   };
 }
 
@@ -45,6 +48,7 @@ export async function getSiteSettings(): Promise<SiteSettingsRecord> {
         allowUserCreateEvents: true,
         startOfDayHour: DEFAULT_START_OF_DAY_HOUR,
         showBirthdaysOnPlanning: true,
+        showChoreographyTags: true,
       },
       select: settingsSelect,
     }),

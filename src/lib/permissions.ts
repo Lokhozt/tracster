@@ -26,6 +26,26 @@ export async function isChoreographyMember(
   return Boolean(assignment);
 }
 
+export async function canManageChoreographyTags(
+  choreographyId: string,
+  userId: string,
+): Promise<boolean> {
+  const choreography = await prisma.choreography.findUnique({
+    where: { id: choreographyId },
+    select: { createdById: true, archivedAt: true },
+  });
+
+  if (!choreography || choreography.archivedAt) {
+    return false;
+  }
+
+  if (await hasGlobalAccess(userId)) {
+    return true;
+  }
+
+  return choreography.createdById === userId;
+}
+
 export async function canEditChoreography(
   choreographyId: string,
   userId: string,

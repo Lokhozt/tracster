@@ -12,10 +12,13 @@ import { eventTypeLabel, getServerTranslator } from "@/i18n/server";
 import { listedChoreographyWhere } from "@/lib/participation";
 import {
   CHOREOGRAPHY_REPRESENTATION_FILTER_COOKIE,
+  CHOREOGRAPHY_TAG_FILTER_COOKIE,
   parseChoreographyRepresentationFilter,
+  parseChoreographyTagFilter,
 } from "@/lib/choreography-list-filter";
 import { hasGlobalAccess } from "@/lib/roles";
-import { canCreateChoreography } from "@/lib/site-settings";
+import { canCreateChoreography, getSiteSettings } from "@/lib/site-settings";
+import { serializeTag } from "@/lib/tags";
 import { basicUserSelect, formatUserName } from "@/lib/users";
 
 function isUserChoreographer(
@@ -77,37 +80,50 @@ export default async function ChoreographiesPage() {
   }
 
   const globalAccess = await hasGlobalAccess(user.id);
-  const canCreate = await canCreateChoreography(user.id);
+  const [canCreate, settings] = await Promise.all([
+    canCreateChoreography(user.id),
+    getSiteSettings(),
+  ]);
 
-  const choreographies = await prisma.choreography.findMany({
-    where: globalAccess ? visibleChoreographyWhere : listedChoreographyWhere(user.id),
-    include: {
-      createdBy: { select: basicUserSelect },
-      choreographers: {
-        where: { userId: user.id },
-        select: { userId: true },
-      },
-      members: {
-        where: { userId: user.id },
-        select: { userId: true },
-      },
-      eventLinks: {
-        where: { event: { type: { kind: "REPRESENTATION" } } },
-        select: {
-          event: {
-            select: {
-              id: true,
-              title: true,
-              startsAt: true,
-              type: { select: { name: true, kind: true } },
+  const [choreographies, tags] = await Promise.all([
+    prisma.choreography.findMany({
+      where: globalAccess ? visibleChoreographyWhere : listedChoreographyWhere(user.id),
+      include: {
+        createdBy: { select: basicUserSelect },
+        choreographers: {
+          where: { userId: user.id },
+          select: { userId: true },
+        },
+        members: {
+          where: { userId: user.id },
+          select: { userId: true },
+        },
+        eventLinks: {
+          where: { event: { type: { kind: "REPRESENTATION" } } },
+          select: {
+            event: {
+              select: {
+                id: true,
+                title: true,
+                startsAt: true,
+                type: { select: { name: true, kind: true } },
+              },
             },
           },
         },
+        tags: {
+          include: { tag: { select: { id: true, name: true, color: true } } },
+          orderBy: { tag: { name: "asc" } },
+        },
+        _count: { select: { members: true, rehearsals: true } },
       },
-      _count: { select: { members: true, rehearsals: true } },
-    },
-    orderBy: { updatedAt: "desc" },
-  });
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.tag.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, color: true },
+    }),
+  ]);
 
   const representations = representationOptions(
     choreographies.flatMap((choreography) => choreography.eventLinks),
@@ -121,6 +137,11 @@ export default async function ChoreographiesPage() {
   )
     ? savedRepresentationId
     : "";
+  const savedTagIds = parseChoreographyTagFilter(
+    cookieStore.get(CHOREOGRAPHY_TAG_FILTER_COOKIE)?.value,
+  );
+  const tagIdSet = new Set(tags.map((tag) => tag.id));
+  const initialTagIds = savedTagIds.filter((id) => tagIdSet.has(id));
 
   return (
     <AppShell title={t("title")}>
@@ -141,7 +162,10 @@ export default async function ChoreographiesPage() {
       <ChoreographiesList
         canCreate={canCreate}
         representations={representations}
+        tags={settings.showChoreographyTags ? tags.map(serializeTag) : []}
+        tagsVisible={settings.showChoreographyTags}
         initialRepresentationId={initialRepresentationId}
+        initialTagIds={settings.showChoreographyTags ? initialTagIds : []}
         choreographies={choreographies.map((choreography) => {
           const isChoreographer = isUserChoreographer(choreography, user.id);
           return {
@@ -157,6 +181,9 @@ export default async function ChoreographiesPage() {
             isInvolved:
               isChoreographer ||
               choreography.members.some((member) => member.userId === user.id),
+            tags: settings.showChoreographyTags
+              ? choreography.tags.map((item) => serializeTag(item.tag))
+              : [],
           };
         })}
       />

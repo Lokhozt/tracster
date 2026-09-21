@@ -12,7 +12,7 @@ Tracster is a web application for dance and performance associations to plan reh
 ## Features
 
 - **Users & roles** — `USER`, `ADMIN`, and `OWNER`. Admins and owners can manage members; only the owner can transfer ownership. A member can also be marked as a **competitor**; this is a status, not a role, and can be turned on or off in account or user settings.
-- **Choreographies** — create pieces, assign choreographers and participants, and optionally split participants into **groups**.
+- **Choreographies** — create pieces, assign choreographers and participants, optionally split participants into **groups**, and label pieces with colored **tags**.
 - **Rehearsals** — schedule rehearsals for a whole choreography or a specific group.
 - **Representations** — schedule performances and attach choreographies to them (shown on the schedule).
 - **Demonstrations** — schedule showcases linked to choreographies, with their own participant lists.
@@ -30,7 +30,7 @@ Tracster is a web application for dance and performance associations to plan reh
 ## Core workflow
 
 1. A user creates a **choreography** and becomes a choreographer on it.
-2. Choreographers add other choreographers, **assign participants**, and optionally create **groups**.
+2. Choreographers add other choreographers, **assign participants**, and optionally create **groups**. The creator (or an admin) can assign **tags**.
 3. They can let others **join** or **request to join**, and choose whether the piece is hidden from non-participants.
 4. A choreographer schedules a **rehearsal** (date, time, optional location and group). Conflict warnings appear if the audience is already booked or unavailable.
 5. Assigned participants respond with **availability** (available, unavailable, maybe) and can maintain a personal **unavailability** calendar.
@@ -216,6 +216,9 @@ prisma/
 | POST | `/api/users/transfer-ownership` | Transfer owner role |
 | GET / POST | `/api/choreographies` | List / create choreographies |
 | GET / PATCH | `/api/choreographies/:id` | Details / update (including join & visibility) |
+| GET / PATCH | `/api/choreographies/:id/tags` | List / replace assigned tags (creator or admin) |
+| GET / POST | `/api/tags` | List tags / create tag (admin) |
+| PATCH / DELETE | `/api/tags/:id` | Update or delete a tag (admin) |
 | POST / DELETE | `/api/choreographies/:id/members` | Assign or remove participant |
 | POST / DELETE | `/api/choreographies/:id/choreographers` | Add or remove choreographer |
 | GET / POST | `/api/choreographies/:id/groups` | List / create groups |
@@ -248,6 +251,7 @@ prisma/
 
 - **User** — association members (`USER`, `ADMIN`, `OWNER`)
 - **Choreography** — a piece being rehearsed (join and visibility settings)
+- **Tag** / **ChoreographyTag** — colored labels assigned to choreographies
 - **ChoreographyChoreographer** — users who can edit and manage
 - **ChoreographyMember** — assigned participants
 - **ChoreographyJoinRequest** — pending join requests

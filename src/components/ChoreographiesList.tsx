@@ -8,7 +8,9 @@ import { ChoreographerBadge } from "@/components/CrownIcon";
 import { Card, Label, Select } from "@/components/ui";
 import { useLocale } from "next-intl";
 
-import { persistChoreographyRepresentationFilter } from "@/lib/choreography-list-filter";
+import { persistChoreographyRepresentationFilter, persistChoreographyTagFilter } from "@/lib/choreography-list-filter";
+import { TagBubble, TagBubbles } from "@/components/TagBubbles";
+import type { TagRecord } from "@/lib/tags";
 
 export type ChoreographyListItem = {
   id: string;
@@ -21,6 +23,7 @@ export type ChoreographyListItem = {
   representationIds: string[];
   isChoreographer: boolean;
   isInvolved: boolean;
+  tags: TagRecord[];
 };
 
 export type RepresentationFilterOption = {
@@ -32,17 +35,24 @@ export type RepresentationFilterOption = {
 export function ChoreographiesList({
   choreographies,
   representations,
+  tags,
+  tagsVisible,
   canCreate,
   initialRepresentationId,
+  initialTagIds,
 }: {
   choreographies: ChoreographyListItem[];
   representations: RepresentationFilterOption[];
+  tags: TagRecord[];
+  tagsVisible: boolean;
   canCreate: boolean;
   initialRepresentationId: string;
+  initialTagIds: string[];
 }) {
   const t = useTranslations("Components");
   const [showAll, setShowAll] = useState(false);
   const [representationId, setRepresentationId] = useState(initialRepresentationId);
+  const [selectedTagIds, setSelectedTagIds] = useState(initialTagIds);
   const locale = useLocale();
   const dateFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
   const representationDateFormatter = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
@@ -57,17 +67,35 @@ export function ChoreographiesList({
     [choreographies, representationId],
   );
 
+  const matchingTags = useMemo(() => {
+    if (!tagsVisible || selectedTagIds.length === 0) {
+      return matchingRepresentation;
+    }
+    const selected = new Set(selectedTagIds);
+    return matchingRepresentation.filter((choreography) =>
+      choreography.tags.some((tag) => selected.has(tag.id)),
+    );
+  }, [matchingRepresentation, selectedTagIds, tagsVisible]);
+
   const visible = useMemo(
     () =>
       showAll
-        ? matchingRepresentation
-        : matchingRepresentation.filter((choreography) => choreography.isInvolved),
-    [matchingRepresentation, showAll],
+        ? matchingTags
+        : matchingTags.filter((choreography) => choreography.isInvolved),
+    [matchingTags, showAll],
   );
 
   function updateRepresentationId(id: string) {
     setRepresentationId(id);
     persistChoreographyRepresentationFilter(id);
+  }
+
+  function toggleTagFilter(tagId: string) {
+    const next = selectedTagIds.includes(tagId)
+      ? selectedTagIds.filter((id) => id !== tagId)
+      : [...selectedTagIds, tagId];
+    setSelectedTagIds(next);
+    persistChoreographyTagFilter(next);
   }
 
   return (
@@ -102,12 +130,40 @@ export function ChoreographiesList({
         )}
       </div>
 
+      {tagsVisible && tags.length > 0 && (
+        <fieldset>
+          <legend className="mb-2 text-sm font-medium text-stone-700">{t("filterByTag")}</legend>
+          <div className="flex flex-wrap gap-2">
+            {tags.map((tag) => {
+              const selected = selectedTagIds.includes(tag.id);
+              return (
+                <button
+                  key={tag.id}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => toggleTagFilter(tag.id)}
+                  className="rounded-full transition hover:brightness-95"
+                >
+                  <TagBubble
+                    tag={tag}
+                    selected={selected}
+                    className="min-h-9 px-3 py-1.5 text-sm"
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      )}
+
       {visible.length === 0 ? (
         <Card>
           <p className="text-stone-600">
             {representationId && matchingRepresentation.length === 0
               ? t("noChoreographiesForRepresentation")
-              : showAll
+              : selectedTagIds.length > 0 && matchingTags.length === 0
+                ? t("noChoreographiesForTags")
+                : showAll
                 ? canCreate
                   ? t("noChoreographiesCreate")
                   : t("noChoreographies")
@@ -127,6 +183,9 @@ export function ChoreographiesList({
                     </h2>
                     {choreography.description && (
                       <p className="mt-1 text-sm text-stone-600">{choreography.description}</p>
+                    )}
+                    {tagsVisible && (
+                      <TagBubbles tags={choreography.tags} className="mt-2" />
                     )}
                     <p className="mt-3 text-xs text-stone-500">
                       {t("createdUpdated", {name: choreography.createdByName, date: dateFormatter.format(new Date(choreography.updatedAt))})}

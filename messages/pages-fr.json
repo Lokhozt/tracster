@@ -85,7 +85,7 @@
     },
     "Settings": {
       "title": "Paramètres",
-      "intro": "Configurez les options de l’association, les lieux proposés et les membres.",
+      "intro": "Configurez les options de l’association, les lieux proposés, les étiquettes et les membres.",
       "categories": "Catégories de paramètres",
       "backToCategories": "Tous les paramètres"
     },

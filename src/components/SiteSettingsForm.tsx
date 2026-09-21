@@ -39,6 +39,7 @@ export function SiteSettingsForm({ settings }: { settings: SiteSettingsRecord })
         allowUserCreateEvents,
         startOfDayHour: Number(startOfDayHour),
         showBirthdaysOnPlanning,
+        showChoreographyTags: settings.showChoreographyTags,
       }),
     });
     const data = await response.json();

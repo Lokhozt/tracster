@@ -17,10 +17,11 @@ import { ChoreographyLifecycleActions } from "@/components/ChoreographyLifecycle
 import { RepresentationsSection } from "@/components/RepresentationForms";
 import { ChoreographerBadge } from "@/components/CrownIcon";
 import { ChoreographyResources } from "@/components/ChoreographyResources";
+import { ChoreographyTagsEditor } from "@/components/ChoreographyTagsEditor";
 import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
+import { canEditChoreography, canManageChoreographyTags, canViewChoreography } from "@/lib/permissions";
 import { isAdmin } from "@/lib/roles";
 import { getChoreographyGroups, serializeGroup } from "@/lib/groups";
 import { getEventTypes } from "@/lib/event-types";
@@ -28,6 +29,8 @@ import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series";
 import { basicUserSelect, formatUserName, serializeBasicUser } from "@/lib/users";
 import { getVisibleChoreographyResources } from "@/lib/choreography-resources";
+import { getSiteSettings } from "@/lib/site-settings";
+import { serializeTag } from "@/lib/tags";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -47,9 +50,10 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
   }
 
   const canEdit = await canEditChoreography(id, user.id);
+  const canManageTags = await canManageChoreographyTags(id, user.id);
   const canManageLifecycle = await isAdmin(user.id);
 
-  const [choreography, users, groups, eventTypes, resources] = await Promise.all([
+  const [choreography, users, groups, eventTypes, resources, allTags, settings] = await Promise.all([
     prisma.choreography.findUnique({
       where: { id },
       include: {
@@ -95,6 +99,10 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           },
           orderBy: { event: { startsAt: "asc" } },
         },
+        tags: {
+          include: { tag: { select: { id: true, name: true, color: true } } },
+          orderBy: { tag: { name: "asc" } },
+        },
       },
     }),
     canEdit
@@ -106,6 +114,11 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
     getChoreographyGroups(id),
     getEventTypes(),
     getVisibleChoreographyResources(id, user.id),
+    prisma.tag.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, color: true },
+    }),
+    getSiteSettings(),
   ]);
 
   if (!choreography || choreography.archivedAt) {
@@ -150,6 +163,14 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           hasPendingRequest={hasPendingRequest}
         />
       </div>
+
+      <ChoreographyTagsEditor
+        choreographyId={id}
+        allTags={allTags.map(serializeTag)}
+        assignedTags={choreography.tags.map((item) => serializeTag(item.tag))}
+        canEdit={canManageTags}
+        visible={settings.showChoreographyTags}
+      />
 
       <ChoreographyResources
         choreographyId={id}
