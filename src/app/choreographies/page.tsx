@@ -38,26 +38,32 @@ function representationOptions(
       id: string;
       title: string;
       startsAt: Date;
+      endsAt: Date | null;
       type: { name: string; kind: EventKind | null };
     };
   }>,
   translator: Awaited<ReturnType<typeof getServerTranslator>>,
+  now = new Date(),
 ) {
   const byId = new Map<string, { id: string; title: string; startsAt: string }>();
   for (const link of links) {
-    if (byId.has(link.event.id)) {
+    const { event } = link;
+    const stillUpcoming = event.endsAt
+      ? event.endsAt >= now
+      : event.startsAt >= now;
+    if (!stillUpcoming || byId.has(event.id)) {
       continue;
     }
-    byId.set(link.event.id, {
-      id: link.event.id,
+    byId.set(event.id, {
+      id: event.id,
       title: defaultEventTitle(
         {
-          name: eventTypeLabel(translator, link.event.type.kind, link.event.type.name),
-          kind: link.event.type.kind,
+          name: eventTypeLabel(translator, event.type.kind, event.type.name),
+          kind: event.type.kind,
         },
-        link.event.title,
+        event.title,
       ),
-      startsAt: link.event.startsAt.toISOString(),
+      startsAt: event.startsAt.toISOString(),
     });
   }
   return [...byId.values()].sort((a, b) => {
@@ -107,6 +113,7 @@ export default async function ChoreographiesPage() {
                 id: true,
                 title: true,
                 startsAt: true,
+                endsAt: true,
                 type: { select: { name: true, kind: true } },
               },
             },

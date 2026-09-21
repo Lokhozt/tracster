@@ -4,37 +4,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 1.0.5 [Unreleased]
+## 1.0.4 - 21-09-2026
 
 ### Added
 
+- Choreography creators (and admins) can transfer ownership of a piece to another choreographer on it.
 - Participants can mark themselves as not participating from event cards and the event page.
 - Joining or leaving a repeating event asks whether to apply that answer to all future occurrences.
 - The choreography page can be searched by choreography name, choreographer, representation, or tag.
 
 ### Changed
 
+- The choreography page uses a settings-style section menu. Overview shows the title, description, choreographers, participants (A–Z), and tags. Resources, groups, representations, demonstrations, rehearsals, editing, and admin actions each have their own section.
+- Update to choreography cards
 - Hiding events you are not participating in also hides them on the planning calendar and omits them from the image export.
 - Event cards show a green “I'm participating” or red “I'm not participating” label instead of a checkmark.
 - The choreography tag filter has been removed.
 - Members on the settings page, event and choreography participant lists, and add-participant pickers are ordered by first name.
 
-
-## 1.0.4 - 21-09-2026
-
-### Added
-
-- Choreography creators (and admins) can transfer ownership of a piece to another choreographer on it.
-
-### Changed
-
-- The choreography page uses a settings-style section menu. Overview shows the title, description, choreographers, participants (A–Z), and tags. Resources, groups, representations, demonstrations, rehearsals, editing, and admin actions each have their own section.
-
-- Update choreography cards
-
 ### Fixed
 - Fixed registering password leaking into the registering email field
 - Linking an existing representation to a choreography no longer lists representations that have already ended.
+- The choreography representation filter no longer lists representations that have already ended.
 
 
 ## 1.0.3 - 17-09-2026
