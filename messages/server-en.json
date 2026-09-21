@@ -29,6 +29,7 @@
       "Incorrect registration password.": "Incorrect registration password.",
       "This password reset link is invalid or has expired.": "This password reset link is invalid or has expired.",
       "Choose a different user to transfer ownership to.": "Choose a different user to transfer ownership to.",
+      "Ownership can only be transferred to a choreographer on this piece.": "Ownership can only be transferred to a choreographer on this piece.",
       "You cannot delete your own account.": "You cannot delete your own account.",
       "The owner account cannot be deleted. Transfer ownership first.": "The owner account cannot be deleted. Transfer ownership first.",
       "A location with this name already exists.": "A location with this name already exists.",

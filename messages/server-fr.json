@@ -29,6 +29,7 @@
       "Incorrect registration password.": "Mot de passe d’inscription incorrect.",
       "This password reset link is invalid or has expired.": "Ce lien de réinitialisation est invalide ou a expiré.",
       "Choose a different user to transfer ownership to.": "Choisissez un autre utilisateur pour le transfert de propriété.",
+      "Ownership can only be transferred to a choreographer on this piece.": "La propriété ne peut être transférée qu’à un chorégraphe de cette pièce.",
       "You cannot delete your own account.": "Vous ne pouvez pas supprimer votre propre compte.",
       "The owner account cannot be deleted. Transfer ownership first.": "Le compte propriétaire ne peut pas être supprimé. Transférez d’abord la propriété.",
       "A location with this name already exists.": "Un lieu portant ce nom existe déjà.",

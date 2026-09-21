@@ -473,10 +473,12 @@ export function ChoreographersList({
   choreographyId,
   choreographers,
   canEdit,
+  ownerUserId,
 }: {
   choreographyId: string;
   choreographers: UserOption[];
   canEdit: boolean;
+  ownerUserId?: string;
 }) {
   const t = useTranslations("Components");
   const ordered = [...choreographers].sort(compareUsersByName);
@@ -486,7 +488,14 @@ export function ChoreographersList({
     <ul className="mb-4 space-y-2 text-sm">
       {ordered.map((choreographer) => (
         <li key={choreographer.id} className="flex items-center justify-between gap-2">
-          <span>{choreographer.name}</span>
+          <span>
+            {choreographer.name}
+            {ownerUserId === choreographer.id && (
+              <span className="ml-2 text-xs font-medium text-stone-500">
+                {t("choreographyOwner")}
+              </span>
+            )}
+          </span>
           {canRemove && (
             <DeleteEventButton
               deleteUrl={`/api/choreographies/${choreographyId}/choreographers`}
@@ -499,5 +508,92 @@ export function ChoreographersList({
         </li>
       ))}
     </ul>
+  );
+}
+
+export function TransferChoreographyOwnershipForm({
+  choreographyId,
+  ownerUserId,
+  choreographers,
+}: {
+  choreographyId: string;
+  ownerUserId: string;
+  choreographers: UserOption[];
+}) {
+  const t = useTranslations("Components");
+  const router = useRouter();
+  const candidates = [...choreographers]
+    .filter((choreographer) => choreographer.id !== ownerUserId)
+    .sort(compareUsersByName);
+  const [userId, setUserId] = useState(candidates[0]?.id ?? "");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!userId) {
+      return;
+    }
+
+    const selected = candidates.find((choreographer) => choreographer.id === userId);
+    if (
+      !window.confirm(
+        t("transferChoreographyOwnershipConfirm", { name: selected?.name ?? "" }),
+      )
+    ) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    const response = await fetch(
+      `/api/choreographies/${choreographyId}/transfer-ownership`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      },
+    );
+    const data = await response.json();
+    setLoading(false);
+
+    if (!response.ok) {
+      setError(data.error ?? t("choreographyOwnershipTransferError"));
+      return;
+    }
+
+    router.refresh();
+  }
+
+  if (candidates.length === 0) {
+    return (
+      <p className="mt-4 text-sm text-stone-600">{t("addChoreographerBeforeTransfer")}</p>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-4 space-y-3 border-t border-stone-100 pt-4">
+      <div>
+        <Label htmlFor="choreography-owner">{t("transferChoreographyOwnership")}</Label>
+        <p className="mb-2 text-xs text-stone-500">{t("transferChoreographyOwnershipHelp")}</p>
+        <select
+          id="choreography-owner"
+          value={userId}
+          onChange={(event) => setUserId(event.target.value)}
+          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"
+        >
+          {candidates.map((choreographer) => (
+            <option key={choreographer.id} value={choreographer.id}>
+              {choreographer.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <Button type="submit" disabled={loading || !userId} variant="secondary">
+        {loading ? t("transferring") : t("transferOwnership")}
+      </Button>
+    </form>
   );
 }

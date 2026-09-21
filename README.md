@@ -30,7 +30,7 @@ Tracster is a web application for dance and performance associations to plan reh
 ## Core workflow
 
 1. A user creates a **choreography** and becomes a choreographer on it.
-2. Choreographers add other choreographers, **assign participants**, and optionally create **groups**. The creator (or an admin) can assign **tags**.
+2. Choreographers add other choreographers, **assign participants**, and optionally create **groups**. The creator (or an admin) can assign **tags** and transfer ownership to another choreographer.
 3. They can let others **join** or **request to join**, and choose whether the piece is hidden from non-participants.
 4. A choreographer schedules a **rehearsal** (date, time, optional location and group). Conflict warnings appear if the audience is already booked or unavailable.
 5. Assigned participants respond with **availability** (available, unavailable, maybe) and can maintain a personal **unavailability** calendar.
@@ -221,6 +221,7 @@ prisma/
 | PATCH / DELETE | `/api/tags/:id` | Update or delete a tag (admin) |
 | POST / DELETE | `/api/choreographies/:id/members` | Assign or remove participant |
 | POST / DELETE | `/api/choreographies/:id/choreographers` | Add or remove choreographer |
+| POST | `/api/choreographies/:id/transfer-ownership` | Transfer piece ownership to a choreographer (creator or admin) |
 | GET / POST | `/api/choreographies/:id/groups` | List / create groups |
 | PATCH / DELETE | `/api/choreographies/:id/groups/:groupId` | Update or delete group |
 | POST | `/api/choreographies/:id/join` | Join as participant |

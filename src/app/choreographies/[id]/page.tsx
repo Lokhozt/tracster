@@ -7,6 +7,7 @@ import {
   ChoreographersList,
   ParticipantsList,
   RehearsalsSection,
+  TransferChoreographyOwnershipForm,
 } from "@/components/ChoreographyForms";
 import { DemonstrationsSection } from "@/components/EventForms";
 import { EditChoreographyForm } from "@/components/CreateChoreographyForm";
@@ -22,7 +23,7 @@ import { SectionNav, type NavSection } from "@/components/SettingsSections";
 import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { canEditChoreography, canManageChoreographyTags, canViewChoreography } from "@/lib/permissions";
+import { canEditChoreography, canManageChoreographyTags, canTransferChoreographyOwnership, canViewChoreography } from "@/lib/permissions";
 import { isAdmin } from "@/lib/roles";
 import { getChoreographyGroups, serializeGroup } from "@/lib/groups";
 import { getEventTypes } from "@/lib/event-types";
@@ -53,6 +54,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
 
   const canEdit = await canEditChoreography(id, user.id);
   const canManageTags = await canManageChoreographyTags(id, user.id);
+  const canTransferOwnership = await canTransferChoreographyOwnership(id, user.id);
   const canManageLifecycle = await isAdmin(user.id);
 
   const [choreography, users, groups, eventTypes, resources, allTags, settings] = await Promise.all([
@@ -175,6 +177,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
               <ChoreographersList
                 choreographyId={id}
                 canEdit={false}
+                ownerUserId={choreography.createdById}
                 choreographers={choreographers}
               />
             </Card>
@@ -201,6 +204,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
               <ChoreographersList
                 choreographyId={id}
                 canEdit={canEdit}
+                ownerUserId={choreography.createdById}
                 choreographers={choreographers}
               />
               {canEdit && (
@@ -208,6 +212,13 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
                   choreographyId={id}
                   users={users}
                   assignedUserIds={choreography.choreographers.map(({ userId }) => userId)}
+                />
+              )}
+              {canTransferOwnership && (
+                <TransferChoreographyOwnershipForm
+                  choreographyId={id}
+                  ownerUserId={choreography.createdById}
+                  choreographers={choreographers}
                 />
               )}
             </Card>
