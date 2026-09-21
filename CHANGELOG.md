@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.0.4 [Unreleased]
+
+### Fixed
+- Fixed registering password leaking into the registering email field
+
+
 ## 1.0.3 - 17-09-2026
 
 ### Added
@@ -13,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Training is a built-in event type visible only to competitors (and to admins managing the calendar).
 - Events, rehearsals, trainings, and custom event types can repeat every chosen weekday for a number of weeks. Representation, festival, competition, and demonstration cannot. Editing or deleting one occurrence can apply to the rest of the upcoming series.
 - Possibility to export planning as an image based on the current filters.
-- Site setting to show birthdays on the planning as 
+- Site setting to show birthdays on the planning
 - Admins can toggle birthday display on the setting page
 - When `REGISTERING_PASSWORD` is set, creating an account asks for that password before personal details.
 - In the scheduling tool, possibility to export the planning as an image before generating the repetitions.

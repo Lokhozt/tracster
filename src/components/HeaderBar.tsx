@@ -9,6 +9,7 @@ import { MainNav, type NavItem, getNavItems } from "@/components/MainNav";
 import { RoleBadge } from "@/components/UserForms";
 import type { UserRole } from "@/generated/prisma/client";
 import { hasAdminPrivileges } from "@/lib/privileges";
+import { getAppName } from "@/lib/app-name";
 import { cn } from "@/lib/utils";
 
 type HeaderUser = {
@@ -110,6 +111,7 @@ export function HeaderBar({
 
 function BrandLink({ logoSrc }: { logoSrc?: string | null }) {
   const [showLogo, setShowLogo] = useState(Boolean(logoSrc));
+  const appName = getAppName();
 
   return (
     <Link
@@ -126,7 +128,7 @@ function BrandLink({ logoSrc }: { logoSrc?: string | null }) {
           onError={() => setShowLogo(false)}
         />
       ) : null}
-      Tracster
+      {appName}
     </Link>
   );
 }

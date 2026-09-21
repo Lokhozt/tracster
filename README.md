@@ -114,6 +114,7 @@ Then configure:
 
 ```bash
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
+NEXT_PUBLIC_APP_NAME="Tracster"
 GOOGLE_CALENDAR_CLIENT_ID="..."
 GOOGLE_CALENDAR_CLIENT_SECRET="..."
 SESSION_SECRET="a-long-random-production-secret"
@@ -124,6 +125,9 @@ GOOGLE_ASSOCIATION_CALENDAR_TIMEZONE="Europe/Paris"
 
 Leave `REGISTERING_PASSWORD` empty (or unset) for open registration. When it has a value, `/register`
 asks for that password first, and the register API rejects accounts that skip it.
+
+`NEXT_PUBLIC_APP_NAME` is the name shown in the header, the browser title, and user-facing copy.
+It defaults to `Tracster` when unset.
 
 `GOOGLE_ASSOCIATION_CALENDAR_ID` is the public calendar shown by **Follow association's calendar**
 on the schedule, account, and settings pages (a calendar id, or a full Google embed URL). Make that

@@ -8,6 +8,7 @@ import {
   languageLocales,
 } from "@/i18n/config";
 import { getCurrentUser } from "@/lib/auth";
+import { getAppName } from "@/lib/app-name";
 
 export default getRequestConfig(async () => {
   const [cookieStore, user] = await Promise.all([cookies(), getCurrentUser()]);
@@ -28,6 +29,10 @@ export default getRequestConfig(async () => {
       ...sharedMessages.default,
       ...pageMessages.default,
       ...componentMessages.default,
+      Common: {
+        ...sharedMessages.default.Common,
+        appName: getAppName(),
+      },
     },
   };
 });

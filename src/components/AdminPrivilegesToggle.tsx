@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
+import { getAppName } from "@/lib/app-name";
 
 export function AdminPrivilegesToggle({ enabled }: { enabled: boolean }) {
   const router = useRouter();
@@ -39,7 +40,7 @@ export function AdminPrivilegesToggle({ enabled }: { enabled: boolean }) {
   return (
     <Card className="max-w-xl">
       <h2 className="mb-2 text-lg font-semibold">{t("adminPrivileges")}</h2>
-      <p className="mb-4 text-sm text-stone-600">{t("adminPrivilegesHelp")}</p>
+      <p className="mb-4 text-sm text-stone-600">{t("adminPrivilegesHelp", { appName: getAppName() })}</p>
       <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
         <input
           type="checkbox"

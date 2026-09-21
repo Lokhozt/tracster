@@ -77,7 +77,7 @@ export function RegisterForm({
 
   if (!unlocked) {
     return (
-      <form onSubmit={handleUnlock} className="space-y-4">
+      <form key="unlock" onSubmit={handleUnlock} className="space-y-4">
         <p className="text-sm text-stone-600">{t("registrationPasswordHelp")}</p>
         <div>
           <Label htmlFor="registrationPassword">{t("registrationPassword")}</Label>
@@ -104,7 +104,7 @@ export function RegisterForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form key="register" onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <Label htmlFor="firstName">{t("firstName")}</Label>

@@ -8,6 +8,7 @@ import { GoogleCalendarConnectionCard } from "@/components/GoogleCalendarConnect
 import { LogoutButton } from "@/components/LogoutButton";
 import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
+import { getAppName } from "@/lib/app-name";
 import { prisma } from "@/lib/db";
 import { canHoldAdminPrivileges } from "@/lib/privileges";
 import {
@@ -63,7 +64,7 @@ export default async function AccountPage({ searchParams }: PageProps) {
         />
         <Card className="max-w-xl">
           <h2 className="mb-2 text-lg font-semibold">{t("session")}</h2>
-          <p className="mb-4 text-sm text-stone-600">{t("signOutHelp")}</p>
+          <p className="mb-4 text-sm text-stone-600">{t("signOutHelp", { appName: getAppName() })}</p>
           <LogoutButton />
         </Card>
       </div>
