@@ -21,7 +21,13 @@ import { getEventTypes, eventKindAllowsChoreographyLinks, eventKindRestrictedToC
 import { getRehearsalAudience, isRehearsalParticipant } from "@/lib/groups";
 import { listedLocationInclude } from "@/lib/locations";
 import { canEditChoreography } from "@/lib/permissions";
-import { basicUserSelect, formatUserName, serializeBasicUser } from "@/lib/users";
+import {
+  basicUserSelect,
+  formatUserName,
+  nestedUserNameOrderBy,
+  serializeBasicUser,
+  userNameOrderBy,
+} from "@/lib/users";
 import { getServerTranslator } from "@/i18n/server";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -86,7 +92,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           include: {
             user: { select: basicUserSelect },
           },
-          orderBy: { user: { lastName: "asc" } },
+          orderBy: nestedUserNameOrderBy,
         },
         joinRequests: {
           include: {
@@ -104,7 +110,7 @@ export default async function EventDetailPage({ params }: PageProps) {
     canEdit
       ? prisma.user
           .findMany({
-            orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+            orderBy: userNameOrderBy,
             select: basicUserSelect,
           })
           .then((items) => items.map(serializeBasicUser))
@@ -154,7 +160,7 @@ export default async function EventDetailPage({ params }: PageProps) {
       ? await prisma.user.findMany({
           where: { id: { in: rehearsalAudience.memberIds } },
           select: basicUserSelect,
-          orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+          orderBy: userNameOrderBy,
         })
       : [];
 

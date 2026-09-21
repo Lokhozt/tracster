@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { getGroupForChoreography, serializeGroup, validateGroupMemberIds } from "@/lib/groups";
 import { canEditChoreography } from "@/lib/permissions";
+import { nestedUserNameOrderBy } from "@/lib/users";
 import { groupSchema } from "@/lib/validations";
 import { syncChoreographyRehearsals } from "@/lib/google-calendar";
 
@@ -51,7 +52,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     include: {
       members: {
         include: { user: { select: { id: true, firstName: true, lastName: true, email: true } } },
-        orderBy: [{ user: { lastName: "asc" } }, { user: { firstName: "asc" } }],
+        orderBy: nestedUserNameOrderBy,
       },
     },
   });

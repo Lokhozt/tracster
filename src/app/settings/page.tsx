@@ -13,7 +13,7 @@ import { prisma } from "@/lib/db";
 import { canManageAssociationGoogleCalendar, canManageSettings } from "@/lib/roles";
 import { getEventTypes } from "@/lib/event-types";
 import { getSiteSettings } from "@/lib/site-settings";
-import { adminUserSelect, serializeAdminUser } from "@/lib/users";
+import { adminUserSelect, serializeAdminUser, userNameOrderBy } from "@/lib/users";
 import {
   associationCalendarFollowUrl,
   connectionIdFor,
@@ -48,7 +48,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
     }),
     getSiteSettings(),
     prisma.user.findMany({
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+      orderBy: userNameOrderBy,
       select: adminUserSelect,
     }),
     getEventTypes(),

@@ -14,6 +14,7 @@ import {
 import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series";
 import { getGroupForChoreography } from "@/lib/groups";
+import { nestedUserNameOrderBy, sortUsersByName } from "@/lib/users";
 import { getServerTranslator, type ServerTranslator } from "@/i18n/server";
 
 const eventTypeSelect = {
@@ -40,7 +41,7 @@ const eventListInclude = {
     include: {
       user: { select: { id: true, firstName: true, lastName: true, email: true } },
     },
-    orderBy: { user: { lastName: "asc" as const } },
+    orderBy: nestedUserNameOrderBy,
   },
   joinRequests: {
     select: { userId: true },
@@ -264,11 +265,15 @@ export function serializeEvent(event: {
       id: link.choreography.id,
       title: link.choreography.title,
     })),
-    participants: event.participants.map(({ user }) => ({
-      id: user.id,
-      name: `${user.firstName} ${user.lastName}`.trim(),
-      email: user.email,
-    })),
+    participants: sortUsersByName(
+      event.participants.map(({ user }) => ({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        name: `${user.firstName} ${user.lastName}`.trim(),
+        email: user.email,
+      })),
+    ),
   };
 }
 

@@ -29,7 +29,7 @@ import { getChoreographyGroups, serializeGroup } from "@/lib/groups";
 import { getEventTypes } from "@/lib/event-types";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series";
-import { basicUserSelect, formatUserName, serializeBasicUser } from "@/lib/users";
+import { basicUserSelect, formatUserName, nestedUserNameOrderBy, serializeBasicUser, userNameOrderBy } from "@/lib/users";
 import { getVisibleChoreographyResources } from "@/lib/choreography-resources";
 import { getSiteSettings } from "@/lib/site-settings";
 import { serializeTag } from "@/lib/tags";
@@ -63,9 +63,11 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
       include: {
         choreographers: {
           include: { user: { select: basicUserSelect } },
+          orderBy: nestedUserNameOrderBy,
         },
         members: {
           include: { user: { select: basicUserSelect } },
+          orderBy: nestedUserNameOrderBy,
         },
         joinRequests: {
           include: { user: { select: basicUserSelect } },
@@ -110,7 +112,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
     }),
     canEdit
       ? prisma.user.findMany({
-          orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+          orderBy: userNameOrderBy,
           select: basicUserSelect,
         }).then((items) => items.map(serializeBasicUser))
       : Promise.resolve([]),

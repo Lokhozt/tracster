@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { CompetitorBadge, RoleBadge } from "@/components/UserForms";
 import { Card, Input, Label, Select } from "@/components/ui";
 import type { UserRole } from "@/generated/prisma/client";
-import { type AdminUser } from "@/lib/users";
+import { type AdminUser, compareUsersByName } from "@/lib/users";
 
 
 function formatDateOfBirth(value: string | null, locale: string): string {
@@ -49,18 +49,20 @@ export function UsersList({ users }: { users: AdminUser[] }) {
   const [competitorFilter, setCompetitorFilter] = useState<"ALL" | "YES" | "NO">("ALL");
 
   const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      if (roleFilter !== "ALL" && user.role !== roleFilter) {
-        return false;
-      }
-      if (competitorFilter === "YES" && !user.isCompetitor) {
-        return false;
-      }
-      if (competitorFilter === "NO" && user.isCompetitor) {
-        return false;
-      }
-      return matchesSearch(user, search);
-    });
+    return users
+      .filter((user) => {
+        if (roleFilter !== "ALL" && user.role !== roleFilter) {
+          return false;
+        }
+        if (competitorFilter === "YES" && !user.isCompetitor) {
+          return false;
+        }
+        if (competitorFilter === "NO" && user.isCompetitor) {
+          return false;
+        }
+        return matchesSearch(user, search);
+      })
+      .sort(compareUsersByName);
   }, [users, search, roleFilter, competitorFilter]);
 
   return (

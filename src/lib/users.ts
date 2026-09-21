@@ -11,17 +11,29 @@ export function formatUserName(user: UserNameFields): string {
   return `${user.firstName} ${user.lastName}`.trim();
 }
 
+export const userNameOrderBy = [
+  { firstName: "asc" as const },
+  { lastName: "asc" as const },
+];
+
+export const nestedUserNameOrderBy = [
+  { user: { firstName: "asc" as const } },
+  { user: { lastName: "asc" as const } },
+];
+
 export function compareUsersByName(
   a: { firstName?: string; lastName?: string; name?: string },
   b: { firstName?: string; lastName?: string; name?: string },
 ): number {
-  const last = (a.lastName || a.name || "").localeCompare(b.lastName || b.name || "", undefined, {
-    sensitivity: "base",
-  });
-  if (last !== 0) {
-    return last;
+  const first = (a.firstName || a.name || "").localeCompare(
+    b.firstName || b.name || "",
+    undefined,
+    { sensitivity: "base" },
+  );
+  if (first !== 0) {
+    return first;
   }
-  return (a.firstName || "").localeCompare(b.firstName || "", undefined, { sensitivity: "base" });
+  return (a.lastName || "").localeCompare(b.lastName || "", undefined, { sensitivity: "base" });
 }
 
 export function sortUsersByName<T extends { firstName?: string; lastName?: string; name?: string }>(

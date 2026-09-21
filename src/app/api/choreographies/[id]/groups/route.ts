@@ -8,6 +8,7 @@ import {
   validateGroupMemberIds,
 } from "@/lib/groups";
 import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
+import { nestedUserNameOrderBy } from "@/lib/users";
 import { groupSchema } from "@/lib/validations";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     include: {
       members: {
         include: { user: { select: { id: true, firstName: true, lastName: true, email: true } } },
-        orderBy: [{ user: { lastName: "asc" } }, { user: { firstName: "asc" } }],
+        orderBy: nestedUserNameOrderBy,
       },
     },
   });

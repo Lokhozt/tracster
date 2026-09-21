@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/db";
-import { basicUserSelect, formatUserName } from "@/lib/users";
+import { basicUserSelect, formatUserName, nestedUserNameOrderBy } from "@/lib/users";
 
 const groupInclude = {
   members: {
     include: { user: { select: basicUserSelect } },
-    orderBy: [{ user: { lastName: "asc" as const } }, { user: { firstName: "asc" as const } }],
+    orderBy: nestedUserNameOrderBy,
   },
 };
 

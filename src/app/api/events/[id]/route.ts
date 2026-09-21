@@ -12,6 +12,7 @@ import {
   isGenericEventKind,
 } from "@/lib/event-types";
 import { hasGlobalAccess } from "@/lib/roles";
+import { nestedUserNameOrderBy } from "@/lib/users";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
 import { getServerTranslator, localizeEventType } from "@/i18n/server";
@@ -35,7 +36,7 @@ async function getEvent(id: string) {
         include: {
           user: { select: { id: true, firstName: true, lastName: true, email: true } },
         },
-        orderBy: { user: { lastName: "asc" } },
+        orderBy: nestedUserNameOrderBy,
       },
     },
   });

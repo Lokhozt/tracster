@@ -7,7 +7,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getEventTypeByKind, getEventTypes, eventKindSkipsGenericCreatePermission } from "@/lib/event-types";
 import { canCreateEvent } from "@/lib/site-settings";
-import { basicUserSelect, serializeBasicUser } from "@/lib/users";
+import { basicUserSelect, serializeBasicUser, userNameOrderBy } from "@/lib/users";
 import { canEditChoreography } from "@/lib/permissions";
 import { hasGlobalAccess } from "@/lib/roles";
 import {
@@ -62,7 +62,7 @@ export default async function NewEventPage({ searchParams }: PageProps) {
 
   const [users, choreographies] = await Promise.all([
     prisma.user.findMany({
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+      orderBy: userNameOrderBy,
       select: basicUserSelect,
     }),
     prisma.choreography.findMany({

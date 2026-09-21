@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hiding events you are not participating in also hides them on the planning calendar and omits them from the image export.
 - Event cards show a green “I'm participating” or red “I'm not participating” label instead of a checkmark.
 - The choreography tag filter has been removed.
+- Members on the settings page, event and choreography participant lists, and add-participant pickers are ordered by first name.
 
 
 ## 1.0.4 - 21-09-2026

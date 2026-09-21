@@ -20,7 +20,7 @@ import { type GroupOption } from "@/components/GroupForms";
 import { CreateEventForm } from "@/components/EventForms";
 import { matchesSearch } from "@/lib/search";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
-import { compareUsersByName } from "@/lib/users";
+import { compareUsersByName, sortUsersByName } from "@/lib/users";
 import {
   addOneHour,
   dateTimePartsToDate,
@@ -56,7 +56,9 @@ export function AssignMemberForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const availableUsers = users.filter((user) => !assignedUserIds.includes(user.id));
+  const availableUsers = sortUsersByName(
+    users.filter((user) => !assignedUserIds.includes(user.id)),
+  );
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -124,7 +126,9 @@ export function AssignChoreographerForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const availableUsers = users.filter((user) => !assignedUserIds.includes(user.id));
+  const availableUsers = sortUsersByName(
+    users.filter((user) => !assignedUserIds.includes(user.id)),
+  );
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();

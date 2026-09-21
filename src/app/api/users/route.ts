@@ -10,6 +10,7 @@ import {
   basicUserSelect,
   serializeAdminUser,
   serializeBasicUser,
+  userNameOrderBy,
 } from "@/lib/users";
 
 export async function GET() {
@@ -20,7 +21,7 @@ export async function GET() {
 
   if (await canManageUsers(user.id)) {
     const users = await prisma.user.findMany({
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+      orderBy: userNameOrderBy,
       select: adminUserSelect,
     });
 
@@ -28,7 +29,7 @@ export async function GET() {
   }
 
   const users = await prisma.user.findMany({
-    orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+    orderBy: userNameOrderBy,
     select: basicUserSelect,
   });
 

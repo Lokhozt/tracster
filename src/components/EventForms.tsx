@@ -18,6 +18,7 @@ import {
 import { ParticipantConflictWarnings } from "@/components/ParticipantConflictWarnings";
 import { RehearsalAudienceSelect, type GroupOption } from "@/components/GroupForms";
 import { Button, Input, Label, Select, Textarea } from "@/components/ui";
+import { sortUsersByName } from "@/lib/users";
 import { ParticipationSettingsFields } from "@/components/ParticipationSettingsFields";
 import {
   addOneHour,
@@ -205,9 +206,11 @@ export function CreateEventForm({
   const allowsRepeat = eventKindAllowsRepeat(eventType?.kind ?? null);
   const allowsChoreographyLinks = eventKindAllowsChoreographyLinks(eventType?.kind ?? null);
   const groupOptions = groups.length > 0 ? groups : fetchedGroups;
-  const participantChoices = eventKindRestrictedToCompetitors(eventType?.kind ?? null)
-    ? (participantOptions ?? []).filter((user) => user.isCompetitor)
-    : participantOptions;
+  const participantChoices = sortUsersByName(
+    eventKindRestrictedToCompetitors(eventType?.kind ?? null)
+      ? (participantOptions ?? []).filter((user) => user.isCompetitor)
+      : participantOptions ?? [],
+  );
 
   useEffect(() => {
     if (!eventKindRestrictedToCompetitors(eventType?.kind ?? null)) {
@@ -457,7 +460,7 @@ export function CreateEventForm({
           placeholder={generic ? t("optionalEventDetails") : t("optionalNotes")}
         />
       </div>
-      {generic && participantChoices && participantChoices.length > 0 && (
+      {generic && participantChoices.length > 0 && (
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium text-stone-700">
             {t("participantsOptional")}
@@ -720,12 +723,13 @@ export function EventParticipantsList({
   canEdit: boolean;
 }) {
   const t = useTranslations("Components");
+  const ordered = sortUsersByName(participants);
   return (
     <ul className="space-y-2">
-      {participants.length === 0 ? (
+      {ordered.length === 0 ? (
         <li className="text-sm text-stone-600">{t("noAssignedParticipants")}</li>
       ) : (
-        participants.map((participant) => (
+        ordered.map((participant) => (
           <li
             key={participant.id}
             className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-stone-100 px-3 py-2"
@@ -762,7 +766,9 @@ export function AssignEventParticipantForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const availableUsers = users.filter((user) => !assignedUserIds.includes(user.id));
+  const availableUsers = sortUsersByName(
+    users.filter((user) => !assignedUserIds.includes(user.id)),
+  );
 
   async function handleSubmit(formEvent: React.FormEvent) {
     formEvent.preventDefault();

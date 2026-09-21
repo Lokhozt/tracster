@@ -10,7 +10,7 @@ import {
   getUserUnavailabilityInRange,
   serializeUnavailability,
 } from "@/lib/unavailability";
-import { formatUserName } from "@/lib/users";
+import { formatUserName, userNameOrderBy } from "@/lib/users";
 import { getSiteSettings } from "@/lib/site-settings";
 
 export default async function UnavailabilityPage() {
@@ -30,7 +30,7 @@ export default async function UnavailabilityPage() {
     getSiteSettings(),
     admin
       ? prisma.user.findMany({
-          orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+          orderBy: userNameOrderBy,
           select: { id: true, firstName: true, lastName: true },
         })
       : Promise.resolve([]),

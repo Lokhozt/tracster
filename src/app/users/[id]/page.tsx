@@ -16,7 +16,7 @@ import { DeleteUserButton } from "@/components/DeleteUserButton";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canManageUsers, isOwner } from "@/lib/roles";
-import { adminUserSelect, serializeAdminUser } from "@/lib/users";
+import { adminUserSelect, serializeAdminUser, userNameOrderBy } from "@/lib/users";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -41,7 +41,7 @@ export default async function UserDetailPage({ params }: PageProps) {
       select: adminUserSelect,
     }),
     prisma.user.findMany({
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+      orderBy: userNameOrderBy,
       select: adminUserSelect,
     }),
     isOwner(currentUser.id),
