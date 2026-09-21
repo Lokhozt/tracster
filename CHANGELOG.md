@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed registering password leaking into the registering email field
+- Linking an existing representation to a choreography no longer lists representations that have already ended.
 
 
 ## 1.0.3 - 17-09-2026

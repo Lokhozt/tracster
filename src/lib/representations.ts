@@ -69,24 +69,35 @@ export async function getLinkableRepresentations(
 
   const excludeIds = linkedIds.map((item) => item.eventId);
 
+  const now = new Date();
   const representations = await prisma.event.findMany({
     where: {
       ...representationTypeWhere,
       id: excludeIds.length > 0 ? { notIn: excludeIds } : undefined,
-      ...(globalAccess
-        ? {}
-        : {
-            OR: [
-              { createdById: userId },
+      AND: [
+        {
+          OR: [
+            { endsAt: { gte: now } },
+            { AND: [{ endsAt: null }, { startsAt: { gte: now } }] },
+          ],
+        },
+        ...(globalAccess
+          ? []
+          : [
               {
-                choreographies: {
-                  some: {
-                    choreography: choreographyAccessFilter(userId),
+                OR: [
+                  { createdById: userId },
+                  {
+                    choreographies: {
+                      some: {
+                        choreography: choreographyAccessFilter(userId),
+                      },
+                    },
                   },
-                },
+                ],
               },
-            ],
-          }),
+            ]),
+      ],
     },
     orderBy: { startsAt: "desc" },
     select: {

@@ -38,6 +38,7 @@
       "Built-in event types cannot be deleted.": "Les types d’événements intégrés ne peuvent pas être supprimés.",
       "This event type is in use and cannot be deleted.": "Ce type d’événement est utilisé et ne peut pas être supprimé.",
       "A choreography must have at least one choreographer. Add another choreographer before removing this one.": "Une chorégraphie doit avoir au moins un chorégraphe. Ajoutez-en un autre avant de retirer celui-ci.",
+      "Past representations cannot be linked.": "Les représentations passées ne peuvent pas être associées.",
       "Rehearsal event type is not configured.": "Le type d’événement Répétition n’est pas configuré.",
       "Representation event type is not configured.": "Le type d’événement Représentation n’est pas configuré.",
       "Add at least one choreography.": "Ajoutez au moins une chorégraphie.",

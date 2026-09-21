@@ -58,11 +58,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
   if (parsed.data.mode === "link") {
     const representation = await prisma.event.findUnique({
       where: { id: parsed.data.representationId },
-      select: { id: true, type: { select: { kind: true } } },
+      select: { id: true, startsAt: true, endsAt: true, type: { select: { kind: true } } },
     });
 
     if (!representation || representation.type.kind !== "REPRESENTATION") {
       return notFound("Representation");
+    }
+
+    const representationEnd = representation.endsAt ?? representation.startsAt;
+    if (representationEnd < new Date()) {
+      return jsonError("Past representations cannot be linked.");
     }
 
     if (!(await canEditEvent(parsed.data.representationId, user.id))) {
