@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 1.0.4 [Unreleased]
+## 1.0.4 -  21-09-2026
 
 ### Added
 
@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The choreography page uses a settings-style section menu. Overview shows the title, description, choreographers, participants (A–Z), and tags. Resources, groups, representations, demonstrations, rehearsals, editing, and admin actions each have their own section.
+
+- Update choreography cards
 
 ### Fixed
 - Fixed registering password leaking into the registering email field

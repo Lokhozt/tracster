@@ -19,7 +19,7 @@ import {
 import { hasGlobalAccess } from "@/lib/roles";
 import { canCreateChoreography, getSiteSettings } from "@/lib/site-settings";
 import { serializeTag } from "@/lib/tags";
-import { basicUserSelect, formatUserName } from "@/lib/users";
+import { basicUserSelect, compareUsersByName, formatUserName } from "@/lib/users";
 
 function isUserChoreographer(
   choreography: {
@@ -89,14 +89,18 @@ export default async function ChoreographiesPage() {
     prisma.choreography.findMany({
       where: globalAccess ? visibleChoreographyWhere : listedChoreographyWhere(user.id),
       include: {
-        createdBy: { select: basicUserSelect },
         choreographers: {
-          where: { userId: user.id },
-          select: { userId: true },
+          include: { user: { select: basicUserSelect } },
         },
         members: {
           where: { userId: user.id },
           select: { userId: true },
+        },
+        rehearsals: {
+          where: { type: { kind: "REHEARSAL" }, startsAt: { gte: new Date() } },
+          orderBy: { startsAt: "asc" },
+          take: 1,
+          select: { startsAt: true },
         },
         eventLinks: {
           where: { event: { type: { kind: "REPRESENTATION" } } },
@@ -115,7 +119,7 @@ export default async function ChoreographiesPage() {
           include: { tag: { select: { id: true, name: true, color: true } } },
           orderBy: { tag: { name: "asc" } },
         },
-        _count: { select: { members: true, rehearsals: true } },
+        _count: { select: { members: true } },
       },
       orderBy: { updatedAt: "desc" },
     }),
@@ -172,10 +176,12 @@ export default async function ChoreographiesPage() {
             id: choreography.id,
             title: choreography.title,
             description: choreography.description,
-            createdByName: formatUserName(choreography.createdBy),
-            updatedAt: choreography.updatedAt.toISOString(),
+            choreographerNames: [...choreography.choreographers]
+              .map(({ user }) => user)
+              .sort(compareUsersByName)
+              .map(formatUserName),
+            nextRehearsalAt: choreography.rehearsals[0]?.startsAt.toISOString() ?? null,
             memberCount: choreography._count.members,
-            rehearsalCount: choreography._count.rehearsals,
             representationIds: choreography.eventLinks.map((link) => link.event.id),
             isChoreographer,
             isInvolved:

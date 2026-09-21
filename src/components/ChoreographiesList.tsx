@@ -16,10 +16,9 @@ export type ChoreographyListItem = {
   id: string;
   title: string;
   description: string | null;
-  createdByName: string;
-  updatedAt: string;
+  choreographerNames: string[];
+  nextRehearsalAt: string | null;
   memberCount: number;
-  rehearsalCount: number;
   representationIds: string[];
   isChoreographer: boolean;
   isInvolved: boolean;
@@ -188,7 +187,16 @@ export function ChoreographiesList({
                       <TagBubbles tags={choreography.tags} className="mt-2" />
                     )}
                     <p className="mt-3 text-xs text-stone-500">
-                      {t("createdUpdated", {name: choreography.createdByName, date: dateFormatter.format(new Date(choreography.updatedAt))})}
+                      {t("choreographyBy", {
+                        names: choreography.choreographerNames.join(", "),
+                      })}
+                    </p>
+                    <p className="mt-1 text-xs text-stone-500">
+                      {choreography.nextRehearsalAt
+                        ? t("nextRehearsal", {
+                            date: dateFormatter.format(new Date(choreography.nextRehearsalAt)),
+                          })
+                        : t("noRehearsalScheduled")}
                     </p>
                     {!choreography.isInvolved && (
                       <p className="mt-2 text-xs font-medium text-stone-500">
@@ -198,7 +206,6 @@ export function ChoreographiesList({
                   </div>
                   <div className="shrink-0 text-sm text-stone-600 sm:text-right">
                     <p>{t("participantCount", {count: choreography.memberCount})}</p>
-                    <p>{t("rehearsalCount", {count: choreography.rehearsalCount})}</p>
                   </div>
                 </div>
               </Card>
