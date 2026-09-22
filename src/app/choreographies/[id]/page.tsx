@@ -155,7 +155,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
         <div className="space-y-6">
           <div className="space-y-3">
             {choreography.description && (
-              <p className="text-stone-600">{choreography.description}</p>
+              <p className="whitespace-pre-wrap text-stone-600">{choreography.description}</p>
             )}
             <ChoreographyTagsEditor
               choreographyId={id}

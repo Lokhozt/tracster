@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed planing not starting at 9am due to a Locales issue
+- Line breaks typed in a choreography description are kept when the description is displayed on the choreography page.
 
 ## 1.0.4 - 21-09-2026
 
