@@ -125,6 +125,114 @@ function hasOverlappingSessionsAtDifferentLocations(sessions: InternalPlacement[
   return false;
 }
 
+function placementScore(
+  placement: InternalPlacement,
+  problem: SchedulingProblem,
+): number {
+  const item = problem.items[placement.itemIndex];
+  const interval = { start: placement.start, end: placement.end };
+  let score = 0;
+
+  if (!constraintRespected(item, placement)) {
+    score -= CONSTRAINT_PENALTY;
+  }
+  if (problem.preferredLocationIds.includes(placement.locationId)) {
+    score += PREFERRED_LOCATION_BONUS;
+  }
+
+  const startDate = new Date(placement.start);
+  if (startDate.getHours() < 9) {
+    score -= BEFORE_NINE_PENALTY;
+  }
+
+  const endDate = new Date(placement.end);
+  if (endDate.getHours() > 20 || (endDate.getHours() === 20 && endDate.getMinutes() > 0)) {
+    score -= AFTER_TWENTY_PENALTY;
+  }
+  if (intervalsOverlap(interval, middayBreakWindow(startDate))) {
+    score -= MIDDAY_OVERLAP_PENALTY;
+  }
+
+  for (const choreographer of item.choreographers) {
+    if (personBusy(choreographer, interval)) {
+      score -= CHOREOGRAPHER_UNAVAILABLE;
+    }
+  }
+  for (const participant of item.participants) {
+    if (personBusy(participant, interval)) {
+      score -= PARTICIPANT_UNAVAILABLE;
+    }
+  }
+
+  return score;
+}
+
+function participantScore(
+  participant: SchedulingPerson,
+  placements: InternalPlacement[],
+  problem: SchedulingProblem,
+): number {
+  if (!participant.availableInPeriod) {
+    return 0;
+  }
+
+  const sessions = participantSessions(placements, problem.items, participant.id);
+  let score = hasOverlappingSessionsAtDifferentLocations(sessions)
+    ? -PARTICIPANT_LOCATION_OVERLAP_PENALTY
+    : 0;
+  const byDay = new Map<string, InternalPlacement[]>();
+  for (const session of sessions) {
+    const key = localDayKey(new Date(session.start));
+    const list = byDay.get(key) ?? [];
+    list.push(session);
+    byDay.set(key, list);
+  }
+
+  for (const [dayKey, daySessions] of byDay) {
+    daySessions.sort((a, b) => a.start - b.start);
+    const breakWindow = middayBreakWindow(parseDayKey(dayKey));
+    let streak = 1;
+    let maxStreak = 1;
+
+    for (let index = 1; index < daySessions.length; index += 1) {
+      const previous = daySessions[index - 1];
+      const current = daySessions[index];
+      const gap = current.start - previous.end;
+
+      if (gap < 0) {
+        streak = 1;
+      } else if (gap <= problem.restMs) {
+        score += CONSECUTIVE_BONUS;
+        streak += 1;
+        maxStreak = Math.max(maxStreak, streak);
+      } else {
+        const isMiddayBreak =
+          previous.end <= breakWindow.start && current.start >= breakWindow.end;
+        if (!isMiddayBreak) {
+          score -= HOLE_PENALTY;
+        }
+        streak = 1;
+      }
+    }
+
+    if (maxStreak > 3) {
+      score -= LONG_STREAK_PENALTY;
+    }
+
+    const lunch = lunchWindow(parseDayKey(dayKey));
+    const covered = daySessions.reduce((total, session) => {
+      const overlapStart = Math.max(session.start, lunch.start);
+      const overlapEnd = Math.min(session.end, lunch.end);
+      return total + Math.max(0, overlapEnd - overlapStart);
+    }, 0);
+    if (covered >= lunch.end - lunch.start) {
+      score -= LUNCH_PENALTY;
+    }
+  }
+
+  return score;
+}
+
 /**
  * Hours (rounded up) between the first bookable minute of a day and its first rehearsal.
  * Without this the score is flat across the whole 9h-20h window, so packing the
@@ -159,21 +267,57 @@ function lateStartHours(placements: InternalPlacement[], problem: SchedulingProb
   return hours;
 }
 
+/**
+ * Exact score change caused by appending one placement. Search nodes already know
+ * their current score, so only the new rehearsal and its affected participants
+ * need to be evaluated.
+ */
+export function scorePlacementDelta(
+  placements: InternalPlacement[],
+  placement: InternalPlacement,
+  problem: SchedulingProblem,
+): number {
+  const item = problem.items[placement.itemIndex];
+  const withPlacement = [...placements, placement];
+  const participantIds = new Set(item.participants.map((participant) => participant.id));
+  let delta = placementScore(placement, problem);
+
+  for (const participant of item.participants) {
+    if (!participantIds.delete(participant.id)) {
+      continue;
+    }
+    delta -= participantScore(participant, placements, problem);
+    delta += participantScore(participant, withPlacement, problem);
+  }
+
+  delta +=
+    LATE_DAY_START_PENALTY *
+    (lateStartHours(placements, problem) -
+      lateStartHours(withPlacement, problem));
+  return delta;
+}
+
 export function scoreSchedule(
   placements: InternalPlacement[],
   problem: SchedulingProblem,
   t: ServerTranslator = englishCaveatTranslator,
 ): { score: number; caveats: ScheduleCaveat[] } {
-  let score = 0;
   const caveats: ScheduleCaveat[] = [];
-  const { items, restMs } = problem;
+  let score = placements.reduce(
+    (total, placement) => total + placementScore(placement, problem),
+    0,
+  );
+  score -= LATE_DAY_START_PENALTY * lateStartHours(placements, problem);
+  for (const participant of uniqueParticipants(problem.items)) {
+    score += participantScore(participant, placements, problem);
+  }
 
+  // Caveats are intentionally produced only for completed candidates. Search
+  // uses scorePlacementDelta and avoids allocating translated messages.
   for (const placement of placements) {
-    const item = items[placement.itemIndex];
+    const item = problem.items[placement.itemIndex];
     const interval = { start: placement.start, end: placement.end };
-
     if (!constraintRespected(item, placement)) {
-      score -= CONSTRAINT_PENALTY;
       caveats.push({
         kind: "constraint",
         message: t("caveats.constraint", {
@@ -183,27 +327,8 @@ export function scoreSchedule(
       });
     }
 
-    if (problem.preferredLocationIds.includes(placement.locationId)) {
-      score += PREFERRED_LOCATION_BONUS;
-    }
-
-    const startDate = new Date(placement.start);
-    if (startDate.getHours() < 9) {
-      score -= BEFORE_NINE_PENALTY;
-    }
-
-    const endDate = new Date(placement.end);
-    if (endDate.getHours() > 20 || (endDate.getHours() === 20 && endDate.getMinutes() > 0)) {
-      score -= AFTER_TWENTY_PENALTY;
-    }
-
-    if (intervalsOverlap(interval, middayBreakWindow(new Date(placement.start)))) {
-      score -= MIDDAY_OVERLAP_PENALTY;
-    }
-
     for (const choreographer of item.choreographers) {
       if (personBusy(choreographer, interval)) {
-        score -= CHOREOGRAPHER_UNAVAILABLE;
         caveats.push({
           kind: "choreographer_unavailable",
           message: t("caveats.choreographerUnavailable", {
@@ -218,7 +343,6 @@ export function scoreSchedule(
 
     for (const participant of item.participants) {
       if (personBusy(participant, interval)) {
-        score -= PARTICIPANT_UNAVAILABLE;
         caveats.push({
           kind: "participant_unavailable",
           message: t("caveats.participantUnavailable", {
@@ -229,80 +353,6 @@ export function scoreSchedule(
           userId: participant.id,
           userName: participant.name,
         });
-      }
-    }
-  }
-
-  score -= LATE_DAY_START_PENALTY * lateStartHours(placements, problem);
-
-  const participants = uniqueParticipants(items);
-
-  for (const participant of participants) {
-    if (!participant.availableInPeriod) {
-      continue;
-    }
-
-    const sessions = participantSessions(placements, items, participant.id);
-    if (hasOverlappingSessionsAtDifferentLocations(sessions)) {
-      score -= PARTICIPANT_LOCATION_OVERLAP_PENALTY;
-    }
-    const byDay = new Map<string, InternalPlacement[]>();
-    for (const session of sessions) {
-      const key = localDayKey(new Date(session.start));
-      const list = byDay.get(key) ?? [];
-      list.push(session);
-      byDay.set(key, list);
-    }
-
-    for (const [dayKey, daySessions] of byDay) {
-      daySessions.sort((a, b) => a.start - b.start);
-      const breakWindow = middayBreakWindow(parseDayKey(dayKey));
-      let streak = 1;
-      let maxStreak = 1;
-
-      for (let index = 1; index < daySessions.length; index += 1) {
-        const previous = daySessions[index - 1];
-        const current = daySessions[index];
-        const gap = current.start - previous.end;
-
-        if (gap < 0) {
-          streak = 1;
-        } else if (gap <= restMs) {
-          score += CONSECUTIVE_BONUS;
-          streak += 1;
-          maxStreak = Math.max(maxStreak, streak);
-        } else {
-          // Freeing the protected midday break is intended, not an idle hole.
-          const isMiddayBreak =
-            previous.end <= breakWindow.start && current.start >= breakWindow.end;
-          if (!isMiddayBreak) {
-            score -= HOLE_PENALTY;
-          }
-          streak = 1;
-        }
-      }
-
-      if (maxStreak > 3) {
-        score -= LONG_STREAK_PENALTY;
-      }
-
-      const lunch = lunchWindow(parseDayKey(dayKey));
-      const lunchBusy = daySessions.some((session) =>
-        intervalsOverlap({ start: session.start, end: session.end }, lunch),
-      );
-      if (lunchBusy) {
-        const freeLunch = lunch.end - lunch.start;
-        let covered = 0;
-        for (const session of daySessions) {
-          const overlapStart = Math.max(session.start, lunch.start);
-          const overlapEnd = Math.min(session.end, lunch.end);
-          if (overlapEnd > overlapStart) {
-            covered += overlapEnd - overlapStart;
-          }
-        }
-        if (covered >= freeLunch) {
-          score -= LUNCH_PENALTY;
-        }
       }
     }
   }

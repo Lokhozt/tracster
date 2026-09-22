@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 1.1.0 - 22-09-2026
 
 ### Changed
-
+- Improvement to planning algorithm:
+    -Scores a new rehearsal as a delta instead of rescoring the whole partial plan.
+    -Builds room/person occupancy only for the ~300 beam survivors.
+    -Prefers start times that pack against existing rehearsals and lunch/midday edges, then samples the rest.
+    -Caps placements per item and spreads them across locations and days.
+    -Places constrained, high-overlap items first.
+    -Deduplicates identical states and keeps more structurally different partials in the beam.
 
 ### Fixed
 - Fixed planing not starting at 9am due to a Locales issue

@@ -1,10 +1,15 @@
 import {
+  localDayKey,
   mergeIntervals,
   overlapsAny,
   snapUpToSlot,
   subtractIntervals,
 } from "@/lib/scheduling/intervals";
-import { scoreSchedule, type InternalPlacement } from "@/lib/scheduling/score";
+import {
+  scorePlacementDelta,
+  scoreSchedule,
+  type InternalPlacement,
+} from "@/lib/scheduling/score";
 import type { ServerTranslator } from "@/i18n/server";
 import type { IntervalMs, SchedulingCandidate, SchedulingProblem } from "@/lib/scheduling/types";
 
@@ -15,26 +20,54 @@ const SLOT_MS = 5 * 60 * 1000;
 const MAX_EXPANSIONS = 12_000;
 const MAX_OPEN = 300;
 const MAX_STARTS_PER_ITEM = 48;
+const MAX_PLACEMENTS_PER_ITEM = 72;
 const CANDIDATE_COUNT = 3;
+const MAX_SIMILAR_PER_LAYER = 2;
 /** How far a rehearsal must move before the plan counts as a different option. */
 const DISTINCT_START_TOLERANCE_MS = 60 * 60 * 1000;
 
 type SearchNode = {
   assigned: InternalPlacement[];
-  nextIndex: number;
   score: number;
+  locationBlocked: Map<string, IntervalMs[]>;
+  participantBlocked: Map<string, IntervalMs[]>;
 };
 
 function itemOrder(problem: SchedulingProblem): number[] {
+  const participantDemand = new Map<string, number>();
+  for (const item of problem.items) {
+    for (const participant of item.participants) {
+      participantDemand.set(
+        participant.id,
+        (participantDemand.get(participant.id) ?? 0) + 1,
+      );
+    }
+  }
+
   return problem.items
     .map((_, index) => index)
     .sort((a, b) => {
       const itemA = problem.items[a];
       const itemB = problem.items[b];
-      const locA = itemA.allowedLocationIds?.length ?? 99;
-      const locB = itemB.allowedLocationIds?.length ?? 99;
-      if (locA !== locB) {
-        return locA - locB;
+      const domainA =
+        (itemA.allowedLocationIds?.length ?? problem.windows.length) *
+        (itemA.allowedWindows?.length ?? 1);
+      const domainB =
+        (itemB.allowedLocationIds?.length ?? problem.windows.length) *
+        (itemB.allowedWindows?.length ?? 1);
+      if (domainA !== domainB) {
+        return domainA - domainB;
+      }
+      const demandA = itemA.participants.reduce(
+        (total, participant) => total + (participantDemand.get(participant.id) ?? 0),
+        0,
+      );
+      const demandB = itemB.participants.reduce(
+        (total, participant) => total + (participantDemand.get(participant.id) ?? 0),
+        0,
+      );
+      if (demandA !== demandB) {
+        return demandB - demandA;
       }
       if (itemB.durationMs !== itemA.durationMs) {
         return itemB.durationMs - itemA.durationMs;
@@ -48,42 +81,23 @@ function withRest(placement: InternalPlacement, restMs: number): IntervalMs {
   return { start: placement.start - restMs, end: placement.end + restMs };
 }
 
-function locationOccupied(
-  assigned: InternalPlacement[],
-  locationId: string,
-  restMs: number,
-): IntervalMs[] {
-  const blocked = assigned
-    .filter((placement) => placement.locationId === locationId)
-    .map((placement) => withRest(placement, restMs));
-  return mergeIntervals(blocked);
-}
-
 function participantOccupied(
   problem: SchedulingProblem,
-  assigned: InternalPlacement[],
+  participantBlocked: Map<string, IntervalMs[]>,
   itemIndex: number,
 ): IntervalMs[] {
-  const participantIds = new Set(
-    problem.items[itemIndex].participants.map((person) => person.id),
-  );
-
-  if (participantIds.size === 0) {
-    return [];
+  const blocked: IntervalMs[] = [];
+  for (const participant of problem.items[itemIndex].participants) {
+    blocked.push(...(participantBlocked.get(participant.id) ?? []));
   }
-
-  const blocked = assigned
-    .filter((placement) =>
-      problem.items[placement.itemIndex].participants.some((person) =>
-        participantIds.has(person.id),
-      ),
-    )
-    .map((placement) => withRest(placement, problem.restMs));
-
   return mergeIntervals(blocked);
 }
 
-function possibleStarts(free: IntervalMs, durationMs: number): number[] {
+function possibleStarts(
+  free: IntervalMs,
+  durationMs: number,
+  preferredStarts: number[],
+): number[] {
   const latest = free.end - durationMs;
   if (latest < free.start) {
     return [];
@@ -100,35 +114,135 @@ function possibleStarts(free: IntervalMs, durationMs: number): number[] {
     return starts;
   }
 
-  const step = Math.ceil(starts.length / MAX_STARTS_PER_ITEM);
+  // Keep starts that pack against another rehearsal or a meaningful time
+  // boundary before filling the remaining quota with an even sample.
+  const available = new Set(starts);
   const sampled: number[] = [];
-  for (let index = 0; index < starts.length; index += step) {
-    sampled.push(starts[index]);
+  const selected = new Set<number>();
+  for (const preferred of preferredStarts) {
+    const snapped = snapUpToSlot(preferred, SLOT_MS);
+    if (available.has(snapped) && !selected.has(snapped)) {
+      sampled.push(snapped);
+      selected.add(snapped);
+      if (sampled.length >= MAX_STARTS_PER_ITEM) {
+        return sampled;
+      }
+    }
   }
-  const last = starts[starts.length - 1];
-  if (sampled[sampled.length - 1] !== last) {
-    sampled.push(last);
+
+  const remaining = starts.filter((start) => !selected.has(start));
+  const quota = MAX_STARTS_PER_ITEM - sampled.length;
+  for (let index = 0; index < quota; index += 1) {
+    const position =
+      quota === 1
+        ? 0
+        : Math.round((index * (remaining.length - 1)) / (quota - 1));
+    const start = remaining[position];
+    if (start !== undefined && !selected.has(start)) {
+      sampled.push(start);
+      selected.add(start);
+    }
   }
   return sampled;
 }
 
-function successorPlacements(
+function preferredStarts(
   problem: SchedulingProblem,
   assigned: InternalPlacement[],
+  itemIndex: number,
+  free: IntervalMs,
+): number[] {
+  const participantIds = new Set(
+    problem.items[itemIndex].participants.map((participant) => participant.id),
+  );
+  const starts = [free.start, free.end - problem.items[itemIndex].durationMs];
+
+  for (const placement of assigned) {
+    if (
+      problem.items[placement.itemIndex].participants.some((participant) =>
+        participantIds.has(participant.id),
+      )
+    ) {
+      starts.push(
+        placement.end + problem.restMs,
+        placement.start - problem.restMs - problem.items[itemIndex].durationMs,
+      );
+    }
+  }
+
+  const day = new Date(free.start);
+  for (const [hour, minute] of [[12, 0], [12, 30], [14, 0]] as const) {
+    const boundary = new Date(
+      day.getFullYear(),
+      day.getMonth(),
+      day.getDate(),
+      hour,
+      minute,
+    ).getTime();
+    starts.push(boundary, boundary - problem.items[itemIndex].durationMs);
+  }
+  return starts;
+}
+
+function limitPlacements(placements: InternalPlacement[]): InternalPlacement[] {
+  if (placements.length <= MAX_PLACEMENTS_PER_ITEM) {
+    return placements;
+  }
+
+  // Round-robin across location/day domains so a large early window cannot
+  // consume the complete value budget and erase otherwise viable alternatives.
+  const groups = new Map<string, InternalPlacement[]>();
+  for (const placement of placements) {
+    const key = `${placement.locationId}:${localDayKey(new Date(placement.start))}`;
+    const group = groups.get(key) ?? [];
+    group.push(placement);
+    groups.set(key, group);
+  }
+
+  const limited: InternalPlacement[] = [];
+  let offset = 0;
+  while (limited.length < MAX_PLACEMENTS_PER_ITEM) {
+    let added = false;
+    for (const group of groups.values()) {
+      const placement = group[offset];
+      if (placement) {
+        limited.push(placement);
+        added = true;
+        if (limited.length >= MAX_PLACEMENTS_PER_ITEM) {
+          break;
+        }
+      }
+    }
+    if (!added) {
+      break;
+    }
+    offset += 1;
+  }
+  return limited;
+}
+
+function successorPlacements(
+  problem: SchedulingProblem,
+  node: SearchNode,
   itemIndex: number,
 ): InternalPlacement[] {
   const item = problem.items[itemIndex];
   const allowed = new Set(item.allowedLocationIds ?? problem.windows.map((window) => window.locationId));
-  const participantBlocked = participantOccupied(problem, assigned, itemIndex);
+  const participantBlocked = participantOccupied(
+    problem,
+    node.participantBlocked,
+    itemIndex,
+  );
   const rested: InternalPlacement[] = [];
   const crowded: InternalPlacement[] = [];
+  const seen = new Set<string>();
 
   for (const window of problem.windows) {
     if (!allowed.has(window.locationId)) {
       continue;
     }
 
-    const occupied = locationOccupied(assigned, window.locationId, problem.restMs);
+    const occupied = node.locationBlocked.get(window.locationId) ?? [];
     const freeSlots = subtractIntervals({ start: window.start, end: window.end }, occupied);
     const constrained =
       item.allowedWindows && item.allowedWindows.length > 0
@@ -143,7 +257,16 @@ function successorPlacements(
     const searchSlots = constrained.length > 0 ? constrained : freeSlots;
 
     for (const free of searchSlots) {
-      for (const start of possibleStarts(free, item.durationMs)) {
+      for (const start of possibleStarts(
+        free,
+        item.durationMs,
+        preferredStarts(problem, node.assigned, itemIndex, free),
+      )) {
+        const key = `${window.locationId}:${start}`;
+        if (seen.has(key)) {
+          continue;
+        }
+        seen.add(key);
         const placement = {
           itemIndex,
           locationId: window.locationId,
@@ -156,7 +279,7 @@ function successorPlacements(
     }
   }
 
-  return rested.length > 0 ? rested : crowded;
+  return limitPlacements(rested.length > 0 ? rested : crowded);
 }
 
 type PlanShape = Array<{ key: string; locationId: string; start: number }>;
@@ -192,6 +315,116 @@ function samePlan(a: PlanShape, b: PlanShape): boolean {
       Math.abs(placement.start - other.start) < DISTINCT_START_TOLERANCE_MS
     );
   });
+}
+
+function extendNode(
+  node: SearchNode,
+  placement: InternalPlacement,
+  problem: SchedulingProblem,
+): SearchNode {
+  return {
+    assigned: [...node.assigned, placement],
+    score:
+      node.score +
+      scorePlacementDelta(node.assigned, placement, problem),
+    // Most children are discarded by the beam. Build these indexes only for
+    // survivors in hydrateNode instead of copying maps for every successor.
+    locationBlocked: new Map(),
+    participantBlocked: new Map(),
+  };
+}
+
+function hydrateNode(node: SearchNode, problem: SchedulingProblem): SearchNode {
+  const locationBlocked = new Map<string, IntervalMs[]>();
+  const participantBlocked = new Map<string, IntervalMs[]>();
+
+  for (const placement of node.assigned) {
+    const blocked = withRest(placement, problem.restMs);
+    locationBlocked.set(placement.locationId, [
+      ...(locationBlocked.get(placement.locationId) ?? []),
+      blocked,
+    ]);
+    const participantIds = new Set(
+      problem.items[placement.itemIndex].participants.map(
+        (participant) => participant.id,
+      ),
+    );
+    for (const participantId of participantIds) {
+      participantBlocked.set(participantId, [
+        ...(participantBlocked.get(participantId) ?? []),
+        blocked,
+      ]);
+    }
+  }
+
+  for (const [key, intervals] of locationBlocked) {
+    locationBlocked.set(key, mergeIntervals(intervals));
+  }
+  for (const [key, intervals] of participantBlocked) {
+    participantBlocked.set(key, mergeIntervals(intervals));
+  }
+  return { ...node, locationBlocked, participantBlocked };
+}
+
+function exactStateKey(node: SearchNode): string {
+  return node.assigned
+    .map(
+      (placement) =>
+        `${placement.itemIndex}:${placement.locationId}:${placement.start}`,
+    )
+    .sort()
+    .join("|");
+}
+
+function coarseStateKey(node: SearchNode, problem: SchedulingProblem): string {
+  return planShape(node.assigned, problem)
+    .map(
+      (placement) =>
+        `${placement.key}:${placement.locationId}:${Math.floor(
+          placement.start / DISTINCT_START_TOLERANCE_MS,
+        )}`,
+    )
+    .join("|");
+}
+
+/**
+ * Prefer genuinely different partial plans. If there are not enough diverse
+ * states to fill the beam, retain the best remaining exact states as fallback.
+ */
+function pruneLayer(nodes: SearchNode[], problem: SchedulingProblem): SearchNode[] {
+  nodes.sort((a, b) => b.score - a.score);
+  const exactSeen = new Set<string>();
+  const deferred: SearchNode[] = [];
+  const selected: SearchNode[] = [];
+  const similarCounts = new Map<string, number>();
+
+  for (const node of nodes) {
+    const exact = exactStateKey(node);
+    if (exactSeen.has(exact)) {
+      continue;
+    }
+    exactSeen.add(exact);
+
+    const coarse = coarseStateKey(node, problem);
+    const count = similarCounts.get(coarse) ?? 0;
+    if (count >= MAX_SIMILAR_PER_LAYER) {
+      deferred.push(node);
+      continue;
+    }
+    similarCounts.set(coarse, count + 1);
+    selected.push(node);
+    if (selected.length >= MAX_OPEN) {
+      return selected;
+    }
+  }
+
+  for (const node of deferred) {
+    selected.push(node);
+    if (selected.length >= MAX_OPEN) {
+      break;
+    }
+  }
+  return selected;
 }
 
 function toCandidate(
@@ -256,7 +489,14 @@ export function generateScheduleCandidates(
   }
 
   const order = itemOrder(problem);
-  let layer: SearchNode[] = [{ assigned: [], nextIndex: 0, score: 0 }];
+  let layer: SearchNode[] = [
+    {
+      assigned: [],
+      score: 0,
+      locationBlocked: new Map(),
+      participantBlocked: new Map(),
+    },
+  ];
   let expansions = 0;
 
   for (let depth = 0; depth < order.length; depth += 1) {
@@ -268,15 +508,9 @@ export function generateScheduleCandidates(
         break;
       }
       expansions += 1;
-      const options = successorPlacements(problem, node.assigned, itemIndex);
+      const options = successorPlacements(problem, node, itemIndex);
       for (const placement of options) {
-        const assigned = [...node.assigned, placement];
-        const { score } = scoreSchedule(assigned, problem);
-        nextLayer.push({
-          assigned,
-          nextIndex: depth + 1,
-          score,
-        });
+        nextLayer.push(extendNode(node, placement, problem));
       }
     }
 
@@ -284,8 +518,9 @@ export function generateScheduleCandidates(
       return [];
     }
 
-    nextLayer.sort((a, b) => b.score - a.score);
-    layer = nextLayer.slice(0, MAX_OPEN);
+    layer = pruneLayer(nextLayer, problem).map((node) =>
+      hydrateNode(node, problem),
+    );
   }
 
   const shapes: PlanShape[] = [];
