@@ -129,6 +129,11 @@ asks for that password first, and the register API rejects accounts that skip it
 `NEXT_PUBLIC_APP_NAME` is the name shown in the header, the browser title, and user-facing copy.
 It defaults to `Tracster` when unset.
 
+`APP_TIMEZONE` is the timezone the association works in (defaults to `Europe/Paris`). The
+scheduling tool reads local hours — locations open at 9h, close at 20h, and the 12h–14h break is
+protected — so a host running in UTC would generate plans shifted by the offset. Set it to an IANA
+name such as `Europe/Paris` on every deployment.
+
 `GOOGLE_ASSOCIATION_CALENDAR_ID` is the public calendar shown by **Follow association's calendar**
 on the schedule, account, and settings pages (a calendar id, or a full Google embed URL). Make that
 calendar public in Google Calendar so members can open it.

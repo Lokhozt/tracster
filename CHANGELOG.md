@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.1.0 - 22-09-2026
+
+### Changed
+
+
+### Fixed
+- Fixed planing not starting at 9am due to a Locales issue
+
 ## 1.0.4 - 21-09-2026
 
 ### Added
@@ -25,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed registering password leaking into the registering email field
 - The start and end times at the top of an event page no longer differ from the time that was set; they were formatted in the server's timezone instead of the reader's.
+- Generated plannings start at 9h again. They followed the hosting server's timezone (UTC in production) instead of the association's, which pushed every rehearsal later in the day. The timezone is set with `APP_TIMEZONE` and defaults to `Europe/Paris`.
 - Linking an existing representation to a choreography no longer lists representations that have already ended.
 - The choreography representation filter no longer lists representations that have already ended.
 
