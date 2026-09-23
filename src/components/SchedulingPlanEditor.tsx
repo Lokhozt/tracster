@@ -21,6 +21,7 @@ export function SchedulingPlanEditor({
   placements,
   days,
   locations,
+  locationUnavailability = [],
   conflicts,
   unavailableAllPeriod,
   users,
@@ -31,6 +32,12 @@ export function SchedulingPlanEditor({
   placements: SchedulePlacement[];
   days: string[];
   locations: Array<{ id: string; name: string }>;
+  locationUnavailability?: Array<{
+    locationId: string;
+    day: string;
+    startsAt: string;
+    endsAt: string;
+  }>;
   conflicts: SchedulingPlacementConflicts;
   unavailableAllPeriod: string[];
   users: Array<{ id: string; name: string }>;
@@ -124,6 +131,7 @@ export function SchedulingPlanEditor({
           locations={locations}
           conflicts={conflicts}
           unavailability={highlightUserId ? highlightBands : []}
+          locationUnavailability={locationUnavailability}
           highlightUserId={highlightUserId || undefined}
           highlightUserName={users.find((user) => user.id === highlightUserId)?.name}
           onMove={onMove}

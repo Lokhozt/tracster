@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On the modifying step of scheduling added the possibility to display unavailability and participation of a selected user. 
 - The edit step lists participants who are unavailable for the whole planning period.
 - Rehearsal hover tooltips in the scheduling calendars show choreographers, unavailable participants, and participants already in another overlapping rehearsal.
+- The scheduling tool can import a JSON file of room unavailability and map each salle to a location, with the option to ignore rooms.
+- Location unavailability is shown as grey empty events on generated candidate calendars, and as immovable grey “unavailable” boxes on the edit calendar.
 
 ### Changed
 - Scheduling scoring now treats a slot with no available choreographer more severely, and penalizes a short midday break (less than half an hour between 12h and 14h) in addition to a fully blocked lunch.

@@ -15,6 +15,7 @@ The user choose on which days the scheduling takes place. By default it is the n
 The user choose the available locations using the list of location.
 For each selected location, the user can mark it as preferred.
 For each location, the user can edit when they are available on the selected days.
+The user can import a JSON file of room (salle) unavailability, map each room name to a location in the app, and ignore rooms that should not be imported.
 The user set a rest time between choreographies (default 10 minutes)
 
 Step 3- Constraints
@@ -49,11 +50,13 @@ Candidates must be visibly different from each other: two plans count as the sam
 
 Step 5- Choose a solution
 The user can look and select one the candidate.
-A candidate is graphically reprensented on a calendar with as many column per day as there are locations, with each rehearsal having its color and name, and start_time->end_time
+A candidate is graphically reprensented on a calendar with as many column per day as there are locations, with each rehearsal having its color and name, and start_time->end_time. Periods when a location is unavailable appear as grey empty events.
+
 The caveat of each candidate are listed: Choreographers not available, then Participants not available (ignore if the person is not available at all during the period)
 
 Optional step 6- Edit
 The user can drag rehearsals in the selected candidate to another time, day, or location before creating them. Dropped start times snap to 10-minute intervals.
+Location unavailability is shown as immovable grey boxes labelled unavailable.
 The user can select a person to mark their unavailability in red on the calendar.
 After every move, conflicts are recalculated and displayed for choreographers who are unavailable, and for participants who are unavailable or already in another rehearsal, including another rehearsal in the edited planning. Participants who are unavailable for the whole planning period are listed separately and omitted from those conflicts.
 

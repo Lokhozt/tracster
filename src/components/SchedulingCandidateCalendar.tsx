@@ -7,6 +7,7 @@ import { formatTime } from "@/lib/datetime";
 import { atLocalTime, mergeIntervals, parseDayKey } from "@/lib/scheduling/intervals";
 import type {
   IntervalMs,
+  LocationUnavailability,
   SchedulePlacement,
   SchedulingPlacementConflicts,
 } from "@/lib/scheduling/types";
@@ -84,12 +85,12 @@ function ParticipantDot() {
   );
 }
 
-function unavailabilityOverlays(
+function overlayIntervals(
   entries: Array<{ startsAt: string; endsAt: string }>,
   day: string,
   minHour: number,
   maxHour: number,
-): Array<{ top: number; height: number }> {
+): Array<{ top: number; height: number; start: Date; end: Date }> {
   const visStart = atLocalTime(parseDayKey(day), minHour).getTime();
   const visEnd = atLocalTime(parseDayKey(day), maxHour).getTime();
   const pieces: IntervalMs[] = [];
@@ -103,6 +104,8 @@ function unavailabilityOverlays(
   return mergeIntervals(pieces).map((interval) => ({
     top: ((interval.start - visStart) / 60_000) * PX_PER_MINUTE,
     height: Math.max(2, ((interval.end - interval.start) / 60_000) * PX_PER_MINUTE),
+    start: new Date(interval.start),
+    end: new Date(interval.end),
   }));
 }
 
@@ -113,6 +116,7 @@ export function SchedulingCandidateCalendar({
   locations,
   conflicts = {},
   unavailability = [],
+  locationUnavailability = [],
   highlightUserId,
   highlightUserName,
   onMove,
@@ -123,6 +127,7 @@ export function SchedulingCandidateCalendar({
   locations?: Array<{ id: string; name: string }>;
   conflicts?: SchedulingPlacementConflicts;
   unavailability?: Array<{ startsAt: string; endsAt: string }>;
+  locationUnavailability?: Array<Pick<LocationUnavailability, "locationId" | "day" | "startsAt" | "endsAt">>;
   highlightUserId?: string;
   highlightUserName?: string;
   onMove?: (itemId: string, locationId: string, startsAt: Date, endsAt: Date) => void;
@@ -146,6 +151,12 @@ export function SchedulingCandidateCalendar({
   for (const placement of placements) {
     const start = new Date(placement.startsAt);
     const end = new Date(placement.endsAt);
+    minHour = Math.min(minHour, start.getHours());
+    maxHour = Math.max(maxHour, end.getHours() + (end.getMinutes() > 0 ? 1 : 0));
+  }
+  for (const entry of locationUnavailability) {
+    const start = new Date(entry.startsAt);
+    const end = new Date(entry.endsAt);
     minHour = Math.min(minHour, start.getHours());
     maxHour = Math.max(maxHour, end.getHours() + (end.getMinutes() > 0 ? 1 : 0));
   }
@@ -306,7 +317,7 @@ export function SchedulingCandidateCalendar({
     };
   });
 
-  if (placements.length === 0) {
+  if (placements.length === 0 && calendarLocations.length === 0) {
     return <p className="text-sm text-stone-600">{t("candidateNoRehearsals")}</p>;
   }
 
@@ -344,10 +355,28 @@ export function SchedulingCandidateCalendar({
                       )}
                       style={{ height }}
                     >
-                      {unavailabilityOverlays(unavailability, day, minHour, maxHour).map((band, index) => (
+                      {overlayIntervals(
+                        locationUnavailability.filter(
+                          (entry) => entry.locationId === locationId && entry.day === day,
+                        ),
+                        day,
+                        minHour,
+                        maxHour,
+                      ).map((band, index) => (
+                        <div
+                          key={`${day}-${locationId}-closed-${index}`}
+                          className="pointer-events-none absolute right-1 left-1 z-[2] overflow-hidden rounded-md border border-stone-400 bg-stone-300 px-1.5 py-1 text-xs leading-tight text-stone-600"
+                          style={{ top: band.top, height: band.height }}
+                          aria-label={t("locationUnavailableBlock")}
+                          title={`${t("locationUnavailableBlock")}\n${formatTime(band.start)} → ${formatTime(band.end)}`}
+                        >
+                          <p className="font-semibold">{t("locationUnavailableBlock")}</p>
+                        </div>
+                      ))}
+                      {overlayIntervals(unavailability, day, minHour, maxHour).map((band, index) => (
                         <div
                           key={`${day}-${locationId}-busy-${index}`}
-                          className="pointer-events-none absolute right-0 left-0 bg-red-400/45"
+                          className="pointer-events-none absolute right-0 left-0 z-[1] bg-red-400/45"
                           style={{ top: band.top, height: band.height }}
                           aria-hidden
                         />

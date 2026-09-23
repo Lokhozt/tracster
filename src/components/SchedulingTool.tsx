@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
 import { DateTime24Input } from "@/components/DateTime24Input";
+import { LocationUnavailabilityImport } from "@/components/LocationUnavailabilityImport";
 import { SchedulingImageExportButton } from "@/components/PlanningImageExport";
 import { SchedulingCandidateCalendar } from "@/components/SchedulingCandidateCalendar";
 import { SchedulingPlanEditor } from "@/components/SchedulingPlanEditor";
@@ -266,6 +267,16 @@ export function SchedulingTool({
         ? current.filter((id) => id !== locationId)
         : [...current, locationId],
     );
+  }
+
+  function visibleLocationUnavailabilities() {
+    return locationUnavailabilities.filter(
+      (entry) => locationIds.includes(entry.locationId) && days.includes(entry.day),
+    );
+  }
+
+  function selectedLocations() {
+    return locations.filter((location) => locationIds.includes(location.id));
   }
 
   function buildRequest(): SchedulingRequest {
@@ -744,10 +755,30 @@ export function SchedulingTool({
 
           <div>
             <p className="mb-2 text-sm font-medium text-stone-800">{t("locationUnavailability")}</p>
-            <p className="mb-3 text-sm text-stone-600">
-              Locations are available from 09:00 to 20:00 on the selected days. Add times when a
-              location cannot be used.
-            </p>
+            <p className="mb-3 text-sm text-stone-600">{t("locationHoursHelp")}</p>
+            <div className="mb-4">
+              <LocationUnavailabilityImport
+                locations={locations}
+                onApply={({ days: importedDays, locationIds: importedLocationIds, unavailabilities }) => {
+                  const importedLocationSet = new Set(importedLocationIds);
+                  const importedDaySet = new Set(importedDays);
+                  if (importedDays.length > 0) {
+                    setDays(importedDays);
+                  }
+                  setLocationIds((current) => [
+                    ...new Set([...current, ...importedLocationIds]),
+                  ]);
+                  setLocationUnavailabilities((current) => [
+                    ...current.filter(
+                      (entry) =>
+                        importedDaySet.has(entry.day) &&
+                        !importedLocationSet.has(entry.locationId),
+                    ),
+                    ...unavailabilities.map((entry) => ({ ...entry, id: newItemId() })),
+                  ]);
+                }}
+              />
+            </div>
             <div className="space-y-4">
               {locationIds.map((locationId) => {
                 const location = locations.find((entry) => entry.id === locationId);
@@ -843,7 +874,12 @@ export function SchedulingTool({
                     {selected ? t("selected") : t("select")}
                   </Button>
                 </div>
-                <SchedulingCandidateCalendar placements={candidate.placements} />
+                <SchedulingCandidateCalendar
+                  placements={candidate.placements}
+                  days={days}
+                  locations={selectedLocations()}
+                  locationUnavailability={visibleLocationUnavailabilities()}
+                />
                 <CaveatList
                   title={t("choreographersNotAvailable")}
                   caveats={uniquePeople(
@@ -887,7 +923,8 @@ export function SchedulingTool({
           <SchedulingPlanEditor
             placements={editedPlacements}
             days={days}
-            locations={locations.filter((location) => locationIds.includes(location.id))}
+            locations={selectedLocations()}
+            locationUnavailability={visibleLocationUnavailabilities()}
             conflicts={placementConflicts}
             unavailableAllPeriod={unavailableAllPeriod}
             users={users}
