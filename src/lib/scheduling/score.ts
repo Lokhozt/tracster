@@ -19,6 +19,8 @@ const englishCaveatTranslator: ServerTranslator = (key, values = {}) => {
     "caveats.constraint": "{title}{group} breaks a location or time constraint.",
     "caveats.choreographerUnavailable":
       "{name} (choreographer) is unavailable for {title}.",
+    "caveats.choreographerOverlap":
+      "{name} (choreographer) is needed in two rehearsals at the same time.",
     "caveats.participantUnavailable": "{name} is unavailable for {title}{group}.",
   };
   return (messages[key] ?? key).replace(/\{(\w+)\}/g, (match, name: string) =>
@@ -36,6 +38,7 @@ export type InternalPlacement = {
 const CONSTRAINT_PENALTY = 100;
 const CHOREOGRAPHER_UNAVAILABLE = 100;
 const ALL_CHOREOGRAPHERS_UNAVAILABLE = 100;
+const CHOREOGRAPHER_OVERLAP_PENALTY = 50;
 const PARTICIPANT_UNAVAILABLE = 10;
 const HOLE_PENALTY = 2;
 const CONSECUTIVE_BONUS = 2;
@@ -128,6 +131,30 @@ function uniqueParticipants(items: ResolvedSchedulingItem[]): SchedulingPerson[]
   return [...byId.values()];
 }
 
+function choreographerSessions(
+  placements: InternalPlacement[],
+  items: ResolvedSchedulingItem[],
+  userId: string,
+): InternalPlacement[] {
+  return placements
+    .filter((placement) =>
+      items[placement.itemIndex].choreographers.some((person) => person.id === userId),
+    )
+    .sort((a, b) => a.start - b.start);
+}
+
+function uniqueChoreographers(items: ResolvedSchedulingItem[]): SchedulingPerson[] {
+  const byId = new Map<string, SchedulingPerson>();
+  for (const item of items) {
+    for (const person of item.choreographers) {
+      if (!byId.has(person.id)) {
+        byId.set(person.id, person);
+      }
+    }
+  }
+  return [...byId.values()];
+}
+
 function hasOverlappingSessionsAtDifferentLocations(sessions: InternalPlacement[]): boolean {
   for (let index = 0; index < sessions.length; index += 1) {
     const current = sessions[index];
@@ -199,6 +226,25 @@ function placementScore(
   }
 
   return score;
+}
+
+/**
+ * A choreographer can only lead one of their pieces at a time, so rehearsals that
+ * run together cost their presence even when nothing blocks them personally.
+ */
+function choreographerScore(
+  choreographer: SchedulingPerson,
+  placements: InternalPlacement[],
+  problem: SchedulingProblem,
+): number {
+  if (!choreographer.availableInPeriod) {
+    return 0;
+  }
+
+  const sessions = choreographerSessions(placements, problem.items, choreographer.id);
+  return hasOverlappingSessionsAtDifferentLocations(sessions)
+    ? -CHOREOGRAPHER_OVERLAP_PENALTY
+    : 0;
 }
 
 function participantScore(
@@ -322,6 +368,15 @@ export function scorePlacementDelta(
     delta += participantScore(participant, withPlacement, problem);
   }
 
+  const choreographerIds = new Set(item.choreographers.map((person) => person.id));
+  for (const choreographer of item.choreographers) {
+    if (!choreographerIds.delete(choreographer.id)) {
+      continue;
+    }
+    delta -= choreographerScore(choreographer, placements, problem);
+    delta += choreographerScore(choreographer, withPlacement, problem);
+  }
+
   delta +=
     LATE_DAY_START_PENALTY *
     (lateStartHours(placements, problem) -
@@ -342,6 +397,9 @@ export function scoreSchedule(
   score -= LATE_DAY_START_PENALTY * lateStartHours(placements, problem);
   for (const participant of uniqueParticipants(problem.items)) {
     score += participantScore(participant, placements, problem);
+  }
+  for (const choreographer of uniqueChoreographers(problem.items)) {
+    score += choreographerScore(choreographer, placements, problem);
   }
 
   // Caveats are intentionally produced only for completed candidates. Search
@@ -386,6 +444,17 @@ export function scoreSchedule(
           userName: participant.name,
         });
       }
+    }
+  }
+
+  for (const choreographer of uniqueChoreographers(problem.items)) {
+    if (choreographerScore(choreographer, placements, problem) < 0) {
+      caveats.push({
+        kind: "choreographer_unavailable",
+        message: t("caveats.choreographerOverlap", { name: choreographer.name }),
+        userId: choreographer.id,
+        userName: choreographer.name,
+      });
     }
   }
 

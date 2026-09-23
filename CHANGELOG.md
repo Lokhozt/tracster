@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Scheduling scoring now treats a slot with no available choreographer more severely, and penalizes a short midday break (less than half an hour between 12h and 14h) in addition to a fully blocked lunch.
+- Generated plans favour rehearsals their choreographer can attend: a choreographer scheduled in two pieces running at the same time is now penalized and reported as a caveat on the candidate.
+- The planning algorithm places pieces whose choreographers have unavailability during the period before the others, so those rehearsals get the slots their choreographer can actually attend.
 - Rehearsals that start before 9h or end after 20h are discouraged more strongly; gaps between a participant’s rehearsals and long consecutive streaks weigh less.
 - Participants unavailable for the whole planning period are omitted from per-rehearsal conflicts on the edit step.
 

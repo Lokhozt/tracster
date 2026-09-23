@@ -30,6 +30,7 @@ Don't consider participants / choreographer that are not available at all on the
 * If a constraint is not respected : -100
 * If a choreographer is not available: -50
 * If all choreographer are not available: -100
+* If a choreographer is in two or more rehearsal that overlap in time: -50
 * If a participant is not available: -10
 * If a participant has a hole longer than the rest setting between 2 rehearsals: -2
 * If a participant has 2 consecutive rehearsals with a gap of at most the rest setting: +2

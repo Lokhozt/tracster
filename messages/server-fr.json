@@ -122,6 +122,7 @@
     "caveats": {
       "constraint": "{title}{group} ne respecte pas une contrainte de lieu ou d’horaire.",
       "choreographerUnavailable": "{name} (chorégraphe) n’est pas disponible pour {title}.",
+      "choreographerOverlap": "{name} (chorégraphe) est attendu dans deux répétitions en même temps.",
       "participantUnavailable": "{name} n’est pas disponible pour {title}{group}."
     }
   }

@@ -33,6 +33,38 @@ type SearchNode = {
   participantBlocked: Map<string, IntervalMs[]>;
 };
 
+/**
+ * Bookable time each item's choreographers are already blocked for. A choreographer
+ * who can only attend part of the period narrows the item as surely as an explicit
+ * constraint, so those items are placed while the calendar is still open.
+ */
+function choreographerPressure(problem: SchedulingProblem): number[] {
+  const bookable = mergeIntervals(
+    problem.windows.map((window) => ({ start: window.start, end: window.end })),
+  );
+
+  return problem.items.map((item) => {
+    const blocked: IntervalMs[] = [];
+    for (const choreographer of item.choreographers) {
+      if (!choreographer.availableInPeriod) {
+        continue;
+      }
+      blocked.push(...choreographer.unavailability);
+    }
+
+    let total = 0;
+    for (const interval of mergeIntervals(blocked)) {
+      for (const window of bookable) {
+        total += Math.max(
+          0,
+          Math.min(interval.end, window.end) - Math.max(interval.start, window.start),
+        );
+      }
+    }
+    return total;
+  });
+}
+
 function itemOrder(problem: SchedulingProblem): number[] {
   const participantDemand = new Map<string, number>();
   for (const item of problem.items) {
@@ -43,6 +75,7 @@ function itemOrder(problem: SchedulingProblem): number[] {
       );
     }
   }
+  const pressure = choreographerPressure(problem);
 
   return problem.items
     .map((_, index) => index)
@@ -57,6 +90,9 @@ function itemOrder(problem: SchedulingProblem): number[] {
         (itemB.allowedWindows?.length ?? 1);
       if (domainA !== domainB) {
         return domainA - domainB;
+      }
+      if (pressure[a] !== pressure[b]) {
+        return pressure[b] - pressure[a];
       }
       const demandA = itemA.participants.reduce(
         (total, participant) => total + (participantDemand.get(participant.id) ?? 0),
