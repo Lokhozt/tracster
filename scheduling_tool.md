@@ -53,6 +53,7 @@ The caveat of each candidate are listed: Choreographers not available, then Part
 
 Optional step 6- Edit
 The user can drag rehearsals in the selected candidate to another time, day, or location before creating them. Dropped start times snap to 10-minute intervals.
+The user can select a person to mark their unavailability in red on the calendar.
 After every move, conflicts are recalculated and displayed for choreographers who are unavailable, and for participants who are unavailable or already in another rehearsal, including another rehearsal in the edited planning. Participants who are unavailable for the whole planning period are listed separately and omitted from those conflicts.
 
 At validation, each rehearsal is automatically created.

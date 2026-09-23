@@ -4,8 +4,9 @@ import { format } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
 import { useEffect, useRef, useState } from "react";
 import { formatTime } from "@/lib/datetime";
-import { atLocalTime, parseDayKey } from "@/lib/scheduling/intervals";
+import { atLocalTime, mergeIntervals, parseDayKey } from "@/lib/scheduling/intervals";
 import type {
+  IntervalMs,
   SchedulePlacement,
   SchedulingPlacementConflicts,
 } from "@/lib/scheduling/types";
@@ -51,12 +52,69 @@ function placementLabel(placement: SchedulePlacement) {
   return placement.choreographyTitle;
 }
 
+function placementHasUser(
+  ids: string[] | undefined,
+  names: string[] | undefined,
+  userId: string | undefined,
+  userName: string | undefined,
+) {
+  if (userId && ids?.includes(userId)) {
+    return true;
+  }
+  return Boolean(userName && names?.includes(userName));
+}
+
+function CrownIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      className="h-3.5 w-3.5 shrink-0 text-amber-500"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M3.5 16.5 5 8l4.2 4.2L12 5.5l2.8 6.7L19 8l1.5 8.5H3.5ZM5 18.5h14v2H5v-2Z" />
+    </svg>
+  );
+}
+
+function ParticipantDot() {
+  return (
+    <span className="mt-0.5 inline-block size-2 shrink-0 rounded-full bg-emerald-500 ring-1 ring-white" />
+  );
+}
+
+function unavailabilityOverlays(
+  entries: Array<{ startsAt: string; endsAt: string }>,
+  day: string,
+  minHour: number,
+  maxHour: number,
+): Array<{ top: number; height: number }> {
+  const visStart = atLocalTime(parseDayKey(day), minHour).getTime();
+  const visEnd = atLocalTime(parseDayKey(day), maxHour).getTime();
+  const pieces: IntervalMs[] = [];
+  for (const entry of entries) {
+    const start = Math.max(new Date(entry.startsAt).getTime(), visStart);
+    const end = Math.min(new Date(entry.endsAt).getTime(), visEnd);
+    if (end > start) {
+      pieces.push({ start, end });
+    }
+  }
+  return mergeIntervals(pieces).map((interval) => ({
+    top: ((interval.start - visStart) / 60_000) * PX_PER_MINUTE,
+    height: Math.max(2, ((interval.end - interval.start) / 60_000) * PX_PER_MINUTE),
+  }));
+}
+
 export function SchedulingCandidateCalendar({
   placements,
   editable = false,
   days,
   locations,
   conflicts = {},
+  unavailability = [],
+  highlightUserId,
+  highlightUserName,
   onMove,
 }: {
   placements: SchedulePlacement[];
@@ -64,6 +122,9 @@ export function SchedulingCandidateCalendar({
   days?: string[];
   locations?: Array<{ id: string; name: string }>;
   conflicts?: SchedulingPlacementConflicts;
+  unavailability?: Array<{ startsAt: string; endsAt: string }>;
+  highlightUserId?: string;
+  highlightUserName?: string;
   onMove?: (itemId: string, locationId: string, startsAt: Date, endsAt: Date) => void;
 }) {
   const t = useTranslations("Components");
@@ -283,10 +344,18 @@ export function SchedulingCandidateCalendar({
                       )}
                       style={{ height }}
                     >
+                      {unavailabilityOverlays(unavailability, day, minHour, maxHour).map((band, index) => (
+                        <div
+                          key={`${day}-${locationId}-busy-${index}`}
+                          className="pointer-events-none absolute right-0 left-0 bg-red-400/45"
+                          style={{ top: band.top, height: band.height }}
+                          aria-hidden
+                        />
+                      ))}
                       {Array.from({ length: maxHour - minHour + 1 }, (_, index) => minHour + index).map((hour) => (
                         <div
                           key={hour}
-                          className="absolute right-0 left-0 border-t border-stone-200/80 text-[10px] text-stone-400"
+                          className="pointer-events-none absolute right-0 left-0 z-[1] border-t border-stone-200/80 text-[10px] text-stone-400"
                           style={{ top: (hour * 60 - startMinutes) * PX_PER_MINUTE }}
                         >
                           <span className="pl-1">{String(hour).padStart(2, "0")}:00</span>
@@ -310,12 +379,25 @@ export function SchedulingCandidateCalendar({
                             (conflict.choreographerUnavailable?.length ?? 0) > 0),
                         );
 
+                        const isChoreographer = placementHasUser(
+                          placement.choreographerIds,
+                          placement.choreographerNames,
+                          highlightUserId,
+                          highlightUserName,
+                        );
+                        const isParticipant = placementHasUser(
+                          placement.participantIds,
+                          placement.participantNames,
+                          highlightUserId,
+                          highlightUserName,
+                        );
+
                         return (
                           <div
                             key={placement.itemId}
                             onPointerDown={(event) => startDrag(event, placement)}
                             className={cn(
-                              "absolute right-1 left-1 overflow-hidden rounded-md border px-1.5 py-1 text-xs leading-tight shadow-sm",
+                              "absolute right-1 left-1 z-[2] overflow-hidden rounded-md border px-1.5 py-1 text-xs leading-tight shadow-sm",
                               editable && "cursor-grab touch-none select-none active:cursor-grabbing",
                               hasConflict && "ring-2 ring-red-600",
                               dragging && "z-10 cursor-grabbing shadow-lg ring-2 ring-stone-700",
@@ -338,12 +420,25 @@ export function SchedulingCandidateCalendar({
                               t,
                             )}
                           >
-                            {hasConflict && (
-                              <span
-                                className="float-right ml-1 font-bold text-red-700"
-                                aria-label={t("schedulingConflict")}
-                              >
-                                !
+                            {(isChoreographer || isParticipant || hasConflict) && (
+                              <span className="float-right ml-1 inline-flex items-center gap-0.5">
+                                {isChoreographer ? (
+                                  <span aria-label={t("highlightUserChoreographer")}>
+                                    <CrownIcon />
+                                  </span>
+                                ) : isParticipant ? (
+                                  <span aria-label={t("highlightUserParticipant")}>
+                                    <ParticipantDot />
+                                  </span>
+                                ) : null}
+                                {hasConflict && (
+                                  <span
+                                    className="font-bold text-red-700"
+                                    aria-label={t("schedulingConflict")}
+                                  >
+                                    !
+                                  </span>
+                                )}
                               </span>
                             )}
                             <p className={cn("font-semibold break-words", blockHeight < 60 && "line-clamp-2")}>

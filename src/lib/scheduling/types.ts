@@ -40,7 +40,9 @@ export type SchedulePlacement = {
   startsAt: IsoDateTime;
   endsAt: IsoDateTime;
   choreographerNames: string[];
+  choreographerIds: string[];
   participantNames: string[];
+  participantIds: string[];
 };
 
 export type ScheduleCaveat = {

@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { isAdmin } from "@/lib/roles";
+import { formatUserName, userNameOrderBy } from "@/lib/users";
 
 export default async function SchedulingPage() {
   const [user, t] = await Promise.all([
@@ -20,7 +21,7 @@ export default async function SchedulingPage() {
     redirect("/");
   }
 
-  const [choreographies, locations, collections] = await Promise.all([
+  const [choreographies, locations, collections, users] = await Promise.all([
     prisma.choreography.findMany({
       where: visibleChoreographyWhere,
       select: {
@@ -52,6 +53,10 @@ export default async function SchedulingPage() {
         },
       },
     }),
+    prisma.user.findMany({
+      orderBy: userNameOrderBy,
+      select: { id: true, firstName: true, lastName: true },
+    }),
   ]);
 
   return (
@@ -63,6 +68,7 @@ export default async function SchedulingPage() {
         choreographies={choreographies}
         locations={locations}
         initialCollections={collections}
+        users={users.map((entry) => ({ id: entry.id, name: formatUserName(entry) }))}
       />
     </AppShell>
   );

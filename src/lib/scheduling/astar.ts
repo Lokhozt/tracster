@@ -458,9 +458,11 @@ function toCandidate(
           choreographerNames: item.choreographers
             .map((person) => person.name)
             .sort((a, b) => a.localeCompare(b)),
+          choreographerIds: item.choreographers.map((person) => person.id),
           participantNames: item.participants
             .map((person) => person.name)
             .sort((a, b) => a.localeCompare(b)),
+          participantIds: item.participants.map((person) => person.id),
         };
       }),
   };

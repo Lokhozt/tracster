@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Scheduling candidates and the optional edit step list choreographers who are unavailable, separately from participants.
+- On the modifying step of scheduling added the possibility to display unavailability and participation of a selected user. 
 - The edit step lists participants who are unavailable for the whole planning period.
 - Rehearsal hover tooltips in the scheduling calendars show choreographers, unavailable participants, and participants already in another overlapping rehearsal.
 

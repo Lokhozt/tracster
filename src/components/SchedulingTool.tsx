@@ -51,6 +51,11 @@ export type SchedulingCollectionOption = {
   }>;
 };
 
+export type SchedulingUserOption = {
+  id: string;
+  name: string;
+};
+
 const STEPS = [
   "choreographies",
   "daysLocations",
@@ -90,10 +95,12 @@ export function SchedulingTool({
   choreographies,
   locations,
   initialCollections,
+  users,
 }: {
   choreographies: SchedulingChoreographyOption[];
   locations: SchedulingLocationOption[];
   initialCollections: SchedulingCollectionOption[];
+  users: SchedulingUserOption[];
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
@@ -883,6 +890,7 @@ export function SchedulingTool({
             locations={locations.filter((location) => locationIds.includes(location.id))}
             conflicts={placementConflicts}
             unavailableAllPeriod={unavailableAllPeriod}
+            users={users}
             checkingConflicts={checkingConflicts}
             conflictError={conflictError}
             onMove={moveEditedPlacement}

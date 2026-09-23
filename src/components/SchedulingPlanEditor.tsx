@@ -1,11 +1,14 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { SchedulingCandidateCalendar } from "@/components/SchedulingCandidateCalendar";
-import { Card } from "@/components/ui";
+import { Card, Label, Select } from "@/components/ui";
+import { parseDayKey } from "@/lib/scheduling/intervals";
 import type {
   SchedulePlacement,
   SchedulingPlacementConflicts,
 } from "@/lib/scheduling/types";
+import type { SerializedUnavailability } from "@/lib/unavailability";
 import { useTranslations } from "next-intl";
 
 function placementLabel(placement: SchedulePlacement) {
@@ -20,6 +23,7 @@ export function SchedulingPlanEditor({
   locations,
   conflicts,
   unavailableAllPeriod,
+  users,
   checkingConflicts,
   conflictError,
   onMove,
@@ -29,11 +33,15 @@ export function SchedulingPlanEditor({
   locations: Array<{ id: string; name: string }>;
   conflicts: SchedulingPlacementConflicts;
   unavailableAllPeriod: string[];
+  users: Array<{ id: string; name: string }>;
   checkingConflicts: boolean;
   conflictError: string | null;
   onMove: (itemId: string, locationId: string, startsAt: Date, endsAt: Date) => void;
 }) {
   const t = useTranslations("Components");
+  const [highlightUserId, setHighlightUserId] = useState("");
+  const [highlightBands, setHighlightBands] = useState<SerializedUnavailability[]>([]);
+  const [highlightError, setHighlightError] = useState<string | null>(null);
   const choreographerConflicts = placements.filter(
     (placement) => (conflicts[placement.itemId]?.choreographerUnavailable.length ?? 0) > 0,
   );
@@ -42,6 +50,46 @@ export function SchedulingPlanEditor({
     return conflict && (conflict.unavailable.length > 0 || conflict.engaged.length > 0);
   });
 
+  useEffect(() => {
+    if (!highlightUserId || days.length === 0) {
+      setHighlightBands([]);
+      setHighlightError(null);
+      return;
+    }
+
+    const sortedDays = [...days].sort();
+    const from = parseDayKey(sortedDays[0]);
+    const to = new Date(parseDayKey(sortedDays[sortedDays.length - 1]).getTime() + 24 * 60 * 60 * 1000);
+    const params = new URLSearchParams({
+      from: from.toISOString(),
+      to: to.toISOString(),
+    });
+    const controller = new AbortController();
+    setHighlightBands([]);
+    setHighlightError(null);
+
+    fetch(`/api/users/${highlightUserId}/unavailability?${params.toString()}`, {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error ?? "UNAVAILABILITY_LOAD_FAILED");
+        }
+        setHighlightBands(data.timeframes as SerializedUnavailability[]);
+        setHighlightError(null);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        setHighlightBands([]);
+        setHighlightError(t("highlightUserError"));
+      });
+
+    return () => controller.abort();
+  }, [days, highlightUserId, t]);
+
   return (
     <div className="space-y-4">
       <Card className="space-y-3">
@@ -49,12 +97,35 @@ export function SchedulingPlanEditor({
           <h2 className="text-lg font-semibold">{t("editSchedule")}</h2>
           <p className="mt-1 text-sm text-stone-600">{t("editScheduleHelp")}</p>
         </div>
+        {users.length > 0 && (
+          <div>
+            <Label htmlFor="scheduling-highlight-user">{t("highlightUserUnavailability")}</Label>
+            <Select
+              id="scheduling-highlight-user"
+              className="mt-1 w-full max-w-sm"
+              value={highlightUserId}
+              onChange={(event) => setHighlightUserId(event.target.value)}
+            >
+              <option value="">{t("highlightUserNone")}</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name}
+                </option>
+              ))}
+            </Select>
+            <p className="mt-1 text-xs text-stone-500">{t("highlightUserHelp")}</p>
+            {highlightError && <p className="mt-1 text-sm text-red-700">{highlightError}</p>}
+          </div>
+        )}
         <SchedulingCandidateCalendar
           placements={placements}
           editable
           days={days}
           locations={locations}
           conflicts={conflicts}
+          unavailability={highlightUserId ? highlightBands : []}
+          highlightUserId={highlightUserId || undefined}
+          highlightUserName={users.find((user) => user.id === highlightUserId)?.name}
           onMove={onMove}
         />
       </Card>
