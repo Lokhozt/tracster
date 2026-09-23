@@ -812,9 +812,6 @@ export function SchedulingTool({
         <div className="space-y-4">
           {candidates.map((candidate) => {
             const selected = candidate.id === selectedCandidateId;
-            const unavailable = uniquePeople(
-              candidate.caveats.filter((caveat) => caveat.kind === "participant_unavailable"),
-            );
             return (
               <Card
                 key={candidate.id}
@@ -834,18 +831,20 @@ export function SchedulingTool({
                   </Button>
                 </div>
                 <SchedulingCandidateCalendar placements={candidate.placements} />
-                <div>
-                  <p className="mb-1 text-sm font-medium">{t("participantsNotAvailable")}</p>
-                  {unavailable.length === 0 ? (
-                    <p className="text-sm text-stone-500">{t("noneCandidate")}</p>
-                  ) : (
-                    <ul className="list-disc space-y-1 pl-5 text-sm text-stone-700">
-                      {unavailable.map((caveat) => (
-                        <li key={`${caveat.userId}-${caveat.message}`}>{caveat.message}</li>
-                      ))}
-                    </ul>
+                <CaveatList
+                  title={t("choreographersNotAvailable")}
+                  caveats={uniquePeople(
+                    candidate.caveats.filter((caveat) => caveat.kind === "choreographer_unavailable"),
                   )}
-                </div>
+                  emptyLabel={t("noneCandidate")}
+                />
+                <CaveatList
+                  title={t("participantsNotAvailable")}
+                  caveats={uniquePeople(
+                    candidate.caveats.filter((caveat) => caveat.kind === "participant_unavailable"),
+                  )}
+                  emptyLabel={t("noneCandidate")}
+                />
               </Card>
             );
           })}
@@ -924,6 +923,31 @@ function uniquePeople(caveats: ScheduleCaveat[]) {
     seen.add(key);
     return true;
   });
+}
+
+function CaveatList({
+  title,
+  caveats,
+  emptyLabel,
+}: {
+  title: string;
+  caveats: ScheduleCaveat[];
+  emptyLabel: string;
+}) {
+  return (
+    <div>
+      <p className="mb-1 text-sm font-medium">{title}</p>
+      {caveats.length === 0 ? (
+        <p className="text-sm text-stone-500">{emptyLabel}</p>
+      ) : (
+        <ul className="list-disc space-y-1 pl-5 text-sm text-stone-700">
+          {caveats.map((caveat) => (
+            <li key={`${caveat.userId}-${caveat.message}`}>{caveat.message}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 function LocationUnavailabilityCard({

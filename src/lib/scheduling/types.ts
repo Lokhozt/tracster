@@ -59,6 +59,7 @@ export type SchedulingCandidate = {
 export type SchedulingPlacementConflict = {
   unavailable: string[];
   engaged: string[];
+  choreographerUnavailable: string[];
 };
 
 export type SchedulingPlacementConflicts = Record<string, SchedulingPlacementConflict>;

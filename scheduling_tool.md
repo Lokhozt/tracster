@@ -29,13 +29,15 @@ Don't consider participants / choreographer that are not available at all on the
 
 * If a constraint is not respected : -100
 * If a choreographer is not available: -50
+* If all choreographer are not available: -100
 * If a participant is not available: -10
-* If a participant has a hole longer than the rest setting between 2 rehearsals: -5
+* If a participant has a hole longer than the rest setting between 2 rehearsals: -2
 * If a participant has 2 consecutive rehearsals with a gap of at most the rest setting: +2
-* If a participant has more than 3 consecutives choreographies: -5
+* If a participant has more than 3 consecutives choreographies: -2
 * If a participant has no time between 12h and 14h: -20
-* If a rehearsal starts before 9h: -1
-* If a rehearsal ends after 20h: -2
+* If a participant has less than 30 minutes between 12h and 14h: -10
+* If a rehearsal starts before 9h: -10
+* If a rehearsal ends after 20h: -10
 * If a rehearsal overlap with 12h30-14h: -2
 * If a participant in in two or more rehearsal that overlap in time (different location): -10
 * If a rehearsal is in a "prefered location": +1
@@ -47,10 +49,10 @@ Candidates must be visibly different from each other: two plans count as the sam
 Step 5- Choose a solution
 The user can look and select one the candidate.
 A candidate is graphically reprensented on a calendar with as many column per day as there are locations, with each rehearsal having its color and name, and start_time->end_time
-The caveat of each candidate are listed: Participants not available (ignore if the participant is not available at all during the period)
+The caveat of each candidate are listed: Choreographers not available, then Participants not available (ignore if the person is not available at all during the period)
 
 Optional step 6- Edit
 The user can drag rehearsals in the selected candidate to another time, day, or location before creating them. Dropped start times snap to 10-minute intervals.
-After every move, conflicts are recalculated and displayed for participants who are unavailable or already in another rehearsal, including another rehearsal in the edited planning.
+After every move, conflicts are recalculated and displayed for choreographers who are unavailable, and for participants who are unavailable or already in another rehearsal, including another rehearsal in the edited planning.
 
 At validation, each rehearsal is automatically created.

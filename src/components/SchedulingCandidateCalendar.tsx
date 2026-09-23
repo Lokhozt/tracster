@@ -305,7 +305,9 @@ export function SchedulingCandidateCalendar({
                         const conflict = conflicts[placement.itemId];
                         const hasConflict = Boolean(
                           conflict &&
-                          (conflict.unavailable.length > 0 || conflict.engaged.length > 0),
+                          (conflict.unavailable.length > 0 ||
+                            conflict.engaged.length > 0 ||
+                            (conflict.choreographerUnavailable?.length ?? 0) > 0),
                         );
 
                         return (

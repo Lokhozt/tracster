@@ -23,6 +23,7 @@ type AudienceMember = {
 type MutableConflict = {
   unavailable: Set<string>;
   engaged: Set<string>;
+  choreographerUnavailable: Set<string>;
 };
 
 export async function findSchedulingPlacementConflicts(
@@ -33,6 +34,7 @@ export async function findSchedulingPlacementConflicts(
     where: { id: { in: choreographyIds } },
     select: {
       id: true,
+      choreographers: { select: { user: { select: basicUserSelect } } },
       members: { select: { user: { select: basicUserSelect } } },
       groups: {
         select: {
@@ -50,8 +52,9 @@ export async function findSchedulingPlacementConflicts(
     choreographies.map((choreography) => [choreography.id, choreography]),
   );
   const audienceByItem = new Map<string, AudienceMember[]>();
+  const choreographersByItem = new Map<string, AudienceMember[]>();
   const intervalByItem = new Map<string, { start: Date; end: Date }>();
-  const allAudienceIds = new Set<string>();
+  const allUserIds = new Set<string>();
   const namesById = new Map<string, string>();
 
   for (const placement of placements) {
@@ -68,10 +71,12 @@ export async function findSchedulingPlacementConflicts(
     }
 
     const members = (group?.members ?? choreography.members).map((entry) => entry.user);
+    const choreographers = choreography.choreographers.map((entry) => entry.user);
     audienceByItem.set(placement.itemId, members);
-    for (const member of members) {
-      allAudienceIds.add(member.id);
-      namesById.set(member.id, formatUserName(member));
+    choreographersByItem.set(placement.itemId, choreographers);
+    for (const person of [...members, ...choreographers]) {
+      allUserIds.add(person.id);
+      namesById.set(person.id, formatUserName(person));
     }
 
     const start = new Date(placement.startsAt);
@@ -85,10 +90,14 @@ export async function findSchedulingPlacementConflicts(
   const mutable = new Map<string, MutableConflict>(
     placements.map((placement) => [
       placement.itemId,
-      { unavailable: new Set<string>(), engaged: new Set<string>() },
+      {
+        unavailable: new Set<string>(),
+        engaged: new Set<string>(),
+        choreographerUnavailable: new Set<string>(),
+      },
     ]),
   );
-  if (allAudienceIds.size === 0) {
+  if (allUserIds.size === 0) {
     return { conflicts: serializeConflicts(mutable) };
   }
 
@@ -103,7 +112,7 @@ export async function findSchedulingPlacementConflicts(
   const [unavailability, rehearsals] = await Promise.all([
     prisma.userUnavailability.findMany({
       where: {
-        userId: { in: [...allAudienceIds] },
+        userId: { in: [...allUserIds] },
         startsAt: { lt: overallEnd },
         endsAt: { gt: overallStart },
       },
@@ -150,11 +159,14 @@ export async function findSchedulingPlacementConflicts(
     for (const placement of placements) {
       const interval = intervalByItem.get(placement.itemId)!;
       const audience = audienceByItem.get(placement.itemId)!;
-      if (
-        audience.some((member) => member.id === entry.userId) &&
-        intervalsOverlap(interval.start, interval.end, entry.startsAt, entry.endsAt)
-      ) {
+      if (!intervalsOverlap(interval.start, interval.end, entry.startsAt, entry.endsAt)) {
+        continue;
+      }
+      if (audience.some((member) => member.id === entry.userId)) {
         mutable.get(placement.itemId)!.unavailable.add(entry.userId);
+      }
+      if (choreographersByItem.get(placement.itemId)!.some((person) => person.id === entry.userId)) {
+        mutable.get(placement.itemId)!.choreographerUnavailable.add(entry.userId);
       }
     }
   }
@@ -226,6 +238,9 @@ function serializeConflicts(
           .map((id) => namesById.get(id) ?? id)
           .sort((a, b) => a.localeCompare(b)),
         engaged: [...conflict.engaged]
+          .map((id) => namesById.get(id) ?? id)
+          .sort((a, b) => a.localeCompare(b)),
+        choreographerUnavailable: [...conflict.choreographerUnavailable]
           .map((id) => namesById.get(id) ?? id)
           .sort((a, b) => a.localeCompare(b)),
       },

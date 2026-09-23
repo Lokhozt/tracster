@@ -35,13 +35,16 @@ export type InternalPlacement = {
 
 const CONSTRAINT_PENALTY = 100;
 const CHOREOGRAPHER_UNAVAILABLE = 50;
+const ALL_CHOREOGRAPHERS_UNAVAILABLE = 100;
 const PARTICIPANT_UNAVAILABLE = 10;
-const HOLE_PENALTY = 5;
+const HOLE_PENALTY = 2;
 const CONSECUTIVE_BONUS = 2;
-const LONG_STREAK_PENALTY = 5;
+const LONG_STREAK_PENALTY = 2;
 const LUNCH_PENALTY = 20;
-const BEFORE_NINE_PENALTY = 2;
-const AFTER_TWENTY_PENALTY = 2;
+const SHORT_LUNCH_PENALTY = 10;
+const SHORT_LUNCH_MS = 30 * 60 * 1000;
+const BEFORE_NINE_PENALTY = 10;
+const AFTER_TWENTY_PENALTY = 10;
 const MIDDAY_OVERLAP_PENALTY = 2;
 const PARTICIPANT_LOCATION_OVERLAP_PENALTY = 10;
 const PREFERRED_LOCATION_BONUS = 1;
@@ -53,6 +56,27 @@ function lunchWindow(day: Date): IntervalMs {
     start: atLocalTime(day, 12).getTime(),
     end: atLocalTime(day, 14).getTime(),
   };
+}
+
+function lunchFreeMs(sessions: InternalPlacement[], lunch: IntervalMs): number {
+  const occupied = sessions
+    .map((session) => ({
+      start: Math.max(session.start, lunch.start),
+      end: Math.min(session.end, lunch.end),
+    }))
+    .filter((interval) => interval.end > interval.start)
+    .sort((a, b) => a.start - b.start);
+
+  let covered = 0;
+  let cursor = lunch.start;
+  for (const interval of occupied) {
+    const start = Math.max(interval.start, cursor);
+    if (interval.end > start) {
+      covered += interval.end - start;
+      cursor = interval.end;
+    }
+  }
+  return lunch.end - lunch.start - covered;
 }
 
 function middayBreakWindow(day: Date): IntervalMs {
@@ -153,10 +177,20 @@ function placementScore(
     score -= MIDDAY_OVERLAP_PENALTY;
   }
 
+  let consideredChoreographers = 0;
+  let unavailableChoreographers = 0;
   for (const choreographer of item.choreographers) {
+    if (!choreographer.availableInPeriod) {
+      continue;
+    }
+    consideredChoreographers += 1;
     if (personBusy(choreographer, interval)) {
+      unavailableChoreographers += 1;
       score -= CHOREOGRAPHER_UNAVAILABLE;
     }
+  }
+  if (consideredChoreographers > 0 && unavailableChoreographers === consideredChoreographers) {
+    score -= ALL_CHOREOGRAPHERS_UNAVAILABLE;
   }
   for (const participant of item.participants) {
     if (personBusy(participant, interval)) {
@@ -220,13 +254,11 @@ function participantScore(
     }
 
     const lunch = lunchWindow(parseDayKey(dayKey));
-    const covered = daySessions.reduce((total, session) => {
-      const overlapStart = Math.max(session.start, lunch.start);
-      const overlapEnd = Math.min(session.end, lunch.end);
-      return total + Math.max(0, overlapEnd - overlapStart);
-    }, 0);
-    if (covered >= lunch.end - lunch.start) {
+    const freeLunchMs = lunchFreeMs(daySessions, lunch);
+    if (freeLunchMs <= 0) {
       score -= LUNCH_PENALTY;
+    } else if (freeLunchMs < SHORT_LUNCH_MS) {
+      score -= SHORT_LUNCH_PENALTY;
     }
   }
 

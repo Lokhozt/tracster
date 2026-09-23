@@ -32,7 +32,10 @@ export function SchedulingPlanEditor({
   onMove: (itemId: string, locationId: string, startsAt: Date, endsAt: Date) => void;
 }) {
   const t = useTranslations("Components");
-  const conflicted = placements.filter((placement) => {
+  const choreographerConflicts = placements.filter(
+    (placement) => (conflicts[placement.itemId]?.choreographerUnavailable.length ?? 0) > 0,
+  );
+  const participantConflicts = placements.filter((placement) => {
     const conflict = conflicts[placement.itemId];
     return conflict && (conflict.unavailable.length > 0 || conflict.engaged.length > 0);
   });
@@ -55,6 +58,34 @@ export function SchedulingPlanEditor({
       </Card>
 
       <Card>
+        <h2 className="text-lg font-semibold">{t("choreographersNotAvailable")}</h2>
+        {conflictError ? (
+          <p className="mt-3 text-sm text-red-700">{conflictError}</p>
+        ) : choreographerConflicts.length === 0 ? (
+          <p className="mt-3 text-sm text-stone-500">
+            {checkingConflicts ? t("checkingConflicts") : t("noneCandidate")}
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-3">
+            {choreographerConflicts.map((placement) => {
+              const names = conflicts[placement.itemId].choreographerUnavailable.join(", ");
+              return (
+                <li
+                  key={placement.itemId}
+                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm"
+                >
+                  <p className="font-semibold text-red-900">{placementLabel(placement)}</p>
+                  <p className="mt-1 text-red-800">
+                    {t("scheduleChoreographerUnavailable", { names })}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
+
+      <Card>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold">{t("scheduleConflicts")}</h2>
           {checkingConflicts && (
@@ -63,13 +94,13 @@ export function SchedulingPlanEditor({
         </div>
         {conflictError ? (
           <p className="mt-3 text-sm text-red-700">{conflictError}</p>
-        ) : conflicted.length === 0 ? (
+        ) : participantConflicts.length === 0 ? (
           <p className="mt-3 text-sm text-stone-500">
             {checkingConflicts ? t("checkingConflicts") : t("noScheduleConflicts")}
           </p>
         ) : (
           <ul className="mt-3 space-y-3">
-            {conflicted.map((placement) => {
+            {participantConflicts.map((placement) => {
               const conflict = conflicts[placement.itemId];
               return (
                 <li
