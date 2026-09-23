@@ -19,7 +19,10 @@ export async function POST(request: NextRequest) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
-  const result = await findSchedulingPlacementConflicts(parsed.data.placements);
+  const result = await findSchedulingPlacementConflicts(
+    parsed.data.placements,
+    parsed.data.days,
+  );
   if ("error" in result) {
     return jsonError(result.error);
   }

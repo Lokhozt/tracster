@@ -127,6 +127,7 @@ export function SchedulingTool({
   const [editedPlacements, setEditedPlacements] = useState<SchedulePlacement[]>([]);
   const [placementConflicts, setPlacementConflicts] =
     useState<SchedulingPlacementConflicts>({});
+  const [unavailableAllPeriod, setUnavailableAllPeriod] = useState<string[]>([]);
   const [checkingConflicts, setCheckingConflicts] = useState(false);
   const [conflictError, setConflictError] = useState<string | null>(null);
   const conflictRequestId = useRef(0);
@@ -383,6 +384,7 @@ export function SchedulingTool({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          days,
           placements: placements.map((placement) => ({
             itemId: placement.itemId,
             choreographyId: placement.choreographyId,
@@ -401,6 +403,9 @@ export function SchedulingTool({
         return;
       }
       setPlacementConflicts(data.conflicts as SchedulingPlacementConflicts);
+      setUnavailableAllPeriod(
+        Array.isArray(data.unavailableAllPeriod) ? data.unavailableAllPeriod : [],
+      );
     } catch {
       if (requestId === conflictRequestId.current) {
         setConflictError(t("scheduleConflictCheckError"));
@@ -420,6 +425,7 @@ export function SchedulingTool({
     const placements = selectedCandidate.placements.map((placement) => ({ ...placement }));
     setEditedPlacements(placements);
     setPlacementConflicts({});
+    setUnavailableAllPeriod([]);
     setConflictError(null);
     setStep(5);
     void checkPlacementConflicts(placements);
@@ -876,6 +882,7 @@ export function SchedulingTool({
             days={days}
             locations={locations.filter((location) => locationIds.includes(location.id))}
             conflicts={placementConflicts}
+            unavailableAllPeriod={unavailableAllPeriod}
             checkingConflicts={checkingConflicts}
             conflictError={conflictError}
             onMove={moveEditedPlacement}

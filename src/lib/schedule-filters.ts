@@ -41,6 +41,55 @@ export function withParticipantTooltip(
   }`;
 }
 
+export function withSchedulingTooltip(
+  base: string,
+  {
+    choreographerNames = [],
+    participantNames = [],
+    unavailableNames = [],
+    engagedNames = [],
+  }: {
+    choreographerNames?: string[];
+    participantNames?: string[];
+    unavailableNames?: string[];
+    engagedNames?: string[];
+  },
+  t?: MessageTranslator,
+) {
+  const lines = [base];
+  const choreographers = choreographerNames.join(", ");
+  if (choreographers) {
+    lines.push(
+      t
+        ? t("choreographersTooltip", { names: choreographers })
+        : `Choreographers: ${choreographers}`,
+    );
+  }
+  const participants = participantNames.join(", ");
+  if (participants) {
+    lines.push(
+      t ? t("participantsTooltip", { names: participants }) : `Participants: ${participants}`,
+    );
+  }
+  const unavailable = unavailableNames.join(", ");
+  if (unavailable) {
+    lines.push(
+      t
+        ? t("scheduleUnavailableConflict", { names: unavailable })
+        : `Unavailable: ${unavailable}`,
+    );
+  }
+  const engaged = engagedNames.join(", ");
+  if (engaged) {
+    lines.push(
+      t
+        ? t("scheduleEngagedConflict", { names: engaged })
+        : `In another rehearsal: ${engaged}`,
+    );
+  }
+  return lines.join("\n");
+}
+
 export type UpcomingEventRange = "all" | "week" | "month";
 
 export function scheduleEventLabel(event: SerializedScheduleEvent) {

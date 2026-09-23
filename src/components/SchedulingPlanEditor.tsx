@@ -19,6 +19,7 @@ export function SchedulingPlanEditor({
   days,
   locations,
   conflicts,
+  unavailableAllPeriod,
   checkingConflicts,
   conflictError,
   onMove,
@@ -27,6 +28,7 @@ export function SchedulingPlanEditor({
   days: string[];
   locations: Array<{ id: string; name: string }>;
   conflicts: SchedulingPlacementConflicts;
+  unavailableAllPeriod: string[];
   checkingConflicts: boolean;
   conflictError: string | null;
   onMove: (itemId: string, locationId: string, startsAt: Date, endsAt: Date) => void;
@@ -81,6 +83,23 @@ export function SchedulingPlanEditor({
                 </li>
               );
             })}
+          </ul>
+        )}
+      </Card>
+
+      <Card>
+        <h2 className="text-lg font-semibold">{t("participantsUnavailableAllPeriod")}</h2>
+        {conflictError ? (
+          <p className="mt-3 text-sm text-red-700">{conflictError}</p>
+        ) : unavailableAllPeriod.length === 0 ? (
+          <p className="mt-3 text-sm text-stone-500">
+            {checkingConflicts ? t("checkingConflicts") : t("noneCandidate")}
+          </p>
+        ) : (
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-stone-700">
+            {unavailableAllPeriod.map((name) => (
+              <li key={name}>{name}</li>
+            ))}
           </ul>
         )}
       </Card>

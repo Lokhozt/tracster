@@ -310,6 +310,7 @@ export const schedulingApplySchema = z.object({
 });
 
 export const schedulingConflictsSchema = z.object({
+  days: z.array(z.string().date()).min(1).max(14),
   placements: z.array(
     z.object({
       itemId: z.string().min(1).max(80),

@@ -1,8 +1,15 @@
 import { prisma } from "@/lib/db";
 import { intervalsOverlap, resolveIntervalEnd } from "@/lib/conflicts";
+import { atLocalTime, hasFreeTime, parseDayKey } from "@/lib/scheduling/intervals";
 import type {
+  IntervalMs,
+  SchedulingConflictsResult,
   SchedulingPlacementConflict,
   SchedulingPlacementConflicts,
+} from "@/lib/scheduling/types";
+import {
+  DEFAULT_LOCATION_END_HOUR,
+  DEFAULT_LOCATION_START_HOUR,
 } from "@/lib/scheduling/types";
 import { basicUserSelect, formatUserName } from "@/lib/users";
 
@@ -28,7 +35,8 @@ type MutableConflict = {
 
 export async function findSchedulingPlacementConflicts(
   placements: PlacementInput[],
-): Promise<{ conflicts: SchedulingPlacementConflicts } | { error: string }> {
+  days: string[],
+): Promise<SchedulingConflictsResult | { error: string }> {
   const choreographyIds = [...new Set(placements.map((placement) => placement.choreographyId))];
   const choreographies = await prisma.choreography.findMany({
     where: { id: { in: choreographyIds } },
@@ -98,14 +106,29 @@ export async function findSchedulingPlacementConflicts(
     ]),
   );
   if (allUserIds.size === 0) {
-    return { conflicts: serializeConflicts(mutable) };
+    return { conflicts: serializeConflicts(mutable), unavailableAllPeriod: [] };
   }
 
+  const periodWindows: IntervalMs[] = days.map((day) => {
+    const dayDate = parseDayKey(day);
+    return {
+      start: atLocalTime(dayDate, DEFAULT_LOCATION_START_HOUR).getTime(),
+      end: atLocalTime(dayDate, DEFAULT_LOCATION_END_HOUR).getTime(),
+    };
+  });
+  const periodStart = new Date(Math.min(...periodWindows.map((window) => window.start)));
+  const periodEnd = new Date(Math.max(...periodWindows.map((window) => window.end)));
   const overallStart = new Date(
-    Math.min(...[...intervalByItem.values()].map((interval) => interval.start.getTime())),
+    Math.min(
+      periodStart.getTime(),
+      ...[...intervalByItem.values()].map((interval) => interval.start.getTime()),
+    ),
   );
   const overallEnd = new Date(
-    Math.max(...[...intervalByItem.values()].map((interval) => interval.end.getTime())),
+    Math.max(
+      periodEnd.getTime(),
+      ...[...intervalByItem.values()].map((interval) => interval.end.getTime()),
+    ),
   );
   const assumedNullEndFloor = new Date(overallStart.getTime() - 60 * 60 * 1000);
 
@@ -154,6 +177,22 @@ export async function findSchedulingPlacementConflicts(
     }),
   ]);
 
+  const fullyUnavailableParticipantIds = new Set<string>();
+  const participantIds = new Set<string>();
+  for (const members of audienceByItem.values()) {
+    for (const member of members) {
+      participantIds.add(member.id);
+    }
+  }
+  for (const participantId of participantIds) {
+    const blocks = unavailability
+      .filter((entry) => entry.userId === participantId)
+      .map((entry) => ({ start: entry.startsAt.getTime(), end: entry.endsAt.getTime() }));
+    if (!hasFreeTime(blocks, periodWindows)) {
+      fullyUnavailableParticipantIds.add(participantId);
+    }
+  }
+
   for (const entry of unavailability) {
     namesById.set(entry.userId, formatUserName(entry.user));
     for (const placement of placements) {
@@ -163,7 +202,9 @@ export async function findSchedulingPlacementConflicts(
         continue;
       }
       if (audience.some((member) => member.id === entry.userId)) {
-        mutable.get(placement.itemId)!.unavailable.add(entry.userId);
+        if (!fullyUnavailableParticipantIds.has(entry.userId)) {
+          mutable.get(placement.itemId)!.unavailable.add(entry.userId);
+        }
       }
       if (choreographersByItem.get(placement.itemId)!.some((person) => person.id === entry.userId)) {
         mutable.get(placement.itemId)!.choreographerUnavailable.add(entry.userId);
@@ -186,7 +227,7 @@ export async function findSchedulingPlacementConflicts(
         continue;
       }
       for (const member of audienceByItem.get(placement.itemId)!) {
-        if (memberIds.has(member.id)) {
+        if (memberIds.has(member.id) && !fullyUnavailableParticipantIds.has(member.id)) {
           mutable.get(placement.itemId)!.engaged.add(member.id);
         }
       }
@@ -215,7 +256,7 @@ export async function findSchedulingPlacementConflicts(
       }
 
       for (const member of audienceByItem.get(other.itemId)!) {
-        if (currentAudience.has(member.id)) {
+        if (currentAudience.has(member.id) && !fullyUnavailableParticipantIds.has(member.id)) {
           mutable.get(current.itemId)!.engaged.add(member.id);
           mutable.get(other.itemId)!.engaged.add(member.id);
         }
@@ -223,7 +264,12 @@ export async function findSchedulingPlacementConflicts(
     }
   }
 
-  return { conflicts: serializeConflicts(mutable, namesById) };
+  return {
+    conflicts: serializeConflicts(mutable, namesById),
+    unavailableAllPeriod: [...fullyUnavailableParticipantIds]
+      .map((id) => namesById.get(id) ?? id)
+      .sort((a, b) => a.localeCompare(b)),
+  };
 }
 
 function serializeConflicts(

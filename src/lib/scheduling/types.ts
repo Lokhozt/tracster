@@ -39,6 +39,7 @@ export type SchedulePlacement = {
   locationName: string;
   startsAt: IsoDateTime;
   endsAt: IsoDateTime;
+  choreographerNames: string[];
   participantNames: string[];
 };
 
@@ -63,6 +64,11 @@ export type SchedulingPlacementConflict = {
 };
 
 export type SchedulingPlacementConflicts = Record<string, SchedulingPlacementConflict>;
+
+export type SchedulingConflictsResult = {
+  conflicts: SchedulingPlacementConflicts;
+  unavailableAllPeriod: string[];
+};
 
 export type IntervalMs = {
   start: number;

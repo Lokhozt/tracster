@@ -8,10 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Scheduling candidates and the optional edit step list choreographers who are unavailable, separately from participants.
+- The edit step lists participants who are unavailable for the whole planning period.
+- Rehearsal hover tooltips in the scheduling calendars show choreographers, unavailable participants, and participants already in another overlapping rehearsal.
 
 ### Changed
 - Scheduling scoring now treats a slot with no available choreographer more severely, and penalizes a short midday break (less than half an hour between 12h and 14h) in addition to a fully blocked lunch.
 - Rehearsals that start before 9h or end after 20h are discouraged more strongly; gaps between a participant’s rehearsals and long consecutive streaks weigh less.
+- Participants unavailable for the whole planning period are omitted from per-rehearsal conflicts on the edit step.
 
 ## 1.1.0 - 22-09-2026
 

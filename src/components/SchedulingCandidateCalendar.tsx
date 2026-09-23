@@ -9,7 +9,7 @@ import type {
   SchedulePlacement,
   SchedulingPlacementConflicts,
 } from "@/lib/scheduling/types";
-import { withParticipantTooltip } from "@/lib/schedule-filters";
+import { withSchedulingTooltip } from "@/lib/schedule-filters";
 import { cn } from "@/lib/utils";
 
 const PX_PER_MINUTE = 1.1;
@@ -327,9 +327,15 @@ export function SchedulingCandidateCalendar({
                               borderColor: tone.border,
                               color: tone.color,
                             }}
-                            title={withParticipantTooltip(
+                            title={withSchedulingTooltip(
                               `${placementLabel(placement)}\n${formatTime(start)} → ${formatTime(end)}`,
-                              placement.participantNames,
+                              {
+                                choreographerNames: placement.choreographerNames ?? [],
+                                participantNames: placement.participantNames,
+                                unavailableNames: conflict?.unavailable ?? [],
+                                engagedNames: conflict?.engaged ?? [],
+                              },
+                              t,
                             )}
                           >
                             {hasConflict && (
