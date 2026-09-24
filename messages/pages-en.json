@@ -60,8 +60,8 @@
       "title": "New event"
     },
     "EventDetail": {
-      "backToChoreography": "← Back to {title}",
       "backToEvents": "← Back to events",
+      "openChoreography": "View choreography: {title}",
       "start": "Start",
       "end": "End",
       "location": "Location",

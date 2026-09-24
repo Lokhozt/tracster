@@ -13,6 +13,7 @@ import { JoinRequestsList } from "@/components/JoinRequestsList";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { RepresentationChoreographiesSection } from "@/components/RepresentationForms";
 import { Card } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canEditEvent, canViewEvent, serializeEvent } from "@/lib/events";
@@ -171,20 +172,27 @@ export default async function EventDetailPage({ params }: PageProps) {
     )
   ).filter((item) => item !== null);
 
-  const backHref =
+  const choreographyHref =
     event.type.kind === "REHEARSAL" && event.choreographyId
       ? `/choreographies/${event.choreographyId}`
-      : "/events";
-  const backLabel =
-    event.type.kind === "REHEARSAL" && event.choreographyTitle
-      ? t("backToChoreography", { title: event.choreographyTitle })
-      : t("backToEvents");
+      : null;
 
   return (
     <AppShell title={event.displayTitle}>
-      <div className="mb-6">
-        <Link href={backHref} className="text-sm text-stone-600 hover:text-stone-900">
-          {backLabel}
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        {choreographyHref && (
+          <Link
+            href={choreographyHref}
+            className={cn(
+              "inline-flex min-h-11 items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition",
+              "bg-stone-900 text-white hover:bg-stone-700",
+            )}
+          >
+            {t("openChoreography", { title: event.choreographyTitle ?? "" })}
+          </Link>
+        )}
+        <Link href="/events" className="text-sm text-stone-600 hover:text-stone-900">
+          {t("backToEvents")}
         </Link>
       </div>
 

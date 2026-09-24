@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - The scheduling edit step can color 10-minute intervals by participant and choreographer availability for a selected choreography, including participant conflicts with other rehearsals.
+- Added a button in repetition to go the the associated choreography.
 
 ## 1.1.1 - 23-09-2026
 

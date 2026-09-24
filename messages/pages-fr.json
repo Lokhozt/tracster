@@ -60,8 +60,8 @@
       "title": "Nouvel événement"
     },
     "EventDetail": {
-      "backToChoreography": "← Retour à {title}",
       "backToEvents": "← Retour aux événements",
+      "openChoreography": "Voir la chorégraphie : {title}",
       "start": "Début",
       "end": "Fin",
       "location": "Lieu",
