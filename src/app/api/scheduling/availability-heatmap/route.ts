@@ -1,0 +1,32 @@
+import { NextRequest } from "next/server";
+import { forbidden, jsonError, unauthorized } from "@/lib/api";
+import { getCurrentUser } from "@/lib/auth";
+import { isAdmin } from "@/lib/roles";
+import { buildSchedulingAvailabilityHeatmap } from "@/lib/scheduling/availability-heatmap";
+import { schedulingAvailabilityHeatmapSchema } from "@/lib/validations";
+
+export async function POST(request: NextRequest) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return unauthorized();
+  }
+  if (!(await isAdmin(user.id))) {
+    return forbidden();
+  }
+
+  const parsed = schedulingAvailabilityHeatmapSchema.safeParse(await request.json());
+  if (!parsed.success) {
+    return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
+  }
+
+  const result = await buildSchedulingAvailabilityHeatmap(
+    parsed.data.selectedItemId,
+    parsed.data.placements,
+    parsed.data.days,
+  );
+  if ("error" in result) {
+    return jsonError(result.error);
+  }
+
+  return Response.json(result);
+}

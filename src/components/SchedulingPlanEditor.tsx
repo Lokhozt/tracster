@@ -6,6 +6,7 @@ import { Card, Label, Select } from "@/components/ui";
 import { parseDayKey } from "@/lib/scheduling/intervals";
 import type {
   SchedulePlacement,
+  SchedulingAvailabilityBand,
   SchedulingPlacementConflicts,
 } from "@/lib/scheduling/types";
 import type { SerializedUnavailability } from "@/lib/unavailability";
@@ -49,6 +50,12 @@ export function SchedulingPlanEditor({
   const [highlightUserId, setHighlightUserId] = useState("");
   const [highlightBands, setHighlightBands] = useState<SerializedUnavailability[]>([]);
   const [highlightError, setHighlightError] = useState<string | null>(null);
+  const [availabilityItemId, setAvailabilityItemId] = useState("");
+  const [availabilityResult, setAvailabilityResult] = useState<{
+    requestKey: string;
+    bands: SchedulingAvailabilityBand[];
+    error: string | null;
+  } | null>(null);
   const choreographerConflicts = placements.filter(
     (placement) => (conflicts[placement.itemId]?.choreographerUnavailable.length ?? 0) > 0,
   );
@@ -59,8 +66,6 @@ export function SchedulingPlanEditor({
 
   useEffect(() => {
     if (!highlightUserId || days.length === 0) {
-      setHighlightBands([]);
-      setHighlightError(null);
       return;
     }
 
@@ -72,8 +77,6 @@ export function SchedulingPlanEditor({
       to: to.toISOString(),
     });
     const controller = new AbortController();
-    setHighlightBands([]);
-    setHighlightError(null);
 
     fetch(`/api/users/${highlightUserId}/unavailability?${params.toString()}`, {
       signal: controller.signal,
@@ -97,12 +100,66 @@ export function SchedulingPlanEditor({
     return () => controller.abort();
   }, [days, highlightUserId, t]);
 
+  const availabilityRequestKey = JSON.stringify({
+    selectedItemId: availabilityItemId,
+    days,
+    placements: placements.map((placement) => ({
+      itemId: placement.itemId,
+      choreographyId: placement.choreographyId,
+      groupId: placement.groupId,
+      startsAt: placement.startsAt,
+      endsAt: placement.endsAt,
+    })),
+  });
+  const availabilityCurrent = availabilityResult?.requestKey === availabilityRequestKey;
+  const availabilityBands = availabilityCurrent ? availabilityResult.bands : [];
+  const availabilityError = availabilityCurrent ? availabilityResult.error : null;
+  const availabilityLoading = Boolean(availabilityItemId && !availabilityCurrent);
+
+  useEffect(() => {
+    if (!availabilityItemId || days.length === 0) {
+      return;
+    }
+
+    const controller = new AbortController();
+    fetch("/api/scheduling/availability-heatmap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: availabilityRequestKey,
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error ?? "AVAILABILITY_HEATMAP_FAILED");
+        }
+        setAvailabilityResult({
+          requestKey: availabilityRequestKey,
+          bands: data.bands as SchedulingAvailabilityBand[],
+          error: null,
+        });
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        setAvailabilityResult({
+          requestKey: availabilityRequestKey,
+          bands: [],
+          error: t("choreographyAvailabilityError"),
+        });
+      });
+
+    return () => controller.abort();
+  }, [availabilityItemId, availabilityRequestKey, days.length, t]);
+
   return (
     <div className="space-y-4">
       <Card className="space-y-3">
         <div>
           <h2 className="text-lg font-semibold">{t("editSchedule")}</h2>
           <p className="mt-1 text-sm text-stone-600">{t("editScheduleHelp")}</p>
+          <p className="mt-1 text-sm text-stone-600">{t("highlightChoreographyAvailabilityHelp")}</p>
         </div>
         {users.length > 0 && (
           <div>
@@ -111,7 +168,15 @@ export function SchedulingPlanEditor({
               id="scheduling-highlight-user"
               className="mt-1 w-full max-w-sm"
               value={highlightUserId}
-              onChange={(event) => setHighlightUserId(event.target.value)}
+              onChange={(event) => {
+                const userId = event.target.value;
+                setHighlightBands([]);
+                setHighlightError(null);
+                setHighlightUserId(userId);
+                if (userId) {
+                  setAvailabilityItemId("");
+                }
+              }}
             >
               <option value="">{t("highlightUserNone")}</option>
               {users.map((user) => (
@@ -124,6 +189,12 @@ export function SchedulingPlanEditor({
             {highlightError && <p className="mt-1 text-sm text-red-700">{highlightError}</p>}
           </div>
         )}
+        {availabilityLoading && (
+          <p className="text-sm text-stone-500">{t("loading")}</p>
+        )}
+        {availabilityError && (
+          <p className="text-sm text-red-700">{availabilityError}</p>
+        )}
         <SchedulingCandidateCalendar
           placements={placements}
           editable
@@ -132,10 +203,34 @@ export function SchedulingPlanEditor({
           conflicts={conflicts}
           unavailability={highlightUserId ? highlightBands : []}
           locationUnavailability={locationUnavailability}
+          availabilityHeatmap={availabilityItemId ? availabilityBands : []}
+          selectedItemId={availabilityItemId || undefined}
           highlightUserId={highlightUserId || undefined}
           highlightUserName={users.find((user) => user.id === highlightUserId)?.name}
           onMove={onMove}
+          onSelect={(itemId) => {
+            setAvailabilityItemId((current) => (current === itemId ? "" : itemId));
+            setHighlightBands([]);
+            setHighlightError(null);
+            setHighlightUserId("");
+          }}
         />
+        {availabilityItemId && (
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-stone-700">
+            {[
+              ["bg-blue-300", t("availabilityAllParticipants")],
+              ["bg-green-400", t("availabilityOneParticipant")],
+              ["bg-yellow-300", t("availabilityTwoParticipants")],
+              ["bg-orange-400", t("availabilityThreeParticipants")],
+              ["bg-red-900", t("availabilityAllChoreographers")],
+            ].map(([color, label]) => (
+              <span key={label} className="inline-flex items-center gap-1.5">
+                <span className={`size-3 rounded-sm ${color}`} aria-hidden />
+                {label}
+              </span>
+            ))}
+          </div>
+        )}
       </Card>
 
       <Card>

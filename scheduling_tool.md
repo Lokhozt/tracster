@@ -58,6 +58,7 @@ Optional step 6- Edit
 The user can drag rehearsals in the selected candidate to another time, day, or location before creating them. Dropped start times snap to 10-minute intervals.
 Location unavailability is shown as immovable grey boxes labelled unavailable.
 The user can select a person to mark their unavailability in red on the calendar.
+The user can instead click a rehearsal to color the planning in 10-minute intervals: blue when every considered participant is available, green for one unavailable participant, yellow for two, orange for three or more, and dark red when every choreographer is unavailable. Clicking the same rehearsal again clears the coloring. Participants unavailable for the whole planning period are excluded, while participants busy in another rehearsal are counted as unavailable. Selecting a choreography clears the selected person, and selecting a person clears the selected choreography.
 After every move, conflicts are recalculated and displayed for choreographers who are unavailable, and for participants who are unavailable or already in another rehearsal, including another rehearsal in the edited planning. Participants who are unavailable for the whole planning period are listed separately and omitted from those conflicts.
 
 At validation, each rehearsal is automatically created.

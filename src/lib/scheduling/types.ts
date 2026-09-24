@@ -72,6 +72,15 @@ export type SchedulingConflictsResult = {
   unavailableAllPeriod: string[];
 };
 
+export type SchedulingAvailabilityBand = {
+  day: IsoDate;
+  startsAt: IsoDateTime;
+  endsAt: IsoDateTime;
+  unavailableParticipants: number;
+  unavailableChoreographers: number;
+  allChoreographersUnavailable: boolean;
+};
+
 export type IntervalMs = {
   start: number;
   end: number;

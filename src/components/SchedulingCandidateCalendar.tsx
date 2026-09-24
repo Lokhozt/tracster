@@ -9,6 +9,7 @@ import type {
   IntervalMs,
   LocationUnavailability,
   SchedulePlacement,
+  SchedulingAvailabilityBand,
   SchedulingPlacementConflicts,
 } from "@/lib/scheduling/types";
 import { withSchedulingTooltip } from "@/lib/schedule-filters";
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils";
 
 const PX_PER_MINUTE = 1.1;
 const EDIT_SNAP_MINUTES = 10;
+const CLICK_MOVE_PX = 6;
 
 type EditDrag = {
   itemId: string;
@@ -26,6 +28,8 @@ type EditDrag = {
   day: string;
   locationId: string;
   offsetMinutes: number;
+  startClientX: number;
+  startClientY: number;
   moved: boolean;
 };
 
@@ -109,6 +113,22 @@ function overlayIntervals(
   }));
 }
 
+function availabilityBandClass(band: SchedulingAvailabilityBand) {
+  if (band.allChoreographersUnavailable) {
+    return "bg-red-900/65";
+  }
+  if (band.unavailableParticipants >= 3) {
+    return "bg-orange-400/55";
+  }
+  if (band.unavailableParticipants === 2) {
+    return "bg-yellow-300/60";
+  }
+  if (band.unavailableParticipants === 1) {
+    return "bg-green-400/50";
+  }
+  return "bg-blue-300/45";
+}
+
 export function SchedulingCandidateCalendar({
   placements,
   editable = false,
@@ -117,9 +137,12 @@ export function SchedulingCandidateCalendar({
   conflicts = {},
   unavailability = [],
   locationUnavailability = [],
+  availabilityHeatmap = [],
+  selectedItemId,
   highlightUserId,
   highlightUserName,
   onMove,
+  onSelect,
 }: {
   placements: SchedulePlacement[];
   editable?: boolean;
@@ -128,9 +151,12 @@ export function SchedulingCandidateCalendar({
   conflicts?: SchedulingPlacementConflicts;
   unavailability?: Array<{ startsAt: string; endsAt: string }>;
   locationUnavailability?: Array<Pick<LocationUnavailability, "locationId" | "day" | "startsAt" | "endsAt">>;
+  availabilityHeatmap?: SchedulingAvailabilityBand[];
+  selectedItemId?: string;
   highlightUserId?: string;
   highlightUserName?: string;
   onMove?: (itemId: string, locationId: string, startsAt: Date, endsAt: Date) => void;
+  onSelect?: (itemId: string) => void;
 }) {
   const t = useTranslations("Components");
   const locale = useLocale();
@@ -190,7 +216,7 @@ export function SchedulingCandidateCalendar({
   }
 
   function startDrag(event: React.PointerEvent<HTMLDivElement>, placement: SchedulePlacement) {
-    if (!editable || !onMove || (event.pointerType === "mouse" && event.button !== 0)) {
+    if (!editable || (!onMove && !onSelect) || (event.pointerType === "mouse" && event.button !== 0)) {
       return;
     }
 
@@ -214,6 +240,8 @@ export function SchedulingCandidateCalendar({
       day,
       locationId: placement.locationId,
       offsetMinutes: startOffset,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
       moved: false,
     });
   }
@@ -277,18 +305,28 @@ export function SchedulingCandidateCalendar({
       const rawMinutes =
         (event.clientY - rect.top) / PX_PER_MINUTE - active.grabOffsetMinutes;
       const snapped = Math.round(rawMinutes / EDIT_SNAP_MINUTES) * EDIT_SNAP_MINUTES;
+      const offsetMinutes = Math.max(
+        0,
+        Math.min(totalMinutes - active.durationMinutes, snapped),
+      );
+      const nextDay = column?.day ?? active.day;
+      const nextLocationId = column?.locationId ?? active.locationId;
+      const moved =
+        active.moved ||
+        Math.hypot(event.clientX - active.startClientX, event.clientY - active.startClientY) >=
+          CLICK_MOVE_PX ||
+        nextDay !== active.day ||
+        nextLocationId !== active.locationId ||
+        offsetMinutes !== active.offsetMinutes;
 
       setDrag((current) =>
         current
           ? {
               ...current,
-              day: column?.day ?? current.day,
-              locationId: column?.locationId ?? current.locationId,
-              offsetMinutes: Math.max(
-                0,
-                Math.min(totalMinutes - active.durationMinutes, snapped),
-              ),
-              moved: true,
+              day: nextDay,
+              locationId: nextLocationId,
+              offsetMinutes,
+              moved,
             }
           : current,
       );
@@ -299,6 +337,10 @@ export function SchedulingCandidateCalendar({
         return;
       }
       setDrag(null);
+      if (!active.moved) {
+        onSelect?.(active.itemId);
+        return;
+      }
       commitDrag(active);
     }
 
@@ -355,6 +397,32 @@ export function SchedulingCandidateCalendar({
                       )}
                       style={{ height }}
                     >
+                      {availabilityHeatmap
+                        .filter((band) => band.day === day)
+                        .map((band, index) => {
+                          const start = new Date(band.startsAt);
+                          const end = new Date(band.endsAt);
+                          const top =
+                            (start.getHours() * 60 + start.getMinutes() - startMinutes) *
+                            PX_PER_MINUTE;
+                          const bandHeight =
+                            ((end.getTime() - start.getTime()) / 60_000) * PX_PER_MINUTE;
+                          return (
+                            <div
+                              key={`${day}-${locationId}-availability-${index}`}
+                              className={cn(
+                                "pointer-events-none absolute right-0 left-0 border-b border-white/25",
+                                availabilityBandClass(band),
+                              )}
+                              style={{ top, height: bandHeight }}
+                              title={t("choreographyAvailabilityTooltip", {
+                                participants: band.unavailableParticipants,
+                                choreographers: band.unavailableChoreographers,
+                              })}
+                              aria-hidden
+                            />
+                          );
+                        })}
                       {overlayIntervals(
                         locationUnavailability.filter(
                           (entry) => entry.locationId === locationId && entry.day === day,
@@ -421,6 +489,7 @@ export function SchedulingCandidateCalendar({
                           highlightUserName,
                         );
 
+                        const selected = selectedItemId === placement.itemId;
                         return (
                           <div
                             key={placement.itemId}
@@ -429,6 +498,7 @@ export function SchedulingCandidateCalendar({
                               "absolute right-1 left-1 z-[2] overflow-hidden rounded-md border px-1.5 py-1 text-xs leading-tight shadow-sm",
                               editable && "cursor-grab touch-none select-none active:cursor-grabbing",
                               hasConflict && "ring-2 ring-red-600",
+                              selected && "z-[3] ring-2 ring-stone-900",
                               dragging && "z-10 cursor-grabbing shadow-lg ring-2 ring-stone-700",
                             )}
                             style={{

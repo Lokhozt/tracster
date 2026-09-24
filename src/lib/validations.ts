@@ -322,6 +322,10 @@ export const schedulingConflictsSchema = z.object({
   ).min(1).max(40),
 });
 
+export const schedulingAvailabilityHeatmapSchema = schedulingConflictsSchema.extend({
+  selectedItemId: z.string().min(1).max(80),
+});
+
 export const choreographyRepresentationSchema = z.discriminatedUnion("mode", [
   z.object({
     mode: z.literal("create"),
