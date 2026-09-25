@@ -4,11 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 1.1.2 - 24-09-2026
+## 1.1.2 - [Unreleased]
 
 ### Added
 - The scheduling edit step can color 10-minute intervals by participant and choreographer availability for a selected choreography, including participant conflicts with other rehearsals.
 - Added a button in repetition to go the the associated choreography.
+- Rehearsals created by the scheduling tool come with availability answers already filled for their participants and choreographers: unavailable when one of their unavailability periods overlaps the rehearsal, available otherwise.
 
 ## 1.1.1 - 23-09-2026
 
