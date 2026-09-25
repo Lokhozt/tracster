@@ -71,6 +71,7 @@
       "notes": "Notes",
       "yourAvailability": "Your availability",
       "participantAvailability": "Participant availability",
+      "availableParticipantCount": "{available}/{total} participants available",
       "noParticipantsAssigned": "No participants assigned yet.",
       "availabilityStatus": {
         "AVAILABLE": "Available",

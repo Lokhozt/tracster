@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The scheduling edit step can color 10-minute intervals by participant and choreographer availability for a selected choreography, including participant conflicts with other rehearsals.
 - Added a button in repetition to go the the associated choreography.
 - Rehearsals created by the scheduling tool come with availability answers already filled for their participants and choreographers: unavailable when one of their unavailability periods overlaps the rehearsal, available otherwise.
+- The rehearsal page shows how many participants marked themselves available as “available/total participants available”, above the availability list.
 
 ## 1.1.1 - 23-09-2026
 

@@ -163,6 +163,11 @@ export default async function EventDetailPage({ params }: PageProps) {
           orderBy: userNameOrderBy,
         })
       : [];
+  const availableParticipantCount = rehearsalMembers.filter((member) =>
+    eventRecord.availabilities.some(
+      (item) => item.userId === member.id && item.status === "AVAILABLE",
+    ),
+  ).length;
 
   const editableChoreographies = (
     await Promise.all(
@@ -285,6 +290,14 @@ export default async function EventDetailPage({ params }: PageProps) {
       {event.type.kind === "REHEARSAL" && canEdit && (
         <Card className="mb-6">
           <h2 className="mb-4 text-lg font-semibold">{t("participantAvailability")}</h2>
+          {rehearsalMembers.length > 0 && (
+            <p className="mb-3 text-sm text-stone-700">
+              {t("availableParticipantCount", {
+                available: availableParticipantCount,
+                total: rehearsalMembers.length,
+              })}
+            </p>
+          )}
           <div className="space-y-3">
             {rehearsalMembers.length === 0 ? (
               <p className="text-sm text-stone-600">{t("noParticipantsAssigned")}</p>
