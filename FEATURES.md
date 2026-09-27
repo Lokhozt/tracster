@@ -7,3 +7,8 @@
 - Rehearsals scheduling tools
 - One-way Google Calendar sync for shared events and per-user rehearsals
 - Follow the association's public Google calendar
+
+# TODO
+- User stats: number of choreographies / demonstration
+- Standalone ressources (documents)
+- Competitors couples
