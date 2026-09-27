@@ -102,6 +102,7 @@
     },
     "roles": {
       "USER": "User",
+      "MANAGER": "Manager",
       "ADMIN": "Admin",
       "OWNER": "Owner"
     },

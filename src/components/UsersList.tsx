@@ -106,6 +106,7 @@ export function UsersList({ users }: { users: AdminUser[] }) {
           >
             <option value="ALL">{t("allRoles")}</option>
             <option value="USER">{t("roleUSER")}</option>
+            <option value="MANAGER">{t("roleMANAGER")}</option>
             <option value="ADMIN">{t("roleADMIN")}</option>
             <option value="OWNER">{t("roleOWNER")}</option>
           </Select>

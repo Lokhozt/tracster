@@ -128,7 +128,7 @@ export function localizeEventType<T extends Pick<SerializedEventType, "name" | "
   return { ...type, name: eventTypeLabel(t, type.kind, type.name) };
 }
 
-export function roleLabel(t: ServerTranslator, role: "USER" | "ADMIN" | "OWNER") {
+export function roleLabel(t: ServerTranslator, role: "USER" | "MANAGER" | "ADMIN" | "OWNER") {
   return t(`roles.${role}`);
 }
 

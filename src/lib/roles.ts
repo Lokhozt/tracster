@@ -23,6 +23,11 @@ export async function isOwner(userId: string): Promise<boolean> {
   return role === "OWNER";
 }
 
+export async function isManager(userId: string): Promise<boolean> {
+  const role = await getUserRole(userId);
+  return role === "MANAGER";
+}
+
 export async function canManageUsers(userId: string): Promise<boolean> {
   return isAdmin(userId);
 }
@@ -66,7 +71,7 @@ export function canAssignRole(
     if (targetRole === "OWNER") {
       return false;
     }
-    return newRole === "USER" || newRole === "ADMIN";
+    return newRole === "USER" || newRole === "MANAGER" || newRole === "ADMIN";
   }
 
   return false;

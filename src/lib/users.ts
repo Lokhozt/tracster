@@ -142,6 +142,7 @@ export function serializeAdminUser(user: {
 
 export const roleLabels: Record<UserRole, string> = {
   USER: "User",
+  MANAGER: "Manager",
   ADMIN: "Admin",
   OWNER: "Owner",
 };
@@ -149,6 +150,7 @@ export const roleLabels: Record<UserRole, string> = {
 export function getRoleLabels(t: MessageTranslator): Record<UserRole, string> {
   return {
     USER: t("roles.USER"),
+    MANAGER: t("roles.MANAGER"),
     ADMIN: t("roles.ADMIN"),
     OWNER: t("roles.OWNER"),
   };

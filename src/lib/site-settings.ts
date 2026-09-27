@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { isAdmin } from "@/lib/roles";
+import { isAdmin, isManager } from "@/lib/roles";
 
 export const SITE_SETTINGS_ID = "default";
 export const DEFAULT_START_OF_DAY_HOUR = 8;
@@ -65,7 +65,7 @@ export async function canCreateChoreography(userId: string): Promise<boolean> {
 }
 
 export async function canCreateEvent(userId: string): Promise<boolean> {
-  if (await isAdmin(userId)) {
+  if ((await isAdmin(userId)) || (await isManager(userId))) {
     return true;
   }
 

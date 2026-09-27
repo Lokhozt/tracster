@@ -108,6 +108,15 @@ export function EditUserForm({ user }: { user: AdminUser }) {
   );
 }
 
+type AssignableUserRole = "USER" | "MANAGER" | "ADMIN";
+
+function assignableRole(role: UserRole): AssignableUserRole {
+  if (role === "MANAGER" || role === "ADMIN") {
+    return role;
+  }
+  return "USER";
+}
+
 export function UserRoleForm({
   user,
   actorRole,
@@ -119,9 +128,7 @@ export function UserRoleForm({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [role, setRole] = useState<"USER" | "ADMIN">(
-    user.role === "OWNER" ? "USER" : user.role,
-  );
+  const [role, setRole] = useState<AssignableUserRole>(assignableRole(user.role));
 
   if (user.role === "OWNER") {
     return (
@@ -166,9 +173,10 @@ export function UserRoleForm({
         <Select
           id="role"
           value={role}
-          onChange={(event) => setRole(event.target.value as "USER" | "ADMIN")}
+          onChange={(event) => setRole(event.target.value as AssignableUserRole)}
         >
           <option value="USER">{t("roleUSER")}</option>
+          <option value="MANAGER">{t("roleMANAGER")}</option>
           <option value="ADMIN">{t("roleADMIN")}</option>
         </Select>
         {actorRole === "ADMIN" && (
@@ -273,7 +281,9 @@ export function RoleBadge({ role }: { role: UserRole }) {
       ? "bg-amber-100 text-amber-900"
       : role === "ADMIN"
         ? "bg-blue-100 text-blue-900"
-        : "bg-stone-100 text-stone-700";
+        : role === "MANAGER"
+          ? "bg-violet-100 text-violet-900"
+          : "bg-stone-100 text-stone-700";
 
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${styles}`}>
@@ -303,7 +313,7 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
   const [phone, setPhone] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"USER" | "ADMIN">("USER");
+  const [role, setRole] = useState<AssignableUserRole>("USER");
   const [isCompetitor, setIsCompetitor] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
@@ -409,9 +419,10 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
         <Select
           id="role"
           value={role}
-          onChange={(event) => setRole(event.target.value as "USER" | "ADMIN")}
+          onChange={(event) => setRole(event.target.value as AssignableUserRole)}
         >
           <option value="USER">{t("roleUSER")}</option>
+          <option value="MANAGER">{t("roleMANAGER")}</option>
           <option value="ADMIN">{t("roleADMIN")}</option>
         </Select>
         {actorRole === "ADMIN" && (
