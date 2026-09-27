@@ -5,6 +5,10 @@ import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { EventsList } from "@/components/EventsList";
 import { getCurrentUser } from "@/lib/auth";
+import {
+  listedEventParticipantIds,
+  userParticipatesInListedEvent,
+} from "@/lib/event-audience";
 import { canEditEvent, getUserEvents, serializeEvent } from "@/lib/events";
 import {
   EVENT_TYPE_FILTER_COOKIE,
@@ -48,9 +52,8 @@ export default async function EventsPage() {
     events.map(async (entry) => ({
       event: serializeEvent(entry),
       canEdit: await canEditEvent(entry.id, user.id),
-      isParticipating: entry.participants.some(
-        (participant) => participant.userId === user.id,
-      ),
+      participantCount: listedEventParticipantIds(entry).size,
+      isParticipating: userParticipatesInListedEvent(entry, user.id),
       isEventParticipant: entry.participants.some((participant) => participant.userId === user.id),
       hasPendingJoinRequest: entry.joinRequests.some((request) => request.userId === user.id),
     })),

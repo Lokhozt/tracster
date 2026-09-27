@@ -28,12 +28,32 @@ const eventTypeSelect = {
 const eventListInclude = {
   ...listedLocationInclude,
   type: { select: eventTypeSelect },
-  choreography: { select: { id: true, title: true } },
-  group: { select: { id: true, name: true } },
+  choreography: {
+    select: {
+      id: true,
+      title: true,
+      members: { select: { userId: true } },
+    },
+  },
+  group: {
+    select: {
+      id: true,
+      name: true,
+      members: { select: { userId: true } },
+    },
+  },
   choreographies: {
     where: { choreography: visibleChoreographyWhere },
     include: {
-      choreography: { select: { id: true, title: true } },
+      choreography: {
+        select: {
+          id: true,
+          title: true,
+          createdById: true,
+          members: { select: { userId: true } },
+          choreographers: { select: { userId: true } },
+        },
+      },
     },
     orderBy: { choreography: { title: "asc" as const } },
   },

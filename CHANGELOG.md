@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Rehearsal now are created with the title being the choreography name.
+- In the event page, rehearsal now append the name of the choreography to the event type
+
+### Fixed
+- Event card not being filled properly.
 
 ## 1.1.1 - 23-09-2026
 

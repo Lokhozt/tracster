@@ -23,6 +23,7 @@ import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 export type EventListItem = {
   event: SerializedEvent;
   canEdit: boolean;
+  participantCount: number;
   isParticipating: boolean;
   isEventParticipant: boolean;
   hasPendingJoinRequest: boolean;
@@ -148,13 +149,20 @@ export function EventsList({
         </Card>
       ) : (
         <div className="grid gap-4">
-          {filteredEvents.map(({ event, canEdit, isParticipating, isEventParticipant, hasPendingJoinRequest }) => (
+          {filteredEvents.map(({ event, canEdit, participantCount, isParticipating, isEventParticipant, hasPendingJoinRequest }) => (
             <EventCard key={event.id} kind={event.type.kind} className="relative">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
-                    {event.type.name}
-                  </p>
+                  <div className="flex flex-wrap items-baseline gap-2">
+                    <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                      {event.type.name}
+                    </p>
+                    {event.type.kind === "REHEARSAL" && event.choreographyTitle && (
+                      <p className="text-sm font-medium text-stone-600">
+                        {event.choreographyTitle}
+                      </p>
+                    )}
+                  </div>
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
                     <Link
                       href={`/events/${event.id}`}
@@ -178,10 +186,7 @@ export function EventsList({
                   )}
                 </div>
                 <div className={cn("flex items-start gap-3 text-sm text-stone-600", aboveCardLink)}>
-                  <p>
-                    {event.participants.length}{" "}
-                    {event.participants.length === 1 ? "participant" : "participants"}
-                  </p>
+                  <p>{t("participantCount", { count: participantCount })}</p>
                   {canEdit && (
                     <EditIconLink href={`/events/${event.id}`} label={t("editEvent")} />
                   )}
