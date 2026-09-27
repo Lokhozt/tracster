@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
   }
 
   const attendeeIdsByPlacement: string[][] = [];
+  const choreographyTitles = new Map<string, string>();
 
   for (const placement of parsed.data.placements) {
     const startsAt = new Date(placement.startsAt);
@@ -67,6 +68,7 @@ export async function POST(request: NextRequest) {
       where: { id: placement.choreographyId, ...visibleChoreographyWhere },
       select: {
         id: true,
+        title: true,
         choreographers: { select: { userId: true } },
         members: { select: { userId: true } },
       },
@@ -74,6 +76,7 @@ export async function POST(request: NextRequest) {
     if (!choreography) {
       return jsonError("One of the selected choreographies was not found.");
     }
+    choreographyTitles.set(choreography.id, choreography.title);
 
     let memberIds = choreography.members.map((member) => member.userId);
     if (placement.groupId) {
@@ -115,6 +118,7 @@ export async function POST(request: NextRequest) {
           choreographyId: placement.choreographyId,
           groupId: placement.groupId ?? null,
           createdById: user.id,
+          title: choreographyTitles.get(placement.choreographyId) ?? "",
           startsAt,
           endsAt,
           locationId: placement.locationId,

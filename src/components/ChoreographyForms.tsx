@@ -186,12 +186,14 @@ export function AssignChoreographerForm({
 
 export function CreateRehearsalForm({
   choreographyId,
+  choreographyTitle,
   groups = [],
   eventTypes,
   onSuccess,
   onCancel,
 }: {
   choreographyId: string;
+  choreographyTitle: string;
   groups?: GroupOption[];
   eventTypes: SerializedEventType[];
   onSuccess?: () => void;
@@ -213,7 +215,7 @@ export function CreateRehearsalForm({
         defaultChoreographyId={choreographyId}
         lockChoreography
         groups={groups}
-        choreographyOptions={[{ id: choreographyId, title: t("thisChoreography") }]}
+        choreographyOptions={[{ id: choreographyId, title: choreographyTitle }]}
         onSuccess={() => onSuccess?.()}
       />
       {onCancel && (
@@ -347,12 +349,14 @@ export function EditRehearsalForm({ rehearsal }: { rehearsal: RehearsalDetailIte
 
 export function RehearsalsSection({
   choreographyId,
+  choreographyTitle,
   canEdit,
   groups = [],
   rehearsals,
   eventTypes,
 }: {
   choreographyId: string;
+  choreographyTitle: string;
   canEdit: boolean;
   groups?: GroupOption[];
   rehearsals: RehearsalListItem[];
@@ -409,6 +413,7 @@ export function RehearsalsSection({
           <h3 className="mb-4 font-medium">{t("scheduleRehearsal")}</h3>
           <CreateRehearsalForm
             choreographyId={choreographyId}
+            choreographyTitle={choreographyTitle}
             groups={groups}
             eventTypes={eventTypes}
             onSuccess={() => setShowAddForm(false)}

@@ -58,7 +58,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       choreographyId: id,
       groupId: parsed.data.groupId ?? null,
       createdById: user.id,
-      title: parsed.data.title ?? "",
+      title: parsed.data.title?.trim() || choreography.title,
       startsAt: new Date(parsed.data.startsAt),
       endsAt: parsed.data.endsAt ? new Date(parsed.data.endsAt) : null,
       locationId: location.locationId,

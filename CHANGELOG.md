@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rehearsals created by the scheduling tool come with availability answers already filled for their participants and choreographers: unavailable when one of their unavailability periods overlaps the rehearsal, available otherwise.
 - The rehearsal page shows how many participants marked themselves available as “available/total participants available”, above the availability list.
 
+### Changed
+- Rehearsal now are created with the title being the choreography name.
+
 ## 1.1.1 - 23-09-2026
 
 ### Added

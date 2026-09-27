@@ -176,10 +176,17 @@ export function CreateEventForm({
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const initialTypeId = defaultTypeId ?? eventTypes[0]?.id ?? "";
+  const initialEventType = selectedEventType(eventTypes, initialTypeId);
+  const initialChoreographyTitle = choreographyOptions?.find(
+    (choreography) => choreography.id === defaultChoreographyId,
+  )?.title;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [typeId, setTypeId] = useState(defaultTypeId ?? eventTypes[0]?.id ?? "");
-  const [title, setTitle] = useState("");
+  const [typeId, setTypeId] = useState(initialTypeId);
+  const [title, setTitle] = useState(
+    initialEventType?.kind === "REHEARSAL" ? (initialChoreographyTitle ?? "") : "",
+  );
   const [description, setDescription] = useState("");
   const [notes, setNotes] = useState("");
   const [locationSelection, setLocationSelection] = useState<LocationSelection>(
@@ -335,7 +342,17 @@ export function CreateEventForm({
           className="mt-1 block w-full"
           value={typeId}
           disabled={lockType}
-          onChange={(event) => setTypeId(event.target.value)}
+          onChange={(event) => {
+            const nextTypeId = event.target.value;
+            const nextType = selectedEventType(eventTypes, nextTypeId);
+            setTypeId(nextTypeId);
+            if (nextType?.kind === "REHEARSAL") {
+              const choreographyTitle = choreographyOptions?.find(
+                (choreography) => choreography.id === choreographyId,
+              )?.title;
+              setTitle((current) => current || choreographyTitle || "");
+            }
+          }}
         >
           {eventTypes.map((type) => (
             <option key={type.id} value={type.id}>
@@ -395,7 +412,19 @@ export function CreateEventForm({
             value={choreographyId}
             disabled={lockChoreography}
             onChange={(event) => {
-              setChoreographyId(event.target.value);
+              const nextChoreographyId = event.target.value;
+              const currentChoreographyTitle = choreographyOptions.find(
+                (choreography) => choreography.id === choreographyId,
+              )?.title;
+              const nextChoreographyTitle = choreographyOptions.find(
+                (choreography) => choreography.id === nextChoreographyId,
+              )?.title;
+              setChoreographyId(nextChoreographyId);
+              setTitle((current) =>
+                !current || current === currentChoreographyTitle
+                  ? (nextChoreographyTitle ?? "")
+                  : current,
+              );
               setAudience("");
             }}
           >

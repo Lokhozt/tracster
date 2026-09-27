@@ -321,6 +321,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
       content: (
         <RehearsalsSection
           choreographyId={id}
+          choreographyTitle={choreography.title}
           canEdit={canEdit}
           groups={groups.map((group) => ({
             id: group.id,

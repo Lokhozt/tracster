@@ -87,6 +87,19 @@ export async function POST(request: NextRequest) {
 
   const startsAt = new Date(parsed.data.startsAt);
   const endsAt = parsed.data.endsAt ? new Date(parsed.data.endsAt) : null;
+  const submittedTitle = parsed.data.title?.trim() ?? "";
+  const defaultRehearsalTitle =
+    eventType.kind === "REHEARSAL" &&
+    parsed.data.choreographyId &&
+    !submittedTitle
+      ? (
+          await prisma.choreography.findUnique({
+            where: { id: parsed.data.choreographyId },
+            select: { title: true },
+          })
+        )?.title ?? ""
+      : "";
+  const title = submittedTitle || defaultRehearsalTitle;
   const repeating =
     parsed.data.repeatWeekday != null && parsed.data.repeatWeeks != null;
 
@@ -114,7 +127,7 @@ export async function POST(request: NextRequest) {
         await tx.event.create({
           data: {
             typeId: eventType.id,
-            title: parsed.data.title?.trim() ?? "",
+            title,
             description: isGeneric ? parsed.data.description : null,
             notes: isGeneric ? null : parsed.data.notes,
             startsAt: occurrence.startsAt,
