@@ -20,6 +20,7 @@ Documents, what's app & viewers.
 - Google Calendar events are not created, updated, deleted, or synchronized while the app runs outside production.
 - Adding a choreography resource opens a dedicated page, then returns to that choreography’s resources.
 - Rehearsal in choreography page are now listed form latest to oldest
+- Each document on the documents page shows an icon for its type, including images, audio, video, PDF, Word, spreadsheets, presentations, text, and supported links.
 
 ### Fixed
 - The browser tab icon now uses the association logo instead of the default Next.js favicon.

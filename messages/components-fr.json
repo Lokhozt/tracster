@@ -595,6 +595,24 @@
     "backToDocumentCategories": "Retour aux catégories",
     "createNewCategory": "Créer une nouvelle catégorie…",
     "newCategoryName": "Nom de la nouvelle catégorie",
-    "noDocumentsInCategory": "Aucun document n’a encore été ajouté à cette catégorie."
+    "noDocumentsInCategory": "Aucun document n’a encore été ajouté à cette catégorie.",
+    "documentTypes": {
+      "image": "Image",
+      "audio": "Audio",
+      "video": "Vidéo",
+      "pdf": "PDF",
+      "word": "Document Word",
+      "spreadsheet": "Tableur",
+      "presentation": "Présentation",
+      "text": "Texte",
+      "youtube": "YouTube",
+      "spotify": "Spotify",
+      "google-document": "Google Docs",
+      "google-spreadsheet": "Google Sheets",
+      "google-presentation": "Google Slides",
+      "whatsapp": "WhatsApp",
+      "link": "Lien",
+      "file": "Fichier"
+    }
   }
 }

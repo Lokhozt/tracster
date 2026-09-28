@@ -58,7 +58,6 @@
     },
     "Documents": {
       "title": "Documents",
-      "intro": "Association-wide files and links available to every member. Managers and admins can add or remove them.",
       "newDocument": "New document"
     },
     "NewDocument": {

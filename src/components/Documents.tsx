@@ -12,13 +12,12 @@ import {
   type PointerEvent as ReactPointerEvent,
   type WheelEvent,
 } from "react";
+import { DocumentTypeIcon } from "@/components/DocumentTypeIcon";
 import { OfficeFileViewer } from "@/components/OfficeFileViewer";
 import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
 import { SectionNav } from "@/components/SettingsSections";
-import type {
-  SerializedDocument,
-  SerializedDocumentCategory,
-} from "@/lib/documents";
+import { documentDisplayType } from "@/lib/document-type";
+import type { SerializedDocument, SerializedDocumentCategory } from "@/lib/documents";
 import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
 
 async function responseError(response: Response, fallback: string) {
@@ -305,6 +304,8 @@ export function DocumentCard({
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const displayType = documentDisplayType(document);
+  const typeLabel = t(`documentTypes.${displayType}`);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -324,15 +325,18 @@ export function DocumentCard({
   return (
     <div className="rounded-lg border border-stone-200 p-4">
       <div className="mb-3 flex items-start justify-between gap-3">
-        <div>
-          <h3 className="font-semibold text-stone-900">{document.title}</h3>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-stone-100 px-2 py-1 text-xs font-medium text-stone-700">
-              {document.type === "LINK" ? t("resourceLink") : t("resourceFile")}
-            </span>
-            {document.fileName && (
-              <span className="text-sm font-medium">{document.fileName}</span>
-            )}
+        <div className="flex min-w-0 items-start gap-3">
+          <DocumentTypeIcon type={displayType} label={typeLabel} />
+          <div className="min-w-0">
+            <h3 className="font-semibold text-stone-900">{document.title}</h3>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-stone-100 px-2 py-1 text-xs font-medium text-stone-700">
+                {typeLabel}
+              </span>
+              {document.fileName && (
+                <span className="text-sm font-medium">{document.fileName}</span>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex shrink-0 items-start gap-3">
@@ -576,22 +580,21 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
 
 function DocumentSummary({ document }: { document: SerializedDocument }) {
   const t = useTranslations("Components");
+  const displayType = documentDisplayType(document);
   return (
     <Link
       href={`/documents/${document.id}`}
-      className="block rounded-lg border border-stone-200 p-4 transition hover:bg-stone-50"
+      className="flex items-start gap-3 rounded-lg border border-stone-200 p-4 transition hover:bg-stone-50"
     >
-      <div className="flex items-start justify-between gap-3">
+      <DocumentTypeIcon type={displayType} label={t(`documentTypes.${displayType}`)} />
+      <div className="min-w-0">
         <h3 className="font-semibold text-stone-900">{document.title}</h3>
-        <span className="shrink-0 rounded-full bg-stone-100 px-2 py-1 text-xs font-medium text-stone-700">
-          {document.type === "LINK" ? t("resourceLink") : t("resourceFile")}
-        </span>
+        {document.description && (
+          <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-sm text-stone-600">
+            {document.description}
+          </p>
+        )}
       </div>
-      {document.description && (
-        <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-sm text-stone-600">
-          {document.description}
-        </p>
-      )}
     </Link>
   );
 }

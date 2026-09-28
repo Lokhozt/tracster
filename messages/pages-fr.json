@@ -58,7 +58,6 @@
     },
     "Documents": {
       "title": "Documents",
-      "intro": "Fichiers et liens de l’association accessibles à tous les membres. Les managers et administrateurs peuvent les ajouter ou les retirer.",
       "newDocument": "Nouveau document"
     },
     "NewDocument": {
