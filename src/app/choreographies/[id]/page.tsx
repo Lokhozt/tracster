@@ -33,6 +33,8 @@ import { basicUserSelect, formatUserName, nestedUserNameOrderBy, serializeBasicU
 import { getVisibleChoreographyResources } from "@/lib/choreography-resources";
 import { getSiteSettings } from "@/lib/site-settings";
 import { serializeTag } from "@/lib/tags";
+import { isWhatsAppUrl } from "@/lib/whatsapp";
+import { WhatsAppLink } from "@/components/WhatsAppLink";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -379,6 +381,7 @@ export default async function ChoreographyDetailPage({ params, searchParams }: P
               id: choreography.id,
               title: choreography.title,
               description: choreography.description,
+              whatsappUrl: choreography.whatsappUrl,
               allowParticipantJoin: choreography.allowParticipantJoin,
               allowJoinRequests: choreography.allowJoinRequests,
               hideFromNonParticipants: choreography.hideFromNonParticipants,
@@ -422,7 +425,10 @@ export default async function ChoreographyDetailPage({ params, searchParams }: P
       title={
         <>
           {canEdit && <ChoreographerBadge className="text-xl" />}
-          <span>{choreography.title}</span>
+          <span className="min-w-0">{choreography.title}</span>
+          {choreography.whatsappUrl && isWhatsAppUrl(choreography.whatsappUrl) && (
+            <WhatsAppLink href={choreography.whatsappUrl} label={t("openWhatsapp")} />
+          )}
         </>
       }
     >

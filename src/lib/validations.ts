@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MAX_REPEAT_WEEKS, MIN_REPEAT_WEEKS } from "@/lib/event-recurrence";
+import { isWhatsAppUrl } from "@/lib/whatsapp";
 
 export const registerSchema = z.object({
   firstName: z.string().trim().min(1).max(50),
@@ -64,9 +65,26 @@ export const resetPasswordSchema = z.object({
   password: z.string().min(8).max(100),
 });
 
+export const whatsappUrlSchema = z.preprocess(
+  (value) => {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    return trimmed.length === 0 ? null : trimmed;
+  },
+  z
+    .string()
+    .max(2048, { message: "WhatsApp links are limited to 2048 characters." })
+    .refine(isWhatsAppUrl, { message: "Enter a valid WhatsApp link." })
+    .nullable()
+    .optional(),
+);
+
 export const choreographySchema = z.object({
   title: z.string().trim().min(2).max(120),
   description: z.string().trim().max(1000).optional(),
+  whatsappUrl: whatsappUrlSchema,
   allowParticipantJoin: z.boolean().optional(),
   allowJoinRequests: z.boolean().optional(),
   hideFromNonParticipants: z.boolean().optional(),

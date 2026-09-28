@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { WhatsAppLink } from "@/components/WhatsAppLink";
 import { Button } from "@/components/ui";
 import type { LinkEmbed } from "@/lib/resource-media";
 
@@ -106,6 +107,17 @@ export function ResourceLink({
           allowFullScreen
           loading="lazy"
         />
+      </div>
+    );
+  }
+
+  if (embed?.provider === "whatsapp") {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" variant="secondary" onClick={copyLink}>
+          {copied ? t("linkCopied") : t("copyLink")}
+        </Button>
+        <WhatsAppLink href={url} label={t("openWhatsapp")} />
       </div>
     );
   }

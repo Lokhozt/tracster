@@ -3,6 +3,8 @@
  * Add new link/file integrations here so both surfaces pick them up.
  */
 
+import { isWhatsAppUrl } from "@/lib/whatsapp";
+
 export const MAX_RESOURCE_BYTES = 250 * 1024 * 1024;
 
 export type ResourceMediaKind = "image" | "audio" | "video" | "pdf" | "docx" | "xlsx" | "document";
@@ -98,7 +100,8 @@ export function youtubeVideoId(url: string) {
 export type LinkEmbed =
   | { provider: "youtube"; src: string }
   | { provider: "spotify"; src: string; height: number }
-  | { provider: "google"; src: string };
+  | { provider: "google"; src: string }
+  | { provider: "whatsapp" };
 
 const spotifyTypes = new Set(["track", "album", "playlist", "episode", "show", "artist"]);
 
@@ -169,6 +172,10 @@ function googleDocsEmbed(url: URL): Extract<LinkEmbed, { provider: "google" }> |
 
 /** Resolve how a LINK should be presented. Extend this when adding new URL integrations. */
 export function resolveLinkPresentation(url: string): LinkEmbed | null {
+  if (isWhatsAppUrl(url)) {
+    return { provider: "whatsapp" };
+  }
+
   const youtubeId = youtubeVideoId(url);
   if (youtubeId) {
     return { provider: "youtube", src: `https://www.youtube-nocookie.com/embed/${youtubeId}` };

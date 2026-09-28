@@ -64,6 +64,8 @@
       "Unable to refresh Google access.": "Unable to refresh Google access.",
       "Resource links must use HTTPS.": "Resource links must use HTTPS.",
       "Enter a valid resource URL.": "Enter a valid resource URL.",
+      "Enter a valid WhatsApp link.": "Enter a valid WhatsApp link.",
+      "WhatsApp links are limited to 2048 characters.": "WhatsApp links are limited to 2048 characters.",
       "Resource URLs are limited to 2048 characters.": "Resource URLs are limited to 2048 characters.",
       "Document title is required.": "Document title is required.",
       "Document titles are limited to 200 characters.": "Document titles are limited to 200 characters.",

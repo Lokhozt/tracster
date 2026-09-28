@@ -6,10 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 1.2.0 [Unreleased]
 
-Documents page
+Documents, what's app & viewers.
 
 ### Added
-- Association documents: every signed-in member can browse titled links and files by category. A category lists each document’s title, description, and type; opening one shows the full player or file. Managers and admins add a document from its own page, choosing or creating a category, and land on that category after it is created. Uses the same link/file upload flow and media players as choreography resources (YouTube, Spotify, Google Docs, audio, video, images).
+- A choreography can store a WhatsApp link when it is created or edited. When a link is set, a WhatsApp button appears beside the title on the choreography page.
+- WhatsApp links added as choreography resources or association documents show the same WhatsApp button.
+- Association documents. Uses the same link/file upload flow and media players as choreography resources (YouTube, Spotify, Google Docs, audio, video, images).
 - Spotify and Google Docs links (Docs, Sheets, and Slides) are embedded on documents and choreography resources, alongside YouTube. Each link has buttons to copy or open the original URL.
 - PDF files open in an inline viewer on documents and choreography resources.
 - Word (.docx) and Excel (.xlsx) uploads open in an inline viewer on documents and choreography resources.

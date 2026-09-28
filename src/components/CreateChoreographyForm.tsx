@@ -32,6 +32,7 @@ export function CreateChoreographyForm() {
       body: JSON.stringify({
         title: formData.get("title"),
         description: formData.get("description") || undefined,
+        whatsappUrl: String(formData.get("whatsappUrl") ?? "").trim() || null,
         ...participation,
       }),
     });
@@ -63,6 +64,7 @@ export function CreateChoreographyForm() {
           placeholder={t("optionalChoreographyNotes")}
         />
       </div>
+      <WhatsAppLinkField id="whatsappUrl" />
       <ParticipationSettingsFields
         idPrefix="create-choreography"
         value={participation}
@@ -83,6 +85,7 @@ export function EditChoreographyForm({
     id: string;
     title: string;
     description: string | null;
+    whatsappUrl: string | null;
     allowParticipantJoin: boolean;
     allowJoinRequests: boolean;
     hideFromNonParticipants: boolean;
@@ -94,6 +97,7 @@ export function EditChoreographyForm({
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState(choreography.title);
   const [description, setDescription] = useState(choreography.description ?? "");
+  const [whatsappUrl, setWhatsappUrl] = useState(choreography.whatsappUrl ?? "");
   const [participation, setParticipation] = useState<ParticipationSettings>({
     allowParticipantJoin: choreography.allowParticipantJoin,
     allowJoinRequests: choreography.allowJoinRequests,
@@ -111,6 +115,7 @@ export function EditChoreographyForm({
       body: JSON.stringify({
         title,
         description: description || undefined,
+        whatsappUrl: whatsappUrl.trim() || null,
         ...participation,
       }),
     });
@@ -146,6 +151,11 @@ export function EditChoreographyForm({
           rows={4}
         />
       </div>
+      <WhatsAppLinkField
+        id="edit-choreography-whatsapp"
+        value={whatsappUrl}
+        onChange={setWhatsappUrl}
+      />
       <ParticipationSettingsFields
         idPrefix="edit-choreography"
         value={participation}
@@ -156,5 +166,38 @@ export function EditChoreographyForm({
         {loading ? t("saving") : t("saveChanges")}
       </Button>
     </form>
+  );
+}
+
+function WhatsAppLinkField({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value?: string;
+  onChange?: (value: string) => void;
+}) {
+  const t = useTranslations("Components");
+  return (
+    <div>
+      <Label htmlFor={id}>{t("whatsappLink")}</Label>
+      <Input
+        id={id}
+        name="whatsappUrl"
+        type="url"
+        inputMode="url"
+        maxLength={2048}
+        placeholder={t("whatsappLinkPlaceholder")}
+        {...(onChange
+          ? {
+              value: value ?? "",
+              onChange: (event: React.ChangeEvent<HTMLInputElement>) =>
+                onChange(event.target.value),
+            }
+          : {})}
+      />
+      <p className="mt-1 text-sm text-stone-500">{t("whatsappLinkHelp")}</p>
+    </div>
   );
 }

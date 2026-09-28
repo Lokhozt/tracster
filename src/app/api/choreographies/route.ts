@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
     data: {
       title: parsed.data.title,
       description: parsed.data.description,
+      whatsappUrl: parsed.data.whatsappUrl ?? null,
       createdById: user.id,
       allowParticipantJoin: parsed.data.allowParticipantJoin ?? false,
       allowJoinRequests: parsed.data.allowJoinRequests ?? false,

@@ -81,6 +81,7 @@ model Choreography {
   id                      String    @id @default(cuid())
   title                   String
   description             String?
+  whatsappUrl             String?
   createdById             String
   allowParticipantJoin    Boolean   @default(false)
   allowJoinRequests       Boolean   @default(false)

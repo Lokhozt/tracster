@@ -90,6 +90,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     data: {
       title: parsed.data.title,
       description: parsed.data.description,
+      whatsappUrl: parsed.data.whatsappUrl,
       allowParticipantJoin: parsed.data.allowParticipantJoin ?? false,
       allowJoinRequests: parsed.data.allowJoinRequests ?? false,
       hideFromNonParticipants: parsed.data.hideFromNonParticipants ?? true,
