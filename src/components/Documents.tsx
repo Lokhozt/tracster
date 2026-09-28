@@ -12,7 +12,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type WheelEvent,
 } from "react";
-import { ResourceLink } from "@/components/ResourceLink";
+import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
 import { SectionNav } from "@/components/SettingsSections";
 import type {
   SerializedDocument,
@@ -239,6 +239,9 @@ function FileDocument({ document }: { document: SerializedDocument }) {
     return (
       <video className="max-h-[32rem] w-full rounded-lg bg-black" controls preload="metadata" src={url} />
     );
+  }
+  if (document.mediaKind === "pdf") {
+    return <PdfViewer src={url} title={document.description ?? label} />;
   }
   if (document.mediaKind === "image") {
     return (

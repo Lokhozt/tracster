@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import {
   resolveLinkPresentation,
   resourceMediaKind,
+  type ResourceMediaKind,
 } from "@/lib/resource-media";
 import { canManageDocuments } from "@/lib/roles";
 
@@ -22,7 +23,7 @@ export type SerializedDocument = {
   fileName: string | null;
   mimeType: string | null;
   sizeBytes: number | null;
-  mediaKind: "image" | "audio" | "video" | "document";
+  mediaKind: ResourceMediaKind;
   embed: ReturnType<typeof resolveLinkPresentation>;
   createdAt: string;
 };

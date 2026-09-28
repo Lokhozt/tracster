@@ -5,6 +5,16 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
 import type { LinkEmbed } from "@/lib/resource-media";
 
+export function PdfViewer({ src, title }: { src: string; title: string }) {
+  return (
+    <iframe
+      className="h-[calc(100vh-12rem)] min-h-[32rem] w-full rounded-lg border border-stone-200 bg-white"
+      src={src}
+      title={title}
+    />
+  );
+}
+
 export function ResourceLink({
   url,
   embed,

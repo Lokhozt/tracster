@@ -15,7 +15,7 @@ import type {
   ChoreographyResourceVisibility,
   SerializedChoreographyResource,
 } from "@/lib/choreography-resources";
-import { ResourceLink } from "@/components/ResourceLink";
+import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
 import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
 
 async function responseError(response: Response, fallback: string) {
@@ -250,6 +250,9 @@ function FileResource({
   }
   if (resource.mediaKind === "video") {
     return <video className="max-h-[32rem] w-full rounded-lg bg-black" controls preload="metadata" src={url} />;
+  }
+  if (resource.mediaKind === "pdf") {
+    return <PdfViewer src={url} title={resource.description ?? label} />;
   }
   if (resource.mediaKind === "image") {
     return (

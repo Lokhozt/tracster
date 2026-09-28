@@ -11,6 +11,7 @@ import {
   resourceMediaKind,
   safeResourceFileName,
   youtubeVideoId,
+  type ResourceMediaKind,
 } from "@/lib/resource-media";
 import { deleteChoreographyResourceObjects } from "@/lib/s3";
 
@@ -51,7 +52,7 @@ export type SerializedChoreographyResource = {
   fileName: string | null;
   mimeType: string | null;
   sizeBytes: number | null;
-  mediaKind: "image" | "audio" | "video" | "document";
+  mediaKind: ResourceMediaKind;
   embed: ReturnType<typeof resolveLinkPresentation>;
   createdAt: string;
 };
