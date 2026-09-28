@@ -49,7 +49,7 @@ function TypeGlyph({ type }: { type: DocumentDisplayType }) {
   if (type === "spotify") return <SpotifyGlyph />;
   if (type === "whatsapp") return <WhatsAppGlyph />;
   if (type === "link") return <LinkGlyph />;
-  return <PageGlyph lines={type === "text" || type === "word" || type === "google-document"} />;
+  return <PageGlyph lines={type === "text" || type === "google-document"} />;
 }
 
 function Glyph({ children }: { children: React.ReactNode }) {
