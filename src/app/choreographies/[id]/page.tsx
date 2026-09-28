@@ -78,7 +78,7 @@ export default async function ChoreographyDetailPage({ params, searchParams }: P
         },
         rehearsals: {
           where: { type: { kind: "REHEARSAL" } },
-          orderBy: { startsAt: "asc" },
+          orderBy: { startsAt: "desc" },
           include: {
             ...listedLocationInclude,
             group: {
@@ -399,6 +399,7 @@ export default async function ChoreographyDetailPage({ params, searchParams }: P
           title={choreography.title}
           upcomingRehearsals={choreography.rehearsals
             .filter((rehearsal) => rehearsal.startsAt >= new Date())
+            .sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime())
             .map((rehearsal) => ({
               id: rehearsal.id,
               title: rehearsal.title,
