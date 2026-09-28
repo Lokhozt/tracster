@@ -3,7 +3,7 @@ import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { canViewChoreographyResource } from "@/lib/choreography-resources";
 import { prisma } from "@/lib/db";
-import { createChoreographyResourceDownloadUrl } from "@/lib/s3";
+import { createChoreographyResourceDownloadUrl, openStoredObject } from "@/lib/s3";
 
 type RouteContext = {
   params: Promise<{ id: string; resourceId: string }>;
@@ -31,6 +31,20 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 
   const download = request.nextUrl.searchParams.get("download") === "1";
+  if (request.nextUrl.searchParams.get("raw") === "1") {
+    try {
+      const safeFileName = resource.fileName.replace(/["\\]/g, "_");
+      return new Response(await openStoredObject(resource.storageKey), {
+        headers: {
+          "Content-Type": resource.mimeType,
+          "Content-Disposition": `inline; filename="${safeFileName}"`,
+          "Cache-Control": "private, no-store",
+        },
+      });
+    } catch {
+      return jsonError("File storage is unavailable.", 503);
+    }
+  }
 
   try {
     return Response.json({

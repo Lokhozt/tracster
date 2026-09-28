@@ -141,6 +141,17 @@ export async function createChoreographyResourceUploadUrl(options: {
   );
 }
 
+export async function openStoredObject(key: string) {
+  const { config, client } = getConfiguredS3();
+  const response = await client.send(
+    new GetObjectCommand({ Bucket: config.bucket, Key: key }),
+  );
+  if (!response.Body) {
+    throw new Error("Stored file is empty.");
+  }
+  return response.Body.transformToWebStream();
+}
+
 export async function headChoreographyResourceObject(key: string) {
   const { config, client } = getConfiguredS3();
   const response = await client.send(

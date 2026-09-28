@@ -5,7 +5,7 @@
 
 export const MAX_RESOURCE_BYTES = 250 * 1024 * 1024;
 
-export type ResourceMediaKind = "image" | "audio" | "video" | "pdf" | "document";
+export type ResourceMediaKind = "image" | "audio" | "video" | "pdf" | "docx" | "xlsx" | "document";
 
 const documentMimeTypes = new Set([
   "application/pdf",
@@ -46,6 +46,12 @@ export function resourceMediaKind(mimeType: string | null): ResourceMediaKind {
   if (!mimeType) return "document";
   const normalized = mimeType.toLowerCase();
   if (normalized === "application/pdf") return "pdf";
+  if (normalized === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+    return "docx";
+  }
+  if (normalized === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
+    return "xlsx";
+  }
   if (imageMimeTypes.has(normalized)) return "image";
   if (normalized.startsWith("audio/")) return "audio";
   if (normalized.startsWith("video/")) return "video";

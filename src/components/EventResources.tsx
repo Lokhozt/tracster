@@ -16,6 +16,7 @@ import type {
   ChoreographyResourceVisibility,
   SerializedChoreographyResource,
 } from "@/lib/choreography-resources";
+import { OfficeFileViewer } from "@/components/OfficeFileViewer";
 import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
 import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
 
@@ -224,7 +225,10 @@ function FileResource({
   const [error, setError] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
 
+  const officeFile = resource.mediaKind === "docx" || resource.mediaKind === "xlsx";
+
   useEffect(() => {
+    if (officeFile) return;
     let cancelled = false;
     fetch(`/api/choreographies/${choreographyId}/resources/${resource.id}/content`)
       .then(async (response) => {
@@ -240,12 +244,22 @@ function FileResource({
     return () => {
       cancelled = true;
     };
-  }, [choreographyId, resource.id, t]);
+  }, [choreographyId, officeFile, resource.id, t]);
+
+  const label = resource.fileName ?? t("resourceFile");
+  if (resource.mediaKind === "docx" || resource.mediaKind === "xlsx") {
+    return (
+      <OfficeFileViewer
+        src={`/api/choreographies/${choreographyId}/resources/${resource.id}/content?raw=1`}
+        kind={resource.mediaKind}
+        title={resource.description ?? label}
+      />
+    );
+  }
 
   if (error) return <p className="text-sm text-red-600">{error}</p>;
   if (!url) return <p className="text-sm text-stone-500">{t("loading")}</p>;
 
-  const label = resource.fileName ?? t("resourceFile");
   if (resource.mediaKind === "audio") {
     return <audio className="w-full" controls preload="metadata" src={url} />;
   }

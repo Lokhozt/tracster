@@ -12,6 +12,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type WheelEvent,
 } from "react";
+import { OfficeFileViewer } from "@/components/OfficeFileViewer";
 import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
 import { SectionNav } from "@/components/SettingsSections";
 import type {
@@ -210,7 +211,10 @@ function FileDocument({ document }: { document: SerializedDocument }) {
   const [error, setError] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
 
+  const officeFile = document.mediaKind === "docx" || document.mediaKind === "xlsx";
+
   useEffect(() => {
+    if (officeFile) return;
     let cancelled = false;
     fetch(`/api/documents/${document.id}/content`)
       .then(async (response) => {
@@ -226,12 +230,22 @@ function FileDocument({ document }: { document: SerializedDocument }) {
     return () => {
       cancelled = true;
     };
-  }, [document.id, t]);
+  }, [document.id, officeFile, t]);
+
+  const label = document.fileName ?? t("resourceFile");
+  if (document.mediaKind === "docx" || document.mediaKind === "xlsx") {
+    return (
+      <OfficeFileViewer
+        src={`/api/documents/${document.id}/content?raw=1`}
+        kind={document.mediaKind}
+        title={document.description ?? label}
+      />
+    );
+  }
 
   if (error) return <p className="text-sm text-red-600">{error}</p>;
   if (!url) return <p className="text-sm text-stone-500">{t("loading")}</p>;
 
-  const label = document.fileName ?? t("resourceFile");
   if (document.mediaKind === "audio") {
     return <audio className="w-full" controls preload="metadata" src={url} />;
   }
