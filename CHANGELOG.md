@@ -21,6 +21,9 @@ Documents, what's app & viewers.
 - Adding a choreography resource opens a dedicated page, then returns to that choreography’s resources.
 - Rehearsal in choreography page are now listed form latest to oldest
 
+### Fixed
+- The browser tab icon now uses the association logo instead of the default Next.js favicon.
+
 ## 1.1.2 - 27-09-2026
 
 ### Added
