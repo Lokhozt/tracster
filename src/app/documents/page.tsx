@@ -32,8 +32,8 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
     : undefined;
 
   return (
-    <AppShell title={t("title")}>
-      <div className="mx-auto max-w-3xl space-y-6">
+    <AppShell title={t("title")} wide>
+      <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-stone-600">{t("intro")}</p>
           {canEdit && (
@@ -48,7 +48,6 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
         <Documents
           documents={documents}
           categories={categories}
-          canEdit={canEdit}
           initialCategoryId={selectedCategoryId}
         />
       </div>

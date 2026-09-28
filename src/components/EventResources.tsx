@@ -15,6 +15,7 @@ import type {
   ChoreographyResourceVisibility,
   SerializedChoreographyResource,
 } from "@/lib/choreography-resources";
+import { ResourceLink } from "@/components/ResourceLink";
 import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
 
 async function responseError(response: Response, fallback: string) {
@@ -335,20 +336,8 @@ function ResourceCard({
         </div>
       </div>
       {resource.description && <p className="mb-3 whitespace-pre-wrap text-sm text-stone-600">{resource.description}</p>}
-      {resource.type === "LINK" && resource.youtubeId ? (
-        <div className="aspect-video overflow-hidden rounded-lg">
-          <iframe
-            className="h-full w-full"
-            src={`https://www.youtube-nocookie.com/embed/${resource.youtubeId}`}
-            title={resource.description ?? t("youtubeVideo")}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          />
-        </div>
-      ) : resource.type === "LINK" && resource.url ? (
-        <a className="break-all font-medium text-stone-800 underline hover:text-stone-600" href={resource.url} target="_blank" rel="noopener noreferrer">
-          {resource.url}
-        </a>
+      {resource.type === "LINK" && resource.url ? (
+        <ResourceLink url={resource.url} embed={resource.embed} title={resource.description} />
       ) : (
         <FileResource choreographyId={choreographyId} resource={resource} />
       )}

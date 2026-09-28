@@ -52,7 +52,7 @@ export type SerializedChoreographyResource = {
   mimeType: string | null;
   sizeBytes: number | null;
   mediaKind: "image" | "audio" | "video" | "document";
-  youtubeId: string | null;
+  embed: ReturnType<typeof resolveLinkPresentation>;
   createdAt: string;
 };
 
@@ -77,9 +77,9 @@ export function serializeChoreographyResource(resource: {
     mimeType: resource.mimeType,
     sizeBytes: resource.sizeBytes === null ? null : Number(resource.sizeBytes),
     mediaKind: resourceMediaKind(resource.mimeType),
-    youtubeId:
+    embed:
       resource.type === "LINK" && resource.url
-        ? resolveLinkPresentation(resource.url).youtubeId
+        ? resolveLinkPresentation(resource.url)
         : null,
     createdAt: resource.createdAt.toISOString(),
   };

@@ -23,7 +23,7 @@ export type SerializedDocument = {
   mimeType: string | null;
   sizeBytes: number | null;
   mediaKind: "image" | "audio" | "video" | "document";
-  youtubeId: string | null;
+  embed: ReturnType<typeof resolveLinkPresentation>;
   createdAt: string;
 };
 
@@ -50,9 +50,9 @@ export function serializeDocument(document: {
     mimeType: document.mimeType,
     sizeBytes: document.sizeBytes === null ? null : Number(document.sizeBytes),
     mediaKind: resourceMediaKind(document.mimeType),
-    youtubeId:
+    embed:
       document.type === "LINK" && document.url
-        ? resolveLinkPresentation(document.url).youtubeId
+        ? resolveLinkPresentation(document.url)
         : null,
     createdAt: document.createdAt.toISOString(),
   };
@@ -82,11 +82,26 @@ export async function resolveDocumentCategory(options: {
   });
 }
 
+const GENERAL_DOCUMENT_CATEGORY_ID = "document-category-general";
+
 export async function listDocumentCategories(): Promise<SerializedDocumentCategory[]> {
-  return prisma.documentCategory.findMany({
+  const categories = await prisma.documentCategory.findMany({
     orderBy: { name: "asc" },
     select: { id: true, name: true },
   });
+  return categories.sort((left, right) => {
+    if (left.id === GENERAL_DOCUMENT_CATEGORY_ID) return -1;
+    if (right.id === GENERAL_DOCUMENT_CATEGORY_ID) return 1;
+    return 0;
+  });
+}
+
+export async function getActiveDocument(id: string) {
+  const document = await prisma.document.findFirst({
+    where: { id, status: "ACTIVE" },
+    include: { category: { select: { id: true, name: true } } },
+  });
+  return document ? serializeDocument(document) : null;
 }
 
 export async function listActiveDocuments() {

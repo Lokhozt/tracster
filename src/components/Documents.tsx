@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useEffect,
@@ -11,6 +12,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type WheelEvent,
 } from "react";
+import { ResourceLink } from "@/components/ResourceLink";
 import { SectionNav } from "@/components/SettingsSections";
 import type {
   SerializedDocument,
@@ -277,7 +279,7 @@ function FileDocument({ document }: { document: SerializedDocument }) {
   );
 }
 
-function DocumentCard({
+export function DocumentCard({
   document,
   canEdit,
 }: {
@@ -299,7 +301,7 @@ function DocumentCard({
       setError(await responseError(response, t("documentDeleteError")));
       return;
     }
-    router.refresh();
+    router.push(`/documents?category=${encodeURIComponent(document.category.id)}`);
   }
 
   return (
@@ -333,25 +335,8 @@ function DocumentCard({
       {document.description && (
         <p className="mb-3 whitespace-pre-wrap text-sm text-stone-600">{document.description}</p>
       )}
-      {document.type === "LINK" && document.youtubeId ? (
-        <div className="aspect-video overflow-hidden rounded-lg">
-          <iframe
-            className="h-full w-full"
-            src={`https://www.youtube-nocookie.com/embed/${document.youtubeId}`}
-            title={document.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          />
-        </div>
-      ) : document.type === "LINK" && document.url ? (
-        <a
-          className="break-all font-medium text-stone-800 underline hover:text-stone-600"
-          href={document.url}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {document.url}
-        </a>
+      {document.type === "LINK" && document.url ? (
+        <ResourceLink url={document.url} embed={document.embed} title={document.title} />
       ) : (
         <FileDocument document={document} />
       )}
@@ -572,15 +557,35 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
   );
 }
 
+function DocumentSummary({ document }: { document: SerializedDocument }) {
+  const t = useTranslations("Components");
+  return (
+    <Link
+      href={`/documents/${document.id}`}
+      className="block rounded-lg border border-stone-200 p-4 transition hover:bg-stone-50"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="font-semibold text-stone-900">{document.title}</h3>
+        <span className="shrink-0 rounded-full bg-stone-100 px-2 py-1 text-xs font-medium text-stone-700">
+          {document.type === "LINK" ? t("resourceLink") : t("resourceFile")}
+        </span>
+      </div>
+      {document.description && (
+        <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-sm text-stone-600">
+          {document.description}
+        </p>
+      )}
+    </Link>
+  );
+}
+
 export function Documents({
   documents,
   categories,
-  canEdit,
   initialCategoryId,
 }: {
   documents: SerializedDocument[];
   categories: SerializedDocumentCategory[];
-  canEdit: boolean;
   initialCategoryId?: string;
 }) {
   const t = useTranslations("Components");
@@ -593,13 +598,12 @@ export function Documents({
       label: category.name,
       content: (
         <Card>
-          <h2 className="mb-4 text-lg font-semibold">{category.name}</h2>
           {categoryDocuments.length === 0 ? (
             <p className="text-sm text-stone-600">{t("noDocumentsInCategory")}</p>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {categoryDocuments.map((document) => (
-                <DocumentCard key={document.id} document={document} canEdit={canEdit} />
+                <DocumentSummary key={document.id} document={document} />
               ))}
             </div>
           )}

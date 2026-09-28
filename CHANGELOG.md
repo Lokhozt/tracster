@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 1.2.0 [Unreleased]
 
 ### Added
-- Association documents: every signed-in member can browse titled links and files by category. Managers and admins add a document from its own page, choosing or creating a category, and land on that category after it is created. Uses the same link/file upload flow and media players as choreography resources (YouTube, audio, video, images).
+- Association documents: every signed-in member can browse titled links and files by category. A category lists each document’s title, description, and type; opening one shows the full player or file. Managers and admins add a document from its own page, choosing or creating a category, and land on that category after it is created. Uses the same link/file upload flow and media players as choreography resources (YouTube, Spotify, Google Docs, audio, video, images).
+- Spotify and Google Docs links (Docs, Sheets, and Slides) are embedded on documents and choreography resources, alongside YouTube. Each link has buttons to copy or open the original URL.
 
 ### Changed
 - Google Calendar events are not created, updated, deleted, or synchronized while the app runs outside production.

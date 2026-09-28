@@ -5,9 +5,11 @@ import { APP_LOGO_SRC, isS3Configured } from "@/lib/s3";
 export async function AppShell({
   children,
   title,
+  wide = false,
 }: {
   children: React.ReactNode;
   title?: React.ReactNode;
+  wide?: boolean;
 }) {
   const user = await getCurrentUser();
 
@@ -25,7 +27,9 @@ export async function AppShell({
         }
         logoSrc={isS3Configured() ? APP_LOGO_SRC : null}
       />
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+      <main
+        className={`mx-auto px-4 py-6 sm:px-6 sm:py-8 ${wide ? "max-w-screen-2xl" : "max-w-5xl"}`}
+      >
         {title && (
           <h1 className="mb-6 flex items-center gap-2 text-2xl font-semibold tracking-tight break-words sm:text-3xl">
             {title}

@@ -87,9 +87,89 @@ export function youtubeVideoId(url: string) {
   }
 }
 
+export type LinkEmbed =
+  | { provider: "youtube"; src: string }
+  | { provider: "spotify"; src: string; height: number }
+  | { provider: "google"; src: string };
+
+const spotifyTypes = new Set(["track", "album", "playlist", "episode", "show", "artist"]);
+
+function spotifyEmbed(url: URL): Extract<LinkEmbed, { provider: "spotify" }> | null {
+  const host = url.hostname.toLowerCase().replace(/^www\./, "");
+  if (host !== "open.spotify.com") return null;
+
+  const parts = url.pathname.split("/").filter(Boolean);
+  let type: string | undefined;
+  let id: string | undefined;
+  if (parts[0] === "embed" && spotifyTypes.has(parts[1] ?? "")) {
+    type = parts[1];
+    id = parts[2];
+  } else if (parts[0]?.startsWith("intl-") && spotifyTypes.has(parts[1] ?? "")) {
+    type = parts[1];
+    id = parts[2];
+  } else if (spotifyTypes.has(parts[0] ?? "")) {
+    type = parts[0];
+    id = parts[1];
+  }
+
+  if (!type || !id || !/^[A-Za-z0-9]{22}$/.test(id)) return null;
+  const compact = type === "track" || type === "episode";
+  return {
+    provider: "spotify",
+    src: `https://open.spotify.com/embed/${type}/${id}`,
+    height: compact ? 152 : 352,
+  };
+}
+
+function googleDocsEmbed(url: URL): Extract<LinkEmbed, { provider: "google" }> | null {
+  const host = url.hostname.toLowerCase().replace(/^www\./, "");
+  if (host !== "docs.google.com") return null;
+
+  const parts = url.pathname.split("/").filter(Boolean);
+  const kind = parts[0];
+  if (kind !== "document" && kind !== "spreadsheets" && kind !== "presentation") {
+    return null;
+  }
+
+  const marker = parts.indexOf("d");
+  if (marker < 0) return null;
+  const published = parts[marker + 1] === "e";
+  const id = published ? parts[marker + 2] : parts[marker + 1];
+  if (!id || !/^[A-Za-z0-9_-]{10,}$/.test(id)) return null;
+
+  if (published) {
+    if (kind === "document") {
+      return { provider: "google", src: `https://docs.google.com/document/d/e/${id}/pub?embedded=true` };
+    }
+    if (kind === "spreadsheets") {
+      return {
+        provider: "google",
+        src: `https://docs.google.com/spreadsheets/d/e/${id}/pubhtml?widget=true&headers=false`,
+      };
+    }
+    return { provider: "google", src: `https://docs.google.com/presentation/d/e/${id}/embed` };
+  }
+
+  if (kind === "document") {
+    return { provider: "google", src: `https://docs.google.com/document/d/${id}/preview` };
+  }
+  if (kind === "spreadsheets") {
+    return { provider: "google", src: `https://docs.google.com/spreadsheets/d/${id}/preview` };
+  }
+  return { provider: "google", src: `https://docs.google.com/presentation/d/${id}/embed` };
+}
+
 /** Resolve how a LINK should be presented. Extend this when adding new URL integrations. */
-export function resolveLinkPresentation(url: string): {
-  youtubeId: string | null;
-} {
-  return { youtubeId: youtubeVideoId(url) };
+export function resolveLinkPresentation(url: string): LinkEmbed | null {
+  const youtubeId = youtubeVideoId(url);
+  if (youtubeId) {
+    return { provider: "youtube", src: `https://www.youtube-nocookie.com/embed/${youtubeId}` };
+  }
+
+  try {
+    const parsed = new URL(url);
+    return spotifyEmbed(parsed) ?? googleDocsEmbed(parsed);
+  } catch {
+    return null;
+  }
 }

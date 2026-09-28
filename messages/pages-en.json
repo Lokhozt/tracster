@@ -65,6 +65,9 @@
       "title": "New document",
       "backToDocuments": "← Back to documents"
     },
+    "DocumentDetail": {
+      "backToCategory": "← Back to {category}"
+    },
     "NewEvent": {
       "title": "New event"
     },
