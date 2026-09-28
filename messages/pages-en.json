@@ -110,6 +110,10 @@
     "NewChoreography": {
       "title": "New choreography"
     },
+    "NewChoreographyResource": {
+      "title": "New resource",
+      "backToChoreography": "← Back to choreography"
+    },
     "ChoreographyDetail": {
       "choreographers": "Choreographers",
       "participants": "Participants",

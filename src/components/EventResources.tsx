@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useEffect,
@@ -371,7 +372,7 @@ function uploadFile(
   });
 }
 
-function ResourceForm({ choreographyId }: { choreographyId: string }) {
+export function ResourceForm({ choreographyId }: { choreographyId: string }) {
   const t = useTranslations("Components");
   const router = useRouter();
   const [kind, setKind] = useState<"LINK" | "FILE">("LINK");
@@ -397,7 +398,8 @@ function ResourceForm({ choreographyId }: { choreographyId: string }) {
           body: JSON.stringify({ url, description: description || undefined, visibility }),
         });
         if (!response.ok) throw new Error(await responseError(response, t("resourceCreateError")));
-        setUrl("");
+        router.push(`/choreographies/${choreographyId}?section=resources`);
+        return;
       } else {
         if (!file) throw new Error(t("selectResourceFile"));
         const initiate = await fetch(`/api/choreographies/${choreographyId}/resources/uploads`, {
@@ -421,13 +423,9 @@ function ResourceForm({ choreographyId }: { choreographyId: string }) {
         );
         if (!complete.ok) throw new Error(await responseError(complete, t("resourceUploadError")));
         pendingResourceId = null;
-        setFile(null);
-        const input = document.getElementById(`choreography-resource-file-${choreographyId}`) as HTMLInputElement | null;
-        if (input) input.value = "";
+        router.push(`/choreographies/${choreographyId}?section=resources`);
+        return;
       }
-      setDescription("");
-      setProgress(null);
-      router.refresh();
     } catch (reason) {
       if (pendingResourceId) {
         await fetch(`/api/choreographies/${choreographyId}/resources/${pendingResourceId}`, {
@@ -441,7 +439,7 @@ function ResourceForm({ choreographyId }: { choreographyId: string }) {
   }
 
   return (
-    <form className="mt-6 border-t border-stone-100 pt-6" onSubmit={submit}>
+    <form onSubmit={submit}>
       <h3 className="mb-4 font-semibold">{t("addResource")}</h3>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -513,7 +511,17 @@ export function ChoreographyResources({
   const t = useTranslations("Components");
   return (
     <Card>
-      <h2 className="mb-4 text-lg font-semibold">{t("choreographyResources")}</h2>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-lg font-semibold">{t("choreographyResources")}</h2>
+        {canEdit && (
+          <Link
+            href={`/choreographies/${choreographyId}/resources/new`}
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
+          >
+            {t("addResource")}
+          </Link>
+        )}
+      </div>
       {resources.length === 0 ? (
         <p className="text-sm text-stone-600">{t("noChoreographyResources")}</p>
       ) : (
@@ -523,7 +531,6 @@ export function ChoreographyResources({
           ))}
         </div>
       )}
-      {canEdit && <ResourceForm choreographyId={choreographyId} />}
     </Card>
   );
 }

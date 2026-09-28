@@ -34,9 +34,12 @@ import { getVisibleChoreographyResources } from "@/lib/choreography-resources";
 import { getSiteSettings } from "@/lib/site-settings";
 import { serializeTag } from "@/lib/tags";
 
-type PageProps = { params: Promise<{ id: string }> };
+type PageProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ section?: string }>;
+};
 
-export default async function ChoreographyDetailPage({ params }: PageProps) {
+export default async function ChoreographyDetailPage({ params, searchParams }: PageProps) {
   const [user, t, tc] = await Promise.all([
     getCurrentUser(),
     getTranslations("Pages.ChoreographyDetail"),
@@ -46,7 +49,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
     redirect("/login");
   }
 
-  const { id } = await params;
+  const [{ id }, query] = await Promise.all([params, searchParams]);
 
   if (!(await canViewChoreography(id, user.id))) {
     notFound();
@@ -424,6 +427,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
     >
       <SectionNav
         sections={sections}
+        initialSectionId={query.section}
         categoriesLabel={t("categories")}
         backLabel={t("backToSections")}
       />

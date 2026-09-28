@@ -110,6 +110,10 @@
     "NewChoreography": {
       "title": "Nouvelle chorégraphie"
     },
+    "NewChoreographyResource": {
+      "title": "Nouvelle ressource",
+      "backToChoreography": "← Retour à la chorégraphie"
+    },
     "ChoreographyDetail": {
       "choreographers": "Chorégraphes",
       "participants": "Participants",

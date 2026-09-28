@@ -15,6 +15,7 @@ Documents page
 
 ### Changed
 - Google Calendar events are not created, updated, deleted, or synchronized while the app runs outside production.
+- Adding a choreography resource opens a dedicated page, then returns to that choreography’s resources.
 
 ## 1.1.2 - 27-09-2026
 
