@@ -56,6 +56,15 @@
       "emptyCreate": "Aucun événement pour le moment. Créez le premier.",
       "empty": "Aucun événement pour le moment."
     },
+    "Documents": {
+      "title": "Documents",
+      "intro": "Fichiers et liens de l’association accessibles à tous les membres. Les managers et administrateurs peuvent les ajouter ou les retirer.",
+      "newDocument": "Nouveau document"
+    },
+    "NewDocument": {
+      "title": "Nouveau document",
+      "backToDocuments": "← Retour aux documents"
+    },
     "NewEvent": {
       "title": "Nouvel événement"
     },

@@ -43,6 +43,7 @@ model User {
   createdEvents                 Event[]                     @relation("EventCreator")
   eventParticipants             EventParticipant[]
   uploadedChoreographyResources ChoreographyResource[]
+  uploadedDocuments             Document[]
   unavailabilityTimeframes      UserUnavailability[]
   choreographyJoinRequests      ChoreographyJoinRequest[]
   eventJoinRequests             EventJoinRequest[]
@@ -374,6 +375,51 @@ model ChoreographyResource {
 
   @@index([choreographyId, status, createdAt])
   @@index([uploadedById])
+}
+
+enum DocumentType {
+  LINK
+  FILE
+}
+
+enum DocumentStatus {
+  PENDING
+  ACTIVE
+}
+
+/// Association-wide document (link or file). Visible to every signed-in user; managed by managers and admins.
+model Document {
+  id           String         @id @default(cuid())
+  uploadedById String?
+  categoryId   String
+  type         DocumentType
+  status       DocumentStatus @default(ACTIVE)
+  title        String
+  description  String?
+  url          String?
+  storageKey   String?        @unique
+  fileName     String?
+  mimeType     String?
+  sizeBytes    BigInt?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  uploadedBy User?            @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  category   DocumentCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([categoryId, status, createdAt])
+  @@index([uploadedById])
+}
+
+model DocumentCategory {
+  id             String     @id @default(cuid())
+  name           String
+  normalizedName String     @unique
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  documents      Document[]
+
+  @@index([name])
 }
 
 model EventChoreography {

@@ -7,7 +7,14 @@ import { cn } from "@/lib/utils";
 
 export type NavItem = {
   href: string;
-  label: "schedule" | "choreographies" | "events" | "unavailability" | "scheduling" | "settings";
+  label:
+    | "schedule"
+    | "choreographies"
+    | "events"
+    | "documents"
+    | "unavailability"
+    | "scheduling"
+    | "settings";
   match: (pathname: string) => boolean;
 };
 
@@ -30,6 +37,11 @@ const baseNavItems: NavItem[] = [
       pathname.startsWith("/representations") ||
       pathname.startsWith("/rehearsals") ||
       pathname.startsWith("/repetitions"),
+  },
+  {
+    href: "/documents",
+    label: "documents",
+    match: (pathname) => pathname.startsWith("/documents"),
   },
   {
     href: "/unavailability",

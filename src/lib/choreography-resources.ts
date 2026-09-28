@@ -4,9 +4,24 @@ import {
   canViewChoreography,
   isChoreographyMember,
 } from "@/lib/permissions";
+import {
+  isAllowedResourceMimeType,
+  MAX_RESOURCE_BYTES,
+  resolveLinkPresentation,
+  resourceMediaKind,
+  safeResourceFileName,
+  youtubeVideoId,
+} from "@/lib/resource-media";
 import { deleteChoreographyResourceObjects } from "@/lib/s3";
 
-export const MAX_CHOREOGRAPHY_RESOURCE_BYTES = 250 * 1024 * 1024;
+export const MAX_CHOREOGRAPHY_RESOURCE_BYTES = MAX_RESOURCE_BYTES;
+
+export {
+  isAllowedResourceMimeType as isAllowedChoreographyResourceMimeType,
+  resourceMediaKind as choreographyResourceMediaKind,
+  safeResourceFileName,
+  youtubeVideoId,
+};
 
 export class ChoreographyResourceCleanupError extends Error {}
 
@@ -14,86 +29,6 @@ export type ChoreographyResourceVisibility =
   | "CHOREOGRAPHER"
   | "PARTICIPANT"
   | "ALL";
-
-const documentMimeTypes = new Set([
-  "application/pdf",
-  "application/msword",
-  "application/vnd.ms-excel",
-  "application/vnd.ms-powerpoint",
-  "application/vnd.oasis.opendocument.presentation",
-  "application/vnd.oasis.opendocument.spreadsheet",
-  "application/vnd.oasis.opendocument.text",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "text/csv",
-  "text/plain",
-]);
-
-const imageMimeTypes = new Set([
-  "image/avif",
-  "image/gif",
-  "image/heic",
-  "image/heif",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-]);
-
-export function isAllowedChoreographyResourceMimeType(mimeType: string) {
-  const normalized = mimeType.toLowerCase();
-  return (
-    imageMimeTypes.has(normalized) ||
-    normalized.startsWith("audio/") ||
-    normalized.startsWith("video/") ||
-    documentMimeTypes.has(normalized)
-  );
-}
-
-export function choreographyResourceMediaKind(mimeType: string | null) {
-  if (!mimeType) return "document" as const;
-  if (imageMimeTypes.has(mimeType.toLowerCase())) return "image" as const;
-  if (mimeType.toLowerCase().startsWith("audio/")) return "audio" as const;
-  if (mimeType.toLowerCase().startsWith("video/")) return "video" as const;
-  return "document" as const;
-}
-
-export function safeResourceFileName(fileName: string) {
-  const normalized = fileName
-    .normalize("NFKD")
-    .replace(/[^\w.-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return normalized.slice(0, 180) || "file";
-}
-
-export function youtubeVideoId(url: string) {
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
-    let id: string | null = null;
-
-    if (host === "youtu.be") {
-      id = parsed.pathname.split("/").filter(Boolean)[0] ?? null;
-    } else if (
-      host === "youtube.com" ||
-      host === "m.youtube.com" ||
-      host === "youtube-nocookie.com"
-    ) {
-      if (parsed.pathname === "/watch") {
-        id = parsed.searchParams.get("v");
-      } else {
-        const [prefix, candidate] = parsed.pathname.split("/").filter(Boolean);
-        if (["embed", "shorts", "live"].includes(prefix)) {
-          id = candidate ?? null;
-        }
-      }
-    }
-
-    return id && /^[A-Za-z0-9_-]{11}$/.test(id) ? id : null;
-  } catch {
-    return null;
-  }
-}
 
 export async function canViewChoreographyResource(
   choreographyId: string,
@@ -141,10 +76,10 @@ export function serializeChoreographyResource(resource: {
     fileName: resource.fileName,
     mimeType: resource.mimeType,
     sizeBytes: resource.sizeBytes === null ? null : Number(resource.sizeBytes),
-    mediaKind: choreographyResourceMediaKind(resource.mimeType),
+    mediaKind: resourceMediaKind(resource.mimeType),
     youtubeId:
       resource.type === "LINK" && resource.url
-        ? youtubeVideoId(resource.url)
+        ? resolveLinkPresentation(resource.url).youtubeId
         : null,
     createdAt: resource.createdAt.toISOString(),
   };

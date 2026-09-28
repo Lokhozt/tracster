@@ -9,6 +9,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const STATIC_PREFIX = "static/";
 const RESOURCE_PREFIX = "ressources/choreographies/";
+const DOCUMENT_PREFIX = "ressources/documents/";
 
 export type S3Config = {
   bucket: string;
@@ -113,6 +114,13 @@ export function choreographyResourceObjectKey(
     throw new Error("Invalid resource object key.");
   }
   return `${RESOURCE_PREFIX}${choreographyId}/${resourceId}/${fileName}`;
+}
+
+export function documentObjectKey(documentId: string, fileName: string) {
+  if (!/^[A-Za-z0-9_-]+$/.test(documentId) || !/^[A-Za-z0-9._-]+$/.test(fileName)) {
+    throw new Error("Invalid document object key.");
+  }
+  return `${DOCUMENT_PREFIX}${documentId}/${fileName}`;
 }
 
 export async function createChoreographyResourceUploadUrl(options: {

@@ -567,6 +567,22 @@
     "zoomOut": "Dézoomer",
     "zoomIn": "Zoomer",
     "reset": "Réinitialiser",
-    "close": "Fermer"
+    "close": "Fermer",
+    "documents": "Documents",
+    "documentsHelp": "Fichiers et liens partagés avec tous les membres de l’association.",
+    "noDocuments": "Aucun document n’a encore été ajouté.",
+    "addDocument": "Ajouter un document",
+    "savingDocument": "Ajout du document…",
+    "documentCreateError": "Impossible d’ajouter le document.",
+    "documentUploadError": "Impossible de téléverser le fichier.",
+    "documentDeleteError": "Impossible de supprimer le document.",
+    "deleteDocumentConfirm": "Supprimer ce document ? Cette action est irréversible.",
+    "documentTitle": "Titre",
+    "documentCategory": "Catégorie",
+    "documentCategories": "Catégories de documents",
+    "backToDocumentCategories": "Retour aux catégories",
+    "createNewCategory": "Créer une nouvelle catégorie…",
+    "newCategoryName": "Nom de la nouvelle catégorie",
+    "noDocumentsInCategory": "Aucun document n’a encore été ajouté à cette catégorie."
   }
 }

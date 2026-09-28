@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 1.2.0 [Unreleased]
 
+### Added
+- Association documents: every signed-in member can browse titled links and files by category. Managers and admins add a document from its own page, choosing or creating a category, and land on that category after it is created. Uses the same link/file upload flow and media players as choreography resources (YouTube, audio, video, images).
+
 ### Changed
 - Google Calendar events are not created, updated, deleted, or synchronized while the app runs outside production.
 

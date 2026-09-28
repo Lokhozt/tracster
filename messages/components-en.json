@@ -567,6 +567,22 @@
     "zoomOut": "Zoom out",
     "zoomIn": "Zoom in",
     "reset": "Reset",
-    "close": "Close"
+    "close": "Close",
+    "documents": "Documents",
+    "documentsHelp": "Files and links shared with every member of the association.",
+    "noDocuments": "No documents have been added yet.",
+    "addDocument": "Add document",
+    "savingDocument": "Adding document…",
+    "documentCreateError": "Unable to add the document.",
+    "documentUploadError": "Unable to upload the file.",
+    "documentDeleteError": "Unable to delete the document.",
+    "deleteDocumentConfirm": "Delete this document? This cannot be undone.",
+    "documentTitle": "Title",
+    "documentCategory": "Category",
+    "documentCategories": "Document categories",
+    "backToDocumentCategories": "Back to categories",
+    "createNewCategory": "Create a new category…",
+    "newCategoryName": "New category name",
+    "noDocumentsInCategory": "No documents have been added to this category yet."
   }
 }

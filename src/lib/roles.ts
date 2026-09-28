@@ -40,6 +40,10 @@ export async function canManageAssociationGoogleCalendar(userId: string): Promis
   return (await isAdmin(userId)) && (await isOwner(userId));
 }
 
+export async function canManageDocuments(userId: string): Promise<boolean> {
+  return (await isAdmin(userId)) || (await isManager(userId));
+}
+
 export async function hasGlobalAccess(userId: string): Promise<boolean> {
   return isAdmin(userId);
 }

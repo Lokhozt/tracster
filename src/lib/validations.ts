@@ -256,6 +256,53 @@ export const choreographyResourceUploadSchema = z.object({
   visibility: choreographyResourceVisibilitySchema,
 });
 
+const documentDescriptionSchema = z.string().trim().max(1000).optional();
+const documentTitleSchema = z
+  .string()
+  .trim()
+  .min(1, { message: "Document title is required." })
+  .max(200, { message: "Document titles are limited to 200 characters." });
+const documentCategoryFields = {
+  categoryId: z.string().trim().min(1).optional(),
+  categoryName: z
+    .string()
+    .trim()
+    .min(1, { message: "Category name is required." })
+    .max(100, { message: "Category names are limited to 100 characters." })
+    .optional(),
+};
+
+export const documentLinkSchema = z.object({
+  title: documentTitleSchema,
+  url: z
+    .string()
+    .trim()
+    .url({ message: "Enter a valid resource URL." })
+    .max(2048, { message: "Resource URLs are limited to 2048 characters." })
+    .refine((value) => new URL(value).protocol === "https:", {
+      message: "Resource links must use HTTPS.",
+    }),
+  description: documentDescriptionSchema,
+  ...documentCategoryFields,
+}).refine((value) => Boolean(value.categoryId) !== Boolean(value.categoryName), {
+  message: "Choose a category or create a new one.",
+});
+
+export const documentUploadSchema = z.object({
+  title: documentTitleSchema,
+  fileName: z.string().trim().min(1).max(255),
+  mimeType: z.string().trim().min(1).max(150),
+  sizeBytes: z
+    .number()
+    .int()
+    .positive()
+    .max(250 * 1024 * 1024, { message: "Files are limited to 250 MB." }),
+  description: documentDescriptionSchema,
+  ...documentCategoryFields,
+}).refine((value) => Boolean(value.categoryId) !== Boolean(value.categoryName), {
+  message: "Choose a category or create a new one.",
+});
+
 const schedulingWindowSchema = z.object({
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime(),

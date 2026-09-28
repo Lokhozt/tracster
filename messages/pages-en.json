@@ -56,6 +56,15 @@
       "emptyCreate": "No events yet. Create your first one.",
       "empty": "No events yet."
     },
+    "Documents": {
+      "title": "Documents",
+      "intro": "Association-wide files and links available to every member. Managers and admins can add or remove them.",
+      "newDocument": "New document"
+    },
+    "NewDocument": {
+      "title": "New document",
+      "backToDocuments": "← Back to documents"
+    },
     "NewEvent": {
       "title": "New event"
     },
