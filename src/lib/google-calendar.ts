@@ -62,6 +62,20 @@ export function isGoogleCalendarConfigured() {
   );
 }
 
+/** Writes and full syncs stay off in local development so a copied production database cannot change live calendars. */
+export function isGoogleCalendarSyncEnabled() {
+  return process.env.NODE_ENV === "production";
+}
+
+let loggedGoogleCalendarSyncSkip = false;
+
+function skipGoogleCalendarSync() {
+  if (!loggedGoogleCalendarSyncSkip) {
+    loggedGoogleCalendarSyncSkip = true;
+    console.info("Skipping Google Calendar sync outside production.");
+  }
+}
+
 const DEFAULT_ASSOCIATION_CALENDAR_TIMEZONE = "Europe/Paris";
 
 export function associationCalendarFollowUrl() {
@@ -357,6 +371,11 @@ async function deleteMapping(mapping: {
   googleEventId: string;
   connection: { calendarId: string; encryptedRefreshToken: string };
 }) {
+  if (!isGoogleCalendarSyncEnabled()) {
+    skipGoogleCalendarSync();
+    await prisma.googleCalendarEvent.deleteMany({ where: { id: mapping.id } });
+    return;
+  }
   const token = await accessToken(mapping.connection.encryptedRefreshToken);
   const response = await fetch(
     `${GOOGLE_API_URL}/calendar/v3/calendars/${encodeURIComponent(mapping.connection.calendarId)}/events/${encodeURIComponent(mapping.googleEventId)}`,
@@ -378,6 +397,10 @@ async function upsertMapping(
     encryptedRefreshToken: string;
   },
 ) {
+  if (!isGoogleCalendarSyncEnabled()) {
+    skipGoogleCalendarSync();
+    return;
+  }
   const mapping = await prisma.googleCalendarEvent.findUnique({
     where: {
       connectionId_tracsterEventId: {
@@ -440,6 +463,10 @@ async function recordSyncResult(connectionId: string, error?: unknown) {
 }
 
 export async function syncGoogleEvent(eventId: string) {
+  if (!isGoogleCalendarSyncEnabled()) {
+    skipGoogleCalendarSync();
+    return;
+  }
   const event = await getSyncEvent(eventId);
   if (!event) {
     const orphaned = await prisma.googleCalendarEvent.findMany({
@@ -517,6 +544,10 @@ export async function syncGoogleEventBestEffort(eventId: string) {
 }
 
 export async function syncGoogleConnection(connectionId: string) {
+  if (!isGoogleCalendarSyncEnabled()) {
+    skipGoogleCalendarSync();
+    return;
+  }
   const connection = await prisma.googleCalendarConnection.findUnique({
     where: { id: connectionId },
   });

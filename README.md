@@ -141,7 +141,9 @@ calendar public in Google Calendar so members can open it.
 The owner connects the association calendar under **Settings**. It receives every future event except
 rehearsals. Each member can connect a personal calendar on **Account** to copy their upcoming
 rehearsals. Sync is one-way from Tracster; personal unavailability is never sent to or read from
-Google.
+Google. Those writes run only when `NODE_ENV` is `production` (`npm run start` or a deployed
+server). `npm run dev` can still connect an account and choose a calendar, but it does not create,
+update, delete, or synchronize Google events.
 
 ### File storage (Railway bucket)
 
