@@ -431,7 +431,7 @@
     "highlightUserParticipant": "Participant de cette répétition",
     "highlightUserChoreographer": "Chorégraphe de cette répétition",
     "highlightUserError": "Impossible de charger l’indisponibilité de cette personne.",
-    "highlightChoreographyAvailabilityHelp": "Cliquez sur une répétition pour colorer le planning selon la disponibilité de cette pièce, par intervalles de 10 minutes. Cliquez de nouveau pour désélectionner. Les participants indisponibles pendant toute la durée du planning sont exclus ; les répétitions comptent comme conflits pour les participants.",
+    "highlightChoreographyAvailabilityHelp": "Cliquez sur une répétition pour colorer le planning selon la disponibilité de cette pièce, par intervalles de 10 minutes. Cliquez de nouveau pour désélectionner. Les participants indisponibles pendant toute la durée du planning sont exclus ; les répétitions comptent comme conflits pour les participants. Les chorégraphes indisponibles pendant toute la période ne déclenchent pas la couleur « tous les chorégraphes indisponibles ».",
     "choreographyAvailabilityError": "Impossible de charger la disponibilité de cette chorégraphie.",
     "choreographyAvailabilityTooltip": "{participants} participants indisponibles ; {choreographers} chorégraphes indisponibles",
     "availabilityAllParticipants": "Tous les participants disponibles",

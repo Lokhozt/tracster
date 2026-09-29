@@ -431,7 +431,7 @@
     "highlightUserParticipant": "Participant in this rehearsal",
     "highlightUserChoreographer": "Choreographer of this rehearsal",
     "highlightUserError": "Unable to load this person’s unavailability.",
-    "highlightChoreographyAvailabilityHelp": "Click a rehearsal to color the planning by that piece’s availability in 10-minute intervals. Click it again to clear. Participants unavailable for the whole planning period are excluded; rehearsals count as participant conflicts.",
+    "highlightChoreographyAvailabilityHelp": "Click a rehearsal to color the planning by that piece’s availability in 10-minute intervals. Click it again to clear. Participants unavailable for the whole planning period are excluded; rehearsals count as participant conflicts. Choreographers unavailable for the whole period do not trigger the all-choreographers color.",
     "choreographyAvailabilityError": "Unable to load availability for this choreography.",
     "choreographyAvailabilityTooltip": "{participants} unavailable participants; {choreographers} unavailable choreographers",
     "availabilityAllParticipants": "All participants available",

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - On a rehearsal, managers and higher roles can run a manual availability check. It sets each participant to available or unavailable from their unavailability periods.
 
+### Fixed
+- On the scheduling edit step, the “all choreographers unavailable” color is not applied for choreographers who have no availability during the planning period.
+
+### Changed
+- The scheduling tool now starts with no rest between choreographies. The gap can still be raised above 0.
+
 ## 1.2.0 - 28-09-2026
 
 Documents, what's app & viewers.

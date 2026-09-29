@@ -145,6 +145,9 @@ export async function buildSchedulingAvailabilityHeatmap(
   const consideredParticipants = selectedAudience.participants.filter(
     (userId) => !fullyUnavailableParticipants.has(userId),
   );
+  const consideredChoreographers = selectedAudience.choreographers.filter((userId) =>
+    hasFreeTime(unavailabilityByUser.get(userId) ?? [], periodWindows),
+  );
   const busyByParticipant = new Map<string, IntervalMs[]>();
 
   function addBusy(userId: string, interval: IntervalMs) {
@@ -188,7 +191,7 @@ export async function buildSchedulingAvailabilityHeatmap(
         [...(unavailabilityByUser.get(userId) ?? []), ...(busyByParticipant.get(userId) ?? [])]
           .some((block) => intervalsOverlap({ start, end }, block)),
       ).length;
-      const unavailableChoreographers = selectedAudience.choreographers.filter((userId) =>
+      const unavailableChoreographers = consideredChoreographers.filter((userId) =>
         (unavailabilityByUser.get(userId) ?? [])
           .some((block) => intervalsOverlap({ start, end }, block)),
       ).length;
@@ -200,8 +203,8 @@ export async function buildSchedulingAvailabilityHeatmap(
         unavailableParticipants,
         unavailableChoreographers,
         allChoreographersUnavailable:
-          selectedAudience.choreographers.length > 0 &&
-          unavailableChoreographers === selectedAudience.choreographers.length,
+          consideredChoreographers.length > 0 &&
+          unavailableChoreographers === consideredChoreographers.length,
       });
     }
   }

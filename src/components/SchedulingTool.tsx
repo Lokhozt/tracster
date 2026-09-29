@@ -126,7 +126,7 @@ export function SchedulingTool({
   const [locationUnavailabilities, setLocationUnavailabilities] = useState<
     Array<LocationUnavailability & { id: string }>
   >([]);
-  const [restMinutes, setRestMinutes] = useState(10);
+  const [restMinutes, setRestMinutes] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [applying, setApplying] = useState(false);
