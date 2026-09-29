@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { AvailabilityButtons } from "@/components/AvailabilityButtons";
+import { ManualAvailabilityCheckButton } from "@/components/ManualAvailabilityCheckButton";
 import {
   AssignEventParticipantForm,
   EditEventForm,
@@ -30,6 +31,7 @@ import {
   userNameOrderBy,
 } from "@/lib/users";
 import { getServerTranslator } from "@/i18n/server";
+import { isAtLeastManager } from "@/lib/roles";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -153,6 +155,7 @@ export default async function EventDetailPage({ params }: PageProps) {
   const canRespondAvailability =
     event.type.kind === "REHEARSAL" &&
     (await isRehearsalParticipant(eventRecord, user.id));
+  const canManualAvailabilityCheck = isAtLeastManager(user.role);
   const myResponse = eventRecord.availabilities.find((item) => item.userId === user.id);
 
   const rehearsalMembers =
@@ -287,9 +290,14 @@ export default async function EventDetailPage({ params }: PageProps) {
         </Card>
       )}
 
-      {event.type.kind === "REHEARSAL" && canEdit && (
+      {event.type.kind === "REHEARSAL" && (canEdit || canManualAvailabilityCheck) && (
         <Card className="mb-6">
           <h2 className="mb-4 text-lg font-semibold">{t("participantAvailability")}</h2>
+          {canManualAvailabilityCheck && (
+            <div className="mb-4">
+              <ManualAvailabilityCheckButton eventId={eventRecord.id} />
+            </div>
+          )}
           {rehearsalMembers.length > 0 && (
             <p className="mb-3 text-sm text-stone-700">
               {t("availableParticipantCount", {

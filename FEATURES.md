@@ -10,5 +10,5 @@
 
 # TODO
 - User stats: number of choreographies / demonstration
-- Standalone ressources (documents)
 - Competitors couples
+- Google Map integration

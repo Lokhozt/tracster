@@ -28,6 +28,10 @@ export async function isManager(userId: string): Promise<boolean> {
   return role === "MANAGER";
 }
 
+export function isAtLeastManager(role: UserRole): boolean {
+  return role === "MANAGER" || role === "ADMIN" || role === "OWNER";
+}
+
 export async function canManageUsers(userId: string): Promise<boolean> {
   return isAdmin(userId);
 }

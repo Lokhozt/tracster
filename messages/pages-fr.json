@@ -82,6 +82,9 @@
       "notes": "Notes",
       "yourAvailability": "Votre disponibilité",
       "participantAvailability": "Disponibilité des participants",
+      "manualAvailabilityCheck": "Vérification manuelle des disponibilités",
+      "manualAvailabilityChecking": "Vérification...",
+      "manualAvailabilityCheckError": "Impossible de mettre à jour les disponibilités.",
       "availableParticipantCount": "{available}/{total} participants disponibles",
       "noParticipantsAssigned": "Aucun participant n’est encore affecté.",
       "availabilityStatus": {
