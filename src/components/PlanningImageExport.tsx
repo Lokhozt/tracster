@@ -659,7 +659,11 @@ export function PlanningImageExportButton({
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setGreyNonParticipating(false);
+          setHideTitles(false);
+          setOpen(true);
+        }}
         className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-900 hover:bg-stone-100 disabled:opacity-50"
         aria-label={exportLabel}
         title={exportLabel}
