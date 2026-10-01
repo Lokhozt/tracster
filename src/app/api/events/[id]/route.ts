@@ -3,7 +3,14 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { eventSchema } from "@/lib/validations";
-import { canEditEvent, canViewEvent, validateEventTypeFields } from "@/lib/events";
+import {
+  canEditEvent,
+  canViewEvent,
+  choreographyLinksFromInput,
+  participantIdsForChoreographyLinks,
+  validateChoreographyLinkGroups,
+  validateEventTypeFields,
+} from "@/lib/events";
 import {
   getEventType,
   eventKindAllowsChoreographyLinks,
@@ -103,16 +110,27 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return forbidden();
   }
 
+  const choreographyLinks = choreographyLinksFromInput(parsed.data);
   const fieldError = await validateEventTypeFields({
     type: eventType,
     title: parsed.data.title,
     choreographyId: parsed.data.choreographyId,
-    choreographyIds: parsed.data.choreographyIds,
+    choreographyIds: choreographyLinks.map((link) => link.choreographyId),
     groupId: parsed.data.groupId,
   });
   if (fieldError) {
     return jsonError(fieldError);
   }
+
+  const linkGroupError = await validateChoreographyLinkGroups(eventType.kind, choreographyLinks);
+  if (linkGroupError) {
+    return jsonError(linkGroupError);
+  }
+
+  const linkedParticipantIds =
+    eventType.kind === "DEMONSTRATION"
+      ? await participantIdsForChoreographyLinks(choreographyLinks)
+      : [];
 
   const location = await resolveLocationFromParsed(parsed.data);
   if ("error" in location) {
@@ -172,11 +190,21 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           choreographyId: eventType.kind === "REHEARSAL" ? parsed.data.choreographyId ?? null : null,
           groupId: eventType.kind === "REHEARSAL" ? parsed.data.groupId ?? null : null,
           seriesId: unlinkFromSeries && target.id === id ? null : undefined,
-          choreographies:
-            eventKindAllowsChoreographyLinks(eventType.kind) && parsed.data.choreographyIds?.length
+          participants:
+            linkedParticipantIds.length > 0
               ? {
-                  create: parsed.data.choreographyIds.map((choreographyId) => ({
-                    choreographyId,
+                  createMany: {
+                    data: linkedParticipantIds.map((userId) => ({ userId })),
+                    skipDuplicates: true,
+                  },
+                }
+              : undefined,
+          choreographies:
+            eventKindAllowsChoreographyLinks(eventType.kind) && choreographyLinks.length
+              ? {
+                  create: choreographyLinks.map((link) => ({
+                    choreographyId: link.choreographyId,
+                    groupId: link.groupId ?? null,
                   })),
                 }
               : undefined,

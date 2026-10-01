@@ -758,14 +758,20 @@ export function RepresentationsSection({
   );
 }
 
-type LinkableChoreography = { id: string; title: string };
+type LinkableChoreography = {
+  id: string;
+  title: string;
+  groups: { id: string; name: string; memberCount: number }[];
+};
 
 function LinkChoreographyForm({
   representationId,
+  allowGroup = false,
   onSuccess,
   onCancel,
 }: {
   representationId: string;
+  allowGroup?: boolean;
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
@@ -776,6 +782,7 @@ function LinkChoreographyForm({
   const [options, setOptions] = useState<LinkableChoreography[]>([]);
   const [fetching, setFetching] = useState(true);
   const [choreographyId, setChoreographyId] = useState("");
+  const [groupId, setGroupId] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -788,6 +795,7 @@ function LinkChoreographyForm({
         if (response.ok) {
           setOptions(data.choreographies ?? []);
           setChoreographyId(data.choreographies?.[0]?.id ?? "");
+          setGroupId("");
         } else {
           setError(data.error ?? t("choreographiesLoadError"));
         }
@@ -814,7 +822,10 @@ function LinkChoreographyForm({
     const response = await fetch(`/api/events/${representationId}/choreographies`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ choreographyId }),
+      body: JSON.stringify({
+        choreographyId,
+        groupId: allowGroup && groupId ? groupId : null,
+      }),
     });
 
     const data = await response.json();
@@ -848,6 +859,8 @@ function LinkChoreographyForm({
     );
   }
 
+  const selectedGroups = options.find((option) => option.id === choreographyId)?.groups ?? [];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
@@ -855,7 +868,10 @@ function LinkChoreographyForm({
         <select
           id="link-choreography"
           value={choreographyId}
-          onChange={(event) => setChoreographyId(event.target.value)}
+          onChange={(event) => {
+            setChoreographyId(event.target.value);
+            setGroupId("");
+          }}
           className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"
         >
           {options.map((option) => (
@@ -865,6 +881,24 @@ function LinkChoreographyForm({
           ))}
         </select>
       </div>
+      {allowGroup && selectedGroups.length > 0 && (
+        <div>
+          <Label htmlFor="link-choreography-group">{t("group")}</Label>
+          <select
+            id="link-choreography-group"
+            value={groupId}
+            onChange={(event) => setGroupId(event.target.value)}
+            className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"
+          >
+            <option value="">{t("allParticipants")}</option>
+            {selectedGroups.map((group) => (
+              <option key={group.id} value={group.id}>
+                {group.name} ({group.memberCount})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" disabled={loading || !choreographyId}>
@@ -885,6 +919,7 @@ export function RepresentationChoreographiesSection({
   choreographies,
   canEdit,
   description,
+  allowGroup = false,
 }: {
   representationId: string;
   choreographies: {
@@ -893,9 +928,11 @@ export function RepresentationChoreographiesSection({
     description: string | null;
     memberCount: number;
     rehearsalCount: number;
+    groupName?: string | null;
   }[];
   canEdit: boolean;
   description?: string;
+  allowGroup?: boolean;
 }) {
   const t = useTranslations("Components");
   const localizedDescription = description ?? t("representationPiecesHelp");
@@ -921,6 +958,7 @@ export function RepresentationChoreographiesSection({
         <Card className="mb-4">
           <LinkChoreographyForm
             representationId={representationId}
+            allowGroup={allowGroup}
             onSuccess={() => setShowLinkForm(false)}
             onCancel={() => setShowLinkForm(false)}
           />
@@ -954,6 +992,11 @@ export function RepresentationChoreographiesSection({
                   />
                 )}
               </div>
+              {choreography.groupName && (
+                <p className="mt-1 text-sm text-stone-600">
+                  {t("group")}: {choreography.groupName}
+                </p>
+              )}
               {choreography.description && (
                 <p className="mt-2 line-clamp-3 text-sm text-stone-600">
                   {choreography.description}

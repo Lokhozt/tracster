@@ -142,7 +142,18 @@ export async function getLinkableChoreographies(userId: string, eventId: string)
             ],
           }),
     },
-    select: { id: true, title: true },
+    select: {
+      id: true,
+      title: true,
+      groups: {
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          _count: { select: { members: true } },
+        },
+      },
+    },
     orderBy: { title: "asc" },
   });
 }

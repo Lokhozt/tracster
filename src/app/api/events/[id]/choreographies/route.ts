@@ -5,7 +5,11 @@ import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { canEditChoreography } from "@/lib/permissions";
 import { canManageAllEvents } from "@/lib/roles";
 import { getLinkableChoreographies } from "@/lib/representations";
-import { canEditEvent } from "@/lib/events";
+import {
+  canEditEvent,
+  participantIdsForChoreographyLinks,
+  validateChoreographyLinkGroups,
+} from "@/lib/events";
 import { eventKindAllowsChoreographyLinks } from "@/lib/event-type-helpers";
 import { linkChoreographySchema } from "@/lib/validations";
 
@@ -37,7 +41,20 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
   const choreographies = await getLinkableChoreographies(user.id, id);
 
-  return Response.json({ choreographies });
+  return Response.json({
+    choreographies: choreographies.map((choreography) => ({
+      id: choreography.id,
+      title: choreography.title,
+      groups:
+        event.type.kind === "DEMONSTRATION"
+          ? choreography.groups.map((group) => ({
+              id: group.id,
+              name: group.name,
+              memberCount: group._count.members,
+            }))
+          : [],
+    })),
+  });
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
@@ -78,24 +95,54 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return forbidden();
   }
 
-  const link = await prisma.eventChoreography.upsert({
-    where: {
-      eventId_choreographyId: {
+  const linkInput = {
+    choreographyId: parsed.data.choreographyId,
+    groupId: parsed.data.groupId ?? null,
+  };
+  const linkGroupError = await validateChoreographyLinkGroups(event.type.kind, [linkInput]);
+  if (linkGroupError) {
+    return jsonError(linkGroupError);
+  }
+
+  const participantIds =
+    event.type.kind === "DEMONSTRATION"
+      ? await participantIdsForChoreographyLinks([linkInput])
+      : [];
+
+  const link = await prisma.$transaction(async (tx) => {
+    const saved = await tx.eventChoreography.upsert({
+      where: {
+        eventId_choreographyId: {
+          choreographyId: parsed.data.choreographyId,
+          eventId: id,
+        },
+      },
+      update: event.type.kind === "DEMONSTRATION" ? { groupId: linkInput.groupId } : {},
+      create: {
         choreographyId: parsed.data.choreographyId,
         eventId: id,
+        groupId: linkInput.groupId,
       },
-    },
-    update: {},
-    create: {
-      choreographyId: parsed.data.choreographyId,
-      eventId: id,
-    },
-    include: {
-      choreography: { select: { id: true, title: true } },
-    },
+      include: {
+        choreography: { select: { id: true, title: true } },
+        group: { select: { id: true, name: true } },
+      },
+    });
+
+    if (participantIds.length > 0) {
+      await tx.eventParticipant.createMany({
+        data: participantIds.map((userId) => ({ eventId: id, userId })),
+        skipDuplicates: true,
+      });
+    }
+
+    return saved;
   });
 
-  return Response.json({ choreography: link.choreography }, { status: 201 });
+  return Response.json({
+    choreography: link.choreography,
+    group: link.group,
+  }, { status: 201 });
 }
 
 export async function DELETE(request: NextRequest, context: RouteContext) {

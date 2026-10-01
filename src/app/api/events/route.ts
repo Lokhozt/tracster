@@ -5,8 +5,11 @@ import { forbidden, jsonError, unauthorized } from "@/lib/api";
 import { eventSchema } from "@/lib/validations";
 import {
   canCreateEventOfType,
+  choreographyLinksFromInput,
   competitorParticipantsAllowed,
   getUserEvents,
+  participantIdsForChoreographyLinks,
+  validateChoreographyLinkGroups,
   validateEventTypeFields,
 } from "@/lib/events";
 import { getEventType } from "@/lib/event-types";
@@ -48,15 +51,22 @@ export async function POST(request: NextRequest) {
     return jsonError("Selected event type was not found.");
   }
 
+  const choreographyLinks = choreographyLinksFromInput(parsed.data);
+  const choreographyIds = choreographyLinks.map((link) => link.choreographyId);
   const fieldError = await validateEventTypeFields({
     type: eventType,
     title: parsed.data.title,
     choreographyId: parsed.data.choreographyId,
-    choreographyIds: parsed.data.choreographyIds,
+    choreographyIds,
     groupId: parsed.data.groupId,
   });
   if (fieldError) {
     return jsonError(fieldError);
+  }
+
+  const linkGroupError = await validateChoreographyLinkGroups(eventType.kind, choreographyLinks);
+  if (linkGroupError) {
+    return jsonError(linkGroupError);
   }
 
   const participantError = await competitorParticipantsAllowed(
@@ -73,7 +83,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       kind: eventType.kind,
       choreographyId: parsed.data.choreographyId,
-      choreographyIds: parsed.data.choreographyIds,
+      choreographyIds,
       canCreateGeneric,
     }))
   ) {
@@ -117,6 +127,13 @@ export async function POST(request: NextRequest) {
     : [{ startsAt, endsAt }];
 
   const isGeneric = isGenericEventKind(eventType.kind);
+  const linkedParticipantIds =
+    eventType.kind === "DEMONSTRATION"
+      ? await participantIdsForChoreographyLinks(choreographyLinks)
+      : [];
+  const participantIds = [
+    ...new Set([...(isGeneric ? parsed.data.participantIds ?? [] : []), ...linkedParticipantIds]),
+  ];
   const created = await prisma.$transaction(async (tx) => {
     const series =
       occurrences.length > 1 ? await tx.eventSeries.create({ data: {} }) : null;
@@ -143,17 +160,17 @@ export async function POST(request: NextRequest) {
             choreographyId: eventType.kind === "REHEARSAL" ? parsed.data.choreographyId ?? null : null,
             groupId: eventType.kind === "REHEARSAL" ? parsed.data.groupId ?? null : null,
             seriesId: series?.id ?? null,
-            participants:
-              isGeneric && parsed.data.participantIds?.length
-                ? {
-                    create: parsed.data.participantIds.map((userId) => ({ userId })),
-                  }
-                : undefined,
+            participants: participantIds.length
+              ? {
+                  create: participantIds.map((userId) => ({ userId })),
+                }
+              : undefined,
             choreographies:
-              eventKindAllowsChoreographyLinks(eventType.kind) && parsed.data.choreographyIds?.length
+              eventKindAllowsChoreographyLinks(eventType.kind) && choreographyLinks.length
                 ? {
-                    create: parsed.data.choreographyIds.map((choreographyId) => ({
-                      choreographyId,
+                    create: choreographyLinks.map((link) => ({
+                      choreographyId: link.choreographyId,
+                      groupId: link.groupId ?? null,
                     })),
                   }
                 : undefined,

@@ -146,6 +146,7 @@ model ChoreographyGroup {
   choreography              Choreography               @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
   members                   ChoreographyGroupMember[]
   rehearsals                Event[]
+  eventLinks                EventChoreography[]
   schedulingCollectionItems SchedulingCollectionItem[]
 
   @@index([choreographyId])
@@ -426,13 +427,16 @@ model DocumentCategory {
 model EventChoreography {
   eventId        String
   choreographyId String
+  groupId        String?
   assignedAt     DateTime @default(now())
 
-  event        Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  choreography Choreography @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
+  event        Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  choreography Choreography       @relation(fields: [choreographyId], references: [id], onDelete: Cascade)
+  group        ChoreographyGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
 
   @@id([eventId, choreographyId])
   @@index([choreographyId])
+  @@index([groupId])
 }
 
 enum AvailabilityStatus {

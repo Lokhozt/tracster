@@ -6,9 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 1.2.2 - 01-10-2026
 
+### Added
+- Demonstrations can link either a full choreography or one of its groups. Linking automatically adds the choreography or group participants to the event.
+
 ### Changed
 - Managers can now change every event, including ones they did not create.
-- Edit an event is now a button to a dedicated page to lighten the event page.
+- Event editing now opens from a button beneath the event details on a dedicated page.
+- Event descriptions preserve line breaks on the event page.
 
 ## 1.2.1 -  30-09-2026
 

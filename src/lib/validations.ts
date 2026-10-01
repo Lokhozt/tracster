@@ -199,9 +199,12 @@ export const linkRepresentationSchema = z.object({
   representationId: z.string().min(1),
 });
 
-export const linkChoreographySchema = z.object({
+export const choreographyLinkSchema = z.object({
   choreographyId: z.string().min(1),
+  groupId: z.string().min(1).nullable().optional(),
 });
+
+export const linkChoreographySchema = choreographyLinkSchema;
 
 export const eventTypeSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -218,6 +221,7 @@ export const eventSchema = z.object({
   participantIds: z.array(z.string()).optional(),
   choreographyId: z.string().min(1).nullable().optional(),
   choreographyIds: z.array(z.string()).optional(),
+  choreographyLinks: z.array(choreographyLinkSchema).optional(),
   groupId: z.string().min(1).nullable().optional(),
   allowParticipantJoin: z.boolean().optional(),
   allowJoinRequests: z.boolean().optional(),

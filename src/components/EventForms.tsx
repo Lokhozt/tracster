@@ -212,6 +212,12 @@ export function CreateEventForm({
   const generic = isGenericEventKind(eventType?.kind ?? null);
   const allowsRepeat = eventKindAllowsRepeat(eventType?.kind ?? null);
   const allowsChoreographyLinks = eventKindAllowsChoreographyLinks(eventType?.kind ?? null);
+  const demonstrationChoreographyId =
+    eventType?.kind === "DEMONSTRATION" && selectedChoreographyIds.length === 1
+      ? selectedChoreographyIds[0]
+      : "";
+  const audienceChoreographyId =
+    eventType?.kind === "REHEARSAL" ? choreographyId : demonstrationChoreographyId;
   const groupOptions = groups.length > 0 ? groups : fetchedGroups;
   const participantChoices = sortUsersByName(
     eventKindRestrictedToCompetitors(eventType?.kind ?? null)
@@ -232,13 +238,18 @@ export function CreateEventForm({
   }, [eventType?.kind, participantOptions]);
 
   useEffect(() => {
-    if (eventType?.kind !== "REHEARSAL" || !choreographyId || groups.length > 0) {
+    if (
+      !audienceChoreographyId ||
+      groups.length > 0 ||
+      (eventType?.kind !== "REHEARSAL" && eventType?.kind !== "DEMONSTRATION")
+    ) {
       return;
     }
 
     let cancelled = false;
+    setFetchedGroups([]);
     async function loadGroups() {
-      const response = await fetch(`/api/choreographies/${choreographyId}/groups`);
+      const response = await fetch(`/api/choreographies/${audienceChoreographyId}/groups`);
       const data = await response.json();
       if (!cancelled && response.ok) {
         setFetchedGroups(
@@ -255,7 +266,11 @@ export function CreateEventForm({
     return () => {
       cancelled = true;
     };
-  }, [choreographyId, eventType?.kind, groups.length]);
+  }, [audienceChoreographyId, eventType?.kind, groups.length]);
+
+  useEffect(() => {
+    setAudience("");
+  }, [audienceChoreographyId]);
 
   function handleStartChange(nextStart: DateTimeParts) {
     setStart(nextStart);
@@ -308,6 +323,17 @@ export function CreateEventForm({
         choreographyId:
           eventType?.kind === "REHEARSAL" ? choreographyId || null : null,
         choreographyIds: allowsChoreographyLinks ? selectedChoreographyIds : undefined,
+        choreographyLinks: allowsChoreographyLinks
+          ? selectedChoreographyIds.map((id) => ({
+              choreographyId: id,
+              groupId:
+                eventType?.kind === "DEMONSTRATION" &&
+                selectedChoreographyIds.length === 1 &&
+                audience
+                  ? audience
+                  : null,
+            }))
+          : undefined,
         groupId: eventType?.kind === "REHEARSAL" ? audience || undefined : undefined,
         ...(generic ? participation : {}),
         ...(allowsRepeat && repeat
@@ -452,6 +478,14 @@ export function CreateEventForm({
           />
         </>
       )}
+      {eventType?.kind === "DEMONSTRATION" && demonstrationChoreographyId && (
+        <RehearsalAudienceSelect
+          id="demonstration-audience"
+          groups={groupOptions}
+          value={audience}
+          onChange={setAudience}
+        />
+      )}
       {allowsChoreographyLinks && choreographyOptions && choreographyOptions.length > 0 && (
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium text-stone-700">
@@ -553,6 +587,12 @@ export function EditEventForm({
   const [selectedChoreographyIds, setSelectedChoreographyIds] = useState(
     event.choreographies.map((item) => item.id),
   );
+  const [groupByChoreography, setGroupByChoreography] = useState<Record<string, string>>(() =>
+    Object.fromEntries(event.choreographies.map((item) => [item.id, item.groupId ?? ""])),
+  );
+  const [groupsByChoreography, setGroupsByChoreography] = useState<Record<string, GroupOption[]>>(
+    {},
+  );
   const [participation, setParticipation] = useState<ParticipationSettings>({
     allowParticipantJoin: event.allowParticipantJoin,
     allowJoinRequests: event.allowJoinRequests,
@@ -570,6 +610,45 @@ export function EditEventForm({
   const eventType = selectedEventType(eventTypes, typeId);
   const generic = isGenericEventKind(eventType?.kind ?? null);
   const allowsChoreographyLinks = eventKindAllowsChoreographyLinks(eventType?.kind ?? null);
+
+  useEffect(() => {
+    if (eventType?.kind !== "DEMONSTRATION") {
+      return;
+    }
+
+    const missing = selectedChoreographyIds.filter((id) => groupsByChoreography[id] === undefined);
+    if (missing.length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      const entries = await Promise.all(
+        missing.map(async (id) => {
+          const response = await fetch(`/api/choreographies/${id}/groups`);
+          const data = await response.json();
+          const loaded: GroupOption[] = response.ok
+            ? (data.groups ?? []).map((group: { id: string; name: string; members: unknown[] }) => ({
+                id: group.id,
+                name: group.name,
+                memberCount: group.members.length,
+              }))
+            : [];
+          return [id, loaded] as const;
+        }),
+      );
+      if (!cancelled) {
+        setGroupsByChoreography((current) => ({
+          ...current,
+          ...Object.fromEntries(entries),
+        }));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [eventType?.kind, groupsByChoreography, selectedChoreographyIds]);
 
   function handleStartChange(nextStart: DateTimeParts) {
     setStart(nextStart);
@@ -607,6 +686,13 @@ export function EditEventForm({
         endsAt: endsAt?.toISOString(),
         choreographyId: eventType?.kind === "REHEARSAL" ? choreographyId || null : null,
         choreographyIds: allowsChoreographyLinks ? selectedChoreographyIds : undefined,
+        choreographyLinks: allowsChoreographyLinks
+          ? selectedChoreographyIds.map((id) => ({
+              choreographyId: id,
+              groupId:
+                eventType?.kind === "DEMONSTRATION" ? groupByChoreography[id] || null : null,
+            }))
+          : undefined,
         ...(generic ? participation : {}),
         applyToUpcoming,
       }),
@@ -703,6 +789,27 @@ export function EditEventForm({
             ))}
           </fieldset>
         )}
+        {eventType?.kind === "DEMONSTRATION" &&
+          selectedChoreographyIds.map((id) => {
+            const choreographyGroups = groupsByChoreography[id] ?? [];
+            if (choreographyGroups.length === 0) {
+              return null;
+            }
+            const title = choreographyOptions?.find((choreography) => choreography.id === id)?.title;
+            return (
+              <div key={id} className="space-y-2">
+                {title && <p className="text-sm font-medium text-stone-700">{title}</p>}
+                <RehearsalAudienceSelect
+                  id={`edit-event-group-${id}`}
+                  groups={choreographyGroups}
+                  value={groupByChoreography[id] ?? ""}
+                  onChange={(value) =>
+                    setGroupByChoreography((current) => ({ ...current, [id]: value }))
+                  }
+                />
+              </div>
+            );
+          })}
         <div>
           <Label htmlFor="edit-event-description">{generic ? t("description") : t("notes")}</Label>
           <Textarea
@@ -856,6 +963,7 @@ export type LinkedEventItem = {
   startsAt: string;
   endsAt: string | null;
   location: string | null;
+  groupName?: string | null;
 };
 
 export type DemonstrationItem = LinkedEventItem;
@@ -874,6 +982,7 @@ function LinkedEventKindSection({
   canEdit,
   eventTypes,
   participantOptions,
+  groups = [],
 }: {
   kind: "DEMONSTRATION";
   heading: string;
@@ -888,6 +997,7 @@ function LinkedEventKindSection({
   canEdit: boolean;
   eventTypes: SerializedEventType[];
   participantOptions: UserOption[];
+  groups?: GroupOption[];
 }) {
   const t = useTranslations("Components");
   const locale = useLocale();
@@ -914,6 +1024,7 @@ function LinkedEventKindSection({
           <CreateEventForm
             eventTypes={eventTypes}
             participantOptions={participantOptions}
+            groups={groups}
             choreographyOptions={[{ id: choreographyId, title: choreographyTitle }]}
             defaultTypeId={eventType.id}
             lockType
@@ -956,6 +1067,11 @@ function LinkedEventKindSection({
                   {item.location && (
                     <p className="mt-1 text-sm text-stone-500">{item.location}</p>
                   )}
+                  {item.groupName && (
+                    <p className="mt-1 text-sm text-stone-500">
+                      {t("group")}: {item.groupName}
+                    </p>
+                  )}
                 </div>
                 {canEdit && (
                   <div className={cn("flex items-center gap-1", aboveCardLink)}>
@@ -983,6 +1099,7 @@ export function DemonstrationsSection({
   canEdit,
   eventTypes,
   participantOptions,
+  groups = [],
 }: {
   choreographyId: string;
   choreographyTitle: string;
@@ -990,6 +1107,7 @@ export function DemonstrationsSection({
   canEdit: boolean;
   eventTypes: SerializedEventType[];
   participantOptions: UserOption[];
+  groups?: GroupOption[];
 }) {
   const t = useTranslations("Components");
   return (
@@ -1007,6 +1125,7 @@ export function DemonstrationsSection({
       canEdit={canEdit}
       eventTypes={eventTypes}
       participantOptions={participantOptions}
+      groups={groups}
     />
   );
 }

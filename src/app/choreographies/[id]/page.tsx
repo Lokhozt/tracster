@@ -100,6 +100,7 @@ export default async function ChoreographyDetailPage({ params, searchParams }: P
             event: { type: { kind: { in: ["REPRESENTATION", "DEMONSTRATION"] } } },
           },
           include: {
+            group: { select: { name: true } },
             event: {
               include: {
                 ...listedLocationInclude,
@@ -310,12 +311,18 @@ export default async function ChoreographyDetailPage({ params, searchParams }: P
           canEdit={canEdit}
           eventTypes={eventTypes}
           participantOptions={users}
+          groups={groups.map((group) => ({
+            id: group.id,
+            name: group.name,
+            memberCount: group.members.length,
+          }))}
           demonstrations={demonstrationLinks.map((link) => ({
             id: link.event.id,
             title: link.event.title || null,
             startsAt: link.event.startsAt.toISOString(),
             endsAt: link.event.endsAt?.toISOString() ?? null,
             location: displayLocation(link.event),
+            groupName: link.group?.name ?? null,
           }))}
         />
       ),

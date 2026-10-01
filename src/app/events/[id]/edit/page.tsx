@@ -50,6 +50,7 @@ export default async function EditEventPage({ params }: PageProps) {
         choreographies: {
           where: { choreography: { archivedAt: null } },
           include: {
+            group: { select: { id: true, name: true } },
             choreography: { select: { id: true, title: true } },
           },
           orderBy: { choreography: { title: "asc" } },

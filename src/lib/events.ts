@@ -231,7 +231,12 @@ export type SerializedEvent = {
   groupName: string | null;
   seriesId: string | null;
   hasUpcomingSeriesEvents: boolean;
-  choreographies: { id: string; title: string }[];
+  choreographies: {
+    id: string;
+    title: string;
+    groupId: string | null;
+    groupName: string | null;
+  }[];
   participants: { id: string; name: string; email: string }[];
 };
 
@@ -255,7 +260,11 @@ export function serializeEvent(event: {
   group: { id: string; name: string } | null;
   listedLocation?: { id?: string; name: string } | null;
   location?: string | null;
-  choreographies: { choreography: { id: string; title: string } }[];
+  choreographies: {
+    groupId?: string | null;
+    group?: { id: string; name: string } | null;
+    choreography: { id: string; title: string };
+  }[];
   participants: {
     user: { id: string; firstName: string; lastName: string; email: string };
   }[];
@@ -284,6 +293,8 @@ export function serializeEvent(event: {
     choreographies: event.choreographies.map((link) => ({
       id: link.choreography.id,
       title: link.choreography.title,
+      groupId: link.groupId ?? link.group?.id ?? null,
+      groupName: link.group?.name ?? null,
     })),
     participants: sortUsersByName(
       event.participants.map(({ user }) => ({
@@ -385,4 +396,80 @@ export async function competitorParticipantsAllowed(
     return "Only competitors can be added to training events.";
   }
   return null;
+}
+
+export type ChoreographyLinkInput = {
+  choreographyId: string;
+  groupId?: string | null;
+};
+
+export function choreographyLinksFromInput(input: {
+  choreographyIds?: string[];
+  choreographyLinks?: ChoreographyLinkInput[];
+}): ChoreographyLinkInput[] {
+  const source = input.choreographyLinks
+    ? input.choreographyLinks
+    : (input.choreographyIds ?? []).map((choreographyId) => ({
+        choreographyId,
+        groupId: null,
+      }));
+  const links = new Map<string, ChoreographyLinkInput>();
+  for (const link of source) {
+    links.set(link.choreographyId, {
+      choreographyId: link.choreographyId,
+      groupId: link.groupId ?? null,
+    });
+  }
+  return [...links.values()];
+}
+
+export async function validateChoreographyLinkGroups(
+  kind: SerializedEventType["kind"],
+  links: ChoreographyLinkInput[],
+): Promise<string | null> {
+  if (kind !== "DEMONSTRATION") {
+    if (links.some((link) => link.groupId)) {
+      return "Only demonstration events can be linked to a choreography group.";
+    }
+    return null;
+  }
+
+  for (const link of links) {
+    if (!link.groupId) {
+      continue;
+    }
+    const group = await getGroupForChoreography(link.choreographyId, link.groupId);
+    if (!group) {
+      return "Selected group does not belong to this choreography.";
+    }
+  }
+
+  return null;
+}
+
+export async function participantIdsForChoreographyLinks(
+  links: ChoreographyLinkInput[],
+): Promise<string[]> {
+  const userIds = new Set<string>();
+  for (const link of links) {
+    if (link.groupId) {
+      const members = await prisma.choreographyGroupMember.findMany({
+        where: { groupId: link.groupId, group: { choreographyId: link.choreographyId } },
+        select: { userId: true },
+      });
+      for (const member of members) {
+        userIds.add(member.userId);
+      }
+      continue;
+    }
+
+    const members = await prisma.choreographyMember.findMany({
+      where: { choreographyId: link.choreographyId },
+      select: { userId: true },
+    });
+    for (const member of members) {
+      userIds.add(member.userId);
+    }
+  }
+  return [...userIds];
 }

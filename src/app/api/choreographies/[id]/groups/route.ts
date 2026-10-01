@@ -8,6 +8,7 @@ import {
   validateGroupMemberIds,
 } from "@/lib/groups";
 import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
+import { canManageAllEvents } from "@/lib/roles";
 import { nestedUserNameOrderBy } from "@/lib/users";
 import { groupSchema } from "@/lib/validations";
 
@@ -21,7 +22,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
   const { id } = await context.params;
 
-  if (!(await canViewChoreography(id, user.id))) {
+  if (!(await canViewChoreography(id, user.id)) && !(await canManageAllEvents(user.id))) {
     return forbidden();
   }
 

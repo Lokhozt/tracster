@@ -371,10 +371,12 @@ export function RehearsalAudienceSelect({
   groups,
   value,
   onChange,
+  id = "rehearsal-audience",
 }: {
   groups: GroupOption[];
   value: string;
   onChange: (value: string) => void;
+  id?: string;
 }) {
   const t = useTranslations("Components");
   if (groups.length === 0) {
@@ -383,9 +385,9 @@ export function RehearsalAudienceSelect({
 
   return (
     <div>
-      <Label htmlFor="rehearsal-audience">{t("participants")}</Label>
+      <Label htmlFor={id}>{t("participants")}</Label>
       <select
-        id="rehearsal-audience"
+        id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"

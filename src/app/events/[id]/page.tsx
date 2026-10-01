@@ -76,6 +76,13 @@ export default async function EventDetailPage({ params }: PageProps) {
         choreographies: {
           where: { choreography: { archivedAt: null } },
           include: {
+            group: {
+              select: {
+                id: true,
+                name: true,
+                _count: { select: { members: true } },
+              },
+            },
             choreography: {
               select: {
                 id: true,
@@ -236,7 +243,7 @@ export default async function EventDetailPage({ params }: PageProps) {
             </p>
           )}
           {event.description && (
-            <p>
+            <p className="whitespace-pre-line">
               <span className="font-medium text-stone-900">{t("description")}:</span>{" "}
               {event.description}
             </p>
@@ -343,12 +350,14 @@ export default async function EventDetailPage({ params }: PageProps) {
                 ? t("demonstrationPieces")
                 : t("representationPieces")
             }
+            allowGroup={event.type.kind === "DEMONSTRATION"}
             choreographies={eventRecord.choreographies.map((link) => ({
               id: link.choreography.id,
               title: link.choreography.title,
               description: link.choreography.description,
-              memberCount: link.choreography._count.members,
+              memberCount: link.group ? link.group._count.members : link.choreography._count.members,
               rehearsalCount: link.choreography._count.rehearsals,
+              groupName: link.group?.name ?? null,
             }))}
           />
         </div>
