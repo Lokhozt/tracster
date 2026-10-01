@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Demonstrations can link either a full choreography or one of its groups. Linking automatically adds the choreography or group participants to the event.
+- A demonstration can now store a WhatsApp link, shown as a button beside its title
 
 ### Changed
 - Managers can now change every event, including ones they did not create.

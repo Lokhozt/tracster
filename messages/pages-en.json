@@ -96,7 +96,8 @@
       "demonstrationPieces": "Pieces shown in this demonstration.",
       "representationPieces": "Pieces performed in this representation.",
       "participants": "Participants",
-      "editEvent": "Edit event"
+      "editEvent": "Edit event",
+      "openWhatsapp": "Open WhatsApp"
     },
     "EditEvent": {
       "title": "Edit event",

@@ -45,6 +45,7 @@ import {
   type ParticipationSettings,
 } from "@/lib/participation";
 import { aboveCardLink, cardLink, cn } from "@/lib/utils";
+import { WhatsAppLinkField } from "@/components/WhatsAppLink";
 
 type UserOption = { id: string; name: string; email: string; isCompetitor?: boolean };
 
@@ -189,6 +190,7 @@ export function CreateEventForm({
   );
   const [description, setDescription] = useState("");
   const [notes, setNotes] = useState("");
+  const [whatsappUrl, setWhatsappUrl] = useState("");
   const [locationSelection, setLocationSelection] = useState<LocationSelection>(
     emptyLocationSelection,
   );
@@ -313,6 +315,7 @@ export function CreateEventForm({
         title: title || undefined,
         description: generic ? description || undefined : undefined,
         notes: generic ? undefined : notes || undefined,
+        whatsappUrl: eventType?.kind === "DEMONSTRATION" ? whatsappUrl.trim() || null : null,
         ...locationPayload(locationSelection),
         startsAt: startsAt.toISOString(),
         endsAt: endsAt?.toISOString(),
@@ -523,6 +526,13 @@ export function CreateEventForm({
           placeholder={generic ? t("optionalEventDetails") : t("optionalNotes")}
         />
       </div>
+      {eventType?.kind === "DEMONSTRATION" && (
+        <WhatsAppLinkField
+          id="event-whatsapp"
+          value={whatsappUrl}
+          onChange={setWhatsappUrl}
+        />
+      )}
       {generic && participantChoices.length > 0 && (
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium text-stone-700">
@@ -580,6 +590,7 @@ export function EditEventForm({
   const [title, setTitle] = useState(event.title);
   const [description, setDescription] = useState(event.description ?? "");
   const [notes, setNotes] = useState(event.notes ?? "");
+  const [whatsappUrl, setWhatsappUrl] = useState(event.whatsappUrl ?? "");
   const [locationSelection, setLocationSelection] = useState<LocationSelection>(() =>
     selectionFromRecord(event),
   );
@@ -681,6 +692,7 @@ export function EditEventForm({
         title: title || undefined,
         description: generic ? description || undefined : undefined,
         notes: generic ? undefined : notes || undefined,
+        whatsappUrl: eventType?.kind === "DEMONSTRATION" ? whatsappUrl.trim() || null : null,
         ...locationPayload(locationSelection),
         startsAt: startsAt.toISOString(),
         endsAt: endsAt?.toISOString(),
@@ -818,9 +830,16 @@ export function EditEventForm({
             onChange={(e) =>
               generic ? setDescription(e.target.value) : setNotes(e.target.value)
             }
-            rows={4}
-          />
+          rows={4}
+        />
         </div>
+        {eventType?.kind === "DEMONSTRATION" && (
+          <WhatsAppLinkField
+            id="edit-event-whatsapp"
+            value={whatsappUrl}
+            onChange={setWhatsappUrl}
+          />
+        )}
         {generic && (
           <ParticipationSettingsFields
             idPrefix="edit-event"

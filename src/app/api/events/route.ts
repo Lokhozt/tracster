@@ -147,6 +147,7 @@ export async function POST(request: NextRequest) {
             title,
             description: isGeneric ? parsed.data.description : null,
             notes: isGeneric ? null : parsed.data.notes,
+            whatsappUrl: eventType.kind === "DEMONSTRATION" ? parsed.data.whatsappUrl ?? null : null,
             startsAt: occurrence.startsAt,
             endsAt: occurrence.endsAt,
             locationId: location.locationId,

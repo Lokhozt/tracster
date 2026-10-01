@@ -217,6 +217,7 @@ export type SerializedEvent = {
   displayTitle: string;
   description: string | null;
   notes: string | null;
+  whatsappUrl: string | null;
   startsAt: string;
   endsAt: string | null;
   location: string | null;
@@ -245,6 +246,7 @@ export function serializeEvent(event: {
   title: string;
   description: string | null;
   notes: string | null;
+  whatsappUrl?: string | null;
   startsAt: Date;
   endsAt: Date | null;
   locationId: string | null;
@@ -276,6 +278,7 @@ export function serializeEvent(event: {
     displayTitle: defaultEventTitle(type, event.title),
     description: event.description,
     notes: event.notes,
+    whatsappUrl: event.whatsappUrl ?? null,
     startsAt: event.startsAt.toISOString(),
     endsAt: event.endsAt?.toISOString() ?? null,
     location: displayLocation(event),

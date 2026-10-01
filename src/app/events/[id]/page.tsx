@@ -30,6 +30,8 @@ import {
 } from "@/lib/users";
 import { getServerTranslator } from "@/i18n/server";
 import { isAtLeastManager } from "@/lib/roles";
+import { WhatsAppLink } from "@/components/WhatsAppLink";
+import { isWhatsAppUrl } from "@/lib/whatsapp";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -175,7 +177,18 @@ export default async function EventDetailPage({ params }: PageProps) {
       : null;
 
   return (
-    <AppShell title={event.displayTitle}>
+    <AppShell
+      title={
+        <>
+          <span className="min-w-0">{event.displayTitle}</span>
+          {event.type.kind === "DEMONSTRATION" &&
+            event.whatsappUrl &&
+            isWhatsAppUrl(event.whatsappUrl) && (
+              <WhatsAppLink href={event.whatsappUrl} label={t("openWhatsapp")} />
+            )}
+        </>
+      }
+    >
       <div className="mb-6 flex flex-wrap items-center gap-3">
         {choreographyHref && (
           <Link

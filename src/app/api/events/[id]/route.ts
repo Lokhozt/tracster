@@ -178,6 +178,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           title: parsed.data.title?.trim() ?? "",
           description: isGeneric ? parsed.data.description : null,
           notes: isGeneric ? null : parsed.data.notes,
+          whatsappUrl: eventType.kind === "DEMONSTRATION" ? parsed.data.whatsappUrl ?? null : null,
           startsAt: schedule.startsAt,
           endsAt: schedule.endsAt,
           locationId: location.locationId,

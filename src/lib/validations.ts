@@ -215,6 +215,7 @@ export const eventSchema = z.object({
   title: z.string().trim().max(120).optional(),
   description: z.string().trim().max(2000).optional(),
   notes: z.string().trim().max(1000).optional(),
+  whatsappUrl: whatsappUrlSchema,
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime().optional(),
   ...locationFieldsSchema,

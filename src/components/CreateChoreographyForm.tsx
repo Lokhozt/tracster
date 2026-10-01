@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Label, Textarea } from "@/components/ui";
+import { WhatsAppLinkField } from "@/components/WhatsAppLink";
 import { ParticipationSettingsFields } from "@/components/ParticipationSettingsFields";
 import {
   defaultParticipationSettings,
@@ -166,38 +167,5 @@ export function EditChoreographyForm({
         {loading ? t("saving") : t("saveChanges")}
       </Button>
     </form>
-  );
-}
-
-function WhatsAppLinkField({
-  id,
-  value,
-  onChange,
-}: {
-  id: string;
-  value?: string;
-  onChange?: (value: string) => void;
-}) {
-  const t = useTranslations("Components");
-  return (
-    <div>
-      <Label htmlFor={id}>{t("whatsappLink")}</Label>
-      <Input
-        id={id}
-        name="whatsappUrl"
-        type="url"
-        inputMode="url"
-        maxLength={2048}
-        placeholder={t("whatsappLinkPlaceholder")}
-        {...(onChange
-          ? {
-              value: value ?? "",
-              onChange: (event: React.ChangeEvent<HTMLInputElement>) =>
-                onChange(event.target.value),
-            }
-          : {})}
-      />
-      <p className="mt-1 text-sm text-stone-500">{t("whatsappLinkHelp")}</p>
-    </div>
   );
 }

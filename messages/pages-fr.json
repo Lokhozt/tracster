@@ -96,7 +96,8 @@
       "demonstrationPieces": "Pièces présentées lors de cette démonstration.",
       "representationPieces": "Pièces interprétées lors de cette représentation.",
       "participants": "Participants",
-      "editEvent": "Modifier l’événement"
+      "editEvent": "Modifier l’événement",
+      "openWhatsapp": "Ouvrir WhatsApp"
     },
     "EditEvent": {
       "title": "Modifier l’événement",

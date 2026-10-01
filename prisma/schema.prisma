@@ -323,6 +323,7 @@ model Event {
   title                   String    @default("")
   description             String?
   notes                   String?
+  whatsappUrl             String?
   startsAt                DateTime
   endsAt                  DateTime?
   locationId              String?
