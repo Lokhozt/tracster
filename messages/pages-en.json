@@ -98,6 +98,10 @@
       "participants": "Participants",
       "editEvent": "Edit event"
     },
+    "EditEvent": {
+      "title": "Edit event",
+      "backToEvent": "← Back to event"
+    },
     "Settings": {
       "title": "Settings",
       "intro": "Configure association-wide options, listed locations, tags, and members.",

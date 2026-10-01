@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Managers can now change every event, including ones they did not create.
+- Edit an event is now a button to a dedicated page to lighten the event page.
 
 ## 1.2.1 -  30-09-2026
 

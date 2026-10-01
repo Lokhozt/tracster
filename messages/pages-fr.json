@@ -98,6 +98,10 @@
       "participants": "Participants",
       "editEvent": "Modifier l’événement"
     },
+    "EditEvent": {
+      "title": "Modifier l’événement",
+      "backToEvent": "← Retour à l’événement"
+    },
     "Settings": {
       "title": "Paramètres",
       "intro": "Configurez les options de l’association, les lieux proposés, les étiquettes et les membres.",

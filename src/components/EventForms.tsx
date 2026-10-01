@@ -620,7 +620,7 @@ export function EditEventForm({
       return;
     }
 
-    router.refresh();
+    router.push(`/events/${event.id}`);
   }
 
   return (

@@ -6,7 +6,6 @@ import { AvailabilityButtons } from "@/components/AvailabilityButtons";
 import { ManualAvailabilityCheckButton } from "@/components/ManualAvailabilityCheckButton";
 import {
   AssignEventParticipantForm,
-  EditEventForm,
   EventParticipantsList,
 } from "@/components/EventForms";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
@@ -19,10 +18,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canEditEvent, canViewEvent, serializeEvent } from "@/lib/events";
 import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series";
-import { getEventTypes, eventKindAllowsChoreographyLinks, eventKindRestrictedToCompetitors, isGenericEventKind } from "@/lib/event-types";
+import { eventKindAllowsChoreographyLinks, eventKindRestrictedToCompetitors, isGenericEventKind } from "@/lib/event-types";
 import { getRehearsalAudience, isRehearsalParticipant } from "@/lib/groups";
 import { listedLocationInclude } from "@/lib/locations";
-import { canEditChoreography } from "@/lib/permissions";
 import {
   basicUserSelect,
   formatUserName,
@@ -31,7 +29,7 @@ import {
   userNameOrderBy,
 } from "@/lib/users";
 import { getServerTranslator } from "@/i18n/server";
-import { canManageAllEvents, isAtLeastManager } from "@/lib/roles";
+import { isAtLeastManager } from "@/lib/roles";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -57,13 +55,9 @@ export default async function EventDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const [canEdit, managesAllEvents] = await Promise.all([
-    canEditEvent(id, user.id),
-    canManageAllEvents(user.id),
-  ]);
-  const eventTypes = await getEventTypes();
+  const canEdit = await canEditEvent(id, user.id);
 
-  const [eventRecord, users, choreographyOptions] = await Promise.all([
+  const [eventRecord, users] = await Promise.all([
     prisma.event.findUnique({
       where: { id },
       include: {
@@ -120,13 +114,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           })
           .then((items) => items.map(serializeBasicUser))
       : Promise.resolve([]),
-    canEdit
-      ? prisma.choreography.findMany({
-          where: { archivedAt: null },
-          select: { id: true, title: true },
-          orderBy: { title: "asc" },
-        })
-      : Promise.resolve([]),
   ]);
 
   if (!eventRecord) {
@@ -174,16 +161,6 @@ export default async function EventDetailPage({ params }: PageProps) {
       (item) => item.userId === member.id && item.status === "AVAILABLE",
     ),
   ).length;
-
-  const editableChoreographies = managesAllEvents
-    ? choreographyOptions
-    : (
-        await Promise.all(
-          choreographyOptions.map(async (choreography) =>
-            (await canEditChoreography(choreography.id, user.id)) ? choreography : null,
-          ),
-        )
-      ).filter((item) => item !== null);
 
   const choreographyHref =
     event.type.kind === "REHEARSAL" && event.choreographyId
@@ -271,6 +248,18 @@ export default async function EventDetailPage({ params }: PageProps) {
             </p>
           )}
         </div>
+        {canEdit && (
+          <div className="mt-4">
+            <Link
+              href={`/events/${id}/edit`}
+              className={cn(
+                "inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-900 transition hover:bg-stone-100",
+              )}
+            >
+              {t("editEvent")}
+            </Link>
+          </div>
+        )}
       </Card>
 
       {generic && canEdit && (eventRecord.allowJoinRequests || eventRecord.joinRequests.length > 0) && (
@@ -389,16 +378,6 @@ export default async function EventDetailPage({ params }: PageProps) {
         </Card>
       )}
 
-      {canEdit && (
-        <Card className="mt-8">
-          <h2 className="mb-4 text-lg font-semibold">{t("editEvent")}</h2>
-          <EditEventForm
-            event={event}
-            eventTypes={eventTypes}
-            choreographyOptions={editableChoreographies}
-          />
-        </Card>
-      )}
     </AppShell>
   );
 }
