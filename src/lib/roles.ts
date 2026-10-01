@@ -52,6 +52,20 @@ export async function hasGlobalAccess(userId: string): Promise<boolean> {
   return isAdmin(userId);
 }
 
+export async function canManageAllEvents(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, adminPrivilegesEnabled: true },
+  });
+  if (!user) {
+    return false;
+  }
+  if (user.role === "MANAGER") {
+    return true;
+  }
+  return hasAdminPrivileges(user);
+}
+
 export async function canManageUserUnavailability(
   actorId: string,
   targetUserId: string,

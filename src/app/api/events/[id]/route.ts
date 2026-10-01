@@ -11,7 +11,7 @@ import {
   eventKindRestrictedToCompetitors,
   isGenericEventKind,
 } from "@/lib/event-types";
-import { hasGlobalAccess } from "@/lib/roles";
+import { canManageAllEvents } from "@/lib/roles";
 import { nestedUserNameOrderBy } from "@/lib/users";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
@@ -98,7 +98,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   if (
     eventKindRestrictedToCompetitors(eventType.kind) &&
     !user.isCompetitor &&
-    !(await hasGlobalAccess(user.id))
+    !(await canManageAllEvents(user.id))
   ) {
     return forbidden();
   }

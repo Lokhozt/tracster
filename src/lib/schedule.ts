@@ -4,7 +4,7 @@ import { canEditEvent } from "@/lib/events";
 import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series";
 import { eventKindAllowsChoreographyLinks } from "@/lib/event-type-helpers";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
-import { hasGlobalAccess } from "@/lib/roles";
+import { canManageAllEvents } from "@/lib/roles";
 import type { SerializedScheduleEvent } from "@/lib/schedule-filters";
 import { formatUserName, type UserNameFields } from "@/lib/users";
 import {
@@ -36,7 +36,7 @@ function uniqueSortedNames(users: Array<{ id: string } & UserNameFields>) {
 
 export async function getUserScheduleEvents(userId: string, t?: ServerTranslator) {
   const [globalAccess, viewer, translator] = await Promise.all([
-    hasGlobalAccess(userId),
+    canManageAllEvents(userId),
     prisma.user.findUnique({
       where: { id: userId },
       select: { isCompetitor: true },

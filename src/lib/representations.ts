@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { canEditEvent, canViewEvent } from "@/lib/events";
 import { canEditChoreography } from "@/lib/permissions";
-import { hasGlobalAccess } from "@/lib/roles";
+import { canManageAllEvents } from "@/lib/roles";
 
 const choreographyAccessFilter = (userId: string) => listedChoreographyWhere(userId);
 
@@ -21,7 +21,7 @@ export async function canEditRepresentation(eventId: string, userId: string) {
 }
 
 export async function getUserRepresentations(userId: string) {
-  const globalAccess = await hasGlobalAccess(userId);
+  const globalAccess = await canManageAllEvents(userId);
 
   return prisma.event.findMany({
     where: {
@@ -60,7 +60,7 @@ export async function getLinkableRepresentations(
   userId: string,
   choreographyId: string,
 ) {
-  const globalAccess = await hasGlobalAccess(userId);
+  const globalAccess = await canManageAllEvents(userId);
 
   const linkedIds = await prisma.eventChoreography.findMany({
     where: { choreographyId },
@@ -120,7 +120,7 @@ export async function getLinkableRepresentations(
 }
 
 export async function getLinkableChoreographies(userId: string, eventId: string) {
-  const globalAccess = await hasGlobalAccess(userId);
+  const globalAccess = await canManageAllEvents(userId);
 
   const linkedIds = await prisma.eventChoreography.findMany({
     where: { eventId },

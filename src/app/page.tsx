@@ -16,7 +16,7 @@ import { getEventTypes } from "@/lib/event-types";
 import { getUpcomingScheduleEvents, getUserScheduleEvents } from "@/lib/schedule";
 import { planningBirthdayEvents } from "@/lib/schedule-birthdays";
 import { filterEventTypesForViewer } from "@/lib/event-type-helpers";
-import { hasGlobalAccess } from "@/lib/roles";
+import { canManageAllEvents } from "@/lib/roles";
 import { APP_LOGO_SRC, isS3Configured } from "@/lib/s3";
 import { getSiteSettings } from "@/lib/site-settings";
 import { formatBirthdayGreeting, isBirthdayOnDate } from "@/lib/users";
@@ -127,7 +127,7 @@ export default async function HomePage() {
       getUserScheduleEvents(user.id),
       getUsersWithBirthdays(),
       getEventTypes(),
-      hasGlobalAccess(user.id),
+      canManageAllEvents(user.id),
       getSiteSettings(),
     ]);
     const events = settings.showBirthdaysOnPlanning

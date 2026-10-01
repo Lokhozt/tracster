@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { canEditChoreography } from "@/lib/permissions";
+import { canManageAllEvents } from "@/lib/roles";
 import {
   assertRepresentationEvent,
   getLinkableChoreographies,
@@ -63,7 +64,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return notFound("Choreography");
   }
 
-  if (!(await canEditChoreography(parsed.data.choreographyId, user.id))) {
+  if (
+    !(await canManageAllEvents(user.id)) &&
+    !(await canEditChoreography(parsed.data.choreographyId, user.id))
+  ) {
     return forbidden();
   }
 

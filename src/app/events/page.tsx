@@ -18,7 +18,7 @@ import {
 } from "@/lib/event-category-filter";
 import { getEventTypes } from "@/lib/event-types";
 import { filterEventTypesForViewer } from "@/lib/event-type-helpers";
-import { hasGlobalAccess } from "@/lib/roles";
+import { canManageAllEvents, hasGlobalAccess } from "@/lib/roles";
 import { canCreateEvent } from "@/lib/site-settings";
 
 export default async function EventsPage() {
@@ -31,15 +31,16 @@ export default async function EventsPage() {
     redirect("/login");
   }
 
-  const [events, globalAccess, canCreate, eventTypes] = await Promise.all([
+  const [events, globalAccess, seesAllEvents, canCreate, eventTypes] = await Promise.all([
     getUserEvents(user.id),
     hasGlobalAccess(user.id),
+    canManageAllEvents(user.id),
     canCreateEvent(user.id),
     getEventTypes(),
   ]);
   const visibleEventTypes = filterEventTypesForViewer(eventTypes, {
     isCompetitor: user.isCompetitor,
-    seesAllEvents: globalAccess,
+    seesAllEvents,
   });
   const hiddenTypeIds = parseHiddenEventTypeIds(
     cookieStore.get(EVENT_TYPE_FILTER_COOKIE)?.value,
@@ -63,7 +64,7 @@ export default async function EventsPage() {
     <AppShell title={t("title")}>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-stone-600">
-          {globalAccess
+          {seesAllEvents
             ? t("introAll")
             : t("introRelevant")}
         </p>

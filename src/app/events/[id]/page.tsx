@@ -31,7 +31,7 @@ import {
   userNameOrderBy,
 } from "@/lib/users";
 import { getServerTranslator } from "@/i18n/server";
-import { isAtLeastManager } from "@/lib/roles";
+import { canManageAllEvents, isAtLeastManager } from "@/lib/roles";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -57,7 +57,10 @@ export default async function EventDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const canEdit = await canEditEvent(id, user.id);
+  const [canEdit, managesAllEvents] = await Promise.all([
+    canEditEvent(id, user.id),
+    canManageAllEvents(user.id),
+  ]);
   const eventTypes = await getEventTypes();
 
   const [eventRecord, users, choreographyOptions] = await Promise.all([
@@ -172,13 +175,15 @@ export default async function EventDetailPage({ params }: PageProps) {
     ),
   ).length;
 
-  const editableChoreographies = (
-    await Promise.all(
-      choreographyOptions.map(async (choreography) =>
-        (await canEditChoreography(choreography.id, user.id)) ? choreography : null,
-      ),
-    )
-  ).filter((item) => item !== null);
+  const editableChoreographies = managesAllEvents
+    ? choreographyOptions
+    : (
+        await Promise.all(
+          choreographyOptions.map(async (choreography) =>
+            (await canEditChoreography(choreography.id, user.id)) ? choreography : null,
+          ),
+        )
+      ).filter((item) => item !== null);
 
   const choreographyHref =
     event.type.kind === "REHEARSAL" && event.choreographyId

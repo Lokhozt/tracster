@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { canOpenListedOrJoinableEvent, visibleEventWhere } from "@/lib/participation";
 import { canEditChoreography, canViewChoreography } from "@/lib/permissions";
-import { hasGlobalAccess } from "@/lib/roles";
+import { canManageAllEvents, hasGlobalAccess } from "@/lib/roles";
 import {
   defaultEventTitle,
   eventKindAllowsChoreographyLinks,
@@ -115,14 +115,14 @@ export async function canViewEvent(eventId: string, userId: string): Promise<boo
     return false;
   }
 
+  if (await canManageAllEvents(userId)) {
+    return true;
+  }
+
   if (eventKindRestrictedToCompetitors(event.type.kind)) {
     if (!(await viewerCanSeeCompetitorOnlyEvents(userId))) {
       return false;
     }
-  }
-
-  if (await hasGlobalAccess(userId)) {
-    return true;
   }
 
   if (event.createdById === userId) {
@@ -156,14 +156,14 @@ export async function canEditEvent(eventId: string, userId: string): Promise<boo
     return false;
   }
 
+  if (await canManageAllEvents(userId)) {
+    return true;
+  }
+
   if (eventKindRestrictedToCompetitors(event.type.kind)) {
     if (!(await viewerCanSeeCompetitorOnlyEvents(userId))) {
       return false;
     }
-  }
-
-  if (await hasGlobalAccess(userId)) {
-    return true;
   }
 
   if (event.createdById === userId) {
@@ -187,7 +187,7 @@ export async function canEditEvent(eventId: string, userId: string): Promise<boo
 
 export async function getUserEvents(userId: string, t?: ServerTranslator) {
   const [globalAccess, viewer, translator] = await Promise.all([
-    hasGlobalAccess(userId),
+    canManageAllEvents(userId),
     prisma.user.findUnique({
       where: { id: userId },
       select: { isCompetitor: true },
