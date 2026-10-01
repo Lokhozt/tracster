@@ -53,6 +53,12 @@ type PlanningImageEntry = {
   locationKey: string;
   locationName: string;
   colorKey: string;
+  muted: boolean;
+};
+
+type PlanningExportOptions = {
+  greyNonParticipating: boolean;
+  hideTitles: boolean;
 };
 
 type ImageRange = {
@@ -181,6 +187,17 @@ function daySegments(entries: PlanningImageEntry[], day: Date): DaySegment[] {
   return segments;
 }
 
+function blockTone(colorKey: string, muted: boolean) {
+  if (muted) {
+    return {
+      background: "#d6d3d1",
+      border: "#78716c",
+      color: "#44403c",
+    };
+  }
+  return rehearsalTone(colorKey);
+}
+
 function drawEventBlock(
   context: CanvasRenderingContext2D,
   {
@@ -189,6 +206,7 @@ function drawEventBlock(
     width,
     height,
     colorKey,
+    muted,
     lines,
   }: {
     x: number;
@@ -196,10 +214,11 @@ function drawEventBlock(
     width: number;
     height: number;
     colorKey: string;
+    muted: boolean;
     lines: Array<{ text: string; font: string; maxLines: number }>;
   },
 ) {
-  const tone = rehearsalTone(colorKey);
+  const tone = blockTone(colorKey, muted);
   context.fillStyle = tone.background;
   context.strokeStyle = tone.border;
   context.lineWidth = 1;
@@ -369,6 +388,7 @@ async function downloadPlanningImage({
             width: laneWidth - 2,
             height: blockHeight - 4,
             colorKey: segment.entry.colorKey,
+            muted: segment.entry.muted,
             lines: [
               {
                 text: segment.entry.label,
@@ -397,6 +417,7 @@ async function downloadPlanningImage({
           width: laneWidth - 2,
           height: blockHeight - 4,
           colorKey: segment.entry.colorKey,
+          muted: segment.entry.muted,
           lines: [
             {
               text: segment.entry.label,
@@ -453,6 +474,38 @@ function schedulingEntries(placements: SchedulePlacement[]): PlanningImageEntry[
     locationKey: placement.locationId,
     locationName: placement.locationName,
     colorKey: `${placement.choreographyId}:${placement.groupId ?? ""}`,
+    muted: false,
+  }));
+}
+
+function planningExportLabel(
+  event: SerializedScheduleEvent,
+  options: PlanningExportOptions,
+  rehearsalLabel: string,
+) {
+  if (options.hideTitles) {
+    return rehearsalLabel;
+  }
+  if (event.typeKind === "REHEARSAL" && event.choreographyTitle) {
+    return event.choreographyTitle;
+  }
+  return scheduleEventLabel(event);
+}
+
+function planningExportEntries(
+  events: SerializedScheduleEvent[],
+  options: PlanningExportOptions,
+  rehearsalLabel: string,
+): PlanningImageEntry[] {
+  return events.map((event) => ({
+    id: event.id,
+    label: planningExportLabel(event, options, rehearsalLabel),
+    startsAt: event.startsAt,
+    endsAt: event.endsAt,
+    locationKey: event.location ?? "__none__",
+    locationName: event.location ?? "",
+    colorKey: event.choreographyId ?? event.typeId,
+    muted: options.greyNonParticipating && !event.isParticipating,
   }));
 }
 
@@ -541,6 +594,8 @@ export function PlanningImageExportButton({
   const [open, setOpen] = useState(false);
   const [startDate, setStartDate] = useState(format(currentWeek.start, "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(currentWeek.end, "yyyy-MM-dd"));
+  const [greyNonParticipating, setGreyNonParticipating] = useState(false);
+  const [hideTitles, setHideTitles] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -565,18 +620,11 @@ export function PlanningImageExportButton({
       return;
     }
     const range = { start, end };
-    const entries: PlanningImageEntry[] = events.map((event) => ({
-      id: event.id,
-      label:
-        event.typeKind === "REHEARSAL" && event.choreographyTitle
-          ? event.choreographyTitle
-          : scheduleEventLabel(event),
-      startsAt: event.startsAt,
-      endsAt: event.endsAt,
-      locationKey: event.location ?? "__none__",
-      locationName: event.location ?? "",
-      colorKey: event.choreographyId ?? event.typeId,
-    }));
+    const entries = planningExportEntries(
+      events,
+      { greyNonParticipating, hideTitles },
+      t("rehearsal"),
+    );
     const rangeEntries = entries.filter((entry) => {
       const eventStart = new Date(entry.startsAt);
       const eventEnd = entry.endsAt
@@ -654,6 +702,34 @@ export function PlanningImageExportButton({
                   onChange={(event) => setEndDate(event.target.value)}
                 />
               </div>
+            </div>
+            <div className="mt-4 space-y-3">
+              <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
+                <input
+                  type="checkbox"
+                  checked={greyNonParticipating}
+                  onChange={(event) => setGreyNonParticipating(event.target.checked)}
+                  className="mt-0.5 rounded border-stone-300"
+                />
+                <span>
+                  <span className="block">{t("greyNonParticipatingEvents")}</span>
+                  <span className="block text-stone-500">
+                    {t("greyNonParticipatingEventsHelp")}
+                  </span>
+                </span>
+              </label>
+              <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
+                <input
+                  type="checkbox"
+                  checked={hideTitles}
+                  onChange={(event) => setHideTitles(event.target.checked)}
+                  className="mt-0.5 rounded border-stone-300"
+                />
+                <span>
+                  <span className="block">{t("hideExportTitles")}</span>
+                  <span className="block text-stone-500">{t("hideExportTitlesHelp")}</span>
+                </span>
+              </label>
             </div>
             {error && <p className="mt-3 text-sm text-red-700">{error}</p>}
             <div className="mt-5 flex justify-end gap-2">
