@@ -155,10 +155,12 @@ export default async function EventDetailPage({ params }: PageProps) {
     event.type.kind === "REHEARSAL" &&
     (await isRehearsalParticipant(eventRecord, user.id));
   const canManualAvailabilityCheck = isAtLeastManager(user.role);
+  const canViewRehearsalParticipants =
+    canRespondAvailability || canEdit || canManualAvailabilityCheck;
   const myResponse = eventRecord.availabilities.find((item) => item.userId === user.id);
 
   const rehearsalMembers =
-    event.type.kind === "REHEARSAL" && rehearsalAudience && rehearsalAudience.memberIds.length > 0
+    canViewRehearsalParticipants && rehearsalAudience && rehearsalAudience.memberIds.length > 0
       ? await prisma.user.findMany({
           where: { id: { in: rehearsalAudience.memberIds } },
           select: basicUserSelect,
@@ -304,7 +306,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         </Card>
       )}
 
-      {event.type.kind === "REHEARSAL" && (canEdit || canManualAvailabilityCheck) && (
+      {event.type.kind === "REHEARSAL" && canViewRehearsalParticipants && (
         <Card className="mb-6">
           <h2 className="mb-4 text-lg font-semibold">{t("participantAvailability")}</h2>
           {canManualAvailabilityCheck && (
