@@ -332,11 +332,7 @@ export function RehearsalCalendar({
   return (
     <Card className="mb-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        {titleActions && !isSmallScreen && (
-          <div className="flex items-center gap-2">{titleActions}</div>
-        )}
-
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           {!isSmallScreen && (
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex rounded-lg border border-stone-300 p-0.5">
@@ -368,7 +364,6 @@ export function RehearsalCalendar({
           )}
 
           <div className="flex items-center gap-2">
-            {isSmallScreen && titleActions}
             {isSmallScreen && (
               <button
                 type="button"
@@ -489,6 +484,7 @@ export function RehearsalCalendar({
           </div>
         </div>
       )}
+      {titleActions && <div className="mt-3 flex justify-end gap-2">{titleActions}</div>}
     </Card>
   );
 }
