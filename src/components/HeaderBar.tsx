@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { AuthNav } from "@/components/AuthNav";
 import { MainNav, type NavItem, getNavItems } from "@/components/MainNav";
+import { FooterContent } from "@/components/SiteFooter";
 import { RoleBadge } from "@/components/UserForms";
 import type { UserRole } from "@/generated/prisma/client";
 import { hasAdminPrivileges } from "@/lib/privileges";
@@ -103,6 +104,10 @@ export function HeaderBar({
           ) : (
             <AuthNav stacked />
           )}
+          <FooterContent
+            className="mt-4 border-t border-stone-200 pt-4"
+            onNavigate={() => setMenuOpen(false)}
+          />
         </div>
       )}
     </header>
