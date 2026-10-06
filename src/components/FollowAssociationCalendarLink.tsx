@@ -5,23 +5,29 @@ import { cn } from "@/lib/utils";
 export function FollowAssociationCalendarLink({
   href,
   className,
+  iconOnly = false,
 }: {
   href: string;
   className?: string;
+  iconOnly?: boolean;
 }) {
   const t = useTranslations("Components");
+  const label = t("followAssociationCalendar");
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      aria-label={iconOnly ? label : undefined}
+      title={iconOnly ? label : undefined}
       className={cn(
-        "inline-flex min-h-11 items-center gap-2 rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-900 hover:bg-stone-100",
+        "inline-flex min-h-11 items-center rounded-lg border border-stone-300 bg-white text-sm font-medium text-stone-900 hover:bg-stone-100",
+        iconOnly ? "min-w-11 justify-center" : "gap-2 px-4 py-2",
         className,
       )}
     >
       <GoogleCalendarMark />
-      {t("followAssociationCalendar")}
+      {!iconOnly && label}
     </a>
   );
 }

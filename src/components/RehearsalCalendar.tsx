@@ -30,11 +30,9 @@ import {
 } from "@/lib/schedule-filters";
 import { isBirthdayScheduleEvent } from "@/lib/schedule-birthdays";
 
-type CalendarView = "month" | "week" | "threeDay";
+type CalendarView = "month" | "week";
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-const threeDaySpan = 3;
 
 // Matches the Tailwind `md` breakpoint used for the grid layout below.
 const smallScreenQuery = "(max-width: 767px)";
@@ -149,6 +147,40 @@ function eventCellClassName(event: SerializedScheduleEvent): string {
   return "bg-stone-100 text-stone-800 hover:bg-stone-200";
 }
 
+function smallScreenCellFrame(index: number, lastVisibleIndex: number, header: boolean) {
+  const isFirst = index === 0;
+  const isLast = index === lastVisibleIndex;
+  return cn(
+    "overflow-hidden border-stone-200",
+    "border-l",
+    isLast && "border-r",
+    header ? "border-t border-b" : "border-b",
+    isFirst && header && "rounded-tl-lg",
+    isFirst && !header && "rounded-bl-lg",
+    isLast && header && "rounded-tr-lg",
+    isLast && !header && "rounded-br-lg",
+  );
+}
+
+function TodayIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="4" y="5" width="16" height="15" rx="2" />
+      <path d="M8 3v4M16 3v4M4 10h16" />
+      <circle cx="12" cy="15" r="1.25" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 function DayCell({
   day,
   events,
@@ -221,28 +253,23 @@ function DayCell({
 
 export function RehearsalCalendar({
   events,
+  titleActions,
 }: {
   events: SerializedScheduleEvent[];
+  titleActions?: React.ReactNode;
 }) {
   const t = useTranslations("Components");
   const isSmallScreen = useIsSmallScreen();
   const locale = useLocale();
   const dateLocale = locale === "fr" ? fr : enUS;
   const [largeScreenView, setLargeScreenView] = useState<CalendarView>("month");
-  const [smallScreenView, setSmallScreenView] = useState<CalendarView>("threeDay");
   const [focusDate, setFocusDate] = useState(() => new Date());
 
-  const view = isSmallScreen ? smallScreenView : largeScreenView;
-  const setView = isSmallScreen ? setSmallScreenView : setLargeScreenView;
-  const viewOptions: Array<{ value: CalendarView; label: string }> = isSmallScreen
-    ? [
-        { value: "week", label: t("week") },
-        { value: "threeDay", label: t("threeDays") },
-      ]
-    : [
-        { value: "month", label: t("month") },
-        { value: "week", label: t("week") },
-      ];
+  const view = isSmallScreen ? "week" : largeScreenView;
+  const viewOptions: Array<{ value: CalendarView; label: string }> = [
+    { value: "month", label: t("month") },
+    { value: "week", label: t("week") },
+  ];
 
   const eventsByDay = useMemo(() => {
     const map = new Map<string, SerializedScheduleEvent[]>();
@@ -266,11 +293,6 @@ export function RehearsalCalendar({
   }, [events]);
 
   const calendarDays = useMemo(() => {
-    if (view === "threeDay") {
-      const start = startOfDay(focusDate);
-      return eachDayOfInterval({ start, end: addDays(start, threeDaySpan - 1) });
-    }
-
     if (view === "week") {
       const weekStart = startOfWeek(focusDate, { weekStartsOn: 1 });
       const weekEnd = endOfWeek(focusDate, { weekStartsOn: 1 });
@@ -295,18 +317,10 @@ export function RehearsalCalendar({
     return `${format(first, "d MMM", {locale: dateLocale})} – ${format(last, "d MMM yyyy", {locale: dateLocale})}`;
   }, [calendarDays, dateLocale, focusDate, view]);
 
-  const periodName = view === "threeDay" ? t("threeDays") : view === "week" ? t("week") : t("month");
+  const periodName = view === "week" ? t("week") : t("month");
 
   function shiftFocus(direction: 1 | -1) {
-    setFocusDate((date) => {
-      if (view === "threeDay") {
-        return addDays(date, direction * threeDaySpan);
-      }
-      if (view === "week") {
-        return addWeeks(date, direction);
-      }
-      return addMonths(date, direction);
-    });
+    setFocusDate((date) => (view === "week" ? addWeeks(date, direction) : addMonths(date, direction)));
   }
 
   function goToToday() {
@@ -318,38 +332,54 @@ export function RehearsalCalendar({
   return (
     <Card className="mb-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">{t("calendar")}</h2>
+        {titleActions && !isSmallScreen && (
+          <div className="flex items-center gap-2">{titleActions}</div>
+        )}
 
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex rounded-lg border border-stone-300 p-0.5">
-              {viewOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setView(option.value)}
-                  className={cn(
-                    "rounded-md px-3 py-1.5 text-sm font-medium transition",
-                    view === option.value
-                      ? "bg-stone-900 text-white"
-                      : "text-stone-600 hover:bg-stone-100",
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
+          {!isSmallScreen && (
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex rounded-lg border border-stone-300 p-0.5">
+                {viewOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setLargeScreenView(option.value)}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-sm font-medium transition",
+                      view === option.value
+                        ? "bg-stone-900 text-white"
+                        : "text-stone-600 hover:bg-stone-100",
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
 
-            <button
-              type="button"
-              onClick={goToToday}
-              className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
-            >
-              {t("today")}
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={goToToday}
+                className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
+              >
+                {t("today")}
+              </button>
+            </div>
+          )}
 
           <div className="flex items-center gap-2">
+            {isSmallScreen && titleActions}
+            {isSmallScreen && (
+              <button
+                type="button"
+                onClick={goToToday}
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-900 hover:bg-stone-100"
+                aria-label={t("today")}
+                title={t("today")}
+              >
+                <TodayIcon />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => shiftFocus(-1)}
@@ -373,51 +403,92 @@ export function RehearsalCalendar({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <div
-          className={cn(
-            "grid gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200",
-            view === "threeDay" ? "grid-cols-3" : "min-w-[640px] grid-cols-7",
-          )}
-        >
-          {view === "threeDay"
-            ? calendarDays.map((day) => (
-                <div
-                  key={`header-${format(day, "yyyy-MM-dd")}`}
-                  className={cn(
-                    "bg-stone-100 px-2 py-2 text-center text-xs font-medium text-stone-600",
-                    isToday(day) && "text-stone-900",
-                  )}
-                >
-                  {format(day, "EEE", {locale: dateLocale})}
-                </div>
-              ))
-            : weekdays.map((day) => (
-                <div
-                  key={day}
-                  className="bg-stone-100 px-2 py-2 text-center text-xs font-medium text-stone-600"
-                >
-                  {day}
-                </div>
-              ))}
-
-          {calendarDays.map((day) => {
-            const dayKey = format(day, "yyyy-MM-dd");
-            const dayEvents = eventsByDay.get(dayKey) ?? [];
-
+      {isSmallScreen ? (
+        <div className="space-y-3">
+          {[calendarDays.slice(0, 4), calendarDays.slice(4)].map((days) => {
+            const columns: Array<Date | null> = days.length === 4 ? days : [...days, null];
+            const lastVisibleIndex = columns.reduce(
+              (last, day, index) => (day ? index : last),
+              0,
+            );
+            const showsSpacer = lastVisibleIndex < columns.length - 1;
             return (
-              <DayCell
-                key={dayKey}
-                day={day}
-                events={dayEvents}
-                muted={view === "month" && !isSameMonth(day, currentMonth)}
-                tall={view !== "month"}
-                wrapLabels={view === "threeDay"}
-              />
+              <div
+                key={format(days[0], "yyyy-MM-dd")}
+                className={cn(
+                  "grid grid-cols-4",
+                  !showsSpacer &&
+                    "gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200",
+                )}
+              >
+                {columns.map((day, index) =>
+                  day ? (
+                    <div
+                      key={`header-${format(day, "yyyy-MM-dd")}`}
+                      className={cn(
+                        "bg-stone-100 px-1 py-2 text-center text-xs font-medium text-stone-600",
+                        isToday(day) && "text-stone-900",
+                        showsSpacer && smallScreenCellFrame(index, lastVisibleIndex, true),
+                      )}
+                    >
+                      {format(day, "EEE", { locale: dateLocale })}
+                    </div>
+                  ) : (
+                    <div key="header-empty" aria-hidden="true" />
+                  ),
+                )}
+                {columns.map((day, index) => {
+                  if (!day) {
+                    return <div key="day-empty" aria-hidden="true" />;
+                  }
+                  const dayKey = format(day, "yyyy-MM-dd");
+                  return (
+                    <div
+                      key={dayKey}
+                      className={showsSpacer ? smallScreenCellFrame(index, lastVisibleIndex, false) : undefined}
+                    >
+                      <DayCell
+                        day={day}
+                        events={eventsByDay.get(dayKey) ?? []}
+                        tall
+                        wrapLabels
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             );
           })}
         </div>
-      </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <div className="grid min-w-[640px] grid-cols-7 gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200">
+            {weekdays.map((day) => (
+              <div
+                key={day}
+                className="bg-stone-100 px-2 py-2 text-center text-xs font-medium text-stone-600"
+              >
+                {day}
+              </div>
+            ))}
+
+            {calendarDays.map((day) => {
+              const dayKey = format(day, "yyyy-MM-dd");
+              const dayEvents = eventsByDay.get(dayKey) ?? [];
+
+              return (
+                <DayCell
+                  key={dayKey}
+                  day={day}
+                  events={dayEvents}
+                  muted={view === "month" && !isSameMonth(day, currentMonth)}
+                  tall={view !== "month"}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

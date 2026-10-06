@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On a rehearsal, every participant can see the participant list, as can managers and higher roles.
 - On the planning page. The event list only load event by increment of 10. Instead of loading every upcoming events.
 - Running event now still display on the event list.
+- Revamp calendar page: Remove redondant titles, replaced button text by icon.
+- Schedule on small screen alway display the whole week on 2 rows.
+
+### Fixed
+- Fixed event not displaying on the upcoming event when they already started.
 
 ## 1.2.2 - 01-10-2026
 

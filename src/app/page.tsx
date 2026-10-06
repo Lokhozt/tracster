@@ -152,7 +152,7 @@ export default async function HomePage() {
     const associationCalendarUrl = associationCalendarFollowUrl();
 
     return (
-      <AppShell title={t("title")}>
+      <AppShell>
         {birthdayGreeting && (
           <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950">
             {birthdayGreeting}

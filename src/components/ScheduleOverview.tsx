@@ -82,16 +82,20 @@ export function ScheduleOverview({
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {associationCalendarUrl && (
-          <FollowAssociationCalendarLink href={associationCalendarUrl} />
-        )}
-        <PlanningImageExportButton
-          events={exportEvents}
-          startOfDayHour={startOfDayHour}
-        />
-      </div>
-      <RehearsalCalendar events={filteredEvents} />
+      <RehearsalCalendar
+        events={filteredEvents}
+        titleActions={
+          <>
+            {associationCalendarUrl && (
+              <FollowAssociationCalendarLink href={associationCalendarUrl} iconOnly />
+            )}
+            <PlanningImageExportButton
+              events={exportEvents}
+              startOfDayHour={startOfDayHour}
+            />
+          </>
+        }
+      />
       <Card className="mb-4">
         <label className="mb-3 flex cursor-pointer items-center gap-2 text-sm text-stone-700">
           <input
