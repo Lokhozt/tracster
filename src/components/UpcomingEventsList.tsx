@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { EditIconLink } from "@/components/EditIconLink";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
 import { ParticipationStatus } from "@/components/ParticipationStatus";
@@ -152,6 +152,7 @@ function defaultEventTitle(event: SerializedScheduleEvent) {
 }
 
 const rangeOptions: UpcomingEventRange[] = ["all", "week", "month"];
+const UPCOMING_PAGE_SIZE = 10;
 
 export function UpcomingEventsList({
   events,
@@ -169,6 +170,50 @@ export function UpcomingEventsList({
     () => filterUpcomingScheduleEvents(events, { range, hideNonParticipating: false }),
     [events, range],
   );
+  const listKey = `${range}:${filteredEvents.map((event) => event.id).join("|")}`;
+  const [scrollWindow, setScrollWindow] = useState({
+    listKey,
+    visibleCount: UPCOMING_PAGE_SIZE,
+  });
+  if (scrollWindow.listKey !== listKey) {
+    setScrollWindow({ listKey, visibleCount: UPCOMING_PAGE_SIZE });
+  }
+  const visibleCount =
+    scrollWindow.listKey === listKey ? scrollWindow.visibleCount : UPCOMING_PAGE_SIZE;
+  const visibleEvents = filteredEvents.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredEvents.length;
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const requestingMore = useRef(false);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore) {
+      return;
+    }
+
+    requestingMore.current = false;
+    const observer = new IntersectionObserver((entries) => {
+      if (requestingMore.current || !entries.some((entry) => entry.isIntersecting)) {
+        return;
+      }
+      requestingMore.current = true;
+      setScrollWindow((current) => {
+        if (current.listKey !== listKey) {
+          return { listKey, visibleCount: UPCOMING_PAGE_SIZE };
+        }
+        return {
+          listKey,
+          visibleCount: Math.min(
+            current.visibleCount + UPCOMING_PAGE_SIZE,
+            filteredEvents.length,
+          ),
+        };
+      });
+    });
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [filteredEvents.length, hasMore, listKey, visibleCount]);
 
   const filtersActive = range !== "all" || categoriesFiltered;
 
@@ -211,7 +256,7 @@ export function UpcomingEventsList({
         </Card>
       ) : (
         <div className="space-y-3">
-          {filteredEvents.map((event) => (
+          {visibleEvents.map((event) => (
             <EventCard key={event.id} kind={event.typeKind} className="relative">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="space-y-1">
@@ -288,6 +333,7 @@ export function UpcomingEventsList({
               )}
             </EventCard>
           ))}
+          {hasMore && <div ref={sentinelRef} aria-hidden="true" className="h-px" />}
         </div>
       )}
     </section>
