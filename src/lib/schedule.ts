@@ -5,7 +5,7 @@ import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series"
 import { eventKindAllowsChoreographyLinks } from "@/lib/event-type-helpers";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { canManageAllEvents } from "@/lib/roles";
-import type { SerializedScheduleEvent } from "@/lib/schedule-filters";
+import { scheduleEventEnd, type SerializedScheduleEvent } from "@/lib/schedule-filters";
 import { formatUserName, type UserNameFields } from "@/lib/users";
 import {
   eventTypeLabel,
@@ -187,7 +187,6 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
   );
 }
 
-export function getUpcomingScheduleEvents(events: SerializedScheduleEvent[]) {
-  const now = new Date();
-  return events.filter((event) => new Date(event.startsAt) >= now);
+export function getUpcomingScheduleEvents(events: SerializedScheduleEvent[], now = new Date()) {
+  return events.filter((event) => scheduleEventEnd(event) > now);
 }

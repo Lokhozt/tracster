@@ -92,6 +92,26 @@ export function withSchedulingTooltip(
 
 export type UpcomingEventRange = "all" | "week" | "month";
 
+const DEFAULT_EVENT_DURATION_MS = 60 * 60 * 1000;
+
+export function scheduleEventEnd(event: { startsAt: string; endsAt: string | null }) {
+  const start = new Date(event.startsAt);
+  if (event.endsAt) {
+    const end = new Date(event.endsAt);
+    if (end > start) {
+      return end;
+    }
+  }
+  return new Date(start.getTime() + DEFAULT_EVENT_DURATION_MS);
+}
+
+export function isScheduleEventHappeningNow(
+  event: { startsAt: string; endsAt: string | null },
+  now = new Date(),
+) {
+  return new Date(event.startsAt) <= now && now < scheduleEventEnd(event);
+}
+
 export function scheduleEventLabel(event: SerializedScheduleEvent) {
   return defaultEventTitle(
     { name: event.typeName, kind: event.typeKind },

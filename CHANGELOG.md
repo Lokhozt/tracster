@@ -8,10 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added pages for Privacy Policy and Terms of service in a footer
+- Added "En ce moment" on running events.
 
 ### Changed
 - On a rehearsal, every participant can see the participant list, as can managers and higher roles.
 - On the planning page. The event list only load event by increment of 10. Instead of loading every upcoming events.
+- Running event now still display on the event list.
 
 ## 1.2.2 - 01-10-2026
 

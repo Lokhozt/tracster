@@ -14,6 +14,8 @@ import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 
 import {
   filterUpcomingScheduleEvents,
+  isScheduleEventHappeningNow,
+  scheduleEventEnd,
   type UpcomingEventRange,
 } from "@/lib/schedule-filters";
 import { isBirthdayScheduleEvent } from "@/lib/schedule-birthdays";
@@ -163,12 +165,22 @@ export function UpcomingEventsList({
 }) {
   const t = useTranslations("Components");
   const [range, setRange] = useState<UpcomingEventRange>("all");
+  const [now, setNow] = useState(() => new Date());
   const locale = useLocale();
   const dateFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
 
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const activeEvents = useMemo(
+    () => events.filter((event) => scheduleEventEnd(event) > now),
+    [events, now],
+  );
   const filteredEvents = useMemo(
-    () => filterUpcomingScheduleEvents(events, { range, hideNonParticipating: false }),
-    [events, range],
+    () => filterUpcomingScheduleEvents(activeEvents, { range, hideNonParticipating: false, now }),
+    [activeEvents, now, range],
   );
   const listKey = `${range}:${filteredEvents.map((event) => event.id).join("|")}`;
   const [scrollWindow, setScrollWindow] = useState({
@@ -267,6 +279,9 @@ export function UpcomingEventsList({
                       </p>
                     )}
                     <EventTypeBadge event={event} />
+                    {isScheduleEventHappeningNow(event, now) && (
+                      <span className="text-sm font-semibold text-emerald-700">{t("rightNow")}</span>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
                     {event.href ? (
