@@ -1,0 +1,173 @@
+{
+  "Footer": {
+    "navLabel": "Informations légales",
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions d’utilisation"
+  },
+  "Legal": {
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "updated": "Dernière mise à jour : 6 octobre 2026",
+      "contactTitle": "Contact",
+      "contactBody": "Pour une question sur cette politique, ou pour demander l’accès, la rectification ou l’effacement de vos données, contactez un administrateur de l’association qui exploite cette installation de {appName}.",
+      "contactEmail": "Vous pouvez aussi écrire à [{email}](mailto:{email}).",
+      "sections": [
+        {
+          "title": "À qui s’applique cette politique",
+          "paragraphs": [
+            "{appName} est une application web qu’une association utilise pour planifier les répétitions, gérer les chorégraphies, recueillir les disponibilités et, si elle le souhaite, copier des événements vers Google Agenda. L’association qui exploite cette installation décide pourquoi les données sont utilisées et en est responsable.",
+            "Cette politique décrit les données collectées par l’application, y compris les informations reçues des API Google, ainsi que leur utilisation, leur conservation, leur partage et leur suppression. Elle est publique et peut être lue sans compte."
+          ]
+        },
+        {
+          "title": "Informations que vous fournissez",
+          "paragraphs": [
+            "Lorsque vous ou un administrateur créez et utilisez un compte, {appName} enregistre :"
+          ],
+          "items": [
+            "Votre nom, votre adresse e-mail et votre mot de passe. Le mot de passe n’est conservé que sous forme d’empreinte cryptographique.",
+            "Un numéro de téléphone et une date de naissance, s’ils sont renseignés.",
+            "Votre langue d’affichage, votre rôle et votre statut de compétiteur.",
+            "Les chorégraphies, groupes, événements, réponses de disponibilité et périodes d’indisponibilité qui vous concernent.",
+            "Les fichiers, liens et notes que vous déposez.",
+            "Un cookie de session, ainsi que des cookies qui mémorisent des choix d’affichage comme la langue et les filtres du planning."
+          ]
+        },
+        {
+          "title": "Données Google auxquelles nous accédons",
+          "paragraphs": [
+            "La connexion d’un compte Google est facultative. {appName} ne demande que les autorisations ci-dessous, et seulement après que vous avez choisi de connecter Google Agenda et accepté l’écran de consentement de Google."
+          ],
+          "items": [
+            "openid et email (https://www.googleapis.com/auth/userinfo.email) — l’adresse e-mail du compte Google connecté, afin d’afficher quel compte est lié. {appName} ne demande pas votre nom, votre photo ni d’autres informations de profil Google.",
+            "https://www.googleapis.com/auth/calendar.calendarlist.readonly — les noms et identifiants des agendas que vous pouvez modifier, afin que vous choisissiez où les événements sont copiés. {appName} n’importe pas dans l’application les événements déjà présents sur ces agendas.",
+            "https://www.googleapis.com/auth/calendar.events — l’autorisation de créer, modifier et supprimer des événements sur l’agenda que vous sélectionnez. {appName} ne l’utilise que pour les événements copiés depuis le planning de l’association. Il n’importe pas vos autres événements Google Agenda."
+          ]
+        },
+        {
+          "title": "Utilisation des données Google",
+          "paragraphs": [
+            "Un administrateur peut connecter un compte Google pour l’association. Les événements communs de l’association, à l’exception des répétitions et des entraînements réservés aux compétiteurs, sont alors copiés vers l’agenda choisi.",
+            "Chaque membre peut connecter son propre compte Google. Les répétitions à venir qui le concernent sont copiées vers un agenda qu’il choisit. Les autres événements de l’association et les indisponibilités personnelles restent dans {appName} et ne sont pas copiés vers cet agenda.",
+            "Un événement copié contient son titre, son début et sa fin, son lieu, ses notes ou sa description, et un lien vers l’événement dans {appName}. La copie se fait de {appName} vers Google Agenda.",
+            "L’adresse e-mail du compte Google sert uniquement à identifier la connexion. La liste des agendas sert uniquement à proposer un agenda modifiable. {appName} n’utilise pas les données Google pour la publicité et ne les vend pas."
+          ]
+        },
+        {
+          "title": "Utilisation limitée des données Google",
+          "highlight": true,
+          "paragraphs": [
+            "L’utilisation par {appName}, et le transfert vers toute autre application, des informations reçues des API Google respectent le [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), y compris les exigences d’utilisation limitée (Limited Use).",
+            "{appName}'s use and transfer to any other app of information received from Google APIs will adhere to the Google API Services User Data Policy, including the Limited Use requirements.",
+            "Les données Google servent uniquement à fournir la connexion d’agenda affichée dans l’application. Elles ne sont pas transmises à des tiers, sauf à Google pour effectuer la synchronisation demandée par vous ou un administrateur ; aux prestataires qui hébergent cette installation, uniquement pour faire fonctionner le service ; lorsque la loi l’exige ; ou pour examiner un abus ou un problème de sécurité.",
+            "Personne ne lit les données Google, sauf si vous demandez de l’aide pour la connexion, si cette lecture est nécessaire à la sécurité, si la loi l’exige, ou si les données ont été agrégées de façon à ne plus vous identifier. {appName} n’utilise pas les données Google pour entraîner des modèles généralistes d’intelligence artificielle ou d’apprentissage automatique."
+          ]
+        },
+        {
+          "title": "Conservation et sécurité",
+          "paragraphs": [
+            "Le jeton d’actualisation fourni par Google est chiffré avant d’être enregistré. Les jetons d’accès, de courte durée, sont demandés au moment d’une synchronisation et ne sont pas enregistrés.",
+            "{appName} conserve aussi l’adresse e-mail connectée, le nom et l’identifiant de l’agenda choisi, l’heure de la dernière synchronisation, l’éventuelle erreur de synchronisation, et les identifiants des événements Google Agenda qu’il a créés, afin de pouvoir les mettre à jour ou les supprimer.",
+            "Le cookie de connexion est inaccessible aux scripts de la page (HTTP-only). En production, il n’est envoyé qu’en HTTPS."
+          ]
+        },
+        {
+          "title": "Partage",
+          "paragraphs": [
+            "Les informations de planning saisies dans {appName} sont visibles des autres membres selon les rôles et les réglages de visibilité de l’association. Si un administrateur connecte l’agenda de l’association, les événements qui y sont copiés peuvent être vus par les personnes qui ouvrent cet agenda Google.",
+            "Le jeton d’actualisation Google d’un membre, la liste de ses agendas et l’adresse e-mail connectée ne sont pas montrés aux autres membres. Nous ne vendons ni les données personnelles ni les données Google."
+          ]
+        },
+        {
+          "title": "Durée de conservation et suppression",
+          "paragraphs": [
+            "Les données Google sont conservées tant que la connexion est active.",
+            "Déconnecter Google Agenda depuis le Compte (connexion personnelle) ou les Paramètres (connexion de l’association) supprime le jeton enregistré et la fiche de connexion. Cela supprime aussi les événements créés par {appName} sur cet agenda, lorsque Google accepte encore la demande.",
+            "Vous pouvez retirer l’accès de {appName} à tout moment depuis les [autorisations de votre compte Google](https://myaccount.google.com/permissions). Ce retrait empêche les synchronisations suivantes. Déconnectez aussi la connexion dans {appName} afin que le jeton enregistré soit supprimé.",
+            "Un administrateur peut supprimer un compte de membre. Cette suppression retire la connexion Google personnelle de ce membre. Vous pouvez demander à un administrateur d’accéder aux autres données personnelles que l’association détient sur vous, de les corriger ou de les effacer."
+          ]
+        },
+        {
+          "title": "Modifications",
+          "paragraphs": [
+            "Cette politique peut être mise à jour. La date en haut de page indique la version en vigueur. Un changement dans l’usage des données Google sera décrit ici."
+          ]
+        }
+      ]
+    },
+    "terms": {
+      "title": "Conditions d’utilisation",
+      "updated": "Dernière mise à jour : 6 octobre 2026",
+      "contactTitle": "Contact",
+      "contactBody": "Les questions sur ces conditions peuvent être adressées à un administrateur de l’association qui exploite cette installation de {appName}.",
+      "contactEmail": "Vous pouvez aussi écrire à [{email}](mailto:{email}).",
+      "sections": [
+        {
+          "title": "Acceptation",
+          "paragraphs": [
+            "Ces conditions régissent l’utilisation de {appName}. En créant un compte ou en utilisant l’application, vous les acceptez, ainsi que la [politique de confidentialité](/privacy).",
+            "L’association qui exploite cette installation fournit le service à ses membres. C’est elle qui gère l’accès, les contenus et l’assistance."
+          ]
+        },
+        {
+          "title": "Le service",
+          "paragraphs": [
+            "{appName} aide une association à organiser des chorégraphies, des répétitions, des représentations et d’autres événements, à recueillir les disponibilités et, si elle le souhaite, à copier des événements vers Google Agenda. Les fonctions disponibles dépendent de votre rôle et des réglages choisis par l’association."
+          ]
+        },
+        {
+          "title": "Comptes",
+          "paragraphs": [
+            "Indiquez des informations exactes et gardez votre mot de passe confidentiel. Vous êtes responsable de l’activité effectuée avec votre compte. Prévenez un administrateur si vous pensez qu’une autre personne l’a utilisé.",
+            "L’association peut limiter les inscriptions, exiger un mot de passe d’inscription et choisir qui reçoit un rôle d’administrateur ou de propriétaire."
+          ]
+        },
+        {
+          "title": "Usage acceptable",
+          "paragraphs": [
+            "Utilisez {appName} pour les activités de l’association. Vous vous engagez à ne pas :"
+          ],
+          "items": [
+            "Enfreindre la loi, ni harceler, diffamer ou nuire à une autre personne.",
+            "Accéder à un compte, un planning, un fichier ou un système auquel vous n’avez pas droit.",
+            "Déposer un contenu que vous n’avez pas le droit de conserver ou de partager.",
+            "Perturber le service, contourner ses contrôles d’accès, ou l’utiliser pour diffuser un logiciel malveillant ou des messages indésirables."
+          ]
+        },
+        {
+          "title": "Vos contenus",
+          "paragraphs": [
+            "Vous conservez vos droits sur les textes, musiques, vidéos et autres fichiers que vous déposez. Vous autorisez l’association à conserver ces contenus et à les montrer aux personnes autorisées par les réglages de visibilité, afin qu’elle puisse répéter et se produire.",
+            "Vous êtes responsable des contenus que vous ajoutez. Un administrateur peut retirer un contenu contraire à ces conditions ou aux règles de l’association."
+          ]
+        },
+        {
+          "title": "Google Agenda",
+          "paragraphs": [
+            "La connexion à Google Agenda est facultative. Si vous connectez un compte Google, vous autorisez {appName} à utiliser les données Google uniquement comme la [politique de confidentialité](/privacy) le décrit. Vous pouvez vous déconnecter à tout moment depuis le Compte ou les Paramètres, et retirer l’accès depuis votre compte Google.",
+            "Votre usage des services Google reste soumis aux conditions de Google. Une copie d’agenda peut être incomplète ou en retard. Vérifiez les horaires importants dans {appName} ou auprès de l’association."
+          ]
+        },
+        {
+          "title": "Disponibilité",
+          "paragraphs": [
+            "Le service est fourni en l’état. Il peut être modifié, suspendu ou interrompu, y compris pour une maintenance ou une défaillance de l’hébergeur. Les plannings et les copies d’agenda aident à s’organiser et peuvent contenir des erreurs."
+          ]
+        },
+        {
+          "title": "Fin d’utilisation",
+          "paragraphs": [
+            "Vous pouvez cesser d’utiliser {appName} et demander à un administrateur de supprimer votre compte. Un administrateur peut suspendre ou retirer un compte qui ne respecte pas ces conditions ou les règles de l’association.",
+            "Ces conditions peuvent être mises à jour. La date en haut de page indique la version en vigueur. Continuer à utiliser {appName} après une mise à jour vaut acceptation des conditions mises à jour."
+          ]
+        },
+        {
+          "title": "Responsabilité",
+          "paragraphs": [
+            "Dans la mesure permise par le droit applicable à l’association, celle-ci n’est pas responsable des dommages indirects ni des décisions prises uniquement à partir d’un planning ou d’une copie d’agenda. Ces conditions ne limitent pas une responsabilité que la loi interdit de limiter, notamment en cas de faute intentionnelle ou de dommage corporel lorsque cette exclusion est interdite."
+          ]
+        }
+      ]
+    }
+  }
+}

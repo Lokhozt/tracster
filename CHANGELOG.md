@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 1.2.3 - [Unreleased]
 
+### Added
+- Added pages for Privacy Policy and Terms of service in a footer
+
 ### Changed
 - On a rehearsal, every participant can see the participant list, as can managers and higher roles.
 

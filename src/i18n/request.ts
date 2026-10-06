@@ -17,10 +17,11 @@ export default getRequestConfig(async () => {
     languageFromPreference(user?.displayLanguage) ??
     (isLanguage(cookieLanguage) ? cookieLanguage : getDefaultLanguage());
   const locale = languageLocales[language];
-  const [sharedMessages, pageMessages, componentMessages] = await Promise.all([
+  const [sharedMessages, pageMessages, componentMessages, legalMessages] = await Promise.all([
     import(`../../messages/${locale}.json`),
     import(`../../messages/pages-${locale}.json`),
     import(`../../messages/components-${locale}.json`),
+    import(`../../messages/legal-${locale}.json`),
   ]);
 
   return {
@@ -29,6 +30,7 @@ export default getRequestConfig(async () => {
       ...sharedMessages.default,
       ...pageMessages.default,
       ...componentMessages.default,
+      ...legalMessages.default,
       Common: {
         ...sharedMessages.default.Common,
         appName: getAppName(),

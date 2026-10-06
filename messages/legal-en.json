@@ -1,0 +1,172 @@
+{
+  "Footer": {
+    "navLabel": "Legal",
+    "privacy": "Privacy policy",
+    "terms": "Terms of service"
+  },
+  "Legal": {
+    "privacy": {
+      "title": "Privacy policy",
+      "updated": "Last updated: 6 October 2026",
+      "contactTitle": "Contact",
+      "contactBody": "To ask about this policy, or to request access, correction, or deletion of your personal data, contact an administrator of the association that operates this installation of {appName}.",
+      "contactEmail": "You can also write to [{email}](mailto:{email}).",
+      "sections": [
+        {
+          "title": "Who this policy applies to",
+          "paragraphs": [
+            "{appName} is a web application an association uses to plan rehearsals, manage choreographies, collect availability, and optionally copy events to Google Calendar. The association that operates this installation decides why personal data is used and is responsible for it.",
+            "This policy describes the data the application collects, including information received from Google APIs, and how that data is used, stored, shared, and deleted. It is public and does not require an account to read."
+          ]
+        },
+        {
+          "title": "Information you provide",
+          "paragraphs": [
+            "When you or an administrator create and use an account, {appName} stores:"
+          ],
+          "items": [
+            "Your name, email address, and password. The password is stored only as a cryptographic hash.",
+            "An optional phone number and date of birth.",
+            "Your display language, role, and competitor status.",
+            "Choreographies, groups, events, availability answers, and unavailability periods recorded for you.",
+            "Files, links, and notes you upload.",
+            "A sign-in cookie, plus cookies that remember display choices such as language and schedule filters."
+          ]
+        },
+        {
+          "title": "Google user data we access",
+          "paragraphs": [
+            "Connecting a Google account is optional. {appName} requests only the permissions below, and only after you choose Connect Google Calendar and approve Google’s consent screen."
+          ],
+          "items": [
+            "openid and email (https://www.googleapis.com/auth/userinfo.email) — the email address of the Google account you connect, so the app can show which account is linked. {appName} does not request your Google profile name, photo, or other profile fields.",
+            "https://www.googleapis.com/auth/calendar.calendarlist.readonly — the names and identifiers of calendars you can edit, so you can choose where events are copied. {appName} does not read the events on those calendars into the application.",
+            "https://www.googleapis.com/auth/calendar.events — permission to create, update, and delete events on the calendar you select. {appName} uses this only for events it copies from the association schedule. It does not import your other Google Calendar events."
+          ]
+        },
+        {
+          "title": "How Google user data is used",
+          "paragraphs": [
+            "An administrator may connect one Google account for the association. Shared association events, other than rehearsals and competitor-only trainings, are then copied to the calendar they choose.",
+            "Each member may connect a personal Google account. Upcoming rehearsals that include that member are copied to a calendar they choose. Other association events and personal unavailability stay in {appName} and are not copied to that calendar.",
+            "A copied event contains its title, start and end, location, notes or description, and a link back to the event in {appName}. The copy goes from {appName} to Google Calendar.",
+            "The Google account email is used only to label the connection. The calendar list is used only to let you pick a calendar you can edit. {appName} does not use Google user data for advertising and does not sell it."
+          ]
+        },
+        {
+          "title": "Limited use of Google user data",
+          "highlight": true,
+          "paragraphs": [
+            "{appName}'s use and transfer to any other app of information received from Google APIs will adhere to the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), including the Limited Use requirements.",
+            "Google user data is used only to provide the calendar connection shown in the application. It is not transferred to others except to Google, to carry out the sync you or an administrator requested; to the providers that host this installation, only so they can run the service; when the law requires it; or to investigate abuse or a security problem.",
+            "People do not read Google user data unless you ask for help with the connection, reading it is needed for security, the law requires it, or the data has been aggregated so that it no longer identifies you. {appName} does not use Google user data to train generalized artificial-intelligence or machine-learning models."
+          ]
+        },
+        {
+          "title": "Storage and security",
+          "paragraphs": [
+            "The refresh token Google issues is encrypted before it is stored. Short-lived access tokens are requested when a sync runs and are not stored.",
+            "{appName} also stores the connected email address, the selected calendar name and identifier, the time of the last sync, any sync error, and the identifiers of the Google Calendar events it created, so those events can later be updated or removed.",
+            "The sign-in cookie is HTTP-only. In production it is sent only over HTTPS."
+          ]
+        },
+        {
+          "title": "Sharing",
+          "paragraphs": [
+            "Schedule information entered in {appName} is visible to other members according to the association’s roles and visibility settings. If an administrator connects an association calendar, the events copied there can be seen by anyone who can open that Google calendar.",
+            "A member’s Google refresh token, calendar list, and connected email address are not shown to other members. We do not sell personal data or Google user data."
+          ]
+        },
+        {
+          "title": "Retention and deletion",
+          "paragraphs": [
+            "Google user data is kept while the connection is active.",
+            "Disconnecting Google Calendar from Account (personal connection) or Settings (association connection) deletes the stored token and the connection record. It also deletes the events {appName} created on that calendar when Google still accepts the request.",
+            "You can revoke {appName}’s access at any time from [Google Account permissions](https://myaccount.google.com/permissions). Revoking access stops later syncs. Disconnect the connection in {appName} as well so the stored token is deleted.",
+            "An administrator can delete a member account. Deleting the account removes that member’s personal Google connection. You can ask an administrator to access, correct, or delete the other personal data the association holds about you."
+          ]
+        },
+        {
+          "title": "Changes",
+          "paragraphs": [
+            "This policy may be updated. The date at the top is the current version. A change to how Google user data is used will be described here."
+          ]
+        }
+      ]
+    },
+    "terms": {
+      "title": "Terms of service",
+      "updated": "Last updated: 6 October 2026",
+      "contactTitle": "Contact",
+      "contactBody": "Questions about these terms can be sent to an administrator of the association that operates this installation of {appName}.",
+      "contactEmail": "You can also write to [{email}](mailto:{email}).",
+      "sections": [
+        {
+          "title": "Agreement",
+          "paragraphs": [
+            "These terms govern use of {appName}. By creating an account or using the application, you agree to them and to the [privacy policy](/privacy).",
+            "The association that operates this installation provides the service to its members and is the party you deal with for access, content, and support."
+          ]
+        },
+        {
+          "title": "The service",
+          "paragraphs": [
+            "{appName} helps an association organize choreographies, rehearsals, performances, and other events, collect availability, and optionally copy events to Google Calendar. Features can vary with your role and with the settings the association chooses."
+          ]
+        },
+        {
+          "title": "Accounts",
+          "paragraphs": [
+            "Provide accurate account information and keep your password confidential. You are responsible for activity under your account. Tell an administrator if you believe someone else has used it.",
+            "The association may limit registration, require a registration password, and decide who receives an administrator or owner role."
+          ]
+        },
+        {
+          "title": "Acceptable use",
+          "paragraphs": [
+            "Use {appName} for the association’s activities. You agree not to:"
+          ],
+          "items": [
+            "Break the law, or harass, defame, or harm another person.",
+            "Access an account, schedule, file, or system you are not allowed to use.",
+            "Upload content you do not have the right to store or share.",
+            "Interfere with the service, attempt to bypass its access controls, or use it to send malware or spam."
+          ]
+        },
+        {
+          "title": "Your content",
+          "paragraphs": [
+            "You keep your rights in the text, music, video, and other files you upload. You give the association permission to store that content and to show it to the people allowed by the visibility settings, so the association can rehearse and perform.",
+            "You are responsible for the content you add. An administrator may remove content that breaks these terms or the association’s rules."
+          ]
+        },
+        {
+          "title": "Google Calendar",
+          "paragraphs": [
+            "Connecting Google Calendar is optional. If you connect a Google account, you authorize {appName} to use Google user data only as described in the [privacy policy](/privacy). You can disconnect at any time from Account or Settings, and you can revoke access from your Google Account.",
+            "Your use of Google services remains subject to Google’s terms. A calendar copy can be incomplete or delayed. Confirm important times in {appName} or with the association."
+          ]
+        },
+        {
+          "title": "Availability",
+          "paragraphs": [
+            "The service is provided as available. It may be changed, suspended, or interrupted, including for maintenance or when a hosting provider fails. Schedules and calendar copies are planning aids and can contain mistakes."
+          ]
+        },
+        {
+          "title": "Ending use",
+          "paragraphs": [
+            "You may stop using {appName} and ask an administrator to delete your account. An administrator may suspend or remove an account that breaks these terms or the association’s rules.",
+            "These terms may be updated. The date at the top is the current version. Continuing to use {appName} after an update means you accept the updated terms."
+          ]
+        },
+        {
+          "title": "Liability",
+          "paragraphs": [
+            "To the extent allowed by the law that applies to the association, the association is not liable for indirect damages or for decisions made only from a schedule or a calendar copy. These terms do not limit liability that the law does not allow to be limited, including liability for intent or for personal injury where that exclusion is prohibited."
+          ]
+        }
+      ]
+    }
+  }
+}
