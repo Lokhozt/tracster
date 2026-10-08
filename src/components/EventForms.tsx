@@ -586,7 +586,7 @@ export function EditEventForm({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [typeId, setTypeId] = useState(event.type.id);
+  const typeId = event.type.id;
   const [title, setTitle] = useState(event.title);
   const [description, setDescription] = useState(event.description ?? "");
   const [notes, setNotes] = useState(event.notes ?? "");
@@ -594,16 +594,9 @@ export function EditEventForm({
   const [locationSelection, setLocationSelection] = useState<LocationSelection>(() =>
     selectionFromRecord(event),
   );
-  const [choreographyId, setChoreographyId] = useState(event.choreographyId ?? "");
-  const [selectedChoreographyIds, setSelectedChoreographyIds] = useState(
-    event.choreographies.map((item) => item.id),
-  );
-  const [groupByChoreography, setGroupByChoreography] = useState<Record<string, string>>(() =>
-    Object.fromEntries(event.choreographies.map((item) => [item.id, item.groupId ?? ""])),
-  );
-  const [groupsByChoreography, setGroupsByChoreography] = useState<Record<string, GroupOption[]>>(
-    {},
-  );
+  const [choreographyId] = useState(event.choreographyId ?? "");
+  const [rehearsalGroupId, setRehearsalGroupId] = useState(event.groupId ?? "");
+  const [rehearsalGroups, setRehearsalGroups] = useState<GroupOption[]>([]);
   const [participation, setParticipation] = useState<ParticipationSettings>({
     allowParticipantJoin: event.allowParticipantJoin,
     allowJoinRequests: event.allowJoinRequests,
@@ -623,43 +616,29 @@ export function EditEventForm({
   const allowsChoreographyLinks = eventKindAllowsChoreographyLinks(eventType?.kind ?? null);
 
   useEffect(() => {
-    if (eventType?.kind !== "DEMONSTRATION") {
-      return;
-    }
-
-    const missing = selectedChoreographyIds.filter((id) => groupsByChoreography[id] === undefined);
-    if (missing.length === 0) {
+    if (eventType?.kind !== "REHEARSAL" || !choreographyId) {
       return;
     }
 
     let cancelled = false;
     void (async () => {
-      const entries = await Promise.all(
-        missing.map(async (id) => {
-          const response = await fetch(`/api/choreographies/${id}/groups`);
-          const data = await response.json();
-          const loaded: GroupOption[] = response.ok
-            ? (data.groups ?? []).map((group: { id: string; name: string; members: unknown[] }) => ({
-                id: group.id,
-                name: group.name,
-                memberCount: group.members.length,
-              }))
-            : [];
-          return [id, loaded] as const;
-        }),
-      );
-      if (!cancelled) {
-        setGroupsByChoreography((current) => ({
-          ...current,
-          ...Object.fromEntries(entries),
-        }));
+      const response = await fetch(`/api/choreographies/${choreographyId}/groups`);
+      const data = await response.json();
+      if (!cancelled && response.ok) {
+        setRehearsalGroups(
+          (data.groups ?? []).map((group: { id: string; name: string; members: unknown[] }) => ({
+            id: group.id,
+            name: group.name,
+            memberCount: group.members.length,
+          })),
+        );
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [eventType?.kind, groupsByChoreography, selectedChoreographyIds]);
+  }, [choreographyId, eventType?.kind]);
 
   function handleStartChange(nextStart: DateTimeParts) {
     setStart(nextStart);
@@ -688,7 +667,7 @@ export function EditEventForm({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        typeId,
+        typeId: event.type.id,
         title: title || undefined,
         description: generic ? description || undefined : undefined,
         notes: generic ? undefined : notes || undefined,
@@ -697,12 +676,15 @@ export function EditEventForm({
         startsAt: startsAt.toISOString(),
         endsAt: endsAt?.toISOString(),
         choreographyId: eventType?.kind === "REHEARSAL" ? choreographyId || null : null,
-        choreographyIds: allowsChoreographyLinks ? selectedChoreographyIds : undefined,
+        groupId:
+          eventType?.kind === "REHEARSAL" ? rehearsalGroupId.trim() || null : undefined,
+        choreographyIds: allowsChoreographyLinks
+          ? event.choreographies.map((link) => link.id)
+          : undefined,
         choreographyLinks: allowsChoreographyLinks
-          ? selectedChoreographyIds.map((id) => ({
-              choreographyId: id,
-              groupId:
-                eventType?.kind === "DEMONSTRATION" ? groupByChoreography[id] || null : null,
+          ? event.choreographies.map((link) => ({
+              choreographyId: link.id,
+              groupId: eventType?.kind === "DEMONSTRATION" ? link.groupId : null,
             }))
           : undefined,
         ...(generic ? participation : {}),
@@ -730,7 +712,7 @@ export function EditEventForm({
             id="edit-event-type"
             className="mt-1 block w-full"
             value={typeId}
-            onChange={(formEvent) => setTypeId(formEvent.target.value)}
+            disabled
           >
             {eventTypes.map((type) => (
               <option key={type.id} value={type.id}>
@@ -766,7 +748,7 @@ export function EditEventForm({
               id="edit-event-choreography"
               className="mt-1 block w-full"
               value={choreographyId}
-              onChange={(formEvent) => setChoreographyId(formEvent.target.value)}
+              disabled
             >
               <option value="">{t("none")}</option>
               {choreographyOptions.map((choreography) => (
@@ -777,51 +759,21 @@ export function EditEventForm({
             </Select>
           </div>
         )}
-        {allowsChoreographyLinks && choreographyOptions && (
-          <fieldset className="space-y-2">
-            <legend className="text-sm font-medium text-stone-700">
-              {t("linkedChoreographies")}
-            </legend>
-            {choreographyOptions.map((choreography) => (
-              <label key={choreography.id} className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={selectedChoreographyIds.includes(choreography.id)}
-                  onChange={(formEvent) => {
-                    setSelectedChoreographyIds((current) =>
-                      formEvent.target.checked
-                        ? [...current, choreography.id]
-                        : current.filter((id) => id !== choreography.id),
-                    );
-                  }}
-                  className="rounded border-stone-300"
-                />
-                {choreography.title}
-              </label>
-            ))}
-          </fieldset>
+        {eventType?.kind === "REHEARSAL" && choreographyId && (
+          <>
+            <RehearsalAudienceSelect
+              groups={rehearsalGroups}
+              value={rehearsalGroupId}
+              onChange={setRehearsalGroupId}
+            />
+            <ParticipantConflictWarnings
+              choreographyId={choreographyId}
+              startsAt={dateTimePartsToDate(start)}
+              endsAt={dateTimePartsToDate(end)}
+              groupId={rehearsalGroupId}
+            />
+          </>
         )}
-        {eventType?.kind === "DEMONSTRATION" &&
-          selectedChoreographyIds.map((id) => {
-            const choreographyGroups = groupsByChoreography[id] ?? [];
-            if (choreographyGroups.length === 0) {
-              return null;
-            }
-            const title = choreographyOptions?.find((choreography) => choreography.id === id)?.title;
-            return (
-              <div key={id} className="space-y-2">
-                {title && <p className="text-sm font-medium text-stone-700">{title}</p>}
-                <RehearsalAudienceSelect
-                  id={`edit-event-group-${id}`}
-                  groups={choreographyGroups}
-                  value={groupByChoreography[id] ?? ""}
-                  onChange={(value) =>
-                    setGroupByChoreography((current) => ({ ...current, [id]: value }))
-                  }
-                />
-              </div>
-            );
-          })}
         <div>
           <Label htmlFor="edit-event-description">{generic ? t("description") : t("notes")}</Label>
           <Textarea

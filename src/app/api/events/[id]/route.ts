@@ -10,6 +10,7 @@ import {
   participantIdsForChoreographyLinks,
   validateChoreographyLinkGroups,
   validateEventTypeFields,
+  validateEventUpdateFields,
 } from "@/lib/events";
 import {
   getEventType,
@@ -91,10 +92,44 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return notFound("Event");
   }
 
+  const existingEvent = await prisma.event.findUnique({
+    where: { id },
+    select: {
+      typeId: true,
+      choreographyId: true,
+      type: { select: { kind: true } },
+      choreographies: { select: { choreographyId: true, groupId: true } },
+    },
+  });
+  if (!existingEvent) {
+    return notFound("Event");
+  }
+
   const body = await request.json();
   const parsed = eventSchema.safeParse(body);
   if (!parsed.success) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
+  }
+
+  const choreographyLinks = choreographyLinksFromInput(parsed.data);
+  const updateFieldError = await validateEventUpdateFields({
+    existing: {
+      typeId: existingEvent.typeId,
+      typeKind: existingEvent.type.kind,
+      choreographyId: existingEvent.choreographyId,
+      choreographyLinks: existingEvent.choreographies.map((link) => ({
+        choreographyId: link.choreographyId,
+        groupId: link.groupId,
+      })),
+    },
+    input: {
+      typeId: parsed.data.typeId,
+      choreographyId: parsed.data.choreographyId,
+      choreographyLinks,
+    },
+  });
+  if (updateFieldError) {
+    return jsonError(updateFieldError);
   }
 
   const eventType = await getEventType(parsed.data.typeId);
@@ -110,7 +145,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return forbidden();
   }
 
-  const choreographyLinks = choreographyLinksFromInput(parsed.data);
   const fieldError = await validateEventTypeFields({
     type: eventType,
     title: parsed.data.title,

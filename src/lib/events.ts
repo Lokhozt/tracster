@@ -383,6 +383,44 @@ export async function validateEventTypeFields(options: {
   return null;
 }
 
+export async function validateEventUpdateFields(options: {
+  existing: {
+    typeId: string;
+    typeKind: SerializedEventType["kind"];
+    choreographyId: string | null;
+    choreographyLinks: ChoreographyLinkInput[];
+  };
+  input: {
+    typeId: string;
+    choreographyId?: string | null;
+    choreographyLinks: ChoreographyLinkInput[];
+  };
+}): Promise<string | null> {
+  if (options.input.typeId !== options.existing.typeId) {
+    return "Event type cannot be changed.";
+  }
+
+  if (options.existing.typeKind === "REHEARSAL") {
+    const nextChoreographyId = options.input.choreographyId ?? null;
+    if (nextChoreographyId !== options.existing.choreographyId) {
+      return "Rehearsal choreography cannot be changed.";
+    }
+  }
+
+  if (eventKindAllowsChoreographyLinks(options.existing.typeKind)) {
+    const existingIds = [...options.existing.choreographyLinks.map((link) => link.choreographyId)].sort();
+    const inputIds = [...options.input.choreographyLinks.map((link) => link.choreographyId)].sort();
+    if (
+      existingIds.length !== inputIds.length ||
+      existingIds.some((id, index) => id !== inputIds[index])
+    ) {
+      return "Linked choreographies cannot be changed.";
+    }
+  }
+
+  return null;
+}
+
 export async function competitorParticipantsAllowed(
   kind: SerializedEventType["kind"],
   participantIds: string[],
