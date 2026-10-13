@@ -8,6 +8,7 @@ import {
 import {
   scorePlacementDelta,
   scoreSchedule,
+  unavailableParticipantSignature,
   type InternalPlacement,
 } from "@/lib/scheduling/score";
 import type { ServerTranslator } from "@/i18n/server";
@@ -337,22 +338,6 @@ function planShape(assigned: InternalPlacement[], problem: SchedulingProblem): P
     .sort((a, b) => (a.key === b.key ? a.start - b.start : a.key.localeCompare(b.key)));
 }
 
-/** Nudging the whole day by a few minutes is not a second option to choose from. */
-function samePlan(a: PlanShape, b: PlanShape): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
-
-  return a.every((placement, index) => {
-    const other = b[index];
-    return (
-      placement.key === other.key &&
-      placement.locationId === other.locationId &&
-      Math.abs(placement.start - other.start) < DISTINCT_START_TOLERANCE_MS
-    );
-  });
-}
-
 function extendNode(
   node: SearchNode,
   placement: InternalPlacement,
@@ -564,14 +549,14 @@ export function generateScheduleCandidates(
     );
   }
 
-  const shapes: PlanShape[] = [];
+  const seen = new Set<string>();
   const unique: SearchNode[] = [];
   for (const node of layer.sort((a, b) => b.score - a.score)) {
-    const shape = planShape(node.assigned, problem);
-    if (shapes.some((accepted) => samePlan(shape, accepted))) {
+    const identity = `${node.score}:${unavailableParticipantSignature(node.assigned, problem)}`;
+    if (seen.has(identity)) {
       continue;
     }
-    shapes.push(shape);
+    seen.add(identity);
     unique.push(node);
     if (unique.length >= CANDIDATE_COUNT) {
       break;

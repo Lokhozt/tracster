@@ -98,6 +98,28 @@ function missedRehearsalCount(person: SchedulingPerson): number {
   return Math.max(0, person.attendance.eligible - person.attendance.attended);
 }
 
+/** Participants unavailable for a choreography, ignoring anyone blocked for the whole period. */
+export function unavailableParticipantSignature(
+  placements: InternalPlacement[],
+  problem: SchedulingProblem,
+): string {
+  const keys: string[] = [];
+  for (const placement of placements) {
+    const item = problem.items[placement.itemIndex];
+    const interval = { start: placement.start, end: placement.end };
+    const seen = new Set<string>();
+    for (const participant of item.participants) {
+      if (!personBusy(participant, interval) || seen.has(participant.id)) {
+        continue;
+      }
+      seen.add(participant.id);
+      keys.push(`${item.choreographyId}:${item.groupId ?? ""}:${participant.id}`);
+    }
+  }
+  keys.sort();
+  return keys.join("|");
+}
+
 function constraintRespected(item: ResolvedSchedulingItem, placement: InternalPlacement): boolean {
   if (item.allowedLocationIds && !item.allowedLocationIds.includes(placement.locationId)) {
     return false;

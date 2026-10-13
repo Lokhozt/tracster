@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { scoreSchedule } from "@/lib/scheduling/score";
+import { scoreSchedule, unavailableParticipantSignature } from "@/lib/scheduling/score";
 import type { SchedulingPerson, SchedulingProblem } from "@/lib/scheduling/types";
 
 function person(overrides: Partial<SchedulingPerson> = {}): SchedulingPerson {
@@ -69,6 +69,31 @@ test("missed rehearsals do not count when the participant can attend", () => {
 
   assert.equal(score, 0);
   assert.equal(caveats.length, 0);
+});
+
+test("unavailable participants are keyed by choreography and ignore a fully blocked person", () => {
+  const blocked = person({
+    id: "blocked",
+    name: "Bea",
+    availableInPeriod: false,
+    unavailability: [{ start: start - 1000, end: end + 1000 }],
+  });
+  const ada = person({
+    unavailability: [{ start: start - 1000, end: end + 1000 }],
+  });
+  const built = problem(ada, start, end);
+  built.items[0].participants = [blocked, ada];
+  const again = problem(ada, start, end);
+  again.items[0].choreographyId = "c2";
+
+  assert.equal(
+    unavailableParticipantSignature([{ itemIndex: 0, locationId: "loc", start, end }], built),
+    "c1::u1",
+  );
+  assert.notEqual(
+    unavailableParticipantSignature([{ itemIndex: 0, locationId: "loc", start, end }], built),
+    unavailableParticipantSignature([{ itemIndex: 0, locationId: "loc", start, end }], again),
+  );
 });
 
 test("a participant unavailable for the whole period is ignored", () => {
