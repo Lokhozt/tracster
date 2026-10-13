@@ -77,6 +77,28 @@ export type RehearsalAudience = {
   memberIds: string[];
 };
 
+export type RehearsalAudienceSource = {
+  groupId: string | null;
+  group?: { members: { userId: string }[] } | null;
+};
+
+/** Member IDs targeted by a rehearsal when group and choreography members are already loaded. */
+export function getRehearsalAudienceMemberIds(
+  rehearsal: RehearsalAudienceSource,
+  choreographyMemberIds: readonly string[],
+): string[] {
+  if (rehearsal.groupId) {
+    if (!rehearsal.group) {
+      return [];
+    }
+    const memberSet = new Set(choreographyMemberIds);
+    return rehearsal.group.members
+      .map((member) => member.userId)
+      .filter((userId) => memberSet.has(userId));
+  }
+  return [...choreographyMemberIds];
+}
+
 export async function getRehearsalAudience(
   rehearsal: {
     choreographyId: string | null;

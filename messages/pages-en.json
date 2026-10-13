@@ -132,6 +132,20 @@
       "backToSections": "All sections",
       "openWhatsapp": "Open WhatsApp"
     },
+    "ChoreographyRehearsalStatistics": {
+      "title": "Rehearsal statistics",
+      "backToRehearsals": "← Back to rehearsals",
+      "rehearsalCountLabel": "Rehearsals",
+      "rehearsalHoursLabel": "Rehearsal time",
+      "durationHours": "{hours} h",
+      "durationMinutes": "{minutes} min",
+      "durationHoursMinutes": "{hours} h {minutes} min",
+      "participantAttendance": "Participant attendance",
+      "noParticipants": "No participants on this choreography yet.",
+      "unknownParticipant": "Participant",
+      "attendanceFraction": "{attended} / {total}",
+      "attendanceRate": "{rate}%"
+    },
     "NewUser": {
       "title": "New user",
       "backToSettings": "← Back to settings"

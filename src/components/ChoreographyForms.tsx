@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
+import { StatisticsIconLink } from "@/components/StatisticsIconLink";
 import {
   RehearsalEventCard,
   type RehearsalListItem,
@@ -383,11 +384,14 @@ export function RehearsalsSection({
     <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">{t("rehearsals")}</h2>
-        {canEdit && !showAddForm && (
-          <Button type="button" onClick={() => setShowAddForm(true)}>
-            {t("scheduleRehearsal")}
-          </Button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <StatisticsIconLink href={`/choreographies/${choreographyId}/rehearsals/statistics`} />
+          {canEdit && !showAddForm && (
+            <Button type="button" onClick={() => setShowAddForm(true)}>
+              {t("scheduleRehearsal")}
+            </Button>
+          )}
+        </div>
       </div>
 
       {rehearsals.length > 0 && (

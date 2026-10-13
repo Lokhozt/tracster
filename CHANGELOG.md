@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated event edit page. Removed choreography mentions
 
+### Added
+- Participants statisctics on choreographies. (Choreographer only)
+
 ## 1.2.3 - 06-10-2026
 
 ### Added
