@@ -1,5 +1,5 @@
 import { differenceInMinutes } from "date-fns";
-import type { AvailabilityStatus } from "@prisma/client";
+import type { AvailabilityStatus } from "@/generated/prisma/client";
 import { resolveIntervalEnd } from "@/lib/conflicts";
 import { getRehearsalAudienceMemberIds } from "@/lib/groups";
 

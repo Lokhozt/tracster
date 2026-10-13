@@ -7,6 +7,7 @@ import { TagsManager } from "@/components/TagsManager";
 import { SettingsSections, type SettingsSection } from "@/components/SettingsSections";
 import { SiteSettingsForm } from "@/components/SiteSettingsForm";
 import { GoogleCalendarConnectionCard } from "@/components/GoogleCalendarConnectionCard";
+import { AssociationStatsPanel } from "@/components/AssociationStatsPanel";
 import { UsersList } from "@/components/UsersList";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -41,7 +42,8 @@ export default async function SettingsPage({ searchParams }: PageProps) {
 
   const showAssociationCalendar = await canManageAssociationGoogleCalendar(user.id);
 
-  const [locations, settings, users, eventTypes, tags, googleConnection, query] = await Promise.all([
+  const [locations, settings, users, representations, eventTypes, tags, googleConnection, query] =
+    await Promise.all([
     prisma.location.findMany({
       orderBy: { name: "asc" },
       select: { id: true, name: true },
@@ -50,6 +52,11 @@ export default async function SettingsPage({ searchParams }: PageProps) {
     prisma.user.findMany({
       orderBy: userNameOrderBy,
       select: adminUserSelect,
+    }),
+    prisma.event.findMany({
+      where: { type: { kind: "REPRESENTATION" } },
+      orderBy: { startsAt: "desc" },
+      select: { id: true, title: true, startsAt: true },
     }),
     getEventTypes(),
     prisma.tag.findMany({
@@ -106,6 +113,23 @@ export default async function SettingsPage({ searchParams }: PageProps) {
       id: "members",
       label: tc("users"),
       content: <UsersList users={users.map(serializeAdminUser)} />,
+    },
+    {
+      id: "stats",
+      label: tc("stats"),
+      content: (
+        <AssociationStatsPanel
+          representations={representations.map((event) => ({
+            id: event.id,
+            title: event.title,
+            startsAt: event.startsAt.toISOString(),
+          }))}
+          users={users.map((entry) => ({
+            id: entry.id,
+            name: serializeAdminUser(entry).name,
+          }))}
+        />
+      ),
     },
   ];
 

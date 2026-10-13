@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Participants statisctics on choreographies. (Choreographer only)
+- Added per representation and per user. (Admin only)
 
 ## 1.2.3 - 06-10-2026
 
