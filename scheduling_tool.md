@@ -32,7 +32,7 @@ Don't consider participants / choreographer that are not available at all on the
 * If a choreographer is not available: -50
 * If all choreographer are not available: -100
 * If a choreographer is in two or more rehearsal that overlap in time: -50
-* If a participant is not available: -10
+* If a participant is not available: -10, plus -1 for each past rehearsal of that choreography they were part of and did not attend (shown as participated / participant)
 * If a participant has a hole longer than the rest setting between 2 rehearsals: -2
 * If a participant has 2 consecutive rehearsals with a gap of at most the rest setting: +2
 * If a participant has more than 3 consecutives choreographies: -2
@@ -52,13 +52,13 @@ Step 5- Choose a solution
 The user can look and select one the candidate.
 A candidate is graphically reprensented on a calendar with as many column per day as there are locations, with each rehearsal having its color and name, and start_time->end_time. Periods when a location is unavailable appear as grey empty events.
 
-The caveat of each candidate are listed: Choreographers not available, then Participants not available (ignore if the person is not available at all during the period)
+The caveat of each candidate are listed: Choreographers not available, then Participants not available (ignore if the person is not available at all during the period). Each unavailable participant is shown with their attendance on that choreography in parentheses (participated / participant).
 
 Optional step 6- Edit
 The user can drag rehearsals in the selected candidate to another time, day, or location before creating them. Dropped start times snap to 10-minute intervals.
 Location unavailability is shown as immovable grey boxes labelled unavailable.
 The user can select a person to mark their unavailability in red on the calendar.
 The user can instead click a rehearsal to color the planning in 10-minute intervals: blue when every considered participant is available, green for one unavailable participant, yellow for two, orange for three or more, and dark red when every choreographer is unavailable. Clicking the same rehearsal again clears the coloring. Participants unavailable for the whole planning period are excluded, while participants busy in another rehearsal are counted as unavailable. Selecting a choreography clears the selected person, and selecting a person clears the selected choreography.
-After every move, conflicts are recalculated and displayed for choreographers who are unavailable, and for participants who are unavailable or already in another rehearsal, including another rehearsal in the edited planning. Participants who are unavailable for the whole planning period are listed separately and omitted from those conflicts.
+After every move, conflicts are recalculated and displayed for choreographers who are unavailable, and for participants who are unavailable or already in another rehearsal, including another rehearsal in the edited planning. Each participant in that conflict list is shown with their attendance on that choreography in parentheses (participated / participant). Participants who are unavailable for the whole planning period are listed separately and omitted from those conflicts.
 
 At validation, each rehearsal is automatically created. Every participant and choreographer of a rehearsal gets an availability answer: unavailable when one of their unavailability periods overlaps the rehearsal, available otherwise.

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { visibleChoreographyWhere } from "@/lib/choreographies";
+import { attendanceFor, loadChoreographyAttendance } from "@/lib/scheduling/attendance";
 import { atLocalTime, hasFreeTime, parseDayKey, subtractIntervals } from "@/lib/scheduling/intervals";
 import type {
   IntervalMs,
@@ -29,6 +30,7 @@ function toPerson(
     name: formatUserName(user),
     unavailability: blocks,
     availableInPeriod: hasFreeTime(blocks, periodWindows),
+    attendance: { attended: 0, eligible: 0 },
   };
 }
 
@@ -156,17 +158,24 @@ export async function buildSchedulingProblem(
     }
   }
 
-  const unavailability =
+  const [unavailability, attendanceByChoreography] = await Promise.all([
     allUserIds.size === 0
-      ? []
-      : await prisma.userUnavailability.findMany({
+      ? Promise.resolve([])
+      : prisma.userUnavailability.findMany({
           where: {
             userId: { in: [...allUserIds] },
             startsAt: { lt: new Date(periodEnd) },
             endsAt: { gt: new Date(periodStart) },
           },
           select: { userId: true, startsAt: true, endsAt: true },
-        });
+        }),
+    loadChoreographyAttendance(
+      choreographies.map((choreography) => ({
+        id: choreography.id,
+        memberIds: choreography.members.map((member) => member.userId),
+      })),
+    ),
+  ]);
 
   const items: ResolvedSchedulingItem[] = [];
 
@@ -227,7 +236,10 @@ export async function buildSchedulingProblem(
       choreographers: choreography.choreographers.map((entry) =>
         toPerson(entry.user, unavailability, periodWindows),
       ),
-      participants: participantUsers.map((user) => toPerson(user, unavailability, periodWindows)),
+      participants: participantUsers.map((user) => ({
+        ...toPerson(user, unavailability, periodWindows),
+        attendance: attendanceFor(attendanceByChoreography, choreography.id, user.id),
+      })),
     });
   }
 

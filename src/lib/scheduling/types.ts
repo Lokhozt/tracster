@@ -86,11 +86,18 @@ export type IntervalMs = {
   end: number;
 };
 
+export type RehearsalAttendance = {
+  attended: number;
+  eligible: number;
+};
+
 export type SchedulingPerson = {
   id: string;
   name: string;
   unavailability: IntervalMs[];
   availableInPeriod: boolean;
+  /** Past rehearsals of this choreography the person was part of. */
+  attendance: RehearsalAttendance;
 };
 
 export type ResolvedSchedulingItem = {

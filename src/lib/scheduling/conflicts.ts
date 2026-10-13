@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/db";
 import { intervalsOverlap, resolveIntervalEnd } from "@/lib/conflicts";
+import {
+  attendanceFor,
+  formatParticipantAttendance,
+  loadChoreographyAttendance,
+} from "@/lib/scheduling/attendance";
 import { atLocalTime, hasFreeTime, parseDayKey } from "@/lib/scheduling/intervals";
 import type {
   IntervalMs,
@@ -132,7 +137,10 @@ export async function findSchedulingPlacementConflicts(
   );
   const assumedNullEndFloor = new Date(overallStart.getTime() - 60 * 60 * 1000);
 
-  const [unavailability, rehearsals] = await Promise.all([
+  const choreographyIdByItem = new Map(
+    placements.map((placement) => [placement.itemId, placement.choreographyId]),
+  );
+  const [unavailability, rehearsals, attendanceByChoreography] = await Promise.all([
     prisma.userUnavailability.findMany({
       where: {
         userId: { in: [...allUserIds] },
@@ -175,6 +183,12 @@ export async function findSchedulingPlacementConflicts(
         },
       },
     }),
+    loadChoreographyAttendance(
+      choreographies.map((choreography) => ({
+        id: choreography.id,
+        memberIds: choreography.members.map((member) => member.user.id),
+      })),
+    ),
   ]);
 
   const fullyUnavailableParticipantIds = new Set<string>();
@@ -265,7 +279,16 @@ export async function findSchedulingPlacementConflicts(
   }
 
   return {
-    conflicts: serializeConflicts(mutable, namesById),
+    conflicts: serializeConflicts(mutable, namesById, (itemId, userId) =>
+      formatParticipantAttendance(
+        namesById.get(userId) ?? userId,
+        attendanceFor(
+          attendanceByChoreography,
+          choreographyIdByItem.get(itemId) ?? "",
+          userId,
+        ),
+      ),
+    ),
     unavailableAllPeriod: [...fullyUnavailableParticipantIds]
       .map((id) => namesById.get(id) ?? id)
       .sort((a, b) => a.localeCompare(b)),
@@ -275,16 +298,20 @@ export async function findSchedulingPlacementConflicts(
 function serializeConflicts(
   conflicts: Map<string, MutableConflict>,
   namesById = new Map<string, string>(),
+  participantLabel?: (itemId: string, userId: string) => string,
 ): SchedulingPlacementConflicts {
+  const label = (itemId: string, userId: string) =>
+    participantLabel?.(itemId, userId) ?? namesById.get(userId) ?? userId;
+
   return Object.fromEntries(
     [...conflicts].map(([itemId, conflict]): [string, SchedulingPlacementConflict] => [
       itemId,
       {
         unavailable: [...conflict.unavailable]
-          .map((id) => namesById.get(id) ?? id)
+          .map((id) => label(itemId, id))
           .sort((a, b) => a.localeCompare(b)),
         engaged: [...conflict.engaged]
-          .map((id) => namesById.get(id) ?? id)
+          .map((id) => label(itemId, id))
           .sort((a, b) => a.localeCompare(b)),
         choreographerUnavailable: [...conflict.choreographerUnavailable]
           .map((id) => namesById.get(id) ?? id)

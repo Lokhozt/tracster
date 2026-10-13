@@ -9,10 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated event edit page. Removed choreography mentions
 - Updated planning display and planning export to display rehearsal sub-groups
+- Scheduling tool: an unavailable participant costs an extra point per past rehearsal of the choreography they missed.
 
 ### Added
 - Participants statisctics on choreographies. (Choreographer only)
 - Added per representation and per user. (Admin only)
+- Scheduling tool: participant attendance (participated / participant) shown on candidates and in the edit step conflicts.
 
 ## 1.2.3 - 06-10-2026
 

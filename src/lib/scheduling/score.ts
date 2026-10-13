@@ -21,7 +21,8 @@ const englishCaveatTranslator: ServerTranslator = (key, values = {}) => {
       "{name} (choreographer) is unavailable for {title}.",
     "caveats.choreographerOverlap":
       "{name} (choreographer) is needed in two rehearsals at the same time.",
-    "caveats.participantUnavailable": "{name} is unavailable for {title}{group}.",
+    "caveats.participantUnavailable":
+      "{name} ({attended} / {eligible}) is unavailable for {title}{group}.",
   };
   return (messages[key] ?? key).replace(/\{(\w+)\}/g, (match, name: string) =>
     Object.prototype.hasOwnProperty.call(values, name) ? String(values[name]) : match,
@@ -91,6 +92,10 @@ function middayBreakWindow(day: Date): IntervalMs {
 
 function personBusy(person: SchedulingPerson, interval: IntervalMs): boolean {
   return person.availableInPeriod && overlapsAny(interval, person.unavailability);
+}
+
+function missedRehearsalCount(person: SchedulingPerson): number {
+  return Math.max(0, person.attendance.eligible - person.attendance.attended);
 }
 
 function constraintRespected(item: ResolvedSchedulingItem, placement: InternalPlacement): boolean {
@@ -221,7 +226,7 @@ function placementScore(
   }
   for (const participant of item.participants) {
     if (personBusy(participant, interval)) {
-      score -= PARTICIPANT_UNAVAILABLE;
+      score -= PARTICIPANT_UNAVAILABLE + missedRehearsalCount(participant);
     }
   }
 
@@ -437,6 +442,8 @@ export function scoreSchedule(
           kind: "participant_unavailable",
           message: t("caveats.participantUnavailable", {
             name: participant.name,
+            attended: participant.attendance.attended,
+            eligible: participant.attendance.eligible,
             title: item.choreographyTitle,
             group: item.groupName ? ` (${item.groupName})` : "",
           }),
