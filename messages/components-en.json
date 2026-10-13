@@ -217,7 +217,9 @@
       "memberChoreographies": "Participant in",
       "representationFallback": "Representation",
       "participantLeaderboard": "Participant leaderboard",
-      "participant": "Participant"
+      "participant": "Participant",
+      "attendance": "Attendance",
+      "attendanceRate": "{rate}%"
     },
     "newUser": "New user",
     "userSearchPlaceholder": "Name, email, or phone…",

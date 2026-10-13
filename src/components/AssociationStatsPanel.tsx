@@ -32,7 +32,18 @@ type LeaderboardSortColumn =
   | "name"
   | "choreographyCount"
   | "rehearsalAttendedCount"
+  | "attendanceRate"
   | "rehearsalAttendedMinutes";
+
+function leaderboardAttendanceClass(rate: number) {
+  if (rate >= 80) {
+    return "text-emerald-700";
+  }
+  if (rate >= 50) {
+    return "text-amber-700";
+  }
+  return "text-rose-700";
+}
 
 function LeaderboardSortHeader({
   label,
@@ -86,6 +97,8 @@ function sortLeaderboard(
         return factor * (left.choreographyCount - right.choreographyCount);
       case "rehearsalAttendedCount":
         return factor * (left.rehearsalAttendedCount - right.rehearsalAttendedCount);
+      case "attendanceRate":
+        return factor * (left.attendanceRate - right.attendanceRate);
       case "rehearsalAttendedMinutes":
         return factor * (left.rehearsalAttendedMinutes - right.rehearsalAttendedMinutes);
       default:
@@ -446,6 +459,13 @@ export function AssociationStatsPanel({
                         direction={leaderboardSort.direction}
                         onSort={handleLeaderboardSort}
                       />
+                      <LeaderboardSortHeader
+                        label={t("attendance")}
+                        column="attendanceRate"
+                        activeColumn={leaderboardSort.column}
+                        direction={leaderboardSort.direction}
+                        onSort={handleLeaderboardSort}
+                      />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-100 bg-white">
@@ -466,6 +486,14 @@ export function AssociationStatsPanel({
                         </td>
                         <td className="px-3 py-2 tabular-nums text-stone-700">
                           {formatDurationMinutes(row.rehearsalAttendedMinutes)}
+                        </td>
+                        <td
+                          className={cn(
+                            "px-3 py-2 tabular-nums font-medium",
+                            leaderboardAttendanceClass(row.attendanceRate),
+                          )}
+                        >
+                          {t("attendanceRate", { rate: row.attendanceRate })}
                         </td>
                       </tr>
                     ))}

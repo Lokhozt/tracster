@@ -2,6 +2,7 @@ import type { AvailabilityStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { getRehearsalAudienceMemberIds } from "@/lib/groups";
 import {
+  attendanceRate,
   isPastRehearsal,
   type RehearsalForStatistics,
 } from "@/lib/rehearsal-statistics";
@@ -24,8 +25,10 @@ export type RepresentationParticipantLeaderboardEntry = {
   userId: string;
   name: string;
   choreographyCount: number;
+  rehearsalEligibleCount: number;
   rehearsalAttendedCount: number;
   rehearsalAttendedMinutes: number;
+  attendanceRate: number;
 };
 
 export type RepresentationStats = {
@@ -190,6 +193,7 @@ export async function loadRepresentationStats(eventId: string): Promise<Represen
     }
   }
 
+  const rehearsalEligibleCountByUser = new Map<string, number>();
   const rehearsalAttendedCountByUser = new Map<string, number>();
   const rehearsalAttendedMinutesByUser = new Map<string, number>();
   for (const rehearsal of rehearsals) {
@@ -207,6 +211,10 @@ export async function loadRepresentationStats(eventId: string): Promise<Represen
     };
     const minutes = rehearsalMinutes(rehearsal);
     for (const audienceUserId of getRehearsalAudienceMemberIds(rehearsal, memberIds)) {
+      rehearsalEligibleCountByUser.set(
+        audienceUserId,
+        (rehearsalEligibleCountByUser.get(audienceUserId) ?? 0) + 1,
+      );
       if (!userAttendedRehearsal(rehearsalForStats, audienceUserId, memberIds)) {
         continue;
       }
@@ -231,13 +239,19 @@ export async function loadRepresentationStats(eventId: string): Promise<Represen
         });
 
   const leaderboard: RepresentationParticipantLeaderboardEntry[] = leaderboardUsers
-    .map((user) => ({
-      userId: user.id,
-      name: formatUserName(user),
-      choreographyCount: choreographyCountByUser.get(user.id) ?? 0,
-      rehearsalAttendedCount: rehearsalAttendedCountByUser.get(user.id) ?? 0,
-      rehearsalAttendedMinutes: rehearsalAttendedMinutesByUser.get(user.id) ?? 0,
-    }))
+    .map((user) => {
+      const rehearsalAttendedCount = rehearsalAttendedCountByUser.get(user.id) ?? 0;
+      const rehearsalEligibleCount = rehearsalEligibleCountByUser.get(user.id) ?? 0;
+      return {
+        userId: user.id,
+        name: formatUserName(user),
+        choreographyCount: choreographyCountByUser.get(user.id) ?? 0,
+        rehearsalEligibleCount,
+        rehearsalAttendedCount,
+        rehearsalAttendedMinutes: rehearsalAttendedMinutesByUser.get(user.id) ?? 0,
+        attendanceRate: attendanceRate(rehearsalAttendedCount, rehearsalEligibleCount),
+      };
+    })
     .sort((left, right) => {
       if (right.rehearsalAttendedMinutes !== left.rehearsalAttendedMinutes) {
         return right.rehearsalAttendedMinutes - left.rehearsalAttendedMinutes;
