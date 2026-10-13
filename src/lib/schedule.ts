@@ -66,6 +66,7 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
       },
       group: {
         select: {
+          name: true,
           members: {
             select: {
               userId: true,
@@ -161,6 +162,7 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
         location: displayLocation(event),
         choreographyId: event.choreographyId,
         choreographyTitle: event.choreography?.title ?? null,
+        groupName: event.group?.name ?? null,
         participantNames,
         isMember:
           kind === "REHEARSAL"

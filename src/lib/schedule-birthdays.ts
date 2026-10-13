@@ -58,6 +58,7 @@ export function planningBirthdayEvents(
           location: null,
           choreographyId: null,
           choreographyTitle: null,
+          groupName: null,
           participantNames: [name],
           isMember: false,
           isParticipating: true,

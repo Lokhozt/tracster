@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Updated event edit page. Removed choreography mentions
+- Updated planning display and planning export to display rehearsal sub-groups
 
 ### Added
 - Participants statisctics on choreographies. (Choreographer only)

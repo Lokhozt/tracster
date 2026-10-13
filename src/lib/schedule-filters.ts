@@ -14,6 +14,7 @@ export type SerializedScheduleEvent = {
   location: string | null;
   choreographyId: string | null;
   choreographyTitle: string | null;
+  groupName: string | null;
   participantNames: string[];
   isMember: boolean;
   isParticipating: boolean;
@@ -117,6 +118,13 @@ export function scheduleEventLabel(event: SerializedScheduleEvent) {
     { name: event.typeName, kind: event.typeKind },
     event.title,
   );
+}
+
+export function scheduleRehearsalTitle(event: SerializedScheduleEvent): string {
+  if (event.typeKind === "REHEARSAL") {
+    return event.choreographyTitle ?? scheduleEventLabel(event);
+  }
+  return scheduleEventLabel(event);
 }
 
 export function isRehearsalScheduleEvent(event: SerializedScheduleEvent) {

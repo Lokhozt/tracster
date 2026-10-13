@@ -274,9 +274,12 @@ export function UpcomingEventsList({
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     {event.choreographyTitle && (
-                      <p className="text-sm font-medium text-stone-500">
-                        {event.choreographyTitle}
-                      </p>
+                      <div className="text-sm font-medium text-stone-500">
+                        <p>{event.choreographyTitle}</p>
+                        {event.groupName && (
+                          <p className="text-xs font-normal text-stone-400">{event.groupName}</p>
+                        )}
+                      </div>
                     )}
                     <EventTypeBadge event={event} />
                     {isScheduleEventHappeningNow(event, now) && (

@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/datetime";
 import {
   scheduleEventLabel,
+  scheduleRehearsalTitle,
   withParticipantTooltip,
   type SerializedScheduleEvent,
 } from "@/lib/schedule-filters";
@@ -52,10 +53,7 @@ function useIsSmallScreen() {
 }
 
 function eventCellLabel(event: SerializedScheduleEvent): string {
-  if (event.typeKind === "REHEARSAL") {
-    return event.choreographyTitle ?? scheduleEventLabel(event);
-  }
-  return scheduleEventLabel(event);
+  return scheduleRehearsalTitle(event);
 }
 
 function eventCoveredDays(event: SerializedScheduleEvent): Date[] {
@@ -112,12 +110,14 @@ function eventTimeLabel(
 function eventCellTitle(event: SerializedScheduleEvent): string {
   const typeLabel = event.typeName;
   const name = eventCellLabel(event);
+  const groupLine =
+    event.typeKind === "REHEARSAL" && event.groupName ? `\n${event.groupName}` : "";
   const start = new Date(event.startsAt);
   const range = event.endsAt
     ? `${formatTime(start)} – ${formatTime(new Date(event.endsAt))}`
     : formatTime(start);
   return withParticipantTooltip(
-    `${typeLabel}${name ? ` – ${name}` : ""} – ${range}`,
+    `${typeLabel}${name ? ` – ${name}` : ""}${groupLine} – ${range}`,
     event.participantNames,
   );
 }
@@ -214,16 +214,21 @@ function DayCell({
       </div>
       <div className="space-y-1">
         {events.map((event) => {
+          const hasGroupLine = event.typeKind === "REHEARSAL" && Boolean(event.groupName);
           const className = cn(
             "rounded px-1.5 py-0.5 text-xs break-words",
-            wrapLabels ? "block" : "line-clamp-2",
+            wrapLabels ? "block" : hasGroupLine ? "line-clamp-4" : "line-clamp-2",
+            hasGroupLine && "min-h-[3.25rem]",
             eventCellClassName(event),
             event.href && "hover:opacity-90",
           );
           const content = (
             <>
-              <span className="font-medium">{eventTimeLabel(event, day, t("allDay"))}</span>{" "}
-              {eventCellLabel(event)}
+              <span className="font-medium">{eventTimeLabel(event, day, t("allDay"))}</span>
+              <span className="mt-0.5 block font-medium leading-tight">{eventCellLabel(event)}</span>
+              {event.typeKind === "REHEARSAL" && event.groupName && (
+                <span className="block text-[10px] leading-tight opacity-90">{event.groupName}</span>
+              )}
             </>
           );
 

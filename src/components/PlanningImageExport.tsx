@@ -21,6 +21,7 @@ import { parseDayKey } from "@/lib/scheduling/intervals";
 import type { SchedulePlacement } from "@/lib/scheduling/types";
 import {
   scheduleEventLabel,
+  scheduleRehearsalTitle,
   type SerializedScheduleEvent,
 } from "@/lib/schedule-filters";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,7 @@ function ExportImageIcon({ className }: { className?: string }) {
 type PlanningImageEntry = {
   id: string;
   label: string;
+  groupLabel: string | null;
   startsAt: string;
   endsAt: string | null;
   locationKey: string;
@@ -90,6 +92,7 @@ const DAY_HEADER_HEIGHT = 34;
 const LOCATION_HEADER_HEIGHT = 26;
 const PX_PER_MINUTE = 1;
 const MIN_BLOCK_HEIGHT = 28;
+const MIN_BLOCK_HEIGHT_WITH_GROUP = 50;
 const MAX_CANVAS_EDGE = 16_000;
 
 function planningFileName(range: ImageRange) {
@@ -196,6 +199,39 @@ function blockTone(colorKey: string, muted: boolean) {
     };
   }
   return rehearsalTone(colorKey);
+}
+
+function planningBlockTextLines(
+  entry: PlanningImageEntry,
+  blockHeight: number,
+  timeRange: string,
+): Array<{ text: string; font: string; maxLines: number }> {
+  const lines: Array<{ text: string; font: string; maxLines: number }> = [
+    {
+      text: entry.label,
+      font: "600 11px system-ui, sans-serif",
+      maxLines: entry.groupLabel
+        ? blockHeight >= 44
+          ? 2
+          : 1
+        : blockHeight >= 58
+          ? 2
+          : 1,
+    },
+  ];
+  if (entry.groupLabel) {
+    lines.push({
+      text: entry.groupLabel,
+      font: "500 10px system-ui, sans-serif",
+      maxLines: 1,
+    });
+  }
+  lines.push({
+    text: timeRange,
+    font: "10px system-ui, sans-serif",
+    maxLines: 1,
+  });
+  return lines;
 }
 
 function drawEventBlock(
@@ -337,8 +373,11 @@ async function downloadPlanningImage({
 
   function blockGeometry(segment: DaySegment) {
     const top = timelineTop + Math.max(0, segment.startMinute - minHour * 60) * PX_PER_MINUTE;
+    const minHeight = segment.entry.groupLabel
+      ? MIN_BLOCK_HEIGHT_WITH_GROUP
+      : MIN_BLOCK_HEIGHT;
     const height = Math.max(
-      MIN_BLOCK_HEIGHT,
+      minHeight,
       Math.min(
         timelineHeight - (top - timelineTop),
         (segment.endMinute - segment.startMinute) * PX_PER_MINUTE,
@@ -389,18 +428,11 @@ async function downloadPlanningImage({
             height: blockHeight - 4,
             colorKey: segment.entry.colorKey,
             muted: segment.entry.muted,
-            lines: [
-              {
-                text: segment.entry.label,
-                font: "600 11px system-ui, sans-serif",
-                maxLines: blockHeight >= 58 ? 2 : 1,
-              },
-              {
-                text: `${formatTime(segment.start)}–${formatTime(segment.end)}`,
-                font: "10px system-ui, sans-serif",
-                maxLines: 1,
-              },
-            ],
+            lines: planningBlockTextLines(
+              segment.entry,
+              blockHeight,
+              `${formatTime(segment.start)}–${formatTime(segment.end)}`,
+            ),
           });
         }
       });
@@ -419,16 +451,11 @@ async function downloadPlanningImage({
           colorKey: segment.entry.colorKey,
           muted: segment.entry.muted,
           lines: [
-            {
-              text: segment.entry.label,
-              font: "600 11px system-ui, sans-serif",
-              maxLines: blockHeight >= 58 ? 2 : 1,
-            },
-            {
-              text: `${formatTime(segment.start)}–${formatTime(segment.end)}`,
-              font: "10px system-ui, sans-serif",
-              maxLines: 1,
-            },
+            ...planningBlockTextLines(
+              segment.entry,
+              blockHeight,
+              `${formatTime(segment.start)}–${formatTime(segment.end)}`,
+            ),
             ...(segment.entry.locationName
               ? [
                   {
@@ -466,9 +493,8 @@ async function downloadPlanningImage({
 function schedulingEntries(placements: SchedulePlacement[]): PlanningImageEntry[] {
   return placements.map((placement) => ({
     id: placement.itemId,
-    label: placement.groupName
-      ? `${placement.choreographyTitle} · ${placement.groupName}`
-      : placement.choreographyTitle,
+    label: placement.choreographyTitle,
+    groupLabel: placement.groupName,
     startsAt: placement.startsAt,
     endsAt: placement.endsAt,
     locationKey: placement.locationId,
@@ -478,18 +504,21 @@ function schedulingEntries(placements: SchedulePlacement[]): PlanningImageEntry[
   }));
 }
 
-function planningExportLabel(
+function planningExportEntry(
   event: SerializedScheduleEvent,
   options: PlanningExportOptions,
   rehearsalLabel: string,
-) {
+): Pick<PlanningImageEntry, "label" | "groupLabel"> {
   if (options.hideTitles) {
-    return rehearsalLabel;
+    return { label: rehearsalLabel, groupLabel: null };
   }
-  if (event.typeKind === "REHEARSAL" && event.choreographyTitle) {
-    return event.choreographyTitle;
+  if (event.typeKind === "REHEARSAL") {
+    return {
+      label: scheduleRehearsalTitle(event),
+      groupLabel: event.groupName,
+    };
   }
-  return scheduleEventLabel(event);
+  return { label: scheduleEventLabel(event), groupLabel: null };
 }
 
 function planningExportEntries(
@@ -499,7 +528,7 @@ function planningExportEntries(
 ): PlanningImageEntry[] {
   return events.map((event) => ({
     id: event.id,
-    label: planningExportLabel(event, options, rehearsalLabel),
+    ...planningExportEntry(event, options, rehearsalLabel),
     startsAt: event.startsAt,
     endsAt: event.endsAt,
     locationKey: event.location ?? "__none__",
