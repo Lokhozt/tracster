@@ -81,6 +81,19 @@ export function parseDayKey(day: string): Date {
   return new Date(year, month - 1, dayOfMonth);
 }
 
+/** Wall-clock minutes from local midnight on `day`; `differenceInMinutes` is wrong on DST fallback days. */
+export function localMinutesInDay(instant: Date, day: Date): number {
+  const dayStart = startOfLocalDay(day);
+  const dayEnd = new Date(dayStart.getFullYear(), dayStart.getMonth(), dayStart.getDate() + 1);
+  if (instant.getTime() <= dayStart.getTime()) {
+    return 0;
+  }
+  if (instant.getTime() >= dayEnd.getTime()) {
+    return 24 * 60;
+  }
+  return instant.getHours() * 60 + instant.getMinutes();
+}
+
 export function atLocalTime(day: Date, hour: number, minute = 0): Date {
   return new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour, minute, 0, 0);
 }

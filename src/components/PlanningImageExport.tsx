@@ -2,7 +2,6 @@
 
 import {
   addDays,
-  differenceInMinutes,
   eachDayOfInterval,
   endOfWeek,
   format,
@@ -17,7 +16,7 @@ import { useEffect, useMemo, useState } from "react";
 import { rehearsalTone } from "@/components/SchedulingCandidateCalendar";
 import { Button, Input, Label } from "@/components/ui";
 import { formatTime } from "@/lib/datetime";
-import { parseDayKey } from "@/lib/scheduling/intervals";
+import { localMinutesInDay, parseDayKey, startOfLocalDay } from "@/lib/scheduling/intervals";
 import type { SchedulePlacement } from "@/lib/scheduling/types";
 import {
   scheduleEventLabel,
@@ -170,20 +169,24 @@ function assignLanes(segments: DaySegment[]) {
 }
 
 function daySegments(entries: PlanningImageEntry[], day: Date): DaySegment[] {
-  const dayStart = startOfDay(day);
-  const dayEnd = addDays(dayStart, 1);
+  const dayStart = startOfLocalDay(day);
+  const dayEnd = new Date(dayStart.getFullYear(), dayStart.getMonth(), dayStart.getDate() + 1);
   const segments = entries
     .map((entry) => ({ entry, ...entryInterval(entry) }))
     .filter(({ start, end }) => start < dayEnd && end > dayStart)
-    .map(({ entry, start, end }) => ({
-      entry,
-      start,
-      end,
-      startMinute: differenceInMinutes(max([start, dayStart]), dayStart),
-      endMinute: differenceInMinutes(min([end, dayEnd]), dayStart),
-      lane: 0,
-      lanes: 1,
-    }))
+    .map(({ entry, start, end }) => {
+      const clipStart = max([start, dayStart]);
+      const clipEnd = min([end, dayEnd]);
+      return {
+        entry,
+        start,
+        end,
+        startMinute: localMinutesInDay(clipStart, day),
+        endMinute: localMinutesInDay(clipEnd, day),
+        lane: 0,
+        lanes: 1,
+      };
+    })
     .sort((a, b) => a.startMinute - b.startMinute || a.endMinute - b.endMinute);
 
   assignLanes(segments);
