@@ -41,7 +41,9 @@ type MutableConflict = {
 export async function findSchedulingPlacementConflicts(
   placements: PlacementInput[],
   days: string[],
+  options?: { excludeRehearsalIds?: string[] },
 ): Promise<SchedulingConflictsResult | { error: string }> {
+  const excludeRehearsalIds = new Set(options?.excludeRehearsalIds ?? []);
   const choreographyIds = [...new Set(placements.map((placement) => placement.choreographyId))];
   const choreographies = await prisma.choreography.findMany({
     where: { id: { in: choreographyIds } },
@@ -169,6 +171,7 @@ export async function findSchedulingPlacementConflicts(
         ],
       },
       select: {
+        id: true,
         startsAt: true,
         endsAt: true,
         group: {
@@ -227,6 +230,9 @@ export async function findSchedulingPlacementConflicts(
   }
 
   for (const rehearsal of rehearsals) {
+    if (excludeRehearsalIds.has(rehearsal.id)) {
+      continue;
+    }
     const members = (rehearsal.group?.members ?? rehearsal.choreography?.members ?? [])
       .map((entry) => entry.user);
     const memberIds = new Set(members.map((member) => member.id));

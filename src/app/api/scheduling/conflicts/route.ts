@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
   const result = await findSchedulingPlacementConflicts(
     parsed.data.placements,
     parsed.data.days,
+    { excludeRehearsalIds: parsed.data.excludeRehearsalIds },
   );
   if ("error" in result) {
     return jsonError(result.error);

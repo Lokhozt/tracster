@@ -16,7 +16,8 @@ import { getEventTypes } from "@/lib/event-types";
 import { getUpcomingScheduleEvents, getUserScheduleEvents } from "@/lib/schedule";
 import { planningBirthdayEvents } from "@/lib/schedule-birthdays";
 import { filterEventTypesForViewer } from "@/lib/event-type-helpers";
-import { canManageAllEvents } from "@/lib/roles";
+import { canManageAllEvents, isAdmin } from "@/lib/roles";
+import { formatUserName, userNameOrderBy } from "@/lib/users";
 import { APP_LOGO_SRC, isS3Configured } from "@/lib/s3";
 import { getSiteSettings } from "@/lib/site-settings";
 import { formatBirthdayGreeting, isBirthdayOnDate } from "@/lib/users";
@@ -123,13 +124,27 @@ export default async function HomePage() {
   ];
 
   if (user) {
-    const [scheduleEvents, birthdayUsers, eventTypes, seesAllEvents, settings] = await Promise.all([
-      getUserScheduleEvents(user.id),
-      getUsersWithBirthdays(),
-      getEventTypes(),
-      canManageAllEvents(user.id),
-      getSiteSettings(),
-    ]);
+    const [scheduleEvents, birthdayUsers, eventTypes, seesAllEvents, settings, admin] =
+      await Promise.all([
+        getUserScheduleEvents(user.id),
+        getUsersWithBirthdays(),
+        getEventTypes(),
+        canManageAllEvents(user.id),
+        getSiteSettings(),
+        isAdmin(user.id),
+      ]);
+    const [planningLocations, planningUsers] = admin
+      ? await Promise.all([
+          prisma.location.findMany({
+            orderBy: { name: "asc" },
+            select: { id: true, name: true },
+          }),
+          prisma.user.findMany({
+            orderBy: userNameOrderBy,
+            select: { id: true, firstName: true, lastName: true },
+          }),
+        ])
+      : [[], []];
     const events = settings.showBirthdaysOnPlanning
       ? [...scheduleEvents, ...planningBirthdayEvents(birthdayUsers, tComponents("birthday"))]
       : scheduleEvents;
@@ -166,6 +181,12 @@ export default async function HomePage() {
           initialHideNonParticipating={hideNonParticipating}
           associationCalendarUrl={associationCalendarUrl}
           startOfDayHour={settings.startOfDayHour}
+          canEditPlanning={admin}
+          planningLocations={planningLocations}
+          planningUsers={planningUsers.map((entry) => ({
+            id: entry.id,
+            name: formatUserName(entry),
+          }))}
         />
       </AppShell>
     );

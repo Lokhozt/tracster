@@ -381,11 +381,30 @@ export const schedulingApplySchema = z.object({
 
 export const schedulingConflictsSchema = z.object({
   days: z.array(z.string().date()).min(1).max(14),
+  excludeRehearsalIds: z.array(z.string().min(1)).max(40).optional(),
   placements: z.array(
     z.object({
       itemId: z.string().min(1).max(80),
       choreographyId: z.string().min(1),
       groupId: z.string().min(1).nullable().optional(),
+      startsAt: z.string().datetime(),
+      endsAt: z.string().datetime(),
+    }),
+  ).min(1).max(40),
+});
+
+export const schedulingPlanningPeriodSchema = z.object({
+  startDate: z.string().date(),
+  endDate: z.string().date(),
+});
+
+export const schedulingPlanningApplySchema = schedulingPlanningPeriodSchema.extend({
+  placements: z.array(
+    z.object({
+      eventId: z.string().min(1),
+      choreographyId: z.string().min(1),
+      groupId: z.string().min(1).nullable().optional(),
+      locationId: z.string().min(1),
       startsAt: z.string().datetime(),
       endsAt: z.string().datetime(),
     }),

@@ -510,10 +510,12 @@ function schedulingEntries(placements: SchedulePlacement[]): PlanningImageEntry[
 function planningExportEntry(
   event: SerializedScheduleEvent,
   options: PlanningExportOptions,
-  rehearsalLabel: string,
 ): Pick<PlanningImageEntry, "label" | "groupLabel"> {
   if (options.hideTitles) {
-    return { label: rehearsalLabel, groupLabel: null };
+    return {
+      label: event.typeName,
+      groupLabel: event.typeKind === "REHEARSAL" ? event.groupName : null,
+    };
   }
   if (event.typeKind === "REHEARSAL") {
     return {
@@ -527,11 +529,10 @@ function planningExportEntry(
 function planningExportEntries(
   events: SerializedScheduleEvent[],
   options: PlanningExportOptions,
-  rehearsalLabel: string,
 ): PlanningImageEntry[] {
   return events.map((event) => ({
     id: event.id,
-    ...planningExportEntry(event, options, rehearsalLabel),
+    ...planningExportEntry(event, options),
     startsAt: event.startsAt,
     endsAt: event.endsAt,
     locationKey: event.location ?? "__none__",
@@ -652,11 +653,7 @@ export function PlanningImageExportButton({
       return;
     }
     const range = { start, end };
-    const entries = planningExportEntries(
-      events,
-      { greyNonParticipating, hideTitles },
-      t("rehearsal"),
-    );
+    const entries = planningExportEntries(events, { greyNonParticipating, hideTitles });
     const rangeEntries = entries.filter((entry) => {
       const eventStart = new Date(entry.startsAt);
       const eventEnd = entry.endsAt

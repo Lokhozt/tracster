@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { EventTypeFilter } from "@/components/EventTypeFilter";
 import { FollowAssociationCalendarLink } from "@/components/FollowAssociationCalendarLink";
 import { PlanningImageExportButton } from "@/components/PlanningImageExport";
+import { PlanningRehearsalsEditButton } from "@/components/PlanningRehearsalsEditButton";
 import { RehearsalCalendar } from "@/components/RehearsalCalendar";
 import { UpcomingEventsList } from "@/components/UpcomingEventsList";
 import { Card } from "@/components/ui";
@@ -24,6 +25,9 @@ export function ScheduleOverview({
   initialHideNonParticipating,
   associationCalendarUrl,
   startOfDayHour,
+  canEditPlanning,
+  planningLocations,
+  planningUsers,
 }: {
   events: SerializedScheduleEvent[];
   upcoming: SerializedScheduleEvent[];
@@ -32,6 +36,9 @@ export function ScheduleOverview({
   initialHideNonParticipating: boolean;
   associationCalendarUrl?: string | null;
   startOfDayHour: number;
+  canEditPlanning?: boolean;
+  planningLocations?: Array<{ id: string; name: string }>;
+  planningUsers?: Array<{ id: string; name: string }>;
 }) {
   const t = useTranslations("Components");
   const [hiddenTypeIds, setHiddenTypeIds] = useState(initialHiddenTypeIds);
@@ -93,6 +100,12 @@ export function ScheduleOverview({
               events={exportEvents}
               startOfDayHour={startOfDayHour}
             />
+            {canEditPlanning && planningLocations && planningUsers && (
+              <PlanningRehearsalsEditButton
+                locations={planningLocations}
+                users={planningUsers}
+              />
+            )}
           </>
         }
       />
