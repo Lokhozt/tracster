@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Added
 - Planning page: admins can edit rehearsal planning for a chosen period with the same editor as the scheduling tool, then apply changes.
 
+## Changed
+- Increased weigth penalty for missed past rehearsals from -1 to -4 
+
 ## Fixed
 - Hiding title in planning export now replace the title with the type of event.
 

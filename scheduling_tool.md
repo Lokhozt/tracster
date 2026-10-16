@@ -32,7 +32,7 @@ Don't consider participants / choreographer that are not available at all on the
 * If a choreographer is not available: -50
 * If all choreographer are not available: -100
 * If a choreographer is in two or more rehearsal that overlap in time: -50
-* If a participant is not available: -10, plus -1 for each past rehearsal of that choreography they were part of and did not attend (shown as participated / participant)
+* If a participant is not available: -10, plus -4 for each past rehearsal of that choreography they were part of and did not attend (shown as participated / participant)
 * If a participant has a hole longer than the rest setting between 2 rehearsals: -2
 * If a participant has 2 consecutive rehearsals with a gap of at most the rest setting: +2
 * If a participant has more than 3 consecutives choreographies: -2

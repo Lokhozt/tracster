@@ -41,6 +41,7 @@ const CHOREOGRAPHER_UNAVAILABLE = 100;
 const ALL_CHOREOGRAPHERS_UNAVAILABLE = 100;
 const CHOREOGRAPHER_OVERLAP_PENALTY = 50;
 const PARTICIPANT_UNAVAILABLE = 10;
+const MISSED_REHEARSAL_PENALTY = 4;
 const HOLE_PENALTY = 2;
 const CONSECUTIVE_BONUS = 2;
 const LONG_STREAK_PENALTY = 2;
@@ -248,7 +249,9 @@ function placementScore(
   }
   for (const participant of item.participants) {
     if (personBusy(participant, interval)) {
-      score -= PARTICIPANT_UNAVAILABLE + missedRehearsalCount(participant);
+      score -=
+        PARTICIPANT_UNAVAILABLE +
+        missedRehearsalCount(participant) * MISSED_REHEARSAL_PENALTY;
     }
   }
 

@@ -48,7 +48,7 @@ function problem(participant: SchedulingPerson, start: number, end: number): Sch
 const start = new Date(2026, 9, 17, 10, 0).getTime();
 const end = start + 60 * 60 * 1000;
 
-test("an unavailable participant loses 10 plus one per missed rehearsal", () => {
+test("an unavailable participant loses 10 plus four per missed rehearsal", () => {
   const participant = person({
     unavailability: [{ start: start - 1000, end: end + 1000 }],
   });
@@ -57,7 +57,7 @@ test("an unavailable participant loses 10 plus one per missed rehearsal", () => 
     problem(participant, start, end),
   );
 
-  assert.equal(score, -13);
+  assert.equal(score, -22);
   assert.equal(caveats[0]?.message, "Ada (2 / 5) is unavailable for Piece.");
 });
 
