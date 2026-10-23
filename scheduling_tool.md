@@ -29,15 +29,15 @@ This is the backend work. The tool create a optimized schedule using the constra
 Don't consider participants / choreographer that are not available at all on the scheduling period.
 
 * If a constraint is not respected : -100
-* If a choreographer is not available: -50
+* If a choreographer is not available: -100
 * If all choreographer are not available: -100
 * If a choreographer is in two or more rehearsal that overlap in time: -50
 * If a participant is not available: -10, plus -4 for each past rehearsal of that choreography they were part of and did not attend (shown as participated / participant)
-* If a participant has a hole longer than the rest setting between 2 rehearsals: -2
-* If a participant has 2 consecutive rehearsals with a gap of at most the rest setting: +2
+* If a participant has a hole longer than the rest setting between 2 rehearsals: -1
+* If a participant has 2 consecutive rehearsals with a gap of at most the rest setting: +1
 * If a participant has more than 3 consecutives choreographies: -2
-* If a participant has no time between 12h and 14h: -20
-* If a participant has less than 30 minutes between 12h and 14h: -10
+* If a participant has no time between 12h and 14h: -5
+* If a participant has less than 30 minutes between 12h and 14h: -1
 * If a rehearsal starts before 9h: -10
 * If a rehearsal ends after 20h: -10
 * If a rehearsal overlap with 12h30-14h: -2
