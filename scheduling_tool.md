@@ -11,7 +11,7 @@ The user can export the ordered list and durations as a named collection. Export
 Importing a collection replaces the current list. The imported list can be modified without changing the saved collection until it is exported again.
 
 Step 2- Days and locations
-The user choose on which days the scheduling takes place. By default it is the next week end (Saturday and Sunday).
+The user choose on which days the scheduling takes place. By default it is the week end after the upcoming one (Saturday and Sunday).
 The user choose the available locations using the list of location.
 For each selected location, the user can mark it as preferred.
 For each location, the user can edit when they are available on the selected days.

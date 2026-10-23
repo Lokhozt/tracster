@@ -420,7 +420,7 @@
     "wholeChoreography": "Whole choreography",
     "durationMinutes": "Duration (minutes)",
     "noRehearsalsList": "No rehearsals in the list yet.",
-    "nextWeekendDefault": "Defaults to the next weekend.",
+    "nextWeekendDefault": "Defaults to the weekend after the upcoming one.",
     "removeDay": "Remove {day}",
     "addDay": "Add day",
     "addLocationsFirst": "Add listed locations in Settings first.",

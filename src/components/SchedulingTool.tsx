@@ -19,7 +19,7 @@ import {
   type DateTimeParts,
 } from "@/lib/datetime";
 import { parseDayKey } from "@/lib/scheduling/intervals";
-import { nextWeekendDayKeys } from "@/lib/scheduling/weekend";
+import { weekendAfterNextDayKeys } from "@/lib/scheduling/weekend";
 import type {
   LocationUnavailability,
   ScheduleCaveat,
@@ -119,7 +119,7 @@ export function SchedulingTool({
   const [selectedChoreographyId, setSelectedChoreographyId] = useState(choreographies[0]?.id ?? "");
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(60);
-  const [days, setDays] = useState<string[]>(() => [...nextWeekendDayKeys()]);
+  const [days, setDays] = useState<string[]>(() => [...weekendAfterNextDayKeys()]);
   const [dayToAdd, setDayToAdd] = useState(todayDateInputValue());
   const [locationIds, setLocationIds] = useState<string[]>(() => locations.map((location) => location.id));
   const [preferredLocationIds, setPreferredLocationIds] = useState<string[]>([]);
