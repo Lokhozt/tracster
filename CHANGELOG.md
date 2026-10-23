@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changed
 - Scheduling tool: Updated weights
+- Choreography ressources now display the most recent first.
+
+# Fixed
+- Scheduling tool: Location unavailability selection bug.
 
 # 1.2.5 - 2026-10-17
 

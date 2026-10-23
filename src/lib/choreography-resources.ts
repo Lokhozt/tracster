@@ -92,7 +92,7 @@ export async function getVisibleChoreographyResources(
 ) {
   const resources = await prisma.choreographyResource.findMany({
     where: { choreographyId, status: "ACTIVE" },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
   });
   const visible = await Promise.all(
     resources.map(async (resource) =>

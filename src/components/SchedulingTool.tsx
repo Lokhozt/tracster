@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
@@ -1023,8 +1023,19 @@ function LocationUnavailabilityCard({
   const [day, setDay] = useState(days[0] ?? "");
   const [times, setTimes] = useState(() => defaultUnavailabilityTimes(days[0] ?? todayDateInputValue()));
 
+  useEffect(() => {
+    if (days.length === 0) {
+      return;
+    }
+    if (!days.includes(day)) {
+      const nextDay = days[0];
+      setDay(nextDay);
+      setTimes(defaultUnavailabilityTimes(nextDay));
+    }
+  }, [days, day]);
+
   function addEntry() {
-    const selectedDay = day || days[0];
+    const selectedDay = days.includes(day) ? day : days[0];
     if (!selectedDay) {
       return;
     }
