@@ -143,6 +143,7 @@ export function SchedulingCandidateCalendar({
   highlightUserName,
   onMove,
   onSelect,
+  onClearSelection,
 }: {
   placements: SchedulePlacement[];
   editable?: boolean;
@@ -157,6 +158,7 @@ export function SchedulingCandidateCalendar({
   highlightUserName?: string;
   onMove?: (itemId: string, locationId: string, startsAt: Date, endsAt: Date) => void;
   onSelect?: (itemId: string) => void;
+  onClearSelection?: () => void;
 }) {
   const t = useTranslations("Components");
   const locale = useLocale();
@@ -256,6 +258,19 @@ export function SchedulingCandidateCalendar({
       }
     }
     return null;
+  }
+
+  function handleColumnBackgroundPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    if (!editable || !onClearSelection) {
+      return;
+    }
+    if ((event.target as HTMLElement).closest("[data-scheduling-placement]")) {
+      return;
+    }
+    if (event.pointerType === "mouse" && event.button !== 0) {
+      return;
+    }
+    onClearSelection();
   }
 
   function commitDrag(active: EditDrag) {
@@ -396,6 +411,7 @@ export function SchedulingCandidateCalendar({
                         drag && drag.locationId === locationId && drag.day === day && "bg-stone-100",
                       )}
                       style={{ height }}
+                      onPointerDown={handleColumnBackgroundPointerDown}
                     >
                       {availabilityHeatmap
                         .filter((band) => band.day === day)
@@ -493,6 +509,7 @@ export function SchedulingCandidateCalendar({
                         return (
                           <div
                             key={placement.itemId}
+                            data-scheduling-placement
                             onPointerDown={(event) => startDrag(event, placement)}
                             className={cn(
                               "absolute right-1 left-1 z-[2] overflow-hidden rounded-md border px-1.5 py-1 text-xs leading-tight shadow-sm",

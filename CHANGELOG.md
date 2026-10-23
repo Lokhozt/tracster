@@ -6,8 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # 1.2.6 - 2026-10-23
 
+# Added
+- Calendar edition: clicking on empty space clear selection.
+
 # Changed
 - Scheduling tool: Updated weights
+- Scheduling tool: Changed default days to weekend after next week-end
 - Choreography ressources now display the most recent first.
 
 # Fixed

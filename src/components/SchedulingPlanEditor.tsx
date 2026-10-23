@@ -214,6 +214,12 @@ export function SchedulingPlanEditor({
             setHighlightError(null);
             setHighlightUserId("");
           }}
+          onClearSelection={() => {
+            setAvailabilityItemId("");
+            setHighlightUserId("");
+            setHighlightBands([]);
+            setHighlightError(null);
+          }}
         />
         {availabilityItemId && (
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-stone-700">
