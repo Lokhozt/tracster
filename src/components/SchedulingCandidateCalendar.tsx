@@ -2,7 +2,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { format } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { formatTime } from "@/lib/datetime";
 import { atLocalTime, mergeIntervals, parseDayKey } from "@/lib/scheduling/intervals";
 import type {
@@ -13,7 +13,97 @@ import type {
   SchedulingPlacementConflicts,
 } from "@/lib/scheduling/types";
 import { withSchedulingTooltip } from "@/lib/schedule-filters";
+import {
+  placementDurationMs,
+  swapConflictPreviewSides,
+  type SwapPreviewSide,
+  swappedPlacements,
+} from "@/lib/scheduling/swap-placements";
 import { cn } from "@/lib/utils";
+
+type SwapTooltipPreview =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; selected: SwapPreviewSide; hovered: SwapPreviewSide };
+
+function SwapArrowsIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("size-5 shrink-0 text-stone-500", className)}
+      aria-hidden="true"
+    >
+      <path d="M7 7h11" />
+      <path d="m13 3 4 4-4 4" />
+      <path d="M17 17H6" />
+      <path d="m11 21-4-4 4-4" />
+    </svg>
+  );
+}
+
+function SwapPreviewTooltipColumn({
+  side,
+  noConflictsLabel,
+}: {
+  side: SwapPreviewSide;
+  noConflictsLabel: string;
+}) {
+  return (
+    <div className="min-w-0 flex-1">
+      <p className="font-semibold leading-snug text-stone-900">{side.title}</p>
+      {side.constraints.length === 0 ? (
+        <p className="mt-1 text-stone-500">{noConflictsLabel}</p>
+      ) : (
+        <ul className="mt-1 space-y-0.5 text-stone-600">
+          {side.constraints.map((line) => (
+            <li key={line} className="leading-snug">{line}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function SwapPreviewTooltip({
+  preview,
+  anchorRect,
+  loadingLabel,
+  noConflictsLabel,
+}: {
+  preview: SwapTooltipPreview;
+  anchorRect: DOMRect;
+  loadingLabel: string;
+  noConflictsLabel: string;
+}) {
+  const width = 380;
+  return (
+    <div
+      role="tooltip"
+      className="pointer-events-none fixed z-[100] rounded-md border border-stone-300 bg-white px-3 py-2.5 text-xs text-stone-800 shadow-lg"
+      style={{
+        top: anchorRect.top,
+        left: Math.min(anchorRect.right + 8, window.innerWidth - width - 8),
+        width,
+      }}
+    >
+      {preview.status === "loading" && <p className="text-stone-500">{loadingLabel}</p>}
+      {preview.status === "error" && <p className="text-red-700">{preview.message}</p>}
+      {preview.status === "ready" && (
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <SwapPreviewTooltipColumn side={preview.selected} noConflictsLabel={noConflictsLabel} />
+          <SwapArrowsIcon className="self-center" />
+          <SwapPreviewTooltipColumn side={preview.hovered} noConflictsLabel={noConflictsLabel} />
+        </div>
+      )}
+    </div>
+  );
+}
 
 const PX_PER_MINUTE = 1.1;
 const EDIT_SNAP_MINUTES = 10;
@@ -144,6 +234,8 @@ export function SchedulingCandidateCalendar({
   onMove,
   onSelect,
   onClearSelection,
+  onSwap,
+  excludeRehearsalIds,
 }: {
   placements: SchedulePlacement[];
   editable?: boolean;
@@ -159,12 +251,20 @@ export function SchedulingCandidateCalendar({
   onMove?: (itemId: string, locationId: string, startsAt: Date, endsAt: Date) => void;
   onSelect?: (itemId: string) => void;
   onClearSelection?: () => void;
+  onSwap?: (selectedItemId: string, targetItemId: string) => void;
+  excludeRehearsalIds?: string[];
 }) {
   const t = useTranslations("Components");
   const locale = useLocale();
   const dateLocale = locale === "fr" ? fr : enUS;
   const [drag, setDrag] = useState<EditDrag | null>(null);
+  const [shiftKeyDown, setShiftKeyDown] = useState(false);
+  const [swapHoverItemId, setSwapHoverItemId] = useState<string | null>(null);
+  const [swapTooltipPreview, setSwapTooltipPreview] = useState<SwapTooltipPreview | null>(null);
+  const [swapTooltipRect, setSwapTooltipRect] = useState<DOMRect | null>(null);
   const columnRefs = useRef(new Map<string, HTMLDivElement>());
+  const swapPreviewRequest = useRef(0);
+  const pointerOverPlacementRef = useRef<{ itemId: string; rect: DOMRect } | null>(null);
 
   const uniqueDays = days ?? [
     ...new Set(placements.map((placement) => format(new Date(placement.startsAt), "yyyy-MM-dd"))),
@@ -260,6 +360,202 @@ export function SchedulingCandidateCalendar({
     return null;
   }
 
+  const syncSwapHoverFromPointer = useCallback(
+    (shiftActive: boolean) => {
+      if (!editable || !selectedItemId || !shiftActive) {
+        return;
+      }
+      const over = pointerOverPlacementRef.current;
+      if (!over || over.itemId === selectedItemId) {
+        setSwapHoverItemId(null);
+        setSwapTooltipPreview(null);
+        setSwapTooltipRect(null);
+        return;
+      }
+      const selected = placements.find((placement) => placement.itemId === selectedItemId);
+      const hovered = placements.find((placement) => placement.itemId === over.itemId);
+      if (!selected || !hovered) {
+        return;
+      }
+      if (placementDurationMs(selected) !== placementDurationMs(hovered)) {
+        setSwapHoverItemId(null);
+        setSwapTooltipPreview(null);
+        setSwapTooltipRect(null);
+        return;
+      }
+      setSwapHoverItemId(over.itemId);
+      setSwapTooltipRect(over.rect);
+    },
+    [editable, placements, selectedItemId],
+  );
+
+  useEffect(() => {
+    if (!selectedItemId) {
+      setSwapHoverItemId(null);
+      setSwapTooltipPreview(null);
+      setSwapTooltipRect(null);
+      return;
+    }
+    syncSwapHoverFromPointer(shiftKeyDown);
+  }, [selectedItemId, shiftKeyDown, syncSwapHoverFromPointer]);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Shift") {
+        return;
+      }
+      setShiftKeyDown(true);
+      syncSwapHoverFromPointer(true);
+    }
+    function onKeyUp(event: KeyboardEvent) {
+      if (event.key !== "Shift") {
+        return;
+      }
+      setShiftKeyDown(false);
+      setSwapHoverItemId(null);
+      setSwapTooltipPreview(null);
+      setSwapTooltipRect(null);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, [syncSwapHoverFromPointer]);
+
+  useEffect(() => {
+    if (!editable || !selectedItemId || !swapHoverItemId || !shiftKeyDown) {
+      setSwapTooltipPreview(null);
+      return;
+    }
+
+    const selected = placements.find((placement) => placement.itemId === selectedItemId);
+    const hovered = placements.find((placement) => placement.itemId === swapHoverItemId);
+    const swapped = selected && hovered
+      ? swappedPlacements(placements, selected.itemId, hovered.itemId)
+      : null;
+    if (!selected || !hovered || !swapped) {
+      setSwapTooltipPreview(null);
+      return;
+    }
+
+    const requestId = swapPreviewRequest.current + 1;
+    swapPreviewRequest.current = requestId;
+    setSwapTooltipPreview({ status: "loading" });
+
+    fetch("/api/scheduling/conflicts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        days: uniqueDays,
+        excludeRehearsalIds,
+        placements: swapped.map((placement) => ({
+          itemId: placement.itemId,
+          choreographyId: placement.choreographyId,
+          groupId: placement.groupId,
+          startsAt: placement.startsAt,
+          endsAt: placement.endsAt,
+        })),
+      }),
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error ?? "CONFLICT_CHECK_FAILED");
+        }
+        if (requestId !== swapPreviewRequest.current) {
+          return;
+        }
+        setSwapTooltipPreview({
+          status: "ready",
+          ...swapConflictPreviewSides(data.conflicts, selected, hovered, (key, values) =>
+            t(key as "scheduleChoreographerUnavailable", values),
+          ),
+        });
+      })
+      .catch(() => {
+        if (requestId === swapPreviewRequest.current) {
+          setSwapTooltipPreview({
+            status: "error",
+            message: t("scheduleConflictCheckError"),
+          });
+        }
+      });
+  }, [
+    editable,
+    excludeRehearsalIds,
+    placements,
+    selectedItemId,
+    shiftKeyDown,
+    swapHoverItemId,
+    t,
+    uniqueDays,
+  ]);
+
+  function handlePlacementPointerEnter(
+    event: React.PointerEvent<HTMLDivElement>,
+    placement: SchedulePlacement,
+  ) {
+    if (!editable) {
+      return;
+    }
+    const rect = event.currentTarget.getBoundingClientRect();
+    pointerOverPlacementRef.current = { itemId: placement.itemId, rect };
+    const shiftActive = shiftKeyDown || event.shiftKey;
+    if (event.shiftKey && !shiftKeyDown) {
+      setShiftKeyDown(true);
+    }
+    syncSwapHoverFromPointer(shiftActive);
+  }
+
+  function handlePlacementPointerMove(
+    event: React.PointerEvent<HTMLDivElement>,
+    placement: SchedulePlacement,
+  ) {
+    if (!editable) {
+      return;
+    }
+    pointerOverPlacementRef.current = {
+      itemId: placement.itemId,
+      rect: event.currentTarget.getBoundingClientRect(),
+    };
+    if (swapHoverItemId === placement.itemId) {
+      setSwapTooltipRect(event.currentTarget.getBoundingClientRect());
+    }
+  }
+
+  function handlePlacementPointerLeave(placement: SchedulePlacement) {
+    if (pointerOverPlacementRef.current?.itemId === placement.itemId) {
+      pointerOverPlacementRef.current = null;
+    }
+    if (swapHoverItemId !== placement.itemId) {
+      return;
+    }
+    setSwapHoverItemId(null);
+    setSwapTooltipPreview(null);
+    setSwapTooltipRect(null);
+  }
+
+  function trySwapWithSelected(targetItemId: string): boolean {
+    if (!editable || !onSwap || !selectedItemId || targetItemId === selectedItemId) {
+      return false;
+    }
+    const selected = placements.find((entry) => entry.itemId === selectedItemId);
+    const target = placements.find((entry) => entry.itemId === targetItemId);
+    if (!selected || !target) {
+      return false;
+    }
+    if (placementDurationMs(selected) !== placementDurationMs(target)) {
+      return false;
+    }
+    onSwap(selectedItemId, targetItemId);
+    setSwapHoverItemId(null);
+    setSwapTooltipPreview(null);
+    setSwapTooltipRect(null);
+    return true;
+  }
+
   function handleColumnBackgroundPointerDown(event: React.PointerEvent<HTMLDivElement>) {
     if (!editable || !onClearSelection) {
       return;
@@ -353,6 +649,14 @@ export function SchedulingCandidateCalendar({
       }
       setDrag(null);
       if (!active.moved) {
+        if (event.shiftKey) {
+          if (trySwapWithSelected(active.itemId)) {
+            return;
+          }
+          if (selectedItemId && active.itemId !== selectedItemId) {
+            return;
+          }
+        }
         onSelect?.(active.itemId);
         return;
       }
@@ -380,6 +684,14 @@ export function SchedulingCandidateCalendar({
 
   return (
     <div className="overflow-x-auto">
+      {swapTooltipPreview && swapTooltipRect && (
+        <SwapPreviewTooltip
+          preview={swapTooltipPreview}
+          anchorRect={swapTooltipRect}
+          loadingLabel={t("swapPreviewLoading")}
+          noConflictsLabel={t("swapPreviewNoConflicts")}
+        />
+      )}
       <div className="inline-flex min-w-full gap-6">
         {uniqueDays.map((day) => (
           <div key={day} className="min-w-[220px] flex-1">
@@ -511,6 +823,9 @@ export function SchedulingCandidateCalendar({
                             key={placement.itemId}
                             data-scheduling-placement
                             onPointerDown={(event) => startDrag(event, placement)}
+                            onPointerEnter={(event) => handlePlacementPointerEnter(event, placement)}
+                            onPointerMove={(event) => handlePlacementPointerMove(event, placement)}
+                            onPointerLeave={() => handlePlacementPointerLeave(placement)}
                             className={cn(
                               "absolute right-1 left-1 z-[2] overflow-hidden rounded-md border px-1.5 py-1 text-xs leading-tight shadow-sm",
                               editable && "cursor-grab touch-none select-none active:cursor-grabbing",
@@ -525,16 +840,20 @@ export function SchedulingCandidateCalendar({
                               borderColor: tone.border,
                               color: tone.color,
                             }}
-                            title={withSchedulingTooltip(
-                              `${placementLabel(placement)}\n${formatTime(start)} → ${formatTime(end)}`,
-                              {
-                                choreographerNames: placement.choreographerNames ?? [],
-                                participantNames: placement.participantNames,
-                                unavailableNames: conflict?.unavailable ?? [],
-                                engagedNames: conflict?.engaged ?? [],
-                              },
-                              t,
-                            )}
+                            title={
+                              shiftKeyDown && editable && selectedItemId
+                                ? undefined
+                                : withSchedulingTooltip(
+                                    `${placementLabel(placement)}\n${formatTime(start)} → ${formatTime(end)}`,
+                                    {
+                                      choreographerNames: placement.choreographerNames ?? [],
+                                      participantNames: placement.participantNames,
+                                      unavailableNames: conflict?.unavailable ?? [],
+                                      engagedNames: conflict?.engaged ?? [],
+                                    },
+                                    t,
+                                  )
+                            }
                           >
                             {(isChoreographer || isParticipant || hasConflict) && (
                               <span className="float-right ml-1 inline-flex items-center gap-0.5">

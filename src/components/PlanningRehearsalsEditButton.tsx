@@ -8,6 +8,8 @@ import { SchedulingImageExportButton } from "@/components/PlanningImageExport";
 import { SchedulingPlanEditor } from "@/components/SchedulingPlanEditor";
 import { Button, Input, Label } from "@/components/ui";
 import { parseDayKey } from "@/lib/scheduling/intervals";
+import { useSchedulePlacementHistory } from "@/lib/scheduling/placement-history";
+import { swappedPlacements } from "@/lib/scheduling/swap-placements";
 import type {
   SchedulePlacement,
   SchedulingPlacementConflicts,
@@ -54,7 +56,8 @@ export function PlanningRehearsalsEditButton({
   const [startDate, setStartDate] = useState(format(currentWeek.start, "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(currentWeek.end, "yyyy-MM-dd"));
   const [days, setDays] = useState<string[]>([]);
-  const [placements, setPlacements] = useState<SchedulePlacement[]>([]);
+  const placementHistory = useSchedulePlacementHistory();
+  const placements = placementHistory.placements;
   const [skippedMissingLocation, setSkippedMissingLocation] = useState(0);
   const [loading, setLoading] = useState(false);
   const [applying, setApplying] = useState(false);
@@ -81,7 +84,7 @@ export function PlanningRehearsalsEditButton({
 
   function resetDialog() {
     setPhase("range");
-    setPlacements([]);
+    placementHistory.reset([]);
     setDays([]);
     setSkippedMissingLocation(0);
     setError(null);
@@ -170,7 +173,7 @@ export function PlanningRehearsalsEditButton({
       return;
     }
 
-    setPlacements(nextPlacements);
+    placementHistory.reset(nextPlacements);
     setDays(nextDays);
     setPhase("edit");
     void checkPlacementConflicts(nextPlacements, nextDays);
@@ -194,8 +197,31 @@ export function PlanningRehearsalsEditButton({
           }
         : placement,
     );
-    setPlacements(nextPlacements);
+    placementHistory.commit(nextPlacements);
     void checkPlacementConflicts(nextPlacements, days);
+  }
+
+  function swapEditedPlacements(selectedItemId: string, targetItemId: string) {
+    const next = swappedPlacements(placements, selectedItemId, targetItemId);
+    if (!next) {
+      return;
+    }
+    placementHistory.commit(next);
+    void checkPlacementConflicts(next, days);
+  }
+
+  function undoEditedPlacements() {
+    const previous = placementHistory.undo();
+    if (previous) {
+      void checkPlacementConflicts(previous, days);
+    }
+  }
+
+  function redoEditedPlacements() {
+    const next = placementHistory.redo();
+    if (next) {
+      void checkPlacementConflicts(next, days);
+    }
   }
 
   async function applyChanges() {
@@ -319,6 +345,12 @@ export function PlanningRehearsalsEditButton({
                     checkingConflicts={checkingConflicts}
                     conflictError={conflictError}
                     onMove={moveEditedPlacement}
+                    onSwap={swapEditedPlacements}
+                    onUndo={undoEditedPlacements}
+                    onRedo={redoEditedPlacements}
+                    canUndo={placementHistory.canUndo}
+                    canRedo={placementHistory.canRedo}
+                    excludeRehearsalIds={placements.map((placement) => placement.itemId)}
                   />
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">

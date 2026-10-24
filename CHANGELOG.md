@@ -4,18 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-# 1.2.6 - 2026-10-23
+## 1.2.6 - 2026-10-24
 
-# Added
-- Calendar edition: clicking on empty space clear selection.
+### Added
+- Scheduling and planning edit: edit history for moves and swaps, with Ctrl+Z to undo and Ctrl+Shift+Z to redo.
+- Scheduling and planning edit: with a rehearsal selected for availability, hold Shift and hover another rehearsal of the same length to preview swap conflicts in a three-column tooltip; Shift+click applies the swap.
+- Planning calendar edit: clicking empty space clears choreography and participant selection.
 
-# Changed
-- Scheduling tool: Updated weights
-- Scheduling tool: Changed default days to weekend after next week-end
-- Choreography ressources now display the most recent first.
+### Changed
+- Scheduling tool: updated scoring weights (documented in `scheduling_tool.md`).
+- Scheduling tool: default days are the weekend after the upcoming one (Saturday and Sunday).
+- Choreography resources are listed newest first.
 
-# Fixed
-- Scheduling tool: Location unavailability selection bug.
+### Fixed
+- Scheduling tool: adding location unavailability on the default day after changing rehearsal days.
+- Swap preview tooltip when Shift is pressed while the pointer is already over a rehearsal.
+- Native rehearsal tooltips are hidden while Shift is held during swap preview.
 
 # 1.2.5 - 2026-10-17
 

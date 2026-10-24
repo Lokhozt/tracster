@@ -19,6 +19,8 @@ import {
   type DateTimeParts,
 } from "@/lib/datetime";
 import { parseDayKey } from "@/lib/scheduling/intervals";
+import { useSchedulePlacementHistory } from "@/lib/scheduling/placement-history";
+import { swappedPlacements } from "@/lib/scheduling/swap-placements";
 import { weekendAfterNextDayKeys } from "@/lib/scheduling/weekend";
 import type {
   LocationUnavailability,
@@ -132,7 +134,8 @@ export function SchedulingTool({
   const [applying, setApplying] = useState(false);
   const [candidates, setCandidates] = useState<SchedulingCandidate[]>([]);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
-  const [editedPlacements, setEditedPlacements] = useState<SchedulePlacement[]>([]);
+  const placementHistory = useSchedulePlacementHistory();
+  const editedPlacements = placementHistory.placements;
   const [placementConflicts, setPlacementConflicts] =
     useState<SchedulingPlacementConflicts>({});
   const [unavailableAllPeriod, setUnavailableAllPeriod] = useState<string[]>([]);
@@ -441,7 +444,7 @@ export function SchedulingTool({
       return;
     }
     const placements = selectedCandidate.placements.map((placement) => ({ ...placement }));
-    setEditedPlacements(placements);
+    placementHistory.reset(placements);
     setPlacementConflicts({});
     setUnavailableAllPeriod([]);
     setConflictError(null);
@@ -467,8 +470,31 @@ export function SchedulingTool({
           }
         : placement,
     );
-    setEditedPlacements(placements);
+    placementHistory.commit(placements);
     void checkPlacementConflicts(placements);
+  }
+
+  function swapEditedPlacements(selectedItemId: string, targetItemId: string) {
+    const next = swappedPlacements(editedPlacements, selectedItemId, targetItemId);
+    if (!next) {
+      return;
+    }
+    placementHistory.commit(next);
+    void checkPlacementConflicts(next);
+  }
+
+  function undoEditedPlacements() {
+    const previous = placementHistory.undo();
+    if (previous) {
+      void checkPlacementConflicts(previous);
+    }
+  }
+
+  function redoEditedPlacements() {
+    const next = placementHistory.redo();
+    if (next) {
+      void checkPlacementConflicts(next);
+    }
   }
 
   return (
@@ -931,6 +957,11 @@ export function SchedulingTool({
             checkingConflicts={checkingConflicts}
             conflictError={conflictError}
             onMove={moveEditedPlacement}
+            onSwap={swapEditedPlacements}
+            onUndo={undoEditedPlacements}
+            onRedo={redoEditedPlacements}
+            canUndo={placementHistory.canUndo}
+            canRedo={placementHistory.canRedo}
           />
           <div className="flex flex-wrap gap-2">
             <Button

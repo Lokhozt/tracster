@@ -29,6 +29,12 @@ export function SchedulingPlanEditor({
   checkingConflicts,
   conflictError,
   onMove,
+  onSwap,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
+  excludeRehearsalIds,
 }: {
   placements: SchedulePlacement[];
   days: string[];
@@ -45,6 +51,12 @@ export function SchedulingPlanEditor({
   checkingConflicts: boolean;
   conflictError: string | null;
   onMove: (itemId: string, locationId: string, startsAt: Date, endsAt: Date) => void;
+  onSwap: (selectedItemId: string, targetItemId: string) => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  excludeRehearsalIds?: string[];
 }) {
   const t = useTranslations("Components");
   const [highlightUserId, setHighlightUserId] = useState("");
@@ -153,6 +165,39 @@ export function SchedulingPlanEditor({
     return () => controller.abort();
   }, [availabilityItemId, availabilityRequestKey, days.length, t]);
 
+  useEffect(() => {
+    if (!onUndo && !onRedo) {
+      return;
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "z") {
+        return;
+      }
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT")
+      ) {
+        return;
+      }
+      event.preventDefault();
+      if (event.shiftKey) {
+        if (canRedo) {
+          onRedo?.();
+        }
+        return;
+      }
+      if (canUndo) {
+        onUndo?.();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [canRedo, canUndo, onRedo, onUndo]);
+
   return (
     <div className="space-y-4">
       <Card className="space-y-3">
@@ -160,6 +205,10 @@ export function SchedulingPlanEditor({
           <h2 className="text-lg font-semibold">{t("editSchedule")}</h2>
           <p className="mt-1 text-sm text-stone-600">{t("editScheduleHelp")}</p>
           <p className="mt-1 text-sm text-stone-600">{t("highlightChoreographyAvailabilityHelp")}</p>
+          <p className="mt-1 text-sm text-stone-600">{t("swapPreviewHelp")}</p>
+          {(onUndo || onRedo) && (
+            <p className="mt-1 text-sm text-stone-600">{t("scheduleEditUndoRedoHelp")}</p>
+          )}
         </div>
         {users.length > 0 && (
           <div>
@@ -208,6 +257,7 @@ export function SchedulingPlanEditor({
           highlightUserId={highlightUserId || undefined}
           highlightUserName={users.find((user) => user.id === highlightUserId)?.name}
           onMove={onMove}
+          onSwap={onSwap}
           onSelect={(itemId) => {
             setAvailabilityItemId((current) => (current === itemId ? "" : itemId));
             setHighlightBands([]);
@@ -220,6 +270,7 @@ export function SchedulingPlanEditor({
             setHighlightBands([]);
             setHighlightError(null);
           }}
+          excludeRehearsalIds={excludeRehearsalIds}
         />
         {availabilityItemId && (
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-stone-700">
