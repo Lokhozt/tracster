@@ -30,7 +30,9 @@ import {
 } from "@/lib/users";
 import { getServerTranslator } from "@/i18n/server";
 import { isAtLeastManager } from "@/lib/roles";
+import { PinnedChoreographyResources } from "@/components/PinnedChoreographyResources";
 import { WhatsAppLink } from "@/components/WhatsAppLink";
+import { getPinnedChoreographyResources } from "@/lib/choreography-resources";
 import { isWhatsAppUrl } from "@/lib/whatsapp";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -178,6 +180,11 @@ export default async function EventDetailPage({ params }: PageProps) {
       ? `/choreographies/${event.choreographyId}`
       : null;
 
+  const pinnedChoreographyResources =
+    event.type.kind === "REHEARSAL" && event.choreographyId
+      ? await getPinnedChoreographyResources(event.choreographyId, user.id)
+      : [];
+
   return (
     <AppShell
       title={
@@ -283,6 +290,13 @@ export default async function EventDetailPage({ params }: PageProps) {
           </div>
         )}
       </Card>
+
+      {event.type.kind === "REHEARSAL" && event.choreographyId && (
+        <PinnedChoreographyResources
+          choreographyId={event.choreographyId}
+          resources={pinnedChoreographyResources}
+        />
+      )}
 
       {generic && canEdit && (eventRecord.allowJoinRequests || eventRecord.joinRequests.length > 0) && (
         <div className="mb-6">

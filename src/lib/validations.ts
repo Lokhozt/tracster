@@ -267,6 +267,10 @@ export const choreographyResourceLinkSchema = z.object({
   visibility: choreographyResourceVisibilitySchema,
 });
 
+export const choreographyResourcePinSchema = z.object({
+  pinned: z.boolean(),
+});
+
 export const choreographyResourceUploadSchema = z.object({
   fileName: z.string().trim().min(1).max(255),
   mimeType: z.string().trim().min(1).max(150),

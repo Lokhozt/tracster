@@ -370,6 +370,7 @@ model ChoreographyResource {
   fileName       String?
   mimeType       String?
   sizeBytes      BigInt?
+  pinned         Boolean                        @default(false)
   createdAt      DateTime                       @default(now())
   updatedAt      DateTime                       @updatedAt
 

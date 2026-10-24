@@ -46,6 +46,7 @@ export async function canViewChoreographyResource(
 export type SerializedChoreographyResource = {
   id: string;
   type: "LINK" | "FILE";
+  pinned: boolean;
   visibility: ChoreographyResourceVisibility;
   description: string | null;
   url: string | null;
@@ -60,6 +61,7 @@ export type SerializedChoreographyResource = {
 export function serializeChoreographyResource(resource: {
   id: string;
   type: "LINK" | "FILE";
+  pinned: boolean;
   visibility: ChoreographyResourceVisibility;
   description: string | null;
   url: string | null;
@@ -71,6 +73,7 @@ export function serializeChoreographyResource(resource: {
   return {
     id: resource.id,
     type: resource.type,
+    pinned: resource.pinned,
     visibility: resource.visibility,
     description: resource.description,
     url: resource.url,
@@ -92,6 +95,28 @@ export async function getVisibleChoreographyResources(
 ) {
   const resources = await prisma.choreographyResource.findMany({
     where: { choreographyId, status: "ACTIVE" },
+    orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
+  });
+  const visible = await Promise.all(
+    resources.map(async (resource) =>
+      (await canViewChoreographyResource(
+        choreographyId,
+        userId,
+        resource.visibility,
+      ))
+        ? serializeChoreographyResource(resource)
+        : null,
+    ),
+  );
+  return visible.filter((resource) => resource !== null);
+}
+
+export async function getPinnedChoreographyResources(
+  choreographyId: string,
+  userId: string,
+) {
+  const resources = await prisma.choreographyResource.findMany({
+    where: { choreographyId, status: "ACTIVE", pinned: true },
     orderBy: { createdAt: "desc" },
   });
   const visible = await Promise.all(

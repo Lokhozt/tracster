@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 1.2.6 - 2026-10-24
 
 ### Added
+- Choreography resources: pin a resource so it appears on every rehearsal page for that choreography.
 - Scheduling and planning edit: edit history for moves and swaps, with Ctrl+Z to undo and Ctrl+Shift+Z to redo.
 - Scheduling and planning edit: with a rehearsal selected for availability, hold Shift and hover another rehearsal of the same length to preview swap conflicts in a three-column tooltip; Shift+click applies the swap.
 - Planning calendar edit: clicking empty space clears choreography and participant selection.
@@ -14,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Scheduling tool: updated scoring weights (documented in `scheduling_tool.md`).
 - Scheduling tool: default days are the weekend after the upcoming one (Saturday and Sunday).
-- Choreography resources are listed newest first.
+- Choreography resources: pinned resources are listed first, then newest first.
 
 ### Fixed
 - Scheduling tool: adding location unavailability on the default day after changing rehearsal days.

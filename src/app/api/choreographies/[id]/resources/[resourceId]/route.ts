@@ -1,13 +1,38 @@
 import { NextRequest } from "next/server";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
+import { serializeChoreographyResource } from "@/lib/choreography-resources";
 import { prisma } from "@/lib/db";
 import { canEditChoreography } from "@/lib/permissions";
 import { deleteChoreographyResourceObjects } from "@/lib/s3";
+import { choreographyResourcePinSchema } from "@/lib/validations";
 
 type RouteContext = {
   params: Promise<{ id: string; resourceId: string }>;
 };
+
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  const user = await getCurrentUser();
+  if (!user) return unauthorized();
+  const { id, resourceId } = await context.params;
+  if (!(await canEditChoreography(id, user.id))) return forbidden();
+
+  const parsed = choreographyResourcePinSchema.safeParse(await request.json());
+  if (!parsed.success) {
+    return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
+  }
+
+  const resource = await prisma.choreographyResource.findFirst({
+    where: { id: resourceId, choreographyId: id, status: "ACTIVE" },
+  });
+  if (!resource) return notFound("Resource");
+
+  const updated = await prisma.choreographyResource.update({
+    where: { id: resource.id },
+    data: { pinned: parsed.data.pinned },
+  });
+  return Response.json({ resource: serializeChoreographyResource(updated) });
+}
 
 export async function DELETE(_request: NextRequest, context: RouteContext) {
   const user = await getCurrentUser();

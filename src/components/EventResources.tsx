@@ -299,6 +299,84 @@ function FileResource({
   );
 }
 
+function PinIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true" fill="none">
+      {filled ? (
+        <path
+          d="M14 4.5 9.5 9 5 7.5 4 8.5v11l5.5-3 5.5 3v-11l-1-1Z"
+          fill="currentColor"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+        />
+      ) : (
+        <path
+          d="M14 4.5 9.5 9 5 7.5 4 8.5v11l5.5-3 5.5 3v-11l-1-1Z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+      )}
+    </svg>
+  );
+}
+
+function PinResourceButton({
+  choreographyId,
+  resourceId,
+  pinned,
+}: {
+  choreographyId: string;
+  resourceId: string;
+  pinned: boolean;
+}) {
+  const t = useTranslations("Components");
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function toggle() {
+    setSaving(true);
+    setError(null);
+    const response = await fetch(
+      `/api/choreographies/${choreographyId}/resources/${resourceId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pinned: !pinned }),
+      },
+    );
+    setSaving(false);
+    if (!response.ok) {
+      setError(await responseError(response, t("resourcePinError")));
+      return;
+    }
+    router.refresh();
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        type="button"
+        className={`inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border transition disabled:opacity-50 ${
+          pinned
+            ? "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
+            : "border-stone-200 bg-white text-stone-500 hover:bg-stone-50 hover:text-stone-800"
+        }`}
+        disabled={saving}
+        aria-pressed={pinned}
+        aria-label={pinned ? t("unpinResource") : t("pinResource")}
+        title={pinned ? t("unpinResource") : t("pinResource")}
+        onClick={toggle}
+      >
+        <PinIcon filled={pinned} />
+      </button>
+      {error && <p className="text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}
+
 function ResourceCard({
   choreographyId,
   resource,
@@ -338,6 +416,13 @@ function ResourceCard({
           {resource.fileName && <span className="text-sm font-medium">{resource.fileName}</span>}
         </div>
         <div className="flex shrink-0 items-start gap-3">
+          {canEdit && (
+            <PinResourceButton
+              choreographyId={choreographyId}
+              resourceId={resource.id}
+              pinned={resource.pinned}
+            />
+          )}
           {resource.type === "FILE" && (
             <ResourceDownloadButton choreographyId={choreographyId} resource={resource} />
           )}
@@ -510,6 +595,32 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
         {saving ? t("savingResource") : t("addResource")}
       </Button>
     </form>
+  );
+}
+
+export function PinnedChoreographyResources({
+  choreographyId,
+  resources,
+}: {
+  choreographyId: string;
+  resources: SerializedChoreographyResource[];
+}) {
+  const t = useTranslations("Components");
+  if (resources.length === 0) return null;
+  return (
+    <Card className="mb-6">
+      <h2 className="mb-4 text-lg font-semibold">{t("pinnedChoreographyResources")}</h2>
+      <div className="space-y-4">
+        {resources.map((resource) => (
+          <ResourceCard
+            key={resource.id}
+            choreographyId={choreographyId}
+            resource={resource}
+            canEdit={false}
+          />
+        ))}
+      </div>
+    </Card>
   );
 }
 
