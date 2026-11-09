@@ -15,7 +15,7 @@ import {
 import { DocumentTypeIcon } from "@/components/DocumentTypeIcon";
 import { OfficeFileViewer } from "@/components/OfficeFileViewer";
 import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
-import { SectionNav } from "@/components/SettingsSections";
+import { SectionNav, type NavSection } from "@/components/SettingsSections";
 import { documentDisplayType } from "@/lib/document-type";
 import { TracBarCategoryPanel } from "@/components/PartyBarSlots";
 import type { SerializedDocument, SerializedDocumentCategory } from "@/lib/documents";
@@ -645,23 +645,26 @@ export function Documents({
     };
   });
 
-  const tracBarSection = tracBar
-    ? [
-        {
-          id: TRAC_BAR_DOCUMENTS_SECTION_ID,
-          label: t("tracBarTitle"),
-          content: (
-            <TracBarCategoryPanel
-              parties={tracBar.parties}
-              currentUserId={tracBar.currentUserId}
-              canManage={tracBar.canManage}
-            />
-          ),
-        },
-      ]
-    : [];
+  const tracBarSection: NavSection | null = tracBar
+    ? {
+        id: TRAC_BAR_DOCUMENTS_SECTION_ID,
+        label: t("tracBarTitle"),
+        content: (
+          <TracBarCategoryPanel
+            parties={tracBar.parties}
+            currentUserId={tracBar.currentUserId}
+            canManage={tracBar.canManage}
+          />
+        ),
+      }
+    : null;
 
-  const sections = [...tracBarSection, ...documentSections];
+  const sections =
+    tracBarSection && documentSections.length > 0
+      ? [documentSections[0], tracBarSection, ...documentSections.slice(1)]
+      : tracBarSection
+        ? [tracBarSection]
+        : documentSections;
 
   return (
     <SectionNav

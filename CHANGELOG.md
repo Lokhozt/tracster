@@ -10,7 +10,7 @@ Party time !
 ### Added
 - Events list: users who can create events can duplicate an event from the list; the create form is prefilled with type, description, location, dates, and participation options.
 - Party events (“Soirée”): new event type with up to three **bar volunteer** slots, separate from the regular participant list.
-- Documents: **Trac Bar** category listing upcoming parties and open bar slots (claim or release a slot).
+- Documents: **Trac Bar** category listing upcoming parties and open bar slots (claim or release a slot); toggle between parties needing volunteers (default) and all upcoming parties; listed second after the first document category, not the default section unless it is the only category.
 - Schedule (planning) page: reminder banner when a party in the current week still has free bar slots, with a link to the event.
 - Party create/edit: option to enable or disable bar volunteer slots; standard participation settings (join, requests, visibility) like other generic events.
 

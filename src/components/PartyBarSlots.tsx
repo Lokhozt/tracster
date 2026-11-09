@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
 import type { PartyBarSlot } from "@/lib/party-bar-shared";
@@ -150,6 +150,12 @@ export function PartyBarEventCard({
   );
 }
 
+type TracBarListFilter = "open" | "all";
+
+function partyHasOpenBarSlot(slots: PartyBarSlot[]): boolean {
+  return slots.some((slot) => slot === null);
+}
+
 export function TracBarCategoryPanel({
   parties,
   currentUserId,
@@ -165,15 +171,48 @@ export function TracBarCategoryPanel({
   canManage: boolean;
 }) {
   const t = useTranslations("Components");
+  const [listFilter, setListFilter] = useState<TracBarListFilter>("open");
+
+  const visibleParties = useMemo(() => {
+    if (listFilter === "all") {
+      return parties;
+    }
+    return parties.filter((party) => partyHasOpenBarSlot(party.slots));
+  }, [parties, listFilter]);
+
+  const emptyMessage =
+    parties.length === 0
+      ? t("tracBarEmpty")
+      : listFilter === "open"
+        ? t("tracBarEmptyOpenSlots")
+        : t("tracBarEmpty");
 
   return (
     <Card>
       <p className="mb-4 text-sm text-stone-600">{t("tracBarHelp")}</p>
-      {parties.length === 0 ? (
-        <p className="text-sm text-stone-600">{t("tracBarEmpty")}</p>
+      {parties.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant={listFilter === "open" ? "primary" : "secondary"}
+            onClick={() => setListFilter("open")}
+          >
+            {t("tracBarFilterOpenSlots")}
+          </Button>
+          <Button
+            type="button"
+            variant={listFilter === "all" ? "primary" : "secondary"}
+            onClick={() => setListFilter("all")}
+          >
+            {t("tracBarFilterAll")}
+          </Button>
+        </div>
+      )}
+      {visibleParties.length === 0 ? (
+        <p className="text-sm text-stone-600">{emptyMessage}</p>
       ) : (
         <div className="space-y-4">
-          {parties.map((party) => (
+          {visibleParties.map((party) => (
             <PartyBarEventCard
               key={party.id}
               eventId={party.id}
