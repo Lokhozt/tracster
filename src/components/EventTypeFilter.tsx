@@ -1,9 +1,13 @@
 "use client";
 
+import { useRef } from "react";
 import { useTranslations } from "next-intl";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
 import { eventCategoryClassName } from "@/lib/event-category-filter";
 import { cn } from "@/lib/utils";
+
+const DOUBLE_CLICK_MS = 400;
+const LONG_PRESS_MS = 500;
 
 export function EventTypeFilter({
   eventTypes,
@@ -16,6 +20,9 @@ export function EventTypeFilter({
 }) {
   const t = useTranslations("Components");
   const hidden = new Set(hiddenTypeIds);
+  const lastClickRef = useRef<{ typeId: string; at: number } | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suppressClickRef = useRef(false);
 
   function toggle(typeId: string) {
     const next = new Set(hidden);
@@ -25,6 +32,57 @@ export function EventTypeFilter({
       next.add(typeId);
     }
     onChange([...next]);
+  }
+
+  function soloOrShowAll(typeId: string) {
+    const allIds = eventTypes.map((type) => type.id);
+    const visibleCount = allIds.filter((id) => !hidden.has(id)).length;
+    const onlyThisVisible = !hidden.has(typeId) && visibleCount === 1;
+
+    if (onlyThisVisible || visibleCount === 0) {
+      onChange([]);
+      return;
+    }
+    onChange(allIds.filter((id) => id !== typeId));
+  }
+
+  function handleCategoryClick(typeId: string) {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+
+    const now = Date.now();
+    const last = lastClickRef.current;
+    if (last?.typeId === typeId && now - last.at < DOUBLE_CLICK_MS) {
+      lastClickRef.current = null;
+      soloOrShowAll(typeId);
+      return;
+    }
+
+    lastClickRef.current = { typeId, at: now };
+    toggle(typeId);
+  }
+
+  function clearLongPressTimer() {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }
+
+  function handlePointerDown(typeId: string) {
+    if (!window.matchMedia("(max-width: 1023px)").matches) {
+      return;
+    }
+    clearLongPressTimer();
+    suppressClickRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      suppressClickRef.current = true;
+      longPressTimerRef.current = null;
+      lastClickRef.current = null;
+      soloOrShowAll(typeId);
+    }, LONG_PRESS_MS);
   }
 
   return (
@@ -59,7 +117,11 @@ export function EventTypeFilter({
               key={type.id}
               type="button"
               aria-pressed={selected}
-              onClick={() => toggle(type.id)}
+              onClick={() => handleCategoryClick(type.id)}
+              onPointerDown={() => handlePointerDown(type.id)}
+              onPointerUp={clearLongPressTimer}
+              onPointerCancel={clearLongPressTimer}
+              onPointerLeave={clearLongPressTimer}
               className={cn(
                 "inline-flex min-h-9 items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition",
                 eventCategoryClassName(type.kind),
