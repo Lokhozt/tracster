@@ -317,7 +317,7 @@
     "partyBarPrefillHelp": "You can pre-fill up to three bar slots when creating the party.",
     "partyBarSlotsEnabled": "Bar volunteer slots",
     "partyBarSlotsEnabledHelp": "Allow members to sign up for up to three bar slots. Turn off for parties without a Tracster bar.",
-    "partyBarPlanningReminder": "{title}: {filled}/{total} bar slots filled this week.",
+    "partyBarPlanningReminder": "{title}: {filled}/{total} bar slots filled (next two weeks).",
     "partyBarPlanningReminderCta": "Sign up",
     "eventCreateError": "Unable to create event.",
     "eventUpdateError": "Unable to update event.",

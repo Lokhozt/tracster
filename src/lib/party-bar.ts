@@ -1,4 +1,4 @@
-import { endOfWeek, startOfWeek } from "date-fns";
+import { addDays } from "date-fns";
 import { prisma } from "@/lib/db";
 import { PARTY_BAR_SLOT_COUNT } from "@/lib/event-type-helpers";
 import { basicUserSelect, formatUserName } from "@/lib/users";
@@ -73,14 +73,13 @@ export async function listUpcomingPartyBarEvents(): Promise<SerializedUpcomingPa
 export async function listPartyBarPlanningReminders(
   now = new Date(),
 ): Promise<PartyBarPlanningReminder[]> {
-  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+  const rangeEnd = addDays(now, 14);
 
   const events = await prisma.event.findMany({
     where: {
       partyBarSlotsEnabled: true,
       type: { kind: "PARTY" },
-      startsAt: { gte: now > weekStart ? now : weekStart, lte: weekEnd },
+      startsAt: { gte: now, lte: rangeEnd },
     },
     orderBy: { startsAt: "asc" },
     select: {

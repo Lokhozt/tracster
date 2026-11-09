@@ -8,12 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Party time !
 
 ### Added
+- Optional message-of-the-day banner when `MOTD` is set in the environment.
 - Seasonal festive header: twinkling lights, snow in the garland, and a soft holiday page tint (1 November – 6 January); disable site-wide with `DISABLE_SEASONAL_STYLE` or per user in account settings.
 - `APP_LOGO_PATH` to override the app logo (default `LOGO.png` from storage, or a path/URL).
 - Events list: users who can create events can duplicate an event from the list; the create form is prefilled with type, description, location, dates, and participation options.
 - Party events (“Soirée”): new event type with up to three **bar volunteer** slots, separate from the regular participant list.
 - Documents: **Trac Bar** category listing upcoming parties and open bar slots (claim or release a slot); toggle between parties needing volunteers (default) and all upcoming parties; listed second after the first document category, not the default section unless it is the only category.
-- Schedule (planning) page: reminder banner when a party in the current week still has free bar slots, with a link to the event.
+- Schedule (planning) page: reminder banner when a party in the next two weeks still has free bar slots, with a link to the event.
 - Party create/edit: option to enable or disable bar volunteer slots; standard participation settings (join, requests, visibility) like other generic events.
 
 ### Changed

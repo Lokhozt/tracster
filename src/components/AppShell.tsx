@@ -3,6 +3,8 @@ import { ChristmasLights } from "@/components/ChristmasLights";
 import { HeaderBar } from "@/components/HeaderBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { shouldShowSeasonalStyle } from "@/lib/festive-season";
+import { MessageOfTheDayBanner } from "@/components/MessageOfTheDayBanner";
+import { getMessageOfTheDay } from "@/lib/motd";
 import { getAppLogoSrc } from "@/lib/s3";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +18,7 @@ export async function AppShell({
   wide?: boolean;
 }) {
   const user = await getCurrentUser();
+  const messageOfTheDay = getMessageOfTheDay();
   const showChristmasLights = shouldShowSeasonalStyle({
     userDisableSeasonalStyle: user?.disableSeasonalStyle,
   });
@@ -46,6 +49,7 @@ export async function AppShell({
       <main
         className={`mx-auto w-full flex-1 px-4 pt-6 pb-6 sm:px-6 sm:pt-8 sm:pb-8 ${user ? "lg:pb-[calc(5rem+env(safe-area-inset-bottom))]" : "sm:pb-[calc(5rem+env(safe-area-inset-bottom))]"} ${wide ? "max-w-screen-2xl" : "max-w-5xl"}`}
       >
+        {messageOfTheDay && <MessageOfTheDayBanner message={messageOfTheDay} />}
         {title && (
           <h1 className="mb-6 flex items-center gap-2 text-2xl font-semibold tracking-tight break-words sm:text-3xl">
             {title}
