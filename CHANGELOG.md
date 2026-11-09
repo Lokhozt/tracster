@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Party time !
 
 ### Added
+- Events list: users who can create events can duplicate an event from the list; the create form is prefilled with type, description, location, dates, and participation options.
 - Party events (“Soirée”): new event type with up to three **bar volunteer** slots, separate from the regular participant list.
 - Documents: **Trac Bar** category listing upcoming parties and open bar slots (claim or release a slot).
 - Schedule (planning) page: reminder banner when a party in the current week still has free bar slots, with a link to the event.

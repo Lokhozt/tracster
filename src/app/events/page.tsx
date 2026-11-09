@@ -98,6 +98,7 @@ export default async function EventsPage() {
           eventTypes={visibleEventTypes}
           initialHiddenTypeIds={hiddenTypeIds}
           initialHideNonParticipating={hideNonParticipating}
+          canCreate={canCreate}
         />
       )}
     </AppShell>

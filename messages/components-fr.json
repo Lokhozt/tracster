@@ -605,6 +605,7 @@
     "choreographies": "Chorégraphies",
     "youAreChoreographer": "Vous êtes chorégraphe",
     "editEvent": "Modifier l’événement",
+    "copyEvent": "Dupliquer l’événement",
     "editRepresentation": "Modifier la représentation",
     "createRepresentation": "Créer une représentation",
     "representationPiecesHelp": "Pièces présentées lors de cette représentation.",

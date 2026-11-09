@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { CopyIconLink } from "@/components/CopyIconLink";
 import { EditIconLink } from "@/components/EditIconLink";
 import { EventTypeFilter } from "@/components/EventTypeFilter";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
@@ -51,11 +52,13 @@ export function EventsList({
   eventTypes,
   initialHiddenTypeIds,
   initialHideNonParticipating,
+  canCreate = false,
 }: {
   events: EventListItem[];
   eventTypes: SerializedEventType[];
   initialHiddenTypeIds: string[];
   initialHideNonParticipating: boolean;
+  canCreate?: boolean;
 }) {
   const t = useTranslations("Components");
   const locale = useLocale();
@@ -185,8 +188,14 @@ export function EventsList({
                     </p>
                   )}
                 </div>
-                <div className={cn("flex items-start gap-3 text-sm text-stone-600", aboveCardLink)}>
-                  <p>{t("participantCount", { count: participantCount })}</p>
+                <div className={cn("flex items-start gap-1 text-sm text-stone-600", aboveCardLink)}>
+                  <p className="mr-2">{t("participantCount", { count: participantCount })}</p>
+                  {canCreate && (
+                    <CopyIconLink
+                      href={`/events/new?copyFrom=${event.id}`}
+                      label={t("copyEvent")}
+                    />
+                  )}
                   {canEdit && (
                     <EditIconLink href={`/events/${event.id}`} label={t("editEvent")} />
                   )}

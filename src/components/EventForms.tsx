@@ -15,6 +15,7 @@ import {
   selectionFromRecord,
   type LocationSelection,
 } from "@/components/LocationPicker";
+import type { EventCreateCopy } from "@/lib/event-create-copy";
 import { ParticipantConflictWarnings } from "@/components/ParticipantConflictWarnings";
 import { RehearsalAudienceSelect, type GroupOption } from "@/components/GroupForms";
 import { Button, Input, Label, Select, Textarea } from "@/components/ui";
@@ -165,6 +166,7 @@ export function CreateEventForm({
   lockType = false,
   defaultChoreographyId,
   lockChoreography = false,
+  copyFrom,
   onSuccess,
   redirectBasePath,
 }: {
@@ -176,27 +178,38 @@ export function CreateEventForm({
   lockType?: boolean;
   defaultChoreographyId?: string;
   lockChoreography?: boolean;
+  copyFrom?: EventCreateCopy;
   onSuccess?: (eventId: string) => void;
   redirectBasePath?: string;
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
-  const initialTypeId = defaultTypeId ?? eventTypes[0]?.id ?? "";
+  const initialTypeId = copyFrom?.typeId ?? defaultTypeId ?? eventTypes[0]?.id ?? "";
   const initialEventType = selectedEventType(eventTypes, initialTypeId);
   const initialChoreographyTitle = choreographyOptions?.find(
     (choreography) => choreography.id === defaultChoreographyId,
   )?.title;
+  const initialStart = copyFrom
+    ? dateToDateTimeParts(new Date(copyFrom.startsAt))
+    : defaultStartDateTime();
+  const initialEnd = copyFrom?.endsAt
+    ? dateToDateTimeParts(new Date(copyFrom.endsAt))
+    : copyFrom
+      ? addOneHour(dateToDateTimeParts(new Date(copyFrom.startsAt)))
+      : addOneHour(defaultStartDateTime());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [typeId, setTypeId] = useState(initialTypeId);
   const [title, setTitle] = useState(
     initialEventType?.kind === "REHEARSAL" ? (initialChoreographyTitle ?? "") : "",
   );
-  const [description, setDescription] = useState("");
-  const [notes, setNotes] = useState("");
+  const [description, setDescription] = useState(copyFrom?.description ?? "");
+  const [notes, setNotes] = useState(copyFrom?.notes ?? "");
   const [whatsappUrl, setWhatsappUrl] = useState("");
-  const [locationSelection, setLocationSelection] = useState<LocationSelection>(
-    emptyLocationSelection,
+  const [locationSelection, setLocationSelection] = useState<LocationSelection>(() =>
+    copyFrom
+      ? selectionFromRecord(copyFrom)
+      : emptyLocationSelection,
   );
   const [selectedParticipantIds, setSelectedParticipantIds] = useState<string[]>([]);
   const [selectedBarSlotUserIds, setSelectedBarSlotUserIds] = useState<string[]>([]);
@@ -207,11 +220,13 @@ export function CreateEventForm({
   const [audience, setAudience] = useState("");
   const [fetchedGroups, setFetchedGroups] = useState<GroupOption[]>([]);
   const [participation, setParticipation] = useState<ParticipationSettings>(
-    defaultParticipationSettings,
+    copyFrom?.participation ?? defaultParticipationSettings,
   );
-  const [partyBarSlotsEnabled, setPartyBarSlotsEnabled] = useState(true);
-  const [start, setStart] = useState<DateTimeParts>(defaultStartDateTime);
-  const [end, setEnd] = useState<DateTimeParts>(() => addOneHour(defaultStartDateTime()));
+  const [partyBarSlotsEnabled, setPartyBarSlotsEnabled] = useState(
+    copyFrom?.partyBarSlotsEnabled ?? true,
+  );
+  const [start, setStart] = useState<DateTimeParts>(initialStart);
+  const [end, setEnd] = useState<DateTimeParts>(initialEnd);
   const [repeat, setRepeat] = useState(false);
   const [repeatWeekday, setRepeatWeekday] = useState(() => weekdayFromParts(defaultStartDateTime()));
   const [repeatWeeks, setRepeatWeeks] = useState(4);

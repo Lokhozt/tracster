@@ -14,9 +14,10 @@ import {
   filterEventTypesForViewer,
   type EventKind,
 } from "@/lib/event-type-helpers";
+import { loadEventCreateCopy } from "@/lib/event-create-copy";
 
 type PageProps = {
-  searchParams: Promise<{ type?: string; choreographyId?: string }>;
+  searchParams: Promise<{ type?: string; choreographyId?: string; copyFrom?: string }>;
 };
 
 const kindAliases: Record<string, EventKind> = {
@@ -57,8 +58,14 @@ export default async function NewEventPage({ searchParams }: PageProps) {
       ? await getEventTypeByKind(requestedKind)
       : undefined);
 
-  const needsGenericCreate = !eventKindSkipsGenericCreatePermission(requestedType?.kind ?? null);
-  if (needsGenericCreate && !(await canCreateEvent(user.id))) {
+  const copyFrom = params.copyFrom
+    ? (await loadEventCreateCopy(params.copyFrom, user.id)) ?? undefined
+    : undefined;
+
+  const needsGenericCreate = !eventKindSkipsGenericCreatePermission(
+    requestedType?.kind ?? null,
+  );
+  if (!copyFrom && needsGenericCreate && !(await canCreateEvent(user.id))) {
     redirect("/events");
   }
 
@@ -97,9 +104,10 @@ export default async function NewEventPage({ searchParams }: PageProps) {
           participantOptions={users.map(serializeBasicUser)}
           choreographyOptions={editableChoreographies}
           defaultTypeId={requestedType?.id}
-          lockType={Boolean(requestedType) && Boolean(params.type)}
+          lockType={Boolean(requestedType) && Boolean(params.type) && !copyFrom}
           defaultChoreographyId={lockChoreography ? params.choreographyId : undefined}
           lockChoreography={lockChoreography}
+          copyFrom={copyFrom}
           redirectBasePath="/events"
         />
       </Card>
