@@ -28,6 +28,7 @@ model User {
   dateOfBirth            DateTime?
   role                   UserRole         @default(USER)
   displayLanguage        DisplayLanguage?
+  disableSeasonalStyle   Boolean          @default(false)
   adminPrivilegesEnabled Boolean          @default(true)
   isCompetitor           Boolean          @default(false)
   passwordHash           String

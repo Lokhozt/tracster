@@ -9,6 +9,7 @@ import { LogoutButton } from "@/components/LogoutButton";
 import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { getAppName } from "@/lib/app-name";
+import { isSeasonalStyleDisabledByEnv } from "@/lib/festive-season";
 import { prisma } from "@/lib/db";
 import { canHoldAdminPrivileges } from "@/lib/privileges";
 import {
@@ -49,7 +50,9 @@ export default async function AccountPage({ searchParams }: PageProps) {
             lastName: user.lastName,
             phone: user.phone,
             displayLanguage: locale === "en" ? "english" : "french",
+            disableSeasonalStyle: user.disableSeasonalStyle,
           }}
+          seasonalStyleLockedByEnv={isSeasonalStyleDisabledByEnv()}
         />
         <CompetitorStatusToggle userId={user.id} isCompetitor={user.isCompetitor} forSelf />
         {canHoldAdminPrivileges(user.role) && (

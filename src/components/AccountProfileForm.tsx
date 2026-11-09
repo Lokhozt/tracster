@@ -11,9 +11,16 @@ type ProfileFields = {
   lastName: string;
   phone: string | null;
   displayLanguage: Language;
+  disableSeasonalStyle: boolean;
 };
 
-export function AccountProfileForm({ user }: { user: ProfileFields }) {
+export function AccountProfileForm({
+  user,
+  seasonalStyleLockedByEnv,
+}: {
+  user: ProfileFields;
+  seasonalStyleLockedByEnv: boolean;
+}) {
   const router = useRouter();
   const t = useTranslations("Account");
   const common = useTranslations("Common");
@@ -21,6 +28,7 @@ export function AccountProfileForm({ user }: { user: ProfileFields }) {
   const [lastName, setLastName] = useState(user.lastName);
   const [phone, setPhone] = useState(user.phone ?? "");
   const [displayLanguage, setDisplayLanguage] = useState(user.displayLanguage);
+  const [disableSeasonalStyle, setDisableSeasonalStyle] = useState(user.disableSeasonalStyle);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -39,6 +47,7 @@ export function AccountProfileForm({ user }: { user: ProfileFields }) {
         lastName,
         phone: phone || undefined,
         displayLanguage,
+        disableSeasonalStyle,
       }),
     });
     const data = (await response.json()) as { error?: string };
@@ -101,6 +110,25 @@ export function AccountProfileForm({ user }: { user: ProfileFields }) {
             <option value="french">{common("french")}</option>
             <option value="english">{common("english")}</option>
           </select>
+        </div>
+        <div>
+          <p className="text-sm font-medium text-stone-900">{t("seasonalStyle")}</p>
+          {seasonalStyleLockedByEnv ? (
+            <p className="mt-1 text-sm text-stone-600">{t("seasonalStyleDisabledBySite")}</p>
+          ) : (
+            <label className="mt-2 flex cursor-pointer items-start gap-2 text-sm text-stone-700">
+              <input
+                type="checkbox"
+                checked={disableSeasonalStyle}
+                onChange={(event) => setDisableSeasonalStyle(event.target.checked)}
+                className="mt-0.5 rounded border-stone-300"
+              />
+              <span>
+                <span className="font-medium">{t("disableSeasonalStyle")}</span>
+                <span className="mt-0.5 block text-stone-500">{t("disableSeasonalStyleHelp")}</span>
+              </span>
+            </label>
+          )}
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         {saved && !error && <p className="text-sm text-stone-600">{t("saved")}</p>}

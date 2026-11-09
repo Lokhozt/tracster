@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Party time !
 
 ### Added
+- Seasonal festive header: double-strand twinkling lights, snow in the garland, and a soft holiday page tint (1 November – 6 January); disable site-wide with `DISABLE_SEASONAL_STYLE` or per user in account settings.
 - Events list: users who can create events can duplicate an event from the list; the create form is prefilled with type, description, location, dates, and participation options.
 - Party events (“Soirée”): new event type with up to three **bar volunteer** slots, separate from the regular participant list.
 - Documents: **Trac Bar** category listing upcoming parties and open bar slots (claim or release a slot); toggle between parties needing volunteers (default) and all upcoming parties; listed second after the first document category, not the default section unless it is the only category.

@@ -41,6 +41,7 @@ export const updateOwnProfileSchema = z.object({
   lastName: z.string().trim().min(1).max(50),
   phone: z.string().trim().max(30).optional(),
   displayLanguage: z.enum(["english", "french"]),
+  disableSeasonalStyle: z.boolean().optional(),
 });
 
 export const updateUserRoleSchema = z.object({

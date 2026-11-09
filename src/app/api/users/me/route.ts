@@ -38,6 +38,9 @@ export async function PATCH(request: NextRequest) {
       lastName: parsed.data.lastName,
       phone: parsed.data.phone || null,
       displayLanguage: preferenceFromLanguage(parsed.data.displayLanguage),
+      ...(parsed.data.disableSeasonalStyle !== undefined
+        ? { disableSeasonalStyle: parsed.data.disableSeasonalStyle }
+        : {}),
     },
     select: {
       id: true,
@@ -48,6 +51,7 @@ export async function PATCH(request: NextRequest) {
       dateOfBirth: true,
       role: true,
       displayLanguage: true,
+      disableSeasonalStyle: true,
       isCompetitor: true,
     },
   });
@@ -72,6 +76,7 @@ export async function PATCH(request: NextRequest) {
       dateOfBirth: updated.dateOfBirth?.toISOString() ?? null,
       role: updated.role,
       displayLanguage: updated.displayLanguage,
+      disableSeasonalStyle: updated.disableSeasonalStyle,
       isCompetitor: updated.isCompetitor,
     },
   });

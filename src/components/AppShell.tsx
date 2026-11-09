@@ -1,7 +1,10 @@
 import { getCurrentUser } from "@/lib/auth";
+import { ChristmasLights } from "@/components/ChristmasLights";
 import { HeaderBar } from "@/components/HeaderBar";
 import { SiteFooter } from "@/components/SiteFooter";
+import { shouldShowSeasonalStyle } from "@/lib/festive-season";
 import { APP_LOGO_SRC, isS3Configured } from "@/lib/s3";
+import { cn } from "@/lib/utils";
 
 export async function AppShell({
   children,
@@ -13,21 +16,32 @@ export async function AppShell({
   wide?: boolean;
 }) {
   const user = await getCurrentUser();
+  const showChristmasLights = shouldShowSeasonalStyle({
+    userDisableSeasonalStyle: user?.disableSeasonalStyle,
+  });
 
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-stone-50 text-stone-900">
-      <HeaderBar
-        user={
-          user
-            ? {
-                name: user.name,
-                role: user.role,
-                adminPrivilegesEnabled: user.adminPrivilegesEnabled,
-              }
-            : null
-        }
-        logoSrc={isS3Configured() ? APP_LOGO_SRC : null}
-      />
+    <div
+      className={cn(
+        "flex min-h-full flex-1 flex-col text-stone-900",
+        showChristmasLights ? "festive-surface" : "bg-stone-50",
+      )}
+    >
+      <div className="sticky top-0 z-40">
+        <HeaderBar
+          user={
+            user
+              ? {
+                  name: user.name,
+                  role: user.role,
+                  adminPrivilegesEnabled: user.adminPrivilegesEnabled,
+                }
+              : null
+          }
+          logoSrc={isS3Configured() ? APP_LOGO_SRC : null}
+        />
+        {showChristmasLights && <ChristmasLights />}
+      </div>
       <main
         className={`mx-auto w-full flex-1 px-4 pt-6 pb-6 sm:px-6 sm:pt-8 sm:pb-8 ${user ? "lg:pb-[calc(5rem+env(safe-area-inset-bottom))]" : "sm:pb-[calc(5rem+env(safe-area-inset-bottom))]"} ${wide ? "max-w-screen-2xl" : "max-w-5xl"}`}
       >

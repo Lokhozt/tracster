@@ -17,6 +17,7 @@ export type AuthUser = {
   dateOfBirth: string | null;
   role: UserRole;
   displayLanguage: DisplayLanguage | null;
+  disableSeasonalStyle: boolean;
   adminPrivilegesEnabled: boolean;
   isCompetitor: boolean;
 };
@@ -30,6 +31,7 @@ function serializeAuthUser(user: {
   dateOfBirth: Date | null;
   role: UserRole;
   displayLanguage: DisplayLanguage | null;
+  disableSeasonalStyle: boolean;
   adminPrivilegesEnabled: boolean;
   isCompetitor: boolean;
 }): AuthUser {
@@ -43,6 +45,7 @@ function serializeAuthUser(user: {
     dateOfBirth: user.dateOfBirth?.toISOString() ?? null,
     role: user.role,
     displayLanguage: user.displayLanguage,
+    disableSeasonalStyle: user.disableSeasonalStyle,
     adminPrivilegesEnabled: user.adminPrivilegesEnabled,
     isCompetitor: user.isCompetitor,
   };
@@ -99,6 +102,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
           dateOfBirth: true,
           role: true,
           displayLanguage: true,
+          disableSeasonalStyle: true,
           adminPrivilegesEnabled: true,
           isCompetitor: true,
         },
