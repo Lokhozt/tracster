@@ -146,7 +146,11 @@ export async function POST(request: NextRequest) {
       ? await participantIdsForChoreographyLinks(choreographyLinks)
       : [];
   const participantIds = [
-    ...new Set([...(isGeneric ? parsed.data.participantIds ?? [] : []), ...linkedParticipantIds]),
+    ...new Set([
+      ...(isGeneric ? parsed.data.participantIds ?? [] : []),
+      ...linkedParticipantIds,
+      ...(isPartyEventKind(eventType.kind) ? barSlotUserIds : []),
+    ]),
   ];
   const created = await prisma.$transaction(async (tx) => {
     const series =

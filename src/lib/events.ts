@@ -82,6 +82,18 @@ export async function isEventParticipant(
   return Boolean(assignment);
 }
 
+/** Party bar volunteers also appear on the generic participant list. */
+export async function ensureEventParticipant(eventId: string, userId: string) {
+  await prisma.eventParticipant.upsert({
+    where: { eventId_userId: { eventId, userId } },
+    update: {},
+    create: { eventId, userId },
+  });
+  await prisma.eventJoinRequest.deleteMany({
+    where: { eventId, userId },
+  });
+}
+
 async function getEventAccessRecord(eventId: string) {
   return prisma.event.findUnique({
     where: { id: eventId },

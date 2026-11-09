@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { forbidden, jsonError, notFound, unauthorized } from "@/lib/api";
 import { assignUserSchema } from "@/lib/validations";
-import { canEditEvent, canViewEvent } from "@/lib/events";
+import { canEditEvent, canViewEvent, ensureEventParticipant } from "@/lib/events";
 import { isPartyEventKind, PARTY_BAR_SLOT_COUNT } from "@/lib/event-type-helpers";
 import { basicUserSelect, formatUserName } from "@/lib/users";
 
@@ -87,6 +87,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     data: { eventId: id, slotIndex, userId: targetUserId },
     include: { user: { select: basicUserSelect } },
   });
+  await ensureEventParticipant(id, targetUserId);
 
   return Response.json(
     {
