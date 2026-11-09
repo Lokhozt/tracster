@@ -81,3 +81,37 @@ export function eventCategoryClassName(kind: EventKind | null): string {
   }
   return "border-sky-300 bg-sky-100 text-sky-900";
 }
+
+/** Schedule cells and badges: same hues as `eventCategoryClassName`, without borders. */
+export function eventScheduleKindClassName(
+  kind: EventKind | null,
+  options?: { hover?: boolean },
+): string {
+  const hover = options?.hover ?? false;
+  if (kind === "REHEARSAL") {
+    return cnSchedule("bg-stone-100 text-stone-800", hover, "hover:bg-stone-200");
+  }
+  if (kind === "REPRESENTATION") {
+    return cnSchedule("bg-amber-100 text-amber-900", hover, "hover:bg-amber-200");
+  }
+  if (kind === "COMPETITION") {
+    return cnSchedule("bg-violet-100 text-violet-900", hover, "hover:bg-violet-200");
+  }
+  if (kind === "DEMONSTRATION") {
+    return cnSchedule("bg-teal-100 text-teal-900", hover, "hover:bg-teal-200");
+  }
+  if (kind === "FESTIVAL") {
+    return cnSchedule("bg-rose-100 text-rose-900", hover, "hover:bg-rose-200");
+  }
+  if (kind === "TRAINING") {
+    return cnSchedule("bg-orange-100 text-orange-900", hover, "hover:bg-orange-200");
+  }
+  if (kind === "PARTY") {
+    return cnSchedule("bg-fuchsia-100 text-fuchsia-900", hover, "hover:bg-fuchsia-200");
+  }
+  return cnSchedule("bg-sky-100 text-sky-900", hover, "hover:bg-sky-200");
+}
+
+function cnSchedule(base: string, hover: boolean, hoverClass: string) {
+  return hover ? `${base} ${hoverClass}` : base;
+}

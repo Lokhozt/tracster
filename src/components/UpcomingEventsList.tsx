@@ -10,6 +10,7 @@ import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControl
 import { ParticipationStatus } from "@/components/ParticipationStatus";
 import { EventCard } from "@/components/EventCard";
 import { Card, Button } from "@/components/ui";
+import { eventScheduleKindClassName } from "@/lib/event-category-filter";
 import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 
 import {
@@ -33,25 +34,7 @@ function eventKindClassName(event: SerializedScheduleEvent) {
   if (isBirthdayScheduleEvent(event)) {
     return "bg-pink-100 text-pink-900";
   }
-  if (event.typeKind === "REPRESENTATION") {
-    return "bg-amber-100 text-amber-900";
-  }
-  if (event.typeKind === "COMPETITION") {
-    return "bg-violet-100 text-violet-900";
-  }
-  if (event.typeKind === "DEMONSTRATION") {
-    return "bg-teal-100 text-teal-900";
-  }
-  if (event.typeKind === "FESTIVAL") {
-    return "bg-rose-100 text-rose-900";
-  }
-  if (event.typeKind === "TRAINING") {
-    return "bg-orange-100 text-orange-900";
-  }
-  if (event.typeKind === "REHEARSAL") {
-    return "bg-stone-100 text-stone-700";
-  }
-  return "bg-sky-100 text-sky-900";
+  return eventScheduleKindClassName(event.typeKind);
 }
 
 function EventTypeBadge({ event }: { event: SerializedScheduleEvent }) {

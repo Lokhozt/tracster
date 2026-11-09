@@ -21,6 +21,7 @@ import {
 } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
 import { Card } from "@/components/ui";
+import { eventScheduleKindClassName } from "@/lib/event-category-filter";
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/datetime";
 import {
@@ -126,25 +127,7 @@ function eventCellClassName(event: SerializedScheduleEvent): string {
   if (isBirthdayScheduleEvent(event)) {
     return "bg-pink-100 text-pink-900";
   }
-  if (event.typeKind === "REPRESENTATION") {
-    return "bg-amber-100 text-amber-900 hover:bg-amber-200";
-  }
-  if (event.typeKind === "COMPETITION") {
-    return "bg-violet-100 text-violet-900 hover:bg-violet-200";
-  }
-  if (event.typeKind === "DEMONSTRATION") {
-    return "bg-teal-100 text-teal-900 hover:bg-teal-200";
-  }
-  if (event.typeKind === "FESTIVAL") {
-    return "bg-rose-100 text-rose-900 hover:bg-rose-200";
-  }
-  if (event.typeKind === "TRAINING") {
-    return "bg-orange-100 text-orange-900 hover:bg-orange-200";
-  }
-  if (event.typeKind === "EVENT" || event.typeKind === null) {
-    return "bg-sky-100 text-sky-900 hover:bg-sky-200";
-  }
-  return "bg-stone-100 text-stone-800 hover:bg-stone-200";
+  return eventScheduleKindClassName(event.typeKind, { hover: true });
 }
 
 function smallScreenCellFrame(index: number, lastVisibleIndex: number, header: boolean) {
