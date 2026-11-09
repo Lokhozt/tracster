@@ -19,7 +19,7 @@ import { planningBirthdayEvents } from "@/lib/schedule-birthdays";
 import { filterEventTypesForViewer } from "@/lib/event-type-helpers";
 import { canManageAllEvents, isAdmin } from "@/lib/roles";
 import { formatUserName, userNameOrderBy } from "@/lib/users";
-import { APP_LOGO_SRC, isS3Configured } from "@/lib/s3";
+import { getAppLogoSrc } from "@/lib/s3";
 import { getSiteSettings } from "@/lib/site-settings";
 import { formatBirthdayGreeting, isBirthdayOnDate } from "@/lib/users";
 
@@ -43,7 +43,7 @@ export default async function HomePage() {
     getTranslations("Components"),
     cookies(),
   ]);
-  const logoSrc = isS3Configured() ? APP_LOGO_SRC : null;
+  const logoSrc = getAppLogoSrc();
   const features = [
     {
       icon: (

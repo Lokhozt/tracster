@@ -22,9 +22,11 @@ type HeaderUser = {
 export function HeaderBar({
   user,
   logoSrc,
+  festive = false,
 }: {
   user: HeaderUser | null;
   logoSrc?: string | null;
+  festive?: boolean;
 }) {
   const t = useTranslations("Navigation");
   const pathname = usePathname();
@@ -54,7 +56,12 @@ export function HeaderBar({
   }, [menuOpen]);
 
   return (
-    <header className="border-b border-stone-200 bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur">
+    <header
+      className={cn(
+        "border-b pt-[env(safe-area-inset-top)] backdrop-blur",
+        festive ? "festive-header border-red-200/80" : "border-stone-200 bg-white/95",
+      )}
+    >
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
         <BrandLink logoSrc={logoSrc} />
 
@@ -88,7 +95,8 @@ export function HeaderBar({
         <div
           id={menuId}
           className={cn(
-            "border-t border-stone-200 bg-white px-4 py-4 sm:px-6",
+            "border-t px-4 py-4 sm:px-6",
+            festive ? "festive-header border-red-200/60" : "border-stone-200 bg-white",
             user ? "lg:hidden" : "sm:hidden",
           )}
         >

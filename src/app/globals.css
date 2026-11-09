@@ -60,6 +60,39 @@ body {
   }
 }
 
+.festive-header,
+.festive-surface .planning-calendar {
+  background: linear-gradient(
+    180deg,
+    #fffbeb 0%,
+    #fff7ed 48%,
+    #fef2f2 100%
+  );
+}
+
+.festive-surface .planning-calendar {
+  border-color: rgb(254 202 202 / 75%);
+}
+
+.festive-surface .planning-calendar-grid {
+  border-color: rgb(254 202 202 / 55%);
+  background-color: rgb(254 226 226 / 40%);
+}
+
+.festive-surface .planning-calendar-day-header {
+  background-color: #ffedd5;
+  color: #9f1239;
+}
+
+.festive-surface .planning-calendar-day {
+  background-color: #fffbeb;
+}
+
+.festive-surface .planning-calendar-day-muted {
+  background-color: rgb(254 242 242 / 80%);
+  color: rgb(120 113 108);
+}
+
 .festive-surface {
   background: linear-gradient(
     165deg,

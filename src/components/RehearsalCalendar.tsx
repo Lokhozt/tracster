@@ -181,9 +181,9 @@ function DayCell({
   return (
     <div
       className={cn(
-        "bg-white p-1.5 sm:p-2",
+        "planning-calendar-day bg-white p-1.5 sm:p-2",
         tall ? "min-h-36 sm:min-h-48" : "min-h-16 sm:min-h-28",
-        muted && "bg-stone-50 text-stone-400",
+        muted && "planning-calendar-day-muted bg-stone-50 text-stone-400",
       )}
     >
       <div
@@ -318,7 +318,7 @@ export function RehearsalCalendar({
   const currentMonth = startOfMonth(focusDate);
 
   return (
-    <Card className="mb-8">
+    <Card className="planning-calendar mb-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           {!isSmallScreen && (
@@ -401,7 +401,7 @@ export function RehearsalCalendar({
                 className={cn(
                   "grid grid-cols-4",
                   !showsSpacer &&
-                    "gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200",
+                    "planning-calendar-grid gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200",
                 )}
               >
                 {columns.map((day, index) =>
@@ -409,7 +409,7 @@ export function RehearsalCalendar({
                     <div
                       key={`header-${format(day, "yyyy-MM-dd")}`}
                       className={cn(
-                        "bg-stone-100 px-1 py-2 text-center text-xs font-medium text-stone-600",
+                        "planning-calendar-day-header bg-stone-100 px-1 py-2 text-center text-xs font-medium text-stone-600",
                         isToday(day) && "text-stone-900",
                         showsSpacer && smallScreenCellFrame(index, lastVisibleIndex, true),
                       )}
@@ -445,11 +445,11 @@ export function RehearsalCalendar({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <div className="grid min-w-[640px] grid-cols-7 gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200">
+          <div className="planning-calendar-grid grid min-w-[640px] grid-cols-7 gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200">
             {weekdays.map((day) => (
               <div
                 key={day}
-                className="bg-stone-100 px-2 py-2 text-center text-xs font-medium text-stone-600"
+                className="planning-calendar-day-header bg-stone-100 px-2 py-2 text-center text-xs font-medium text-stone-600"
               >
                 {day}
               </div>

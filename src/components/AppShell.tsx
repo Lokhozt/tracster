@@ -3,7 +3,7 @@ import { ChristmasLights } from "@/components/ChristmasLights";
 import { HeaderBar } from "@/components/HeaderBar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { shouldShowSeasonalStyle } from "@/lib/festive-season";
-import { APP_LOGO_SRC, isS3Configured } from "@/lib/s3";
+import { getAppLogoSrc } from "@/lib/s3";
 import { cn } from "@/lib/utils";
 
 export async function AppShell({
@@ -29,6 +29,7 @@ export async function AppShell({
     >
       <div className="sticky top-0 z-40">
         <HeaderBar
+          festive={showChristmasLights}
           user={
             user
               ? {
@@ -38,7 +39,7 @@ export async function AppShell({
                 }
               : null
           }
-          logoSrc={isS3Configured() ? APP_LOGO_SRC : null}
+          logoSrc={getAppLogoSrc()}
         />
         {showChristmasLights && <ChristmasLights />}
       </div>

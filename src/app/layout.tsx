@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { getAppName } from "@/lib/app-name";
-import { APP_LOGO_SRC, isS3Configured } from "@/lib/s3";
+import { getAppLogoSrc } from "@/lib/s3";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -21,12 +21,15 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: getAppName(),
     description: t("description"),
-    icons: isS3Configured()
-      ? {
-          icon: [{ url: APP_LOGO_SRC, type: "image/png" }],
-          apple: APP_LOGO_SRC,
-        }
-      : undefined,
+    icons: (() => {
+      const logoSrc = getAppLogoSrc();
+      return logoSrc
+        ? {
+            icon: [{ url: logoSrc, type: "image/png" }],
+            apple: logoSrc,
+          }
+        : undefined;
+    })(),
   };
 }
 

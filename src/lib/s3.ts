@@ -98,8 +98,33 @@ export function staticObjectKey(path: string) {
   return `${STATIC_PREFIX}${normalized}`;
 }
 
-export const APP_LOGO_OBJECT_PATH = "LOGO.png";
-export const APP_LOGO_SRC = `/api/static/${APP_LOGO_OBJECT_PATH}`;
+const DEFAULT_APP_LOGO_OBJECT_PATH = "LOGO.png";
+
+/** @deprecated Use getAppLogoSrc() */
+export const APP_LOGO_OBJECT_PATH = DEFAULT_APP_LOGO_OBJECT_PATH;
+
+/**
+ * S3 object key (e.g. LOGO.png), site path (/foo.png), or absolute URL.
+ * Configure with APP_LOGO_PATH; default is LOGO.png served from /api/static/.
+ */
+export function getAppLogoSrc(): string | null {
+  const configured = process.env.APP_LOGO_PATH?.trim();
+  if (configured) {
+    if (/^https?:\/\//i.test(configured) || configured.startsWith("/")) {
+      return configured;
+    }
+    if (isS3Configured()) {
+      return `/api/static/${configured.replace(/^\//, "")}`;
+    }
+    return null;
+  }
+
+  if (!isS3Configured()) {
+    return null;
+  }
+
+  return `/api/static/${DEFAULT_APP_LOGO_OBJECT_PATH}`;
+}
 
 export function choreographyResourceObjectKey(
   choreographyId: string,
