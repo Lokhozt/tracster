@@ -1,0 +1,1 @@
+ALTER TABLE "Event" ADD COLUMN "partyBarSlotsEnabled" BOOLEAN NOT NULL DEFAULT true;

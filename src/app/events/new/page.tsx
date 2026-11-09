@@ -28,6 +28,8 @@ const kindAliases: Record<string, EventKind> = {
   demonstration: "DEMONSTRATION",
   festival: "FESTIVAL",
   training: "TRAINING",
+  party: "PARTY",
+  soiree: "PARTY",
 };
 
 export default async function NewEventPage({ searchParams }: PageProps) {

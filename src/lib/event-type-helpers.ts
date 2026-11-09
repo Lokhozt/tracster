@@ -6,7 +6,10 @@ export type EventKind =
   | "COMPETITION"
   | "DEMONSTRATION"
   | "FESTIVAL"
-  | "TRAINING";
+  | "TRAINING"
+  | "PARTY";
+
+export const PARTY_BAR_SLOT_COUNT = 3;
 
 export const BUILTIN_EVENT_TYPE_IDS = {
   EVENT: "event-type-event",
@@ -16,6 +19,7 @@ export const BUILTIN_EVENT_TYPE_IDS = {
   DEMONSTRATION: "event-type-demonstration",
   FESTIVAL: "event-type-festival",
   TRAINING: "event-type-training",
+  PARTY: "event-type-party",
 } as const;
 
 export const BUILTIN_EVENT_TYPES = [
@@ -36,6 +40,7 @@ export const BUILTIN_EVENT_TYPES = [
   },
   { id: BUILTIN_EVENT_TYPE_IDS.FESTIVAL, name: "Festival", kind: "FESTIVAL" as const, sortOrder: 5 },
   { id: BUILTIN_EVENT_TYPE_IDS.TRAINING, name: "Training", kind: "TRAINING" as const, sortOrder: 6 },
+  { id: BUILTIN_EVENT_TYPE_IDS.PARTY, name: "Party", kind: "PARTY" as const, sortOrder: 7 },
 ] as const;
 
 export type SerializedEventType = {
@@ -64,6 +69,37 @@ export function serializeEventType(
 
 export function isGenericEventKind(kind: EventKind | null): boolean {
   return kind !== "REHEARSAL" && kind !== "REPRESENTATION";
+}
+
+export function isPartyEventKind(kind: EventKind | null): boolean {
+  return kind === "PARTY";
+}
+
+export function genericEventParticipationFields(
+  kind: EventKind | null,
+  parsed: {
+    allowParticipantJoin?: boolean;
+    allowJoinRequests?: boolean;
+    hideFromNonParticipants?: boolean;
+  },
+): {
+  allowParticipantJoin: boolean;
+  allowJoinRequests: boolean;
+  hideFromNonParticipants: boolean;
+} {
+  if (isPartyEventKind(kind)) {
+    return {
+      allowParticipantJoin: parsed.allowParticipantJoin ?? false,
+      allowJoinRequests: parsed.allowJoinRequests ?? false,
+      hideFromNonParticipants: parsed.hideFromNonParticipants ?? false,
+    };
+  }
+
+  return {
+    allowParticipantJoin: parsed.allowParticipantJoin ?? false,
+    allowJoinRequests: parsed.allowJoinRequests ?? false,
+    hideFromNonParticipants: parsed.hideFromNonParticipants ?? true,
+  };
 }
 
 export function eventKindAllowsChoreographyLinks(kind: EventKind | null): boolean {

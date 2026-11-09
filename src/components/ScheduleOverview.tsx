@@ -7,8 +7,10 @@ import { FollowAssociationCalendarLink } from "@/components/FollowAssociationCal
 import { PlanningImageExportButton } from "@/components/PlanningImageExport";
 import { PlanningRehearsalsEditButton } from "@/components/PlanningRehearsalsEditButton";
 import { RehearsalCalendar } from "@/components/RehearsalCalendar";
+import { PartyBarPlanningReminders } from "@/components/PartyBarPlanningReminders";
 import { UpcomingEventsList } from "@/components/UpcomingEventsList";
 import { Card } from "@/components/ui";
+import type { PartyBarPlanningReminder } from "@/lib/party-bar";
 import {
   persistHiddenEventTypeIds,
   persistHideNonParticipating,
@@ -28,6 +30,7 @@ export function ScheduleOverview({
   canEditPlanning,
   planningLocations,
   planningUsers,
+  partyBarReminders = [],
 }: {
   events: SerializedScheduleEvent[];
   upcoming: SerializedScheduleEvent[];
@@ -39,6 +42,7 @@ export function ScheduleOverview({
   canEditPlanning?: boolean;
   planningLocations?: Array<{ id: string; name: string }>;
   planningUsers?: Array<{ id: string; name: string }>;
+  partyBarReminders?: PartyBarPlanningReminder[];
 }) {
   const t = useTranslations("Components");
   const [hiddenTypeIds, setHiddenTypeIds] = useState(initialHiddenTypeIds);
@@ -89,6 +93,7 @@ export function ScheduleOverview({
 
   return (
     <>
+      <PartyBarPlanningReminders reminders={partyBarReminders} />
       <RehearsalCalendar
         events={filteredEvents}
         titleActions={

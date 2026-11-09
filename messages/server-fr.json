@@ -107,7 +107,8 @@
       "COMPETITION": "Compétition",
       "DEMONSTRATION": "Démonstration",
       "FESTIVAL": "Festival",
-      "TRAINING": "Entraînement"
+      "TRAINING": "Entraînement",
+      "PARTY": "Soirée"
     },
     "roles": {
       "USER": "Utilisateur",

@@ -17,7 +17,9 @@ import {
   eventKindAllowsChoreographyLinks,
   eventKindAllowsRepeat,
   eventKindRestrictedToCompetitors,
+  genericEventParticipationFields,
   isGenericEventKind,
+  isPartyEventKind,
 } from "@/lib/event-types";
 import { canManageAllEvents } from "@/lib/roles";
 import { nestedUserNameOrderBy } from "@/lib/users";
@@ -185,6 +187,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   const unlinkFromSeries = seriesUpdateUnlink(origin, applyToUpcoming && targets.length > 1, eventType.kind);
   const isGeneric = isGenericEventKind(eventType.kind);
+  const partyBarSlotsEnabled = isPartyEventKind(eventType.kind)
+    ? (parsed.data.partyBarSlotsEnabled ?? true)
+    : true;
+  const participation = genericEventParticipationFields(eventType.kind, parsed.data);
   const nextStartsAt = new Date(parsed.data.startsAt);
   const nextEndsAt = parsed.data.endsAt ? new Date(parsed.data.endsAt) : null;
 
@@ -217,11 +223,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           endsAt: schedule.endsAt,
           locationId: location.locationId,
           location: location.location,
-          allowParticipantJoin: isGeneric ? (parsed.data.allowParticipantJoin ?? false) : false,
-          allowJoinRequests: isGeneric ? (parsed.data.allowJoinRequests ?? false) : false,
-          hideFromNonParticipants: isGeneric
-            ? (parsed.data.hideFromNonParticipants ?? true)
-            : true,
+          allowParticipantJoin: isGeneric ? participation.allowParticipantJoin : false,
+          allowJoinRequests: isGeneric ? participation.allowJoinRequests : false,
+          hideFromNonParticipants: isGeneric ? participation.hideFromNonParticipants : true,
+          partyBarSlotsEnabled: isPartyEventKind(eventType.kind) ? partyBarSlotsEnabled : true,
           choreographyId: eventType.kind === "REHEARSAL" ? parsed.data.choreographyId ?? null : null,
           groupId: eventType.kind === "REHEARSAL" ? parsed.data.groupId ?? null : null,
           seriesId: unlinkFromSeries && target.id === id ? null : undefined,

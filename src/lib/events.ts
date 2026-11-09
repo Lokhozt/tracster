@@ -8,9 +8,11 @@ import {
   eventKindAllowsChoreographyLinks,
   eventKindRestrictedToCompetitors,
   isGenericEventKind,
+  isPartyEventKind,
   type SerializedEventType,
   serializeEventType,
 } from "@/lib/event-type-helpers";
+import { partyBarSlotIdsLimitError } from "@/lib/party-bar-shared";
 import { visibleChoreographyWhere } from "@/lib/choreographies";
 import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series";
 import { getGroupForChoreography } from "@/lib/groups";
@@ -225,6 +227,7 @@ export type SerializedEvent = {
   allowParticipantJoin: boolean;
   allowJoinRequests: boolean;
   hideFromNonParticipants: boolean;
+  partyBarSlotsEnabled: boolean;
   type: SerializedEventType;
   choreographyId: string | null;
   choreographyTitle: string | null;
@@ -253,6 +256,7 @@ export function serializeEvent(event: {
   allowParticipantJoin: boolean;
   allowJoinRequests: boolean;
   hideFromNonParticipants: boolean;
+  partyBarSlotsEnabled?: boolean;
   type: SerializedEventType;
   choreographyId: string | null;
   groupId: string | null;
@@ -286,6 +290,7 @@ export function serializeEvent(event: {
     allowParticipantJoin: event.allowParticipantJoin,
     allowJoinRequests: event.allowJoinRequests,
     hideFromNonParticipants: event.hideFromNonParticipants,
+    partyBarSlotsEnabled: event.partyBarSlotsEnabled ?? true,
     type,
     choreographyId: event.choreographyId,
     choreographyTitle: event.choreography?.title ?? null,
@@ -424,7 +429,15 @@ export async function validateEventUpdateFields(options: {
 export async function competitorParticipantsAllowed(
   kind: SerializedEventType["kind"],
   participantIds: string[],
+  barSlotUserIds: string[] = [],
 ): Promise<string | null> {
+  const partyBarLimitError = isPartyEventKind(kind)
+    ? partyBarSlotIdsLimitError(barSlotUserIds)
+    : null;
+  if (partyBarLimitError) {
+    return partyBarLimitError;
+  }
+
   if (!eventKindRestrictedToCompetitors(kind) || participantIds.length === 0) {
     return null;
   }

@@ -18,7 +18,14 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canEditEvent, canViewEvent, serializeEvent } from "@/lib/events";
 import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series";
-import { eventKindAllowsChoreographyLinks, eventKindRestrictedToCompetitors, isGenericEventKind } from "@/lib/event-types";
+import {
+  eventKindAllowsChoreographyLinks,
+  eventKindRestrictedToCompetitors,
+  isGenericEventKind,
+  isPartyEventKind,
+} from "@/lib/event-types";
+import { buildPartyBarSlots } from "@/lib/party-bar-shared";
+import { PartyBarEventCard } from "@/components/PartyBarSlots";
 import { getRehearsalAudience, isRehearsalParticipant } from "@/lib/groups";
 import { listedLocationInclude } from "@/lib/locations";
 import {
@@ -104,6 +111,12 @@ export default async function EventDetailPage({ params }: PageProps) {
           },
           orderBy: nestedUserNameOrderBy,
         },
+        partyBarSlots: {
+          include: {
+            user: { select: basicUserSelect },
+          },
+          orderBy: { slotIndex: "asc" },
+        },
         joinRequests: {
           include: {
             user: { select: basicUserSelect },
@@ -142,6 +155,16 @@ export default async function EventDetailPage({ params }: PageProps) {
     serverT,
   );
   const generic = isGenericEventKind(event.type.kind);
+  const party = isPartyEventKind(event.type.kind);
+  const partySlots = party
+    ? buildPartyBarSlots(
+        eventRecord.partyBarSlots.map((slot) => ({
+          userId: slot.userId,
+          name: formatUserName(slot.user),
+        })),
+      )
+    : [];
+  const partyBarAssignedUserIds = eventRecord.partyBarSlots.map((slot) => slot.userId);
   const isParticipant = eventRecord.participants.some(
     (participant) => participant.userId === user.id,
   );
@@ -390,6 +413,30 @@ export default async function EventDetailPage({ params }: PageProps) {
             }))}
           />
         </div>
+      )}
+
+      {party && event.partyBarSlotsEnabled && (
+        <Card className="mb-6">
+          <h2 className="mb-4 text-lg font-semibold">{t("partyBarSectionTitle")}</h2>
+          <PartyBarEventCard
+            eventId={id}
+            title={event.displayTitle}
+            startsAt={event.startsAt}
+            slots={partySlots}
+            currentUserId={user.id}
+            canManage={canEdit}
+          />
+          {canEdit && partySlots.some((slot) => slot === null) && (
+            <div className="mt-6 border-t border-stone-100 pt-6">
+              <AssignEventParticipantForm
+                eventId={id}
+                users={users}
+                assignedUserIds={partyBarAssignedUserIds}
+                assignUrl={`/api/events/${id}/bar-slots`}
+              />
+            </div>
+          )}
+        </Card>
       )}
 
       {generic && (

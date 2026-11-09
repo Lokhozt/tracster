@@ -9,6 +9,8 @@ import {
   listActiveDocuments,
   listDocumentCategories,
 } from "@/lib/documents";
+import { listUpcomingPartyBarEvents, TRAC_BAR_DOCUMENTS_SECTION_ID } from "@/lib/party-bar";
+import { canManageAllEvents } from "@/lib/roles";
 
 type PageProps = {
   searchParams: Promise<{ category?: string }>;
@@ -20,16 +22,21 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
     redirect("/login");
   }
 
-  const [t, documents, categories, canEdit, params] = await Promise.all([
-    getTranslations("Pages.Documents"),
-    listActiveDocuments(),
-    listDocumentCategories(),
-    canManageDocuments(user.id),
-    searchParams,
-  ]);
-  const selectedCategoryId = categories.some((category) => category.id === params.category)
-    ? params.category
-    : undefined;
+  const [t, documents, categories, canEdit, upcomingParties, canManageParties, params] =
+    await Promise.all([
+      getTranslations("Pages.Documents"),
+      listActiveDocuments(),
+      listDocumentCategories(),
+      canManageDocuments(user.id),
+      listUpcomingPartyBarEvents(),
+      canManageAllEvents(user.id),
+      searchParams,
+    ]);
+  const selectedCategoryId =
+    params.category === TRAC_BAR_DOCUMENTS_SECTION_ID ||
+    categories.some((category) => category.id === params.category)
+      ? params.category
+      : undefined;
 
   return (
     <AppShell title={t("title")} wide>
@@ -48,6 +55,11 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
           documents={documents}
           categories={categories}
           initialCategoryId={selectedCategoryId}
+          tracBar={{
+            parties: upcomingParties,
+            currentUserId: user.id,
+            canManage: canManageParties,
+          }}
         />
       </div>
     </AppShell>

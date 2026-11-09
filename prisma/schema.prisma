@@ -42,6 +42,7 @@ model User {
   availabilityResponses         AvailabilityResponse[]
   createdEvents                 Event[]                     @relation("EventCreator")
   eventParticipants             EventParticipant[]
+  eventPartyBarSlots            EventPartyBarSlot[]
   uploadedChoreographyResources ChoreographyResource[]
   uploadedDocuments             Document[]
   unavailabilityTimeframes      UserUnavailability[]
@@ -280,6 +281,7 @@ enum EventKind {
   DEMONSTRATION
   FESTIVAL
   TRAINING
+  PARTY
 }
 
 enum ChoreographyResourceType {
@@ -332,6 +334,7 @@ model Event {
   allowParticipantJoin    Boolean   @default(false)
   allowJoinRequests       Boolean   @default(false)
   hideFromNonParticipants Boolean   @default(true)
+  partyBarSlotsEnabled    Boolean   @default(true)
   choreographyId          String?
   groupId                 String?
   seriesId                String?
@@ -346,6 +349,7 @@ model Event {
   series                 EventSeries?           @relation(fields: [seriesId], references: [id], onDelete: SetNull)
   choreographies         EventChoreography[]
   participants           EventParticipant[]
+  partyBarSlots          EventPartyBarSlot[]
   joinRequests           EventJoinRequest[]
   availabilities         AvailabilityResponse[]
   googleCalendarMappings GoogleCalendarEvent[]
@@ -482,6 +486,20 @@ model EventParticipant {
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([eventId, userId])
+}
+
+model EventPartyBarSlot {
+  eventId    String
+  slotIndex  Int
+  userId     String
+  assignedAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, slotIndex])
+  @@unique([eventId, userId])
+  @@index([eventId])
 }
 
 model UserUnavailability {

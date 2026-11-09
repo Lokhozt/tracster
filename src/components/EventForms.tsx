@@ -32,6 +32,8 @@ import {
   eventKindAllowsRepeat,
   eventKindRestrictedToCompetitors,
   isGenericEventKind,
+  isPartyEventKind,
+  PARTY_BAR_SLOT_COUNT,
   type SerializedEventType,
 } from "@/lib/event-type-helpers";
 import {
@@ -195,6 +197,7 @@ export function CreateEventForm({
     emptyLocationSelection,
   );
   const [selectedParticipantIds, setSelectedParticipantIds] = useState<string[]>([]);
+  const [selectedBarSlotUserIds, setSelectedBarSlotUserIds] = useState<string[]>([]);
   const [choreographyId, setChoreographyId] = useState(defaultChoreographyId ?? "");
   const [selectedChoreographyIds, setSelectedChoreographyIds] = useState<string[]>(
     defaultChoreographyId ? [defaultChoreographyId] : [],
@@ -204,6 +207,7 @@ export function CreateEventForm({
   const [participation, setParticipation] = useState<ParticipationSettings>(
     defaultParticipationSettings,
   );
+  const [partyBarSlotsEnabled, setPartyBarSlotsEnabled] = useState(true);
   const [start, setStart] = useState<DateTimeParts>(defaultStartDateTime);
   const [end, setEnd] = useState<DateTimeParts>(() => addOneHour(defaultStartDateTime()));
   const [repeat, setRepeat] = useState(false);
@@ -212,6 +216,7 @@ export function CreateEventForm({
 
   const eventType = selectedEventType(eventTypes, typeId);
   const generic = isGenericEventKind(eventType?.kind ?? null);
+  const party = isPartyEventKind(eventType?.kind ?? null);
   const allowsRepeat = eventKindAllowsRepeat(eventType?.kind ?? null);
   const allowsChoreographyLinks = eventKindAllowsChoreographyLinks(eventType?.kind ?? null);
   const demonstrationChoreographyId =
@@ -323,6 +328,10 @@ export function CreateEventForm({
           generic && selectedParticipantIds.length > 0
             ? selectedParticipantIds
             : undefined,
+        barSlotUserIds:
+          party && selectedBarSlotUserIds.length > 0
+            ? selectedBarSlotUserIds
+            : undefined,
         choreographyId:
           eventType?.kind === "REHEARSAL" ? choreographyId || null : null,
         choreographyIds: allowsChoreographyLinks ? selectedChoreographyIds : undefined,
@@ -339,6 +348,7 @@ export function CreateEventForm({
           : undefined,
         groupId: eventType?.kind === "REHEARSAL" ? audience || undefined : undefined,
         ...(generic ? participation : {}),
+        ...(party ? { partyBarSlotsEnabled } : {}),
         ...(allowsRepeat && repeat
           ? { repeatWeekday, repeatWeeks }
           : {}),
@@ -533,6 +543,35 @@ export function CreateEventForm({
           onChange={setWhatsappUrl}
         />
       )}
+      {party && participantChoices.length > 0 && (
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium text-stone-700">
+            {t("partyBarPrefillLegend")}
+          </legend>
+          <p className="text-sm text-stone-500">{t("partyBarPrefillHelp")}</p>
+          {participantChoices.map((user) => (
+            <label key={`bar-${user.id}`} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={selectedBarSlotUserIds.includes(user.id)}
+                onChange={(e) => {
+                  setSelectedBarSlotUserIds((current) => {
+                    if (!e.target.checked) {
+                      return current.filter((id) => id !== user.id);
+                    }
+                    if (current.length >= PARTY_BAR_SLOT_COUNT) {
+                      return current;
+                    }
+                    return [...current, user.id];
+                  });
+                }}
+                className="rounded border-stone-300"
+              />
+              {user.name}
+            </label>
+          ))}
+        </fieldset>
+      )}
       {generic && participantChoices.length > 0 && (
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium text-stone-700">
@@ -556,6 +595,20 @@ export function CreateEventForm({
             </label>
           ))}
         </fieldset>
+      )}
+      {party && (
+        <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
+          <input
+            type="checkbox"
+            checked={partyBarSlotsEnabled}
+            onChange={(event) => setPartyBarSlotsEnabled(event.target.checked)}
+            className="mt-0.5 rounded border-stone-300"
+          />
+          <span>
+            <span className="font-medium">{t("partyBarSlotsEnabled")}</span>
+            <span className="mt-0.5 block text-stone-500">{t("partyBarSlotsEnabledHelp")}</span>
+          </span>
+        </label>
       )}
       {generic && (
         <ParticipationSettingsFields
@@ -602,6 +655,9 @@ export function EditEventForm({
     allowJoinRequests: event.allowJoinRequests,
     hideFromNonParticipants: event.hideFromNonParticipants,
   });
+  const [partyBarSlotsEnabled, setPartyBarSlotsEnabled] = useState(
+    event.partyBarSlotsEnabled,
+  );
   const [start, setStart] = useState<DateTimeParts>(() =>
     dateToDateTimeParts(new Date(event.startsAt)),
   );
@@ -613,6 +669,7 @@ export function EditEventForm({
 
   const eventType = selectedEventType(eventTypes, typeId);
   const generic = isGenericEventKind(eventType?.kind ?? null);
+  const party = isPartyEventKind(eventType?.kind ?? null);
   const allowsChoreographyLinks = eventKindAllowsChoreographyLinks(eventType?.kind ?? null);
 
   useEffect(() => {
@@ -688,6 +745,7 @@ export function EditEventForm({
             }))
           : undefined,
         ...(generic ? participation : {}),
+        ...(party ? { partyBarSlotsEnabled } : {}),
         applyToUpcoming,
       }),
     });
@@ -792,6 +850,20 @@ export function EditEventForm({
             onChange={setWhatsappUrl}
           />
         )}
+        {party && (
+          <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
+            <input
+              type="checkbox"
+              checked={partyBarSlotsEnabled}
+              onChange={(event) => setPartyBarSlotsEnabled(event.target.checked)}
+              className="mt-0.5 rounded border-stone-300"
+            />
+            <span>
+              <span className="font-medium">{t("partyBarSlotsEnabled")}</span>
+              <span className="mt-0.5 block text-stone-500">{t("partyBarSlotsEnabledHelp")}</span>
+            </span>
+          </label>
+        )}
         {generic && (
           <ParticipationSettingsFields
             idPrefix="edit-event"
@@ -862,10 +934,14 @@ export function AssignEventParticipantForm({
   eventId,
   users,
   assignedUserIds,
+  assignUrl,
+  assignLabel,
 }: {
   eventId: string;
   users: UserOption[];
   assignedUserIds: string[];
+  assignUrl?: string;
+  assignLabel?: string;
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
@@ -884,7 +960,7 @@ export function AssignEventParticipantForm({
     setLoading(true);
     setError(null);
 
-    const response = await fetch(`/api/events/${eventId}/participants`, {
+    const response = await fetch(assignUrl ?? `/api/events/${eventId}/participants`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId }),

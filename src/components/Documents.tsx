@@ -17,7 +17,9 @@ import { OfficeFileViewer } from "@/components/OfficeFileViewer";
 import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
 import { SectionNav } from "@/components/SettingsSections";
 import { documentDisplayType } from "@/lib/document-type";
+import { TracBarCategoryPanel } from "@/components/PartyBarSlots";
 import type { SerializedDocument, SerializedDocumentCategory } from "@/lib/documents";
+import { TRAC_BAR_DOCUMENTS_SECTION_ID, type PartyBarSlot } from "@/lib/party-bar-shared";
 import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
 
 async function responseError(response: Response, fallback: string) {
@@ -603,13 +605,24 @@ export function Documents({
   documents,
   categories,
   initialCategoryId,
+  tracBar,
 }: {
   documents: SerializedDocument[];
   categories: SerializedDocumentCategory[];
   initialCategoryId?: string;
+  tracBar?: {
+    parties: {
+      id: string;
+      displayTitle: string;
+      startsAt: string;
+      slots: PartyBarSlot[];
+    }[];
+    currentUserId: string;
+    canManage: boolean;
+  };
 }) {
   const t = useTranslations("Components");
-  const sections = categories.map((category) => {
+  const documentSections = categories.map((category) => {
     const categoryDocuments = documents.filter(
       (document) => document.category.id === category.id,
     );
@@ -631,6 +644,24 @@ export function Documents({
       ),
     };
   });
+
+  const tracBarSection = tracBar
+    ? [
+        {
+          id: TRAC_BAR_DOCUMENTS_SECTION_ID,
+          label: t("tracBarTitle"),
+          content: (
+            <TracBarCategoryPanel
+              parties={tracBar.parties}
+              currentUserId={tracBar.currentUserId}
+              canManage={tracBar.canManage}
+            />
+          ),
+        },
+      ]
+    : [];
+
+  const sections = [...tracBarSection, ...documentSections];
 
   return (
     <SectionNav

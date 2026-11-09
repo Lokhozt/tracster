@@ -13,7 +13,13 @@ import {
   validateEventTypeFields,
 } from "@/lib/events";
 import { getEventType } from "@/lib/event-types";
-import { eventKindAllowsChoreographyLinks, eventKindAllowsRepeat, isGenericEventKind } from "@/lib/event-type-helpers";
+import {
+  eventKindAllowsChoreographyLinks,
+  eventKindAllowsRepeat,
+  genericEventParticipationFields,
+  isGenericEventKind,
+  isPartyEventKind,
+} from "@/lib/event-type-helpers";
 import { expandWeeklyOccurrences } from "@/lib/event-recurrence";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { canCreateEvent } from "@/lib/site-settings";
@@ -69,9 +75,13 @@ export async function POST(request: NextRequest) {
     return jsonError(linkGroupError);
   }
 
+  const barSlotUserIds = isPartyEventKind(eventType.kind)
+    ? [...new Set(parsed.data.barSlotUserIds ?? [])]
+    : [];
   const participantError = await competitorParticipantsAllowed(
     eventType.kind,
     parsed.data.participantIds ?? [],
+    barSlotUserIds,
   );
   if (participantError) {
     return jsonError(participantError);
@@ -127,6 +137,10 @@ export async function POST(request: NextRequest) {
     : [{ startsAt, endsAt }];
 
   const isGeneric = isGenericEventKind(eventType.kind);
+  const partyBarSlotsEnabled = isPartyEventKind(eventType.kind)
+    ? (parsed.data.partyBarSlotsEnabled ?? true)
+    : true;
+  const participation = genericEventParticipationFields(eventType.kind, parsed.data);
   const linkedParticipantIds =
     eventType.kind === "DEMONSTRATION"
       ? await participantIdsForChoreographyLinks(choreographyLinks)
@@ -153,11 +167,10 @@ export async function POST(request: NextRequest) {
             locationId: location.locationId,
             location: location.location,
             createdById: user.id,
-            allowParticipantJoin: isGeneric ? (parsed.data.allowParticipantJoin ?? false) : false,
-            allowJoinRequests: isGeneric ? (parsed.data.allowJoinRequests ?? false) : false,
-            hideFromNonParticipants: isGeneric
-              ? (parsed.data.hideFromNonParticipants ?? true)
-              : true,
+            allowParticipantJoin: isGeneric ? participation.allowParticipantJoin : false,
+            allowJoinRequests: isGeneric ? participation.allowJoinRequests : false,
+            hideFromNonParticipants: isGeneric ? participation.hideFromNonParticipants : true,
+            partyBarSlotsEnabled: isPartyEventKind(eventType.kind) ? partyBarSlotsEnabled : true,
             choreographyId: eventType.kind === "REHEARSAL" ? parsed.data.choreographyId ?? null : null,
             groupId: eventType.kind === "REHEARSAL" ? parsed.data.groupId ?? null : null,
             seriesId: series?.id ?? null,
@@ -166,6 +179,15 @@ export async function POST(request: NextRequest) {
                   create: participantIds.map((userId) => ({ userId })),
                 }
               : undefined,
+            partyBarSlots:
+              barSlotUserIds.length > 0
+                ? {
+                    create: barSlotUserIds.map((userId, slotIndex) => ({
+                      slotIndex,
+                      userId,
+                    })),
+                  }
+                : undefined,
             choreographies:
               eventKindAllowsChoreographyLinks(eventType.kind) && choreographyLinks.length
                 ? {

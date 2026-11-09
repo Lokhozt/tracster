@@ -17,7 +17,9 @@ export {
   eventKindRestrictedToCompetitors,
   eventKindSkipsGenericCreatePermission,
   filterEventTypesForViewer,
+  genericEventParticipationFields,
   isGenericEventKind,
+  isPartyEventKind,
   serializeEventType,
   type SerializedEventType,
 } from "@/lib/event-type-helpers";

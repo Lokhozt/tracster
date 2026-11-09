@@ -13,6 +13,7 @@ import {
   parseHideNonParticipating,
 } from "@/lib/event-category-filter";
 import { getEventTypes } from "@/lib/event-types";
+import { listPartyBarPlanningReminders } from "@/lib/party-bar";
 import { getUpcomingScheduleEvents, getUserScheduleEvents } from "@/lib/schedule";
 import { planningBirthdayEvents } from "@/lib/schedule-birthdays";
 import { filterEventTypesForViewer } from "@/lib/event-type-helpers";
@@ -124,7 +125,7 @@ export default async function HomePage() {
   ];
 
   if (user) {
-    const [scheduleEvents, birthdayUsers, eventTypes, seesAllEvents, settings, admin] =
+    const [scheduleEvents, birthdayUsers, eventTypes, seesAllEvents, settings, admin, partyBarReminders] =
       await Promise.all([
         getUserScheduleEvents(user.id),
         getUsersWithBirthdays(),
@@ -132,6 +133,7 @@ export default async function HomePage() {
         canManageAllEvents(user.id),
         getSiteSettings(),
         isAdmin(user.id),
+        listPartyBarPlanningReminders(),
       ]);
     const [planningLocations, planningUsers] = admin
       ? await Promise.all([
@@ -187,6 +189,7 @@ export default async function HomePage() {
             id: entry.id,
             name: formatUserName(entry),
           }))}
+          partyBarReminders={partyBarReminders}
         />
       </AppShell>
     );

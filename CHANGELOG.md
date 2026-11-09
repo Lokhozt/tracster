@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.2.7 - 2026-11-09
+Party time !
+
+### Added
+- Party events (“Soirée”): new event type with up to three **bar volunteer** slots, separate from the regular participant list.
+- Documents: **Trac Bar** category listing upcoming parties and open bar slots (claim or release a slot).
+- Schedule (planning) page: reminder banner when a party in the current week still has free bar slots, with a link to the event.
+- Party create/edit: option to enable or disable bar volunteer slots; standard participation settings (join, requests, visibility) like other generic events.
+
+### Changed
+- Party bar volunteers are stored separately from event participants; existing party sign-ups were migrated to bar slots.
+
 ## 1.2.6 - 2026-10-24
 
 ### Added
