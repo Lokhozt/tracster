@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Input, Label } from "@/components/ui";
 import type { SerializedGroup } from "@/lib/groups";
-import { compareUsersByName } from "@/lib/users";
+import { UserSelectionMatrix } from "@/components/UserSelectionMatrix";
 
 type MemberOption = { id: string; name: string; email: string; firstName?: string; lastName?: string };
 
@@ -14,43 +14,25 @@ function GroupMemberCheckboxes({
   members,
   selectedMemberIds,
   onChange,
+  idPrefix,
 }: {
   members: MemberOption[];
   selectedMemberIds: string[];
   onChange: (memberIds: string[]) => void;
+  idPrefix: string;
 }) {
   const t = useTranslations("Components");
-  const ordered = [...members].sort(compareUsersByName);
-  function toggleMember(memberId: string) {
-    if (selectedMemberIds.includes(memberId)) {
-      onChange(selectedMemberIds.filter((id) => id !== memberId));
-      return;
-    }
-
-    onChange([...selectedMemberIds, memberId]);
-  }
-
   if (members.length === 0) {
     return <p className="text-sm text-stone-500">{t("addParticipantsBeforeGroups")}</p>;
   }
 
   return (
-    <div className="space-y-2">
-      {ordered.map((member) => (
-        <label
-          key={member.id}
-          className="flex cursor-pointer items-start gap-2 rounded-lg border border-stone-200 px-3 py-2 text-sm hover:bg-stone-50"
-        >
-          <input
-            type="checkbox"
-            checked={selectedMemberIds.includes(member.id)}
-            onChange={() => toggleMember(member.id)}
-            className="mt-0.5 rounded border-stone-300"
-          />
-          <span className="font-medium text-stone-900">{member.name}</span>
-        </label>
-      ))}
-    </div>
+    <UserSelectionMatrix
+      idPrefix={idPrefix}
+      users={members}
+      selectedUserIds={selectedMemberIds}
+      onChange={onChange}
+    />
   );
 }
 
@@ -116,6 +98,7 @@ function CreateGroupForm({
         <Label>{t("members")}</Label>
         <div className="mt-2">
           <GroupMemberCheckboxes
+            idPrefix="create-group-members"
             members={members}
             selectedMemberIds={selectedMemberIds}
             onChange={setSelectedMemberIds}
@@ -203,6 +186,7 @@ function EditGroupForm({
         <Label>{t("members")}</Label>
         <div className="mt-2">
           <GroupMemberCheckboxes
+            idPrefix={`edit-group-members-${group.id}`}
             members={members}
             selectedMemberIds={selectedMemberIds}
             onChange={setSelectedMemberIds}

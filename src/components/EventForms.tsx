@@ -19,6 +19,8 @@ import { ParticipantConflictWarnings } from "@/components/ParticipantConflictWar
 import { RehearsalAudienceSelect, type GroupOption } from "@/components/GroupForms";
 import { Button, Input, Label, Select, Textarea } from "@/components/ui";
 import { sortUsersByName } from "@/lib/users";
+import { AssignUsersMatrixForm } from "@/components/AssignUsersMatrixForm";
+import { UserSelectionMatrix } from "@/components/UserSelectionMatrix";
 import { ParticipationSettingsFields } from "@/components/ParticipationSettingsFields";
 import {
   addOneHour,
@@ -544,57 +546,24 @@ export function CreateEventForm({
         />
       )}
       {party && participantChoices.length > 0 && (
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-medium text-stone-700">
-            {t("partyBarPrefillLegend")}
-          </legend>
-          <p className="text-sm text-stone-500">{t("partyBarPrefillHelp")}</p>
-          {participantChoices.map((user) => (
-            <label key={`bar-${user.id}`} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={selectedBarSlotUserIds.includes(user.id)}
-                onChange={(e) => {
-                  setSelectedBarSlotUserIds((current) => {
-                    if (!e.target.checked) {
-                      return current.filter((id) => id !== user.id);
-                    }
-                    if (current.length >= PARTY_BAR_SLOT_COUNT) {
-                      return current;
-                    }
-                    return [...current, user.id];
-                  });
-                }}
-                className="rounded border-stone-300"
-              />
-              {user.name}
-            </label>
-          ))}
-        </fieldset>
+        <UserSelectionMatrix
+          idPrefix="create-event-bar"
+          label={t("partyBarPrefillLegend")}
+          help={t("partyBarPrefillHelp")}
+          users={participantChoices}
+          selectedUserIds={selectedBarSlotUserIds}
+          onChange={setSelectedBarSlotUserIds}
+          maxSelection={PARTY_BAR_SLOT_COUNT}
+        />
       )}
       {generic && participantChoices.length > 0 && (
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-medium text-stone-700">
-            {t("participantsOptional")}
-          </legend>
-          {participantChoices.map((user) => (
-            <label key={user.id} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={selectedParticipantIds.includes(user.id)}
-                onChange={(e) => {
-                  setSelectedParticipantIds((current) =>
-                    e.target.checked
-                      ? [...current, user.id]
-                      : current.filter((id) => id !== user.id),
-                  );
-                }}
-                className="rounded border-stone-300"
-              />
-              {user.name}
-            </label>
-          ))}
-        </fieldset>
+        <UserSelectionMatrix
+          idPrefix="create-event-participants"
+          label={t("participantsOptional")}
+          users={participantChoices}
+          selectedUserIds={selectedParticipantIds}
+          onChange={setSelectedParticipantIds}
+        />
       )}
       {party && (
         <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
@@ -935,72 +904,26 @@ export function AssignEventParticipantForm({
   users,
   assignedUserIds,
   assignUrl,
-  assignLabel,
+  submitLabel,
+  maxSelection,
 }: {
   eventId: string;
   users: UserOption[];
   assignedUserIds: string[];
   assignUrl?: string;
-  assignLabel?: string;
+  submitLabel?: string;
+  maxSelection?: number;
 }) {
-  const t = useTranslations("Components");
-  const router = useRouter();
-  const [userId, setUserId] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const availableUsers = sortUsersByName(
-    users.filter((user) => !assignedUserIds.includes(user.id)),
-  );
-
-  async function handleSubmit(formEvent: React.FormEvent) {
-    formEvent.preventDefault();
-    if (!userId) return;
-
-    setLoading(true);
-    setError(null);
-
-    const response = await fetch(assignUrl ?? `/api/events/${eventId}/participants`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
-    });
-
-    const data = await response.json();
-    setLoading(false);
-
-    if (!response.ok) {
-      setError(data.error ?? t("assignParticipantError"));
-      return;
-    }
-
-    setUserId("");
-    router.refresh();
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <div>
-        <Label htmlFor="event-participant">{t("addParticipant")}</Label>
-        <select
-          id="event-participant"
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"
-        >
-          <option value="">{t("selectUser")}</option>
-          {availableUsers.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading || !userId}>
-        {loading ? t("adding") : t("addParticipant")}
-      </Button>
-    </form>
+    <AssignUsersMatrixForm
+      idPrefix={`event-${eventId}-participants`}
+      users={users}
+      assignedUserIds={assignedUserIds}
+      assignUrl={assignUrl ?? `/api/events/${eventId}/participants`}
+      submitLabel={submitLabel}
+      maxSelection={maxSelection}
+      errorFallbackKey="assignParticipantError"
+    />
   );
 }
 

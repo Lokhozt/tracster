@@ -17,6 +17,7 @@ Party time !
 - Party bar volunteers are stored separately from event participants; existing party sign-ups were migrated to bar slots.
 - Schedule and events pages: double-click a category filter to show only that type, or show all when it is already the sole visible type (long-press on small screens).
 - Planning calendar and upcoming events list: event-type colors aligned with category filter chips (including Party).
+- Add participants: searchable multi-select grid (names only, tap to toggle selection, at least two columns) when adding members to events, choreography participants, or groups; assign several people in one step. Adding a choreographer stays a single-choice dropdown.
 
 ### Fixed
 - French UI: missing label for the choreography rehearsal statistics link.

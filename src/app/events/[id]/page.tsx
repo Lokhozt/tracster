@@ -24,6 +24,7 @@ import {
   isGenericEventKind,
   isPartyEventKind,
 } from "@/lib/event-types";
+import { PARTY_BAR_SLOT_COUNT } from "@/lib/event-type-helpers";
 import { buildPartyBarSlots } from "@/lib/party-bar-shared";
 import { PartyBarEventCard } from "@/components/PartyBarSlots";
 import { getRehearsalAudience, isRehearsalParticipant } from "@/lib/groups";
@@ -433,6 +434,7 @@ export default async function EventDetailPage({ params }: PageProps) {
                 users={users}
                 assignedUserIds={partyBarAssignedUserIds}
                 assignUrl={`/api/events/${id}/bar-slots`}
+                maxSelection={PARTY_BAR_SLOT_COUNT}
               />
             </div>
           )}

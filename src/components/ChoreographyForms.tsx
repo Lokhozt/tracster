@@ -16,6 +16,7 @@ import {
   locationPayload,
   selectionFromRecord,
 } from "@/components/LocationPicker";
+import { AssignUsersMatrixForm } from "@/components/AssignUsersMatrixForm";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { type GroupOption } from "@/components/GroupForms";
 import { CreateEventForm } from "@/components/EventForms";
@@ -52,63 +53,15 @@ export function AssignMemberForm({
   assignedUserIds: string[];
 }) {
   const t = useTranslations("Components");
-  const router = useRouter();
-  const [userId, setUserId] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const availableUsers = sortUsersByName(
-    users.filter((user) => !assignedUserIds.includes(user.id)),
-  );
-
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    if (!userId) return;
-
-    setLoading(true);
-    setError(null);
-
-    const response = await fetch(`/api/choreographies/${choreographyId}/members`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
-    });
-
-    const data = await response.json();
-    setLoading(false);
-
-    if (!response.ok) {
-      setError(data.error ?? t("assignMemberError"));
-      return;
-    }
-
-    setUserId("");
-    router.refresh();
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <div>
-        <Label htmlFor="member">{t("assignParticipant")}</Label>
-        <select
-          id="member"
-          value={userId}
-          onChange={(event) => setUserId(event.target.value)}
-          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base sm:text-sm"
-        >
-          <option value="">{t("selectUser")}</option>
-          {availableUsers.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading || !userId}>
-        {loading ? t("assigning") : t("assignParticipant")}
-      </Button>
-    </form>
+    <AssignUsersMatrixForm
+      idPrefix={`choreography-${choreographyId}-members`}
+      users={users}
+      assignedUserIds={assignedUserIds}
+      assignUrl={`/api/choreographies/${choreographyId}/members`}
+      label={t("assignParticipant")}
+      errorFallbackKey="assignMemberError"
+    />
   );
 }
 
