@@ -47,7 +47,7 @@
     "saveError": "Unable to save your profile.",
     "seasonalStyle": "Seasonal display",
     "disableSeasonalStyle": "Hide seasonal decorations",
-    "disableSeasonalStyleHelp": "Turn off holiday lights and themed backgrounds on your device while they are shown for the season.",
+    "disableSeasonalStyleHelp": "Turn off autumn and holiday lights and themed backgrounds on your device while they are shown for the season.",
     "seasonalStyleDisabledBySite": "Seasonal decorations are turned off for everyone on this site.",
     "adminPrivileges": "Admin privileges",
     "adminPrivilegesHelp": "Turn this off to use {appName} as a regular member. You can turn it back on here at any time.",

@@ -1,8 +1,9 @@
 import { getCurrentUser } from "@/lib/auth";
+import { AutumnAccent } from "@/components/AutumnAccent";
 import { ChristmasLights } from "@/components/ChristmasLights";
 import { HeaderBar } from "@/components/HeaderBar";
 import { SiteFooter } from "@/components/SiteFooter";
-import { shouldShowSeasonalStyle } from "@/lib/festive-season";
+import { getSeasonalTheme } from "@/lib/festive-season";
 import { MessageOfTheDayBanner } from "@/components/MessageOfTheDayBanner";
 import { getMessageOfTheDay } from "@/lib/motd";
 import { getAppLogoSrc } from "@/lib/s3";
@@ -19,7 +20,7 @@ export async function AppShell({
 }) {
   const user = await getCurrentUser();
   const messageOfTheDay = getMessageOfTheDay();
-  const showChristmasLights = shouldShowSeasonalStyle({
+  const seasonalTheme = getSeasonalTheme(new Date(), {
     userDisableSeasonalStyle: user?.disableSeasonalStyle,
   });
 
@@ -27,12 +28,14 @@ export async function AppShell({
     <div
       className={cn(
         "flex min-h-full flex-1 flex-col text-stone-900",
-        showChristmasLights ? "festive-surface" : "bg-stone-50",
+        seasonalTheme === "christmas" && "festive-surface",
+        seasonalTheme === "autumn" && "autumn-surface",
+        !seasonalTheme && "bg-stone-50",
       )}
     >
       <div className="sticky top-0 z-40">
         <HeaderBar
-          festive={showChristmasLights}
+          seasonalTheme={seasonalTheme}
           user={
             user
               ? {
@@ -44,7 +47,8 @@ export async function AppShell({
           }
           logoSrc={getAppLogoSrc()}
         />
-        {showChristmasLights && <ChristmasLights />}
+        {seasonalTheme === "christmas" && <ChristmasLights />}
+        {seasonalTheme === "autumn" && <AutumnAccent />}
       </div>
       <main
         className={`mx-auto w-full flex-1 px-4 pt-6 pb-6 sm:px-6 sm:pt-8 sm:pb-8 ${user ? "lg:pb-[calc(5rem+env(safe-area-inset-bottom))]" : "sm:pb-[calc(5rem+env(safe-area-inset-bottom))]"} ${wide ? "max-w-screen-2xl" : "max-w-5xl"}`}

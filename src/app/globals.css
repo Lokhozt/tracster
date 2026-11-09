@@ -60,6 +60,79 @@ body {
   }
 }
 
+.autumn-header,
+.autumn-surface .planning-calendar {
+  background: linear-gradient(
+    180deg,
+    #fffbeb 0%,
+    #ffedd5 45%,
+    #fdba74 100%
+  );
+}
+
+.autumn-surface .planning-calendar {
+  border-color: rgb(251 191 36 / 55%);
+}
+
+.autumn-surface .planning-calendar-grid {
+  border-color: rgb(245 158 11 / 45%);
+  background-color: rgb(254 215 170 / 45%);
+}
+
+.autumn-surface .planning-calendar-day-header {
+  background-color: #fed7aa;
+  color: #9a3412;
+}
+
+.autumn-surface .planning-calendar-day {
+  background-color: #fff7ed;
+}
+
+.autumn-surface .planning-calendar-day-muted {
+  background-color: rgb(255 237 213 / 85%);
+  color: rgb(120 113 108);
+}
+
+.autumn-surface {
+  background: linear-gradient(
+    165deg,
+    #fffbeb 0%,
+    #ffedd5 18%,
+    #fef3c7 32%,
+    #fafaf9 55%,
+    #fafaf9 100%
+  );
+}
+
+.autumn-strip-sky {
+  background: linear-gradient(
+    180deg,
+    #78350f 0%,
+    #9a3412 28%,
+    #c2410c 55%,
+    #b45309 85%,
+    #92400e 100%
+  );
+}
+
+@keyframes autumn-leaf-fall {
+  0% {
+    transform: translate(0, -6px) rotate(0deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate(var(--autumn-drift, 0px), 42px) rotate(140deg);
+    opacity: 0;
+  }
+}
+
+.autumn-leaf {
+  animation: autumn-leaf-fall linear infinite;
+}
+
 .festive-header,
 .festive-surface .planning-calendar {
   background: linear-gradient(
@@ -164,5 +237,11 @@ body {
     animation: none;
     opacity: 0.35;
     top: 60%;
+  }
+
+  .autumn-leaf {
+    animation: none;
+    opacity: 0.75;
+    top: 45%;
   }
 }

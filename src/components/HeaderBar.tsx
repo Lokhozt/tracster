@@ -11,6 +11,7 @@ import { RoleBadge } from "@/components/UserForms";
 import type { UserRole } from "@/generated/prisma/client";
 import { hasAdminPrivileges } from "@/lib/privileges";
 import { getAppName } from "@/lib/app-name";
+import type { SeasonalTheme } from "@/lib/festive-season";
 import { cn } from "@/lib/utils";
 
 type HeaderUser = {
@@ -22,11 +23,11 @@ type HeaderUser = {
 export function HeaderBar({
   user,
   logoSrc,
-  festive = false,
+  seasonalTheme = null,
 }: {
   user: HeaderUser | null;
   logoSrc?: string | null;
-  festive?: boolean;
+  seasonalTheme?: SeasonalTheme | null;
 }) {
   const t = useTranslations("Navigation");
   const pathname = usePathname();
@@ -59,7 +60,9 @@ export function HeaderBar({
     <header
       className={cn(
         "border-b pt-[env(safe-area-inset-top)] backdrop-blur",
-        festive ? "festive-header border-red-200/80" : "border-stone-200 bg-white/95",
+        seasonalTheme === "christmas" && "festive-header border-red-200/80",
+        seasonalTheme === "autumn" && "autumn-header border-amber-300/80",
+        !seasonalTheme && "border-stone-200 bg-white/95",
       )}
     >
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
@@ -96,7 +99,9 @@ export function HeaderBar({
           id={menuId}
           className={cn(
             "border-t px-4 py-4 sm:px-6",
-            festive ? "festive-header border-red-200/60" : "border-stone-200 bg-white",
+            seasonalTheme === "christmas" && "festive-header border-red-200/60",
+            seasonalTheme === "autumn" && "autumn-header border-amber-300/60",
+            !seasonalTheme && "border-stone-200 bg-white",
             user ? "lg:hidden" : "sm:hidden",
           )}
         >

@@ -9,7 +9,7 @@ Party time !
 
 ### Added
 - Optional message-of-the-day banner when `MOTD` is set in the environment.
-- Seasonal festive header: twinkling lights, snow in the garland, and a soft holiday page tint (1 November – 6 January); disable site-wide with `DISABLE_SEASONAL_STYLE` or per user in account settings.
+- Seasonal themes: autumn styling with falling leaves 15 October – 30 November; Christmas lights and styling 1 December – 6 January; disable site-wide with `DISABLE_SEASONAL_STYLE` or per user in account settings.
 - `APP_LOGO_PATH` to override the app logo (default `LOGO.png` from storage, or a path/URL).
 - Events list: users who can create events can duplicate an event from the list; the create form is prefilled with type, description, location, dates, and participation options.
 - Party events (“Soirée”): new event type with up to three **bar volunteer** slots, separate from the regular participant list.

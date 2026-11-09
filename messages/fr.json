@@ -47,7 +47,7 @@
     "saveError": "Impossible d’enregistrer votre profil.",
     "seasonalStyle": "Affichage saisonnier",
     "disableSeasonalStyle": "Masquer les décorations saisonnières",
-    "disableSeasonalStyleHelp": "Désactive les guirlandes et le fond thématique sur votre appareil pendant la période festive.",
+    "disableSeasonalStyleHelp": "Désactive les thèmes automne et fêtes (guirlandes, fonds) sur votre appareil pendant la période concernée.",
     "seasonalStyleDisabledBySite": "Les décorations saisonnières sont désactivées pour tout le monde sur ce site.",
     "adminPrivileges": "Privilèges d’administration",
     "adminPrivilegesHelp": "Désactivez cette option pour utiliser {appName} comme un membre. Vous pourrez la réactiver ici à tout moment.",
