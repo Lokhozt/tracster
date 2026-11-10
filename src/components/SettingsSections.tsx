@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,16 @@ export type NavSection = {
 };
 
 export type SettingsSection = NavSection;
+
+function resolveSelectedId(
+  sections: NavSection[],
+  initialSectionId?: string,
+): string | undefined {
+  if (initialSectionId && sections.some((section) => section.id === initialSectionId)) {
+    return initialSectionId;
+  }
+  return sections[0]?.id;
+}
 
 export function SectionNav({
   sections,
@@ -25,21 +35,43 @@ export function SectionNav({
   categoriesLabel: string;
   backLabel: string;
 }) {
-  const [openId, setOpenId] = useState<string | null>(
-    sections.some((section) => section.id === initialSectionId) ? (initialSectionId ?? null) : null,
+  const [selectedId, setSelectedId] = useState(() =>
+    resolveSelectedId(sections, initialSectionId),
+  );
+  const [mobileOpen, setMobileOpen] = useState(
+    () =>
+      Boolean(
+        initialSectionId && sections.some((section) => section.id === initialSectionId),
+      ),
   );
   const panelId = useId();
-  const activeId = openId ?? sections[0]?.id;
+  const activeId = selectedId ?? sections[0]?.id;
+
+  useEffect(() => {
+    const nextId = resolveSelectedId(sections, initialSectionId);
+    if (!nextId) {
+      return;
+    }
+    setSelectedId(nextId);
+    if (initialSectionId && sections.some((section) => section.id === initialSectionId)) {
+      setMobileOpen(true);
+    }
+  }, [initialSectionId, sections]);
+
+  function selectSection(sectionId: string) {
+    setSelectedId(sectionId);
+    setMobileOpen(true);
+  }
 
   return (
     <div>
       {intro && (
-        <p className={cn("mb-6 text-stone-600", openId && "hidden lg:block")}>{intro}</p>
+        <p className={cn("mb-6 text-stone-600", mobileOpen && "max-lg:hidden")}>{intro}</p>
       )}
       <div className="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start lg:gap-8">
         <nav
           aria-label={categoriesLabel}
-          className={cn("lg:sticky lg:top-24 lg:block", openId ? "hidden" : "block")}
+          className={cn("block lg:sticky lg:top-24", mobileOpen && "max-lg:hidden")}
         >
           <ul
             className={cn(
@@ -54,14 +86,11 @@ export function SectionNav({
                 <li key={section.id}>
                   <button
                     type="button"
-                    onClick={() => setOpenId(section.id)}
+                    onClick={() => selectSection(section.id)}
                     aria-controls={panelId}
                     aria-current={isActive ? "true" : undefined}
                     className={cn(
-                      "flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left text-base font-medium transition lg:min-h-11 lg:rounded-lg lg:px-3 lg:py-2 lg:text-sm",
-                      section.id === openId
-                        ? "bg-stone-100 text-stone-900"
-                        : "text-stone-700 hover:bg-stone-100 hover:text-stone-900",
+                      "flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left text-base font-medium text-stone-700 transition hover:bg-stone-100 hover:text-stone-900 lg:min-h-11 lg:rounded-lg lg:px-3 lg:py-2 lg:text-sm",
                       isActive
                         ? "lg:bg-stone-900 lg:text-white lg:hover:bg-stone-900 lg:hover:text-white"
                         : "lg:bg-transparent lg:text-stone-700 lg:hover:bg-stone-100 lg:hover:text-stone-900",
@@ -76,10 +105,13 @@ export function SectionNav({
           </ul>
         </nav>
 
-        <div id={panelId} className={cn("min-w-0 lg:block", openId ? "block" : "hidden")}>
+        <div
+          id={panelId}
+          className={cn("min-w-0 block", !mobileOpen && "max-lg:hidden")}
+        >
           <button
             type="button"
-            onClick={() => setOpenId(null)}
+            onClick={() => setMobileOpen(false)}
             className="mb-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-stone-600 transition hover:text-stone-900 lg:hidden"
           >
             <ChevronLeftIcon />

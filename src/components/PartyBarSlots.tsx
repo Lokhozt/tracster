@@ -102,6 +102,7 @@ export function PartyBarEventCard({
   slots,
   currentUserId,
   canManage,
+  readOnly = false,
 }: {
   eventId: string;
   title: string;
@@ -110,6 +111,7 @@ export function PartyBarEventCard({
   slots: PartyBarSlot[];
   currentUserId: string;
   canManage: boolean;
+  readOnly?: boolean;
 }) {
   const t = useTranslations("Components");
 
@@ -134,18 +136,32 @@ export function PartyBarEventCard({
           </Link>
         )}
       </div>
-      <ul className="space-y-2" aria-label={t("partyBarSlotsAria", { title })}>
-        {slots.map((slot, index) => (
-          <SlotRow
-            key={index}
-            index={index}
-            slot={slot}
-            eventId={eventId}
-            currentUserId={currentUserId}
-            canManage={canManage}
-          />
-        ))}
-      </ul>
+      {readOnly ? (
+        <ul className="space-y-1" aria-label={t("partyBarSlotsAria", { title })}>
+          {slots.map((slot, index) => (
+            <li key={index} className="text-sm text-stone-700">
+              <span className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                {t("partyBarSlotLabel", { index: index + 1 })}
+                {": "}
+              </span>
+              {slot ? slot.name : t("partyBarSlotEmpty")}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <ul className="space-y-2" aria-label={t("partyBarSlotsAria", { title })}>
+          {slots.map((slot, index) => (
+            <SlotRow
+              key={index}
+              index={index}
+              slot={slot}
+              eventId={eventId}
+              currentUserId={currentUserId}
+              canManage={canManage}
+            />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -158,8 +174,10 @@ function partyHasOpenBarSlot(slots: PartyBarSlot[]): boolean {
 
 export function TracBarCategoryPanel({
   parties,
+  pastParties = [],
   currentUserId,
   canManage,
+  showPastSeason = false,
 }: {
   parties: {
     id: string;
@@ -167,11 +185,19 @@ export function TracBarCategoryPanel({
     startsAt: string;
     slots: PartyBarSlot[];
   }[];
+  pastParties?: {
+    id: string;
+    displayTitle: string;
+    startsAt: string;
+    slots: PartyBarSlot[];
+  }[];
   currentUserId: string;
   canManage: boolean;
+  showPastSeason?: boolean;
 }) {
   const t = useTranslations("Components");
   const [listFilter, setListFilter] = useState<TracBarListFilter>("open");
+  const [showPast, setShowPast] = useState(false);
 
   const visibleParties = useMemo(() => {
     if (listFilter === "all") {
@@ -190,22 +216,39 @@ export function TracBarCategoryPanel({
   return (
     <Card>
       <p className="mb-4 text-sm text-stone-600">{t("tracBarHelp")}</p>
-      {parties.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant={listFilter === "open" ? "primary" : "secondary"}
-            onClick={() => setListFilter("open")}
-          >
-            {t("tracBarFilterOpenSlots")}
-          </Button>
-          <Button
-            type="button"
-            variant={listFilter === "all" ? "primary" : "secondary"}
-            onClick={() => setListFilter("all")}
-          >
-            {t("tracBarFilterAll")}
-          </Button>
+      {(parties.length > 0 || showPastSeason) && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          {parties.length > 0 && (
+            <>
+              <Button
+                type="button"
+                variant={listFilter === "open" ? "primary" : "secondary"}
+                onClick={() => setListFilter("open")}
+              >
+                {t("tracBarFilterOpenSlots")}
+              </Button>
+              <Button
+                type="button"
+                variant={listFilter === "all" ? "primary" : "secondary"}
+                onClick={() => setListFilter("all")}
+              >
+                {t("tracBarFilterAll")}
+              </Button>
+            </>
+          )}
+          {showPastSeason && (
+            <label
+              className={`flex cursor-pointer items-center gap-2 text-sm text-stone-700${parties.length > 0 ? " ml-auto" : ""}`}
+            >
+              <input
+                type="checkbox"
+                checked={showPast}
+                onChange={(event) => setShowPast(event.target.checked)}
+                className="rounded border-stone-300"
+              />
+              {t("tracBarShowPastSeason")}
+            </label>
+          )}
         </div>
       )}
       {visibleParties.length === 0 ? (
@@ -224,6 +267,28 @@ export function TracBarCategoryPanel({
               canManage={canManage}
             />
           ))}
+        </div>
+      )}
+      {showPastSeason && showPast && (
+        <div className="mt-6 space-y-4 border-t border-stone-200 pt-6">
+          <h3 className="text-sm font-semibold text-stone-900">{t("tracBarPastSeasonTitle")}</h3>
+          {pastParties.length === 0 ? (
+            <p className="text-sm text-stone-600">{t("tracBarPastSeasonEmpty")}</p>
+          ) : (
+            pastParties.map((party) => (
+              <PartyBarEventCard
+                key={party.id}
+                eventId={party.id}
+                title={party.displayTitle}
+                startsAt={party.startsAt}
+                href={`/events/${party.id}`}
+                slots={party.slots}
+                currentUserId={currentUserId}
+                canManage={false}
+                readOnly
+              />
+            ))
+          )}
         </div>
       )}
     </Card>

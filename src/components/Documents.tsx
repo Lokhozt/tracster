@@ -617,8 +617,15 @@ export function Documents({
       startsAt: string;
       slots: PartyBarSlot[];
     }[];
+    pastParties?: {
+      id: string;
+      displayTitle: string;
+      startsAt: string;
+      slots: PartyBarSlot[];
+    }[];
     currentUserId: string;
     canManage: boolean;
+    showPastSeason?: boolean;
   };
 }) {
   const t = useTranslations("Components");
@@ -652,8 +659,10 @@ export function Documents({
         content: (
           <TracBarCategoryPanel
             parties={tracBar.parties}
+            pastParties={tracBar.pastParties ?? []}
             currentUserId={tracBar.currentUserId}
             canManage={tracBar.canManage}
+            showPastSeason={tracBar.showPastSeason ?? false}
           />
         ),
       }

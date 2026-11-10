@@ -1,6 +1,7 @@
 import { addDays } from "date-fns";
 import { prisma } from "@/lib/db";
 import { PARTY_BAR_SLOT_COUNT } from "@/lib/event-type-helpers";
+import { defaultAssociationStatsPeriodStart } from "@/lib/stats-period";
 import { basicUserSelect, formatUserName } from "@/lib/users";
 import {
   buildPartyBarSlots,
@@ -30,29 +31,29 @@ export type SerializedUpcomingParty = {
   slots: PartyBarSlot[];
 };
 
-export async function listUpcomingPartyBarEvents(): Promise<SerializedUpcomingParty[]> {
-  const events = await prisma.event.findMany({
-    where: {
-      startsAt: { gte: new Date() },
-      partyBarSlotsEnabled: true,
-      type: { kind: "PARTY" },
-    },
-    orderBy: { startsAt: "asc" },
+const partyBarEventSelect = {
+  id: true,
+  title: true,
+  startsAt: true,
+  type: { select: { name: true, kind: true } },
+  partyBarSlots: {
+    orderBy: { slotIndex: "asc" as const },
     select: {
-      id: true,
-      title: true,
-      startsAt: true,
-      type: { select: { name: true, kind: true } },
-      partyBarSlots: {
-        orderBy: { slotIndex: "asc" },
-        select: {
-          userId: true,
-          user: { select: basicUserSelect },
-        },
-      },
+      userId: true,
+      user: { select: basicUserSelect },
     },
-  });
+  },
+} as const;
 
+function serializePartyBarEvents(
+  events: {
+    id: string;
+    title: string;
+    startsAt: Date;
+    type: { name: string };
+    partyBarSlots: { userId: string; user: Parameters<typeof formatUserName>[0] }[];
+  }[],
+): SerializedUpcomingParty[] {
   return events.map((event) => {
     const trimmedTitle = event.title.trim();
     return {
@@ -68,6 +69,37 @@ export async function listUpcomingPartyBarEvents(): Promise<SerializedUpcomingPa
       ),
     };
   });
+}
+
+export async function listUpcomingPartyBarEvents(): Promise<SerializedUpcomingParty[]> {
+  const events = await prisma.event.findMany({
+    where: {
+      startsAt: { gte: new Date() },
+      partyBarSlotsEnabled: true,
+      type: { kind: "PARTY" },
+    },
+    orderBy: { startsAt: "asc" },
+    select: partyBarEventSelect,
+  });
+
+  return serializePartyBarEvents(events);
+}
+
+export async function listPastPartyBarEventsSinceSeasonStart(
+  now = new Date(),
+): Promise<SerializedUpcomingParty[]> {
+  const seasonStart = defaultAssociationStatsPeriodStart(now);
+  const events = await prisma.event.findMany({
+    where: {
+      startsAt: { gte: seasonStart, lt: now },
+      partyBarSlotsEnabled: true,
+      type: { kind: "PARTY" },
+    },
+    orderBy: { startsAt: "desc" },
+    select: partyBarEventSelect,
+  });
+
+  return serializePartyBarEvents(events);
 }
 
 export async function listPartyBarPlanningReminders(
