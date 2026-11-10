@@ -181,7 +181,6 @@ export function ScheduleOverview({
       </div>
       <RehearsalCalendar
         events={filteredEvents}
-        layoutEvents={events}
         titleActions={
           <>
             {associationCalendarUrl && (

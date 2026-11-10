@@ -164,14 +164,6 @@ function TodayIcon() {
   );
 }
 
-function dayEventsAreaMinHeight(layoutEventCount: number, tall: boolean): string | undefined {
-  if (layoutEventCount <= 0) {
-    return undefined;
-  }
-  const slotRem = tall ? 2.75 : 1.75;
-  return `${layoutEventCount * slotRem}rem`;
-}
-
 function buildEventsByDay(eventList: SerializedScheduleEvent[]) {
   const map = new Map<string, SerializedScheduleEvent[]>();
 
@@ -193,28 +185,45 @@ function buildEventsByDay(eventList: SerializedScheduleEvent[]) {
   return map;
 }
 
+function chunkWeekRows(days: Date[]): Date[][] {
+  const rows: Date[][] = [];
+  for (let index = 0; index < days.length; index += 7) {
+    rows.push(days.slice(index, index + 7));
+  }
+  return rows;
+}
+
+function rowMaxEventCount(row: Date[], eventsByDay: Map<string, SerializedScheduleEvent[]>) {
+  return row.reduce((max, day) => {
+    const count = eventsByDay.get(format(day, "yyyy-MM-dd"))?.length ?? 0;
+    return Math.max(max, count);
+  }, 0);
+}
+
 function DayCell({
   day,
   events,
-  layoutEventCount,
+  rowEventCount,
   muted = false,
   tall = false,
   wrapLabels = false,
 }: {
   day: Date;
   events: SerializedScheduleEvent[];
-  layoutEventCount: number;
+  /** Max visible events on any day in this calendar row (equal event band height). */
+  rowEventCount: number;
   muted?: boolean;
   tall?: boolean;
   wrapLabels?: boolean;
 }) {
   const t = useTranslations("Components");
-  const eventsAreaMinHeight = dayEventsAreaMinHeight(layoutEventCount, tall);
+  const slotRem = tall ? 2.75 : 1.75;
+  const eventsAreaMinHeight =
+    rowEventCount > 0 ? `${rowEventCount * slotRem}rem` : undefined;
   return (
     <div
       className={cn(
-        "planning-calendar-day bg-white p-1.5 sm:p-2",
-        tall ? "min-h-36 sm:min-h-48" : "min-h-16 sm:min-h-28",
+        "planning-calendar-day flex h-full min-h-0 flex-col bg-white p-1.5 sm:p-2",
         muted && "planning-calendar-day-muted bg-stone-50 text-stone-400",
       )}
     >
@@ -228,7 +237,7 @@ function DayCell({
         {format(day, "d")}
       </div>
       <div
-        className="space-y-1"
+        className="min-h-0 flex-1 space-y-1"
         style={eventsAreaMinHeight ? { minHeight: eventsAreaMinHeight } : undefined}
       >
         {events.map((event) => {
@@ -276,12 +285,9 @@ function DayCell({
 
 export function RehearsalCalendar({
   events,
-  layoutEvents,
   titleActions,
 }: {
   events: SerializedScheduleEvent[];
-  /** Unfiltered events used only to keep day cell height stable when filters change. */
-  layoutEvents?: SerializedScheduleEvent[];
   titleActions?: React.ReactNode;
 }) {
   const t = useTranslations("Components");
@@ -298,10 +304,6 @@ export function RehearsalCalendar({
   ];
 
   const eventsByDay = useMemo(() => buildEventsByDay(events), [events]);
-  const layoutEventsByDay = useMemo(
-    () => buildEventsByDay(layoutEvents ?? events),
-    [events, layoutEvents],
-  );
 
   const calendarDays = useMemo(() => {
     if (view === "week") {
@@ -339,6 +341,11 @@ export function RehearsalCalendar({
   }
 
   const currentMonth = startOfMonth(focusDate);
+  const weekRows = useMemo(() => chunkWeekRows(calendarDays), [calendarDays]);
+  const rowEventCounts = useMemo(
+    () => weekRows.map((row) => rowMaxEventCount(row, eventsByDay)),
+    [eventsByDay, weekRows],
+  );
 
   return (
     <Card className="planning-calendar mb-8 [overflow-anchor:none]">
@@ -412,6 +419,7 @@ export function RehearsalCalendar({
       {isSmallScreen ? (
         <div className="space-y-3">
           {[calendarDays.slice(0, 4), calendarDays.slice(4)].map((days) => {
+            const rowEventCount = rowMaxEventCount(days, eventsByDay);
             const columns: Array<Date | null> = days.length === 4 ? days : [...days, null];
             const lastVisibleIndex = columns.reduce(
               (last, day, index) => (day ? index : last),
@@ -422,7 +430,7 @@ export function RehearsalCalendar({
               <div
                 key={format(days[0], "yyyy-MM-dd")}
                 className={cn(
-                  "grid grid-cols-4",
+                  "grid grid-cols-4 items-stretch",
                   !showsSpacer &&
                     "planning-calendar-grid gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200",
                 )}
@@ -451,12 +459,15 @@ export function RehearsalCalendar({
                   return (
                     <div
                       key={dayKey}
-                      className={showsSpacer ? smallScreenCellFrame(index, lastVisibleIndex, false) : undefined}
+                      className={cn(
+                        "flex min-h-0 flex-col",
+                        showsSpacer ? smallScreenCellFrame(index, lastVisibleIndex, false) : "h-full",
+                      )}
                     >
                       <DayCell
                         day={day}
                         events={eventsByDay.get(dayKey) ?? []}
-                        layoutEventCount={layoutEventsByDay.get(dayKey)?.length ?? 0}
+                        rowEventCount={rowEventCount}
                         tall
                         wrapLabels
                       />
@@ -469,31 +480,39 @@ export function RehearsalCalendar({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <div className="planning-calendar-grid grid min-w-[640px] grid-cols-7 gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200">
-            {weekdays.map((day) => (
+          <div className="min-w-[640px] space-y-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200">
+            <div className="planning-calendar-grid grid grid-cols-7 gap-px bg-stone-200">
+              {weekdays.map((day) => (
+                <div
+                  key={day}
+                  className="planning-calendar-day-header bg-stone-100 px-2 py-2 text-center text-xs font-medium text-stone-600"
+                >
+                  {day}
+                </div>
+              ))}
+            </div>
+            {weekRows.map((row, rowIndex) => (
               <div
-                key={day}
-                className="planning-calendar-day-header bg-stone-100 px-2 py-2 text-center text-xs font-medium text-stone-600"
+                key={format(row[0], "yyyy-MM-dd")}
+                className="planning-calendar-grid grid grid-cols-7 items-stretch gap-px bg-stone-200"
               >
-                {day}
+                {row.map((day) => {
+                  const dayKey = format(day, "yyyy-MM-dd");
+                  const dayEvents = eventsByDay.get(dayKey) ?? [];
+
+                  return (
+                    <DayCell
+                      key={dayKey}
+                      day={day}
+                      events={dayEvents}
+                      rowEventCount={rowEventCounts[rowIndex] ?? 0}
+                      muted={view === "month" && !isSameMonth(day, currentMonth)}
+                      tall={view !== "month"}
+                    />
+                  );
+                })}
               </div>
             ))}
-
-            {calendarDays.map((day) => {
-              const dayKey = format(day, "yyyy-MM-dd");
-              const dayEvents = eventsByDay.get(dayKey) ?? [];
-
-              return (
-                <DayCell
-                  key={dayKey}
-                  day={day}
-                  events={dayEvents}
-                  layoutEventCount={layoutEventsByDay.get(dayKey)?.length ?? 0}
-                  muted={view === "month" && !isSameMonth(day, currentMonth)}
-                  tall={view !== "month"}
-                />
-              );
-            })}
           </div>
         </div>
       )}
