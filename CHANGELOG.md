@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 1.2.8 - Unreleased
 
 ### Added
-- Admin can check past party events in the document page
+- Documents, **Trac Bar**: admins can show past parties since 1 September (read-only bar slots) via a checkbox on that section.
+- Planning page: **Planning filters** panel is collapsible; open or closed state is remembered on your device.
+
+### Changed
+- Planning page: event-type filters sit above the calendar; toggling filters keeps the page steadier (less scroll jump, calendar day cells keep height when events are hidden).
+
+### Fixed
+- Documents page: switching categories in the sidebar on large screens works again after the first selection.
 
 ## 1.2.7 - 2026-11-09
 Party time !

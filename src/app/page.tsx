@@ -9,8 +9,10 @@ import { associationCalendarFollowUrl } from "@/lib/google-calendar";
 import {
   EVENT_TYPE_FILTER_COOKIE,
   HIDE_NON_PARTICIPATING_COOKIE,
+  PLANNING_FILTERS_COLLAPSED_COOKIE,
   parseHiddenEventTypeIds,
   parseHideNonParticipating,
+  parsePlanningFiltersCollapsed,
 } from "@/lib/event-category-filter";
 import { getEventTypes } from "@/lib/event-types";
 import { listPartyBarPlanningReminders } from "@/lib/party-bar";
@@ -161,6 +163,9 @@ export default async function HomePage() {
     const hideNonParticipating = parseHideNonParticipating(
       cookieStore.get(HIDE_NON_PARTICIPATING_COOKIE)?.value,
     );
+    const planningFiltersCollapsed = parsePlanningFiltersCollapsed(
+      cookieStore.get(PLANNING_FILTERS_COLLAPSED_COOKIE)?.value,
+    );
     const birthdayGreeting = settings.showBirthdaysOnPlanning
       ? formatBirthdayGreeting(
           birthdayUsers.filter((birthdayUser) => isBirthdayOnDate(birthdayUser.dateOfBirth, new Date())),
@@ -181,6 +186,7 @@ export default async function HomePage() {
           eventTypes={visibleEventTypes}
           initialHiddenTypeIds={hiddenTypeIds}
           initialHideNonParticipating={hideNonParticipating}
+          initialPlanningFiltersCollapsed={planningFiltersCollapsed}
           associationCalendarUrl={associationCalendarUrl}
           startOfDayHour={settings.startOfDayHour}
           canEditPlanning={admin}

@@ -164,20 +164,52 @@ function TodayIcon() {
   );
 }
 
+function dayEventsAreaMinHeight(layoutEventCount: number, tall: boolean): string | undefined {
+  if (layoutEventCount <= 0) {
+    return undefined;
+  }
+  const slotRem = tall ? 2.75 : 1.75;
+  return `${layoutEventCount * slotRem}rem`;
+}
+
+function buildEventsByDay(eventList: SerializedScheduleEvent[]) {
+  const map = new Map<string, SerializedScheduleEvent[]>();
+
+  for (const event of eventList) {
+    for (const day of eventCoveredDays(event)) {
+      const dayKey = format(day, "yyyy-MM-dd");
+      const existing = map.get(dayKey) ?? [];
+      existing.push(event);
+      map.set(dayKey, existing);
+    }
+  }
+
+  for (const dayEvents of map.values()) {
+    dayEvents.sort(
+      (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+    );
+  }
+
+  return map;
+}
+
 function DayCell({
   day,
   events,
+  layoutEventCount,
   muted = false,
   tall = false,
   wrapLabels = false,
 }: {
   day: Date;
   events: SerializedScheduleEvent[];
+  layoutEventCount: number;
   muted?: boolean;
   tall?: boolean;
   wrapLabels?: boolean;
 }) {
   const t = useTranslations("Components");
+  const eventsAreaMinHeight = dayEventsAreaMinHeight(layoutEventCount, tall);
   return (
     <div
       className={cn(
@@ -195,7 +227,10 @@ function DayCell({
       >
         {format(day, "d")}
       </div>
-      <div className="space-y-1">
+      <div
+        className="space-y-1"
+        style={eventsAreaMinHeight ? { minHeight: eventsAreaMinHeight } : undefined}
+      >
         {events.map((event) => {
           const hasGroupLine = event.typeKind === "REHEARSAL" && Boolean(event.groupName);
           const className = cn(
@@ -241,9 +276,12 @@ function DayCell({
 
 export function RehearsalCalendar({
   events,
+  layoutEvents,
   titleActions,
 }: {
   events: SerializedScheduleEvent[];
+  /** Unfiltered events used only to keep day cell height stable when filters change. */
+  layoutEvents?: SerializedScheduleEvent[];
   titleActions?: React.ReactNode;
 }) {
   const t = useTranslations("Components");
@@ -259,26 +297,11 @@ export function RehearsalCalendar({
     { value: "week", label: t("week") },
   ];
 
-  const eventsByDay = useMemo(() => {
-    const map = new Map<string, SerializedScheduleEvent[]>();
-
-    for (const event of events) {
-      for (const day of eventCoveredDays(event)) {
-        const dayKey = format(day, "yyyy-MM-dd");
-        const existing = map.get(dayKey) ?? [];
-        existing.push(event);
-        map.set(dayKey, existing);
-      }
-    }
-
-    for (const dayEvents of map.values()) {
-      dayEvents.sort(
-        (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-      );
-    }
-
-    return map;
-  }, [events]);
+  const eventsByDay = useMemo(() => buildEventsByDay(events), [events]);
+  const layoutEventsByDay = useMemo(
+    () => buildEventsByDay(layoutEvents ?? events),
+    [events, layoutEvents],
+  );
 
   const calendarDays = useMemo(() => {
     if (view === "week") {
@@ -318,7 +341,7 @@ export function RehearsalCalendar({
   const currentMonth = startOfMonth(focusDate);
 
   return (
-    <Card className="planning-calendar mb-8">
+    <Card className="planning-calendar mb-8 [overflow-anchor:none]">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           {!isSmallScreen && (
@@ -433,6 +456,7 @@ export function RehearsalCalendar({
                       <DayCell
                         day={day}
                         events={eventsByDay.get(dayKey) ?? []}
+                        layoutEventCount={layoutEventsByDay.get(dayKey)?.length ?? 0}
                         tall
                         wrapLabels
                       />
@@ -464,6 +488,7 @@ export function RehearsalCalendar({
                   key={dayKey}
                   day={day}
                   events={dayEvents}
+                  layoutEventCount={layoutEventsByDay.get(dayKey)?.length ?? 0}
                   muted={view === "month" && !isSameMonth(day, currentMonth)}
                   tall={view !== "month"}
                 />
