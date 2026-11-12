@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Card, Input, Label, Select } from "@/components/ui";
+import { Button, Card, Input, Label, Select } from "@/components/ui";
 import { formatDurationMinutes } from "@/lib/format-duration";
 import type {
   RepresentationParticipantLeaderboardEntry,
@@ -146,7 +146,9 @@ export function AssociationStatsPanel({
     ),
   );
   const [loading, setLoading] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [representationStats, setRepresentationStats] = useState<RepresentationStats | null>(null);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [leaderboardSort, setLeaderboardSort] = useState<{
@@ -255,6 +257,38 @@ export function AssociationStatsPanel({
     return item.title.trim() ? `${item.title} · ${date}` : date;
   }
 
+  async function exportRepresentationPdf() {
+    if (!representationId) {
+      return;
+    }
+    setExportError(null);
+    setExportingPdf(true);
+    try {
+      const response = await fetch(
+        `/api/settings/stats/representation/export?eventId=${encodeURIComponent(representationId)}`,
+      );
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setExportError(typeof data.error === "string" ? data.error : t("exportRepresentationPdfError"));
+        return;
+      }
+      const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition");
+      const fileNameMatch = disposition?.match(/filename="([^"]+)"/);
+      const fileName = fileNameMatch?.[1] ?? "representation-roster.pdf";
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setExportError(t("exportRepresentationPdfError"));
+    } finally {
+      setExportingPdf(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
@@ -285,21 +319,37 @@ export function AssociationStatsPanel({
       </div>
 
       {mode === "representation" ? (
-        <div>
-          <Label htmlFor="stats-representation">{t("selectRepresentation")}</Label>
-          <Select
-            id="stats-representation"
-            value={representationId}
-            onChange={(event) => setRepresentationId(event.target.value)}
-            className="mt-1 w-full max-w-xl"
-          >
-            <option value="">{t("selectRepresentationPlaceholder")}</option>
-            {representations.map((item) => (
-              <option key={item.id} value={item.id}>
-                {representationLabel(item)}
-              </option>
-            ))}
-          </Select>
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="min-w-[min(100%,20rem)] flex-1">
+              <Label htmlFor="stats-representation">{t("selectRepresentation")}</Label>
+              <Select
+                id="stats-representation"
+                value={representationId}
+                onChange={(event) => {
+                  setRepresentationId(event.target.value);
+                  setExportError(null);
+                }}
+                className="mt-1 w-full"
+              >
+                <option value="">{t("selectRepresentationPlaceholder")}</option>
+                {representations.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {representationLabel(item)}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={exportRepresentationPdf}
+              disabled={!representationId || exportingPdf || loading}
+            >
+              {exportingPdf ? t("exportingRepresentationPdf") : t("exportRepresentationPdf")}
+            </Button>
+          </div>
+          {exportError && <p className="text-sm text-red-600">{exportError}</p>}
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

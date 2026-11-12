@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Documents, **Trac Bar**: admins can show past parties since 1 September (read-only bar slots) via a checkbox on that section.
 - Planning page: **Planning filters** panel is collapsible; open or closed state is remembered on your device.
+- Settings → **Stats** (by representation): export the selected representation as a PDF roster with each linked choreography’s choreographers and participants.
 
 ### Changed
 - Planning page: event-type filters sit above the calendar; toggling filters keeps the page steadier (less scroll jump, calendar day cells keep height when events are hidden).

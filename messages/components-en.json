@@ -219,7 +219,10 @@
       "participantLeaderboard": "Participant leaderboard",
       "participant": "Participant",
       "attendance": "Attendance",
-      "attendanceRate": "{rate}%"
+      "attendanceRate": "{rate}%",
+      "exportRepresentationPdf": "Export PDF",
+      "exportingRepresentationPdf": "Exporting…",
+      "exportRepresentationPdfError": "Could not export PDF."
     },
     "newUser": "New user",
     "userSearchPlaceholder": "Name, email, or phone…",

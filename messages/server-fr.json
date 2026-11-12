@@ -135,6 +135,11 @@
       "choreographerUnavailable": "{name} (chorégraphe) n’est pas disponible pour {title}.",
       "choreographerOverlap": "{name} (chorégraphe) est attendu dans deux répétitions en même temps.",
       "participantUnavailable": "{name} ({attended} / {eligible}) n’est pas disponible pour {title}{group}."
+    },
+    "representationExport": {
+      "choreographers": "Chorégraphes",
+      "participants": "Participants",
+      "none": "Aucun"
     }
   }
 }

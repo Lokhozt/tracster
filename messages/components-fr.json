@@ -219,7 +219,10 @@
       "participantLeaderboard": "Classement des participants",
       "participant": "Participant",
       "attendance": "Présence",
-      "attendanceRate": "{rate} %"
+      "attendanceRate": "{rate} %",
+      "exportRepresentationPdf": "Exporter en PDF",
+      "exportingRepresentationPdf": "Export en cours…",
+      "exportRepresentationPdfError": "Impossible d’exporter le PDF."
     },
     "newUser": "Nouvel utilisateur",
     "userSearchPlaceholder": "Nom, e-mail ou téléphone…",
