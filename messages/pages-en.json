@@ -130,8 +130,17 @@
       "editChoreography": "Edit choreography",
       "overview": "Overview",
       "demonstrations": "Demonstrations",
+      "nextRehearsal": "Next rehearsal",
+      "noUpcomingRehearsal": "No rehearsal scheduled.",
+      "nextPerformance": "Next date",
+      "people": "Team",
+      "participantCount": "{count, plural, =0 {No participants} one {# participant} other {# participants}}",
+      "eventsTab": "Events",
+      "youAreChoreographer": "You are a choreographer",
+      "moreActions": "More actions",
+      "pinnedResources": "Pinned resources",
+      "openResource": "Open",
       "categories": "Choreography sections",
-      "backToSections": "All sections",
       "openWhatsapp": "Open WhatsApp"
     },
     "ChoreographyRehearsalStatistics": {

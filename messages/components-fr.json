@@ -442,6 +442,7 @@
     "scheduleRehearsals": "Planifier des répétitions",
     "pastEventsHeading": "Événements passés",
     "planningSearchPlaceholder": "Titre, chorégraphie, lieu ou participant…",
+    "rehearsalCountSummary": "{shown} sur {total, plural, one {# répétition} other {# répétitions}}",
     "calendarView": "Vue du calendrier",
     "noEventsOnDay": "Rien de prévu ce jour.",
     "dayEventCount": "{date} : {count, plural, =0 {aucun événement} one {# événement} other {# événements}}",

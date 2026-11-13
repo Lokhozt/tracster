@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
@@ -19,7 +20,10 @@ import { RepresentationsSection } from "@/components/RepresentationForms";
 import { ChoreographerBadge } from "@/components/CrownIcon";
 import { ChoreographyResources } from "@/components/ChoreographyResources";
 import { ChoreographyTagsEditor } from "@/components/ChoreographyTagsEditor";
-import { SectionNav, type NavSection } from "@/components/SettingsSections";
+import { ChoreographyHeaderActions } from "@/components/ChoreographyHeaderActions";
+import { type ChoreographyTab, ChoreographyTabs } from "@/components/ChoreographyTabs";
+import { AvailabilityButtons } from "@/components/AvailabilityButtons";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -34,7 +38,6 @@ import { getVisibleChoreographyResources } from "@/lib/choreography-resources";
 import { getSiteSettings } from "@/lib/site-settings";
 import { serializeTag } from "@/lib/tags";
 import { isWhatsAppUrl } from "@/lib/whatsapp";
-import { WhatsAppLink } from "@/components/WhatsAppLink";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -152,58 +155,159 @@ export default async function ChoreographyDetailPage({ params, searchParams }: P
   const participants = choreography.members.map(({ user }) => serializeBasicUser(user));
   const showJoinRequests =
     canEdit && (choreography.allowJoinRequests || choreography.joinRequests.length > 0);
+  const now = new Date();
+  const upcomingRehearsals = choreography.rehearsals
+    .filter((rehearsal) => (rehearsal.endsAt ?? rehearsal.startsAt) >= now)
+    .sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime());
+  const nextRehearsal = upcomingRehearsals[0] ?? null;
+  const userIsInNextRehearsal = nextRehearsal
+    ? nextRehearsal.group
+      ? nextRehearsal.group.members.some((member) => member.userId === user.id)
+      : isMember
+    : false;
+  const myNextRehearsalStatus =
+    nextRehearsal?.availabilities.find((item) => item.userId === user.id)?.status;
+  const upcomingEventLinks = choreography.eventLinks.filter(
+    (link) => (link.event.endsAt ?? link.event.startsAt) >= now,
+  );
+  const nextPerformance = upcomingEventLinks[0] ?? null;
+  const pinnedResources = resources.filter((resource) => resource.pinned);
+  const isChoreographer = choreographers.some((entry) => entry.id === user.id);
+  const showGroups = canEdit || groups.length > 0;
 
-  const sections: NavSection[] = [
+  const tabs: ChoreographyTab[] = [
     {
       id: "overview",
       label: t("overview"),
       content: (
-        <div className="space-y-6">
-          <div className="space-y-3">
-            {choreography.description && (
-              <p className="whitespace-pre-wrap text-stone-600">{choreography.description}</p>
-            )}
-            <ChoreographyTagsEditor
-              choreographyId={id}
-              allTags={allTags.map(serializeTag)}
-              assignedTags={choreography.tags.map((item) => serializeTag(item.tag))}
-              canEdit={canManageTags}
-              visible={settings.showChoreographyTags}
-            />
-          </div>
-          <JoinAsParticipantControls
-            joinUrl={`/api/choreographies/${id}/join`}
-            requestUrl={`/api/choreographies/${id}/join-requests`}
-            allowJoin={choreography.allowParticipantJoin}
-            allowRequest={choreography.allowJoinRequests}
-            isParticipant={isMember}
-            hasPendingRequest={hasPendingRequest}
-          />
-          <div className="grid gap-6 lg:grid-cols-2">
+        // Overview first: what's next, the key resources and who is involved, without a tap.
+        <div className="space-y-4">
+          <div className="grid gap-4 lg:grid-cols-2">
             <Card>
-              <h2 className="mb-4 text-lg font-semibold">{t("choreographers")}</h2>
-              <ChoreographersList
-                choreographyId={id}
-                canEdit={false}
-                ownerUserId={choreography.createdById}
-                choreographers={choreographers}
-              />
+              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
+                {t("nextRehearsal")}
+              </h2>
+              {nextRehearsal ? (
+                <div className="space-y-3">
+                  <Link href={`/events/${nextRehearsal.id}`} className="block hover:underline">
+                    <p className="font-semibold text-stone-900">
+                      <LocalDateTime value={nextRehearsal.startsAt.toISOString()} />
+                    </p>
+                    <p className="text-sm text-stone-600">
+                      {[displayLocation(nextRehearsal), nextRehearsal.group?.name]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </Link>
+                  {userIsInNextRehearsal && (
+                    <AvailabilityButtons
+                      rehearsalId={nextRehearsal.id}
+                      currentStatus={myNextRehearsalStatus}
+                    />
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-stone-600">{t("noUpcomingRehearsal")}</p>
+              )}
+              {nextPerformance && (
+                <Link
+                  href={`/events/${nextPerformance.event.id}`}
+                  className="mt-4 block border-t border-stone-100 pt-3 text-sm hover:underline"
+                >
+                  <span className="text-stone-500">{t("nextPerformance")} · </span>
+                  <span className="font-medium text-stone-900">
+                    {nextPerformance.event.title || tc("representation")}
+                  </span>
+                  <span className="text-stone-600">
+                    {" · "}
+                    <LocalDateTime value={nextPerformance.event.startsAt.toISOString()} />
+                  </span>
+                </Link>
+              )}
             </Card>
             <Card>
-              <h2 className="mb-4 text-lg font-semibold">{t("participants")}</h2>
-              <ParticipantsList
-                choreographyId={id}
-                canEdit={false}
-                members={participants}
-              />
+              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
+                {t("people")}
+              </h2>
+              <p className="text-stone-900">
+                <span className="text-stone-500">{t("choreographers")} : </span>
+                {choreographers.map((entry) => entry.name).join(", ") || "—"}
+              </p>
+              <p className="mt-1 text-stone-900">
+                {t("participantCount", { count: participants.length })}
+              </p>
+              <div className="mt-3">
+                <JoinAsParticipantControls
+                  joinUrl={`/api/choreographies/${id}/join`}
+                  requestUrl={`/api/choreographies/${id}/join-requests`}
+                  allowJoin={choreography.allowParticipantJoin}
+                  allowRequest={choreography.allowJoinRequests}
+                  isParticipant={isMember}
+                  hasPendingRequest={hasPendingRequest}
+                />
+              </div>
             </Card>
           </div>
+          {pinnedResources.length > 0 && (
+            // Compact list: full previews (video players…) stay in the Resources tab.
+            <Card>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">
+                  {t("pinnedResources")}
+                </h2>
+                <Link href="?section=resources" className="text-sm font-medium text-stone-600 hover:text-stone-900">
+                  {t("resources")} ›
+                </Link>
+              </div>
+              <ul className="divide-y divide-stone-100">
+                {pinnedResources.map((resource) => (
+                  <li key={resource.id} className="flex min-h-11 items-center justify-between gap-3 py-1.5">
+                    <span className="min-w-0 truncate text-stone-900">
+                      {resource.description || resource.fileName || resource.url}
+                    </span>
+                    {resource.type === "LINK" && resource.url ? (
+                      <a
+                        href={resource.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 text-sm font-medium text-stone-600 hover:text-stone-900"
+                      >
+                        {t("openResource")} ↗
+                      </a>
+                    ) : (
+                      <Link
+                        href="?section=resources"
+                        className="shrink-0 text-sm font-medium text-stone-600 hover:text-stone-900"
+                      >
+                        {t("openResource")} ›
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+          {(choreography.description || settings.showChoreographyTags) && (
+            <Card className="space-y-3">
+              {choreography.description && (
+                <p className="whitespace-pre-wrap text-stone-700">{choreography.description}</p>
+              )}
+              <ChoreographyTagsEditor
+                choreographyId={id}
+                allTags={allTags.map(serializeTag)}
+                assignedTags={choreography.tags.map((item) => serializeTag(item.tag))}
+                canEdit={canManageTags}
+                visible={settings.showChoreographyTags}
+              />
+            </Card>
+          )}
         </div>
       ),
     },
     {
       id: "participants",
       label: t("participants"),
+      count: participants.length,
       content: (
         <div className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
@@ -261,6 +365,7 @@ export default async function ChoreographyDetailPage({ params, searchParams }: P
     {
       id: "resources",
       label: t("resources"),
+      count: resources.length,
       content: (
         <ChoreographyResources
           choreographyId={id}
@@ -269,117 +374,125 @@ export default async function ChoreographyDetailPage({ params, searchParams }: P
         />
       ),
     },
+    ...(showGroups
+      ? [
+          {
+            id: "groups",
+            label: tc("groups"),
+            count: groups.length,
+            content: (
+              <GroupsSection
+                choreographyId={id}
+                canEdit={canEdit}
+                groups={groups.map(serializeGroup)}
+                members={participants}
+              />
+            ),
+          },
+        ]
+      : []),
     {
-      id: "groups",
-      label: tc("groups"),
+      // Rehearsals, representations and demonstrations in one place, like the planning.
+      id: "events",
+      label: t("eventsTab"),
+      count: upcomingRehearsals.length + upcomingEventLinks.length,
       content: (
-        <GroupsSection
-          choreographyId={id}
-          canEdit={canEdit}
-          groups={groups.map(serializeGroup)}
-          members={participants}
-        />
-      ),
-    },
-    {
-      id: "representations",
-      label: tc("representations"),
-      content: (
-        <RepresentationsSection
-          choreographyId={id}
-          canEdit={canEdit}
-          eventTypes={eventTypes}
-          representations={representationLinks.map((link) => ({
-            id: link.event.id,
-            title: link.event.title || null,
-            startsAt: link.event.startsAt.toISOString(),
-            endsAt: link.event.endsAt?.toISOString() ?? null,
-            location: displayLocation(link.event),
-            locationId: link.event.locationId,
-            notes: link.event.notes,
-          }))}
-        />
-      ),
-    },
-    {
-      id: "demonstrations",
-      label: t("demonstrations"),
-      content: (
-        <DemonstrationsSection
-          choreographyId={id}
-          choreographyTitle={choreography.title}
-          canEdit={canEdit}
-          eventTypes={eventTypes}
-          participantOptions={users}
-          groups={groups.map((group) => ({
-            id: group.id,
-            name: group.name,
-            memberCount: group.members.length,
-          }))}
-          demonstrations={demonstrationLinks.map((link) => ({
-            id: link.event.id,
-            title: link.event.title || null,
-            startsAt: link.event.startsAt.toISOString(),
-            endsAt: link.event.endsAt?.toISOString() ?? null,
-            location: displayLocation(link.event),
-            groupName: link.group?.name ?? null,
-          }))}
-        />
-      ),
-    },
-    {
-      id: "rehearsals",
-      label: tc("rehearsals"),
-      content: (
-        <RehearsalsSection
-          choreographyId={id}
-          choreographyTitle={choreography.title}
-          canEdit={canEdit}
-          groups={groups.map((group) => ({
-            id: group.id,
-            name: group.name,
-            memberCount: group.members.length,
-          }))}
-          eventTypes={eventTypes}
-          rehearsals={choreography.rehearsals.map((rehearsal) => {
-            const targetUserIds = new Set(
-              rehearsal.group
-                ? rehearsal.group.members.map((member) => member.userId)
-                : choreography.members.map(({ userId }) => userId),
-            );
+        <div className="space-y-8">
+          <section>
+            <RehearsalsSection
+              choreographyId={id}
+              choreographyTitle={choreography.title}
+              canEdit={canEdit}
+              groups={groups.map((group) => ({
+                id: group.id,
+                name: group.name,
+                memberCount: group.members.length,
+              }))}
+              eventTypes={eventTypes}
+              rehearsals={choreography.rehearsals.map((rehearsal) => {
+                const targetUserIds = new Set(
+                  rehearsal.group
+                    ? rehearsal.group.members.map((member) => member.userId)
+                    : choreography.members.map(({ userId }) => userId),
+                );
 
-            const targetAvailabilities = rehearsal.availabilities.filter((item) =>
-              targetUserIds.has(item.userId),
-            );
+                const targetAvailabilities = rehearsal.availabilities.filter((item) =>
+                  targetUserIds.has(item.userId),
+                );
 
-            return {
-              id: rehearsal.id,
-              title: rehearsal.title,
-              startsAt: rehearsal.startsAt.toISOString(),
-              endsAt: rehearsal.endsAt?.toISOString() ?? null,
-              location: displayLocation(rehearsal),
-              groupName: rehearsal.group?.name ?? null,
-              availableNames: targetAvailabilities
-                .filter((item) => item.status === "AVAILABLE")
-                .map((item) => formatUserName(item.user)),
-              unavailableNames: targetAvailabilities
-                .filter((item) => item.status === "UNAVAILABLE")
-                .map((item) => formatUserName(item.user)),
-              hasUpcomingSeriesEvents: hasUpcomingSeriesEvents(
-                rehearsal,
-                rehearsalSeriesSiblings,
-              ),
-            };
-          })}
-        />
+                return {
+                  id: rehearsal.id,
+                  title: rehearsal.title,
+                  startsAt: rehearsal.startsAt.toISOString(),
+                  endsAt: rehearsal.endsAt?.toISOString() ?? null,
+                  location: displayLocation(rehearsal),
+                  groupName: rehearsal.group?.name ?? null,
+                  availableNames: targetAvailabilities
+                    .filter((item) => item.status === "AVAILABLE")
+                    .map((item) => formatUserName(item.user)),
+                  unavailableNames: targetAvailabilities
+                    .filter((item) => item.status === "UNAVAILABLE")
+                    .map((item) => formatUserName(item.user)),
+                  hasUpcomingSeriesEvents: hasUpcomingSeriesEvents(
+                    rehearsal,
+                    rehearsalSeriesSiblings,
+                  ),
+                };
+              })}
+            />
+          </section>
+          {(canEdit || representationLinks.length > 0) && (
+            <section>
+              <RepresentationsSection
+                choreographyId={id}
+                canEdit={canEdit}
+                eventTypes={eventTypes}
+                representations={representationLinks.map((link) => ({
+                  id: link.event.id,
+                  title: link.event.title || null,
+                  startsAt: link.event.startsAt.toISOString(),
+                  endsAt: link.event.endsAt?.toISOString() ?? null,
+                  location: displayLocation(link.event),
+                  locationId: link.event.locationId,
+                  notes: link.event.notes,
+                }))}
+              />
+            </section>
+          )}
+          {(canEdit || demonstrationLinks.length > 0) && (
+            <section>
+              <DemonstrationsSection
+                choreographyId={id}
+                choreographyTitle={choreography.title}
+                canEdit={canEdit}
+                eventTypes={eventTypes}
+                participantOptions={users}
+                groups={groups.map((group) => ({
+                  id: group.id,
+                  name: group.name,
+                  memberCount: group.members.length,
+                }))}
+                demonstrations={demonstrationLinks.map((link) => ({
+                  id: link.event.id,
+                  title: link.event.title || null,
+                  startsAt: link.event.startsAt.toISOString(),
+                  endsAt: link.event.endsAt?.toISOString() ?? null,
+                  location: displayLocation(link.event),
+                  groupName: link.group?.name ?? null,
+                }))}
+              />
+            </section>
+          )}
+        </div>
       ),
     },
   ];
 
+  // Edit form and admin actions: opened from the title-row actions, not shown as tabs.
+  const extraSections: Array<{ id: string; content: React.ReactNode }> = [];
   if (canEdit) {
-    sections.push({
+    extraSections.push({
       id: "edit",
-      label: t("editChoreography"),
       content: (
         <Card>
           <h2 className="mb-4 text-lg font-semibold">{t("editChoreography")}</h2>
@@ -400,9 +513,8 @@ export default async function ChoreographyDetailPage({ params, searchParams }: P
   }
 
   if (canManageLifecycle) {
-    sections.push({
+    extraSections.push({
       id: "admin",
-      label: tc("adminActions"),
       content: (
         <ChoreographyLifecycleActions
           choreographyId={choreography.id}
@@ -429,22 +541,28 @@ export default async function ChoreographyDetailPage({ params, searchParams }: P
 
   return (
     <AppShell
-      title={
-        <>
-          {canEdit && <ChoreographerBadge className="text-xl" />}
-          <span className="min-w-0">{choreography.title}</span>
-          {choreography.whatsappUrl && isWhatsAppUrl(choreography.whatsappUrl) && (
-            <WhatsAppLink href={choreography.whatsappUrl} label={t("openWhatsapp")} />
-          )}
-        </>
+      title={choreography.title}
+      titleActions={
+        <ChoreographyHeaderActions
+          whatsappUrl={
+            choreography.whatsappUrl && isWhatsAppUrl(choreography.whatsappUrl)
+              ? choreography.whatsappUrl
+              : null
+          }
+          canEdit={canEdit}
+          canManageLifecycle={canManageLifecycle}
+        />
       }
     >
-      <SectionNav
-        sections={sections}
-        initialSectionId={query.section}
-        categoriesLabel={t("categories")}
-        backLabel={t("backToSections")}
-      />
+      {isChoreographer && (
+        <p className="-mt-4 mb-4">
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-900">
+            <ChoreographerBadge className="text-sm" />
+            {t("youAreChoreographer")}
+          </span>
+        </p>
+      )}
+      <ChoreographyTabs tabs={tabs} extraSections={extraSections} initialSectionId={query.section} />
     </AppShell>
   );
 }

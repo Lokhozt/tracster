@@ -360,7 +360,7 @@ export function RehearsalsSection({
             className="mt-1"
           />
           <p className="mt-2 text-sm text-stone-500">
-            {filteredRehearsals.length} of {rehearsals.length} rehearsals
+            {t("rehearsalCountSummary", { shown: filteredRehearsals.length, total: rehearsals.length })}
           </p>
         </div>
       )}

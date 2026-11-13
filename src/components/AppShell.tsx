@@ -96,9 +96,12 @@ export async function AppShell({
   title,
   wide = false,
   fillHeight = false,
+  titleActions,
 }: {
   children: React.ReactNode;
   title?: React.ReactNode;
+  /** Buttons on the title row, kept outside the <h1> so they don't become part of its name. */
+  titleActions?: React.ReactNode;
   wide?: boolean;
   /** Wide screens (xl+): exactly the window height, no page scroll (the content scrolls inside). */
   fillHeight?: boolean;
@@ -124,9 +127,12 @@ export async function AppShell({
       >
         {messageOfTheDay && <MessageOfTheDayBanner message={messageOfTheDay} />}
         {title && (
-          <h1 className="mb-6 flex items-center gap-2 text-2xl font-semibold tracking-tight break-words sm:text-3xl">
-            {title}
-          </h1>
+          <div className="mb-6 flex items-center gap-3">
+            <h1 className="flex min-w-0 flex-1 items-center gap-2 text-2xl font-semibold tracking-tight break-words sm:text-3xl">
+              {title}
+            </h1>
+            {titleActions}
+          </div>
         )}
         {children}
       </main>
