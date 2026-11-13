@@ -1,80 +1,77 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { EventTypeFilter } from "@/components/EventTypeFilter";
+import { useMemo, useState } from "react";
 import { FollowAssociationCalendarLink } from "@/components/FollowAssociationCalendarLink";
+import { EventTypeFilter } from "@/components/EventTypeFilter";
+import { FilterButton, FilterCheckbox, FilterSheet } from "@/components/FilterSheet";
+import { type FloatingAction, FloatingActionButton } from "@/components/FloatingActionButton";
 import { PlanningImageExportButton } from "@/components/PlanningImageExport";
 import { PlanningRehearsalsEditButton } from "@/components/PlanningRehearsalsEditButton";
 import { RehearsalCalendar } from "@/components/RehearsalCalendar";
 import { PartyBarPlanningReminders } from "@/components/PartyBarPlanningReminders";
 import { UpcomingEventsList } from "@/components/UpcomingEventsList";
-import { Card } from "@/components/ui";
+import { SearchInput } from "@/components/ui";
 import type { PartyBarPlanningReminder } from "@/lib/party-bar";
 import {
   persistHiddenEventTypeIds,
   persistHideNonParticipating,
-  persistPlanningFiltersCollapsed,
 } from "@/lib/event-category-filter";
-import { cn } from "@/lib/utils";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
 import { isBirthdayScheduleEvent } from "@/lib/schedule-birthdays";
 import type { SerializedScheduleEvent } from "@/lib/schedule-filters";
+import { matchesSearch } from "@/lib/search";
 
+function matchesScheduleSearch(event: SerializedScheduleEvent, query: string): boolean {
+  return matchesSearch(
+    query,
+    event.title,
+    event.typeName,
+    event.choreographyTitle,
+    event.groupName,
+    event.location,
+    ...event.participantNames,
+  );
+}
+
+/**
+ * The planning: one search + filter row drives both the calendar and the event list below it
+ * (this replaced the separate Events tab), plus a "+" to create events on phones.
+ */
 export function ScheduleOverview({
   events,
-  upcoming,
   eventTypes,
   initialHiddenTypeIds,
   initialHideNonParticipating,
-  initialPlanningFiltersCollapsed = false,
   associationCalendarUrl,
   startOfDayHour,
   canEditPlanning,
   planningLocations,
   planningUsers,
   partyBarReminders = [],
+  createActions = [],
 }: {
   events: SerializedScheduleEvent[];
-  upcoming: SerializedScheduleEvent[];
   eventTypes: SerializedEventType[];
   initialHiddenTypeIds: string[];
   initialHideNonParticipating: boolean;
-  initialPlanningFiltersCollapsed?: boolean;
   associationCalendarUrl?: string | null;
   startOfDayHour: number;
   canEditPlanning?: boolean;
   planningLocations?: Array<{ id: string; name: string }>;
   planningUsers?: Array<{ id: string; name: string }>;
   partyBarReminders?: PartyBarPlanningReminder[];
+  /** "+" button actions (new event, schedule rehearsals) the viewer is allowed to use. */
+  createActions?: FloatingAction[];
 }) {
   const t = useTranslations("Components");
-  const filterAnchorRef = useRef<HTMLDivElement>(null);
   const [hiddenTypeIds, setHiddenTypeIds] = useState(initialHiddenTypeIds);
   const [hideNonParticipating, setHideNonParticipating] = useState(
     initialHideNonParticipating,
   );
-  const [filtersExpanded, setFiltersExpanded] = useState(!initialPlanningFiltersCollapsed);
-
-  const preserveScrollAnchor = useCallback((update: () => void) => {
-    const topBefore = filterAnchorRef.current?.getBoundingClientRect().top;
-    update();
-    if (topBefore === undefined) {
-      return;
-    }
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const anchor = filterAnchorRef.current;
-        if (!anchor) {
-          return;
-        }
-        const delta = anchor.getBoundingClientRect().top - topBefore;
-        if (Math.abs(delta) > 0.5) {
-          window.scrollBy({ top: delta, left: 0 });
-        }
-      });
-    });
-  }, []);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [showPast, setShowPast] = useState(false);
   const hidden = useMemo(() => new Set(hiddenTypeIds), [hiddenTypeIds]);
   const filteredEvents = useMemo(
     () =>
@@ -85,48 +82,28 @@ export function ScheduleOverview({
         if (hideNonParticipating && !event.isParticipating) {
           return false;
         }
-        return true;
+        return matchesScheduleSearch(event, search);
       }),
-    [events, hidden, hideNonParticipating],
+    [events, hidden, hideNonParticipating, search],
   );
   const exportEvents = useMemo(
     () => filteredEvents.filter((event) => !isBirthdayScheduleEvent(event)),
     [filteredEvents],
   );
-  const filteredUpcoming = useMemo(
-    () =>
-      upcoming.filter((event) => {
-        if (hidden.has(event.typeId) || isBirthdayScheduleEvent(event)) {
-          return false;
-        }
-        if (hideNonParticipating && !event.isParticipating) {
-          return false;
-        }
-        return true;
-      }),
-    [upcoming, hidden, hideNonParticipating],
+  const listEvents = useMemo(
+    () => filteredEvents.filter((event) => !isBirthdayScheduleEvent(event)),
+    [filteredEvents],
   );
+  const activeFilterCount = hiddenTypeIds.length + (hideNonParticipating ? 1 : 0) + (showPast ? 1 : 0);
 
   function updateHiddenTypeIds(ids: string[]) {
-    preserveScrollAnchor(() => {
-      setHiddenTypeIds(ids);
-      persistHiddenEventTypeIds(ids);
-    });
+    setHiddenTypeIds(ids);
+    persistHiddenEventTypeIds(ids);
   }
 
   function updateHideNonParticipating(value: boolean) {
-    preserveScrollAnchor(() => {
-      setHideNonParticipating(value);
-      persistHideNonParticipating(value);
-    });
-  }
-
-  function toggleFiltersExpanded() {
-    preserveScrollAnchor(() => {
-      const next = !filtersExpanded;
-      setFiltersExpanded(next);
-      persistPlanningFiltersCollapsed(!next);
-    });
+    setHideNonParticipating(value);
+    persistHideNonParticipating(value);
   }
 
   const filtersSummary = useMemo(() => {
@@ -139,91 +116,78 @@ export function ScheduleOverview({
     if (hideNonParticipating) {
       parts.push(t("planningFiltersSummaryParticipatingOnly"));
     }
+    if (showPast) {
+      parts.push(t("pastEventsShown"));
+    }
     return parts.join(" · ");
-  }, [hiddenTypeIds.length, hideNonParticipating, t]);
+  }, [hiddenTypeIds.length, hideNonParticipating, showPast, t]);
 
   return (
-    <>
+    // Wide screens (xl+): fills the window; only the calendar body and the event list scroll.
+    <div className="xl:flex xl:min-h-0 xl:flex-1 xl:flex-col">
       <PartyBarPlanningReminders reminders={partyBarReminders} />
-      <div ref={filterAnchorRef} className="mb-4 [overflow-anchor:none]">
-      <Card>
-        <button
-          type="button"
-          onClick={toggleFiltersExpanded}
-          aria-expanded={filtersExpanded}
-          className="-mx-1 mb-0 flex w-[calc(100%+0.5rem)] items-center justify-between gap-3 rounded-lg px-1 py-0.5 text-left transition hover:bg-stone-50"
-        >
-          <span className="text-sm font-semibold text-stone-900">{t("planningFilters")}</span>
-          <ChevronIcon expanded={filtersExpanded} />
-        </button>
-        {!filtersExpanded && (
-          <p className="mt-2 text-sm text-stone-600">{filtersSummary}</p>
-        )}
-        {filtersExpanded && (
-          <div className="mt-3 border-t border-stone-100 pt-3">
-            <label className="mb-3 flex cursor-pointer items-center gap-2 text-sm text-stone-700">
-              <input
-                type="checkbox"
-                checked={hideNonParticipating}
-                onChange={(event) => updateHideNonParticipating(event.target.checked)}
-                className="rounded border-stone-300"
-              />
-              {t("hideNonParticipatingEvents")}
-            </label>
-            <EventTypeFilter
-              eventTypes={eventTypes}
-              hiddenTypeIds={hiddenTypeIds}
-              onChange={updateHiddenTypeIds}
-            />
-          </div>
-        )}
-      </Card>
+      <div className="mb-4 flex gap-2">
+        <div className="min-w-0 flex-1">
+          <SearchInput
+            aria-label={t("search")}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={t("planningSearchPlaceholder")}
+          />
+        </div>
+        <FilterButton activeFilterCount={activeFilterCount} onClick={() => setFilterSheetOpen(true)} />
       </div>
-      <RehearsalCalendar
-        events={filteredEvents}
-        titleActions={
-          <>
-            {associationCalendarUrl && (
-              <FollowAssociationCalendarLink href={associationCalendarUrl} iconOnly />
-            )}
-            <PlanningImageExportButton
-              events={exportEvents}
-              startOfDayHour={startOfDayHour}
-            />
-            {canEditPlanning && planningLocations && planningUsers && (
-              <PlanningRehearsalsEditButton
-                locations={planningLocations}
-                users={planningUsers}
-              />
-            )}
-          </>
-        }
-      />
-      <div className="[overflow-anchor:none]">
-        <UpcomingEventsList
-          events={filteredUpcoming}
-          categoriesFiltered={hiddenTypeIds.length > 0 || hideNonParticipating}
+      <FloatingActionButton actions={createActions} />
+      <FilterSheet
+        open={filterSheetOpen}
+        onClose={() => setFilterSheetOpen(false)}
+        title={t("planningFilters")}
+        summary={filtersSummary}
+      >
+        <FilterCheckbox checked={hideNonParticipating} onChange={updateHideNonParticipating}>
+          {t("hideNonParticipatingEvents")}
+        </FilterCheckbox>
+        <FilterCheckbox checked={showPast} onChange={setShowPast}>
+          {t("showPastEvents")}
+        </FilterCheckbox>
+        <EventTypeFilter
+          eventTypes={eventTypes}
+          hiddenTypeIds={hiddenTypeIds}
+          onChange={updateHiddenTypeIds}
         />
+      </FilterSheet>
+      {/* Wide screens: calendar and event list side by side, sharing the window height. */}
+      <div className="xl:grid xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,1fr)_18rem] xl:gap-6 2xl:grid-cols-[minmax(0,1fr)_26rem]">
+        <RehearsalCalendar
+          events={filteredEvents}
+          fillHeight
+          titleActions={
+            <>
+              {associationCalendarUrl && (
+                <FollowAssociationCalendarLink href={associationCalendarUrl} iconOnly />
+              )}
+              <PlanningImageExportButton
+                events={exportEvents}
+                startOfDayHour={startOfDayHour}
+              />
+              {canEditPlanning && planningLocations && planningUsers && (
+                <PlanningRehearsalsEditButton
+                  locations={planningLocations}
+                  users={planningUsers}
+                />
+              )}
+            </>
+          }
+        />
+        {/* Side column on wide screens: scrolls on its own. */}
+        <div className="[overflow-anchor:none] xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain xl:pr-1">
+          <UpcomingEventsList
+            events={listEvents}
+            includePast={showPast}
+            categoriesFiltered={hiddenTypeIds.length > 0 || hideNonParticipating || search.trim() !== ""}
+          />
+        </div>
       </div>
-    </>
-  );
-}
-
-function ChevronIcon({ expanded }: { expanded: boolean }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={cn(
-        "h-5 w-5 shrink-0 text-stone-500 transition-transform",
-        expanded && "rotate-180",
-      )}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      aria-hidden="true"
-    >
-      <path d="M6 9l6 6 6-6" />
-    </svg>
+    </div>
   );
 }

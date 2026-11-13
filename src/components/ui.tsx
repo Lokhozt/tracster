@@ -38,6 +38,30 @@ export function Input({
   );
 }
 
+/** Search field with a magnifier icon inside it. */
+export function SearchInput({
+  className,
+  ...props
+}: Omit<React.InputHTMLAttributes<HTMLInputElement>, "type">) {
+  return (
+    <div className="relative">
+      <svg
+        viewBox="0 0 24 24"
+        className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-stone-400"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3.5-3.5" />
+      </svg>
+      <Input type="search" autoComplete="off" className={cn("pl-9", className)} {...props} />
+    </div>
+  );
+}
+
 export function Textarea({
   className,
   ...props

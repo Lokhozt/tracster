@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Button, Input, Label, Select } from "@/components/ui";
 import type { UserRole } from "@/generated/prisma/client";
 import { type AdminUser } from "@/lib/users";
+import { useAppNavigation } from "@/lib/app-navigation";
 
 export function EditUserForm({ user }: { user: AdminUser }) {
   const t = useTranslations("Components");
@@ -202,6 +203,7 @@ export function TransferOwnershipForm({
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const navigation = useAppNavigation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const candidates = users.filter((user) => user.id !== currentUserId);
@@ -238,7 +240,7 @@ export function TransferOwnershipForm({
       return;
     }
 
-    router.push("/settings");
+    navigation.returnTo("/settings");
     router.refresh();
   }
 
@@ -305,6 +307,7 @@ export function CompetitorBadge() {
 export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const navigation = useAppNavigation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
@@ -344,7 +347,7 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
       return;
     }
 
-    router.push(`/users/${data.user.id}`);
+    navigation.replace(`/users/${data.user.id}`);
     router.refresh();
   }
 

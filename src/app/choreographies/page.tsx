@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -142,7 +143,8 @@ export default async function ChoreographiesPage() {
     : "";
   return (
     <AppShell title={t("title")}>
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* Below lg: no intro (the Mine / All switch says it) and a floating "+" instead of the button. */}
+      <div className="mb-6 hidden gap-3 lg:flex lg:flex-row lg:items-center lg:justify-between">
         <p className="text-stone-600">
           {t("intro")}
         </p>
@@ -155,6 +157,11 @@ export default async function ChoreographiesPage() {
           </Link>
         )}
       </div>
+      {canCreate && (
+        <FloatingActionButton
+          actions={[{ href: "/choreographies/new", label: t("newChoreography") }]}
+        />
+      )}
 
       <ChoreographiesList
         canCreate={canCreate}

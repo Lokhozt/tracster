@@ -51,6 +51,7 @@ import {
 } from "@/lib/participation";
 import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 import { WhatsAppLinkField } from "@/components/WhatsAppLink";
+import { useAppNavigation } from "@/lib/app-navigation";
 
 type UserOption = { id: string; name: string; email: string; isCompetitor?: boolean };
 
@@ -184,6 +185,7 @@ export function CreateEventForm({
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const navigation = useAppNavigation();
   const initialTypeId = copyFrom?.typeId ?? defaultTypeId ?? eventTypes[0]?.id ?? "";
   const initialEventType = selectedEventType(eventTypes, initialTypeId);
   const initialChoreographyTitle = choreographyOptions?.find(
@@ -382,7 +384,7 @@ export function CreateEventForm({
 
     const eventId = data.event.id as string;
     if (redirectBasePath) {
-      router.push(`${redirectBasePath}/${eventId}`);
+      navigation.replace(`${redirectBasePath}/${eventId}`);
     } else {
       router.refresh();
     }
@@ -620,7 +622,7 @@ export function EditEventForm({
   choreographyOptions?: ChoreographyOption[];
 }) {
   const t = useTranslations("Components");
-  const router = useRouter();
+  const navigation = useAppNavigation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const typeId = event.type.id;
@@ -742,7 +744,7 @@ export function EditEventForm({
       return;
     }
 
-    router.push(`/events/${event.id}`);
+    navigation.returnTo(`/events/${event.id}`);
   }
 
   return (
@@ -869,7 +871,7 @@ export function EditEventForm({
           confirmMessage={t("deleteEventConfirm")}
           upcomingConfirmMessage={t("deleteUpcomingRepeatsConfirm")}
           hasUpcomingSeries={event.hasUpcomingSeriesEvents}
-          redirectTo="/events"
+          redirectTo="/"
         />
       </div>
     </div>

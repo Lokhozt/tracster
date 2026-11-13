@@ -45,7 +45,7 @@ export function WhatsAppLink({ href, label }: { href: string; label: string }) {
       rel="noopener noreferrer"
       aria-label={label}
       title={label}
-      className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-[#25D366] px-3 text-sm font-medium text-white hover:bg-[#1DA851] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#128C7E]"
+      className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-[#25D366] px-3 text-sm font-medium text-[#fff] hover:bg-[#1DA851] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#128C7E]"
     >
       <WhatsAppMark />
       WhatsApp

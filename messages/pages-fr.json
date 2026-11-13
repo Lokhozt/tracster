@@ -71,7 +71,7 @@
       "title": "Nouvel événement"
     },
     "EventDetail": {
-      "backToEvents": "← Retour aux événements",
+      "back": "← Retour",
       "openChoreography": "Voir la chorégraphie : {title}",
       "start": "Début",
       "end": "Fin",
@@ -97,6 +97,7 @@
       "representationPieces": "Pièces interprétées lors de cette représentation.",
       "participants": "Participants",
       "partyBarSectionTitle": "Volontaires au bar",
+      "duplicateEvent": "Dupliquer",
       "editEvent": "Modifier l’événement",
       "openWhatsapp": "Ouvrir WhatsApp"
     },

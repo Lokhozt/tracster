@@ -63,7 +63,7 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
           <p className="text-stone-600">{t("noMatchingRepresentations")}</p>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 md:grid-cols-2">
           {filteredItems.map(({ representation, canEdit }) => (
             <Card key={representation.id} className="relative transition hover:border-stone-400">
               <div className="flex flex-wrap items-start justify-between gap-4">

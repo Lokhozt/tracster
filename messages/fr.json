@@ -30,7 +30,13 @@
     "register": "S’inscrire",
     "signOut": "Se déconnecter",
     "openMenu": "Ouvrir le menu",
-    "closeMenu": "Fermer le menu"
+    "closeMenu": "Fermer le menu",
+    "administration": "Administration",
+    "collapseSidebar": "Réduire le menu",
+    "expandSidebar": "Agrandir le menu",
+    "mainNavLabel": "Navigation principale",
+    "choreographiesShort": "Chorés",
+    "unavailabilityShort": "Indispos"
   },
   "Metadata": {
     "description": "Planifiez les répétitions et suivez les disponibilités des participants de votre association."
@@ -54,8 +60,6 @@
     "adminPrivilegesLabel": "Utiliser les privilèges d’administration",
     "adminPrivilegesOn": "La planification, les paramètres et les autres outils d’administration sont disponibles.",
     "adminPrivilegesOff": "Vous avez actuellement le même accès qu’un membre.",
-    "adminPrivilegesError": "Impossible de mettre à jour les privilèges d’administration.",
-    "session": "Session",
-    "signOutHelp": "Déconnectez-vous de {appName} sur cet appareil."
+    "adminPrivilegesError": "Impossible de mettre à jour les privilèges d’administration."
   }
 }

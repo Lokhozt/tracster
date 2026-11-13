@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui";
+import { useAppNavigation } from "@/lib/app-navigation";
 
 
 type UpcomingItem = {
@@ -26,6 +27,7 @@ export function ChoreographyLifecycleActions({
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const navigation = useAppNavigation();
   const [loadingAction, setLoadingAction] = useState<"archive" | "delete" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,7 +70,7 @@ export function ChoreographyLifecycleActions({
       return;
     }
 
-    router.push("/choreographies");
+    navigation.returnTo("/choreographies");
     router.refresh();
   }
 

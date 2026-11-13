@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui";
+import { useAppNavigation } from "@/lib/app-navigation";
 
 export function DeleteUserButton({
   userId,
@@ -16,6 +17,7 @@ export function DeleteUserButton({
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const navigation = useAppNavigation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +39,7 @@ export function DeleteUserButton({
     }
 
     if (redirectTo) {
-      router.push(redirectTo);
+      navigation.returnTo(redirectTo);
     }
     router.refresh();
   }

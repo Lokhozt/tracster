@@ -14,7 +14,7 @@ export function EventCard({
   return (
     <div
       className={cn(
-        "rounded-xl border p-4 shadow-sm transition sm:p-5",
+        "rounded-xl border p-3 shadow-sm transition sm:p-5",
         eventCardClassName(kind),
         className,
       )}

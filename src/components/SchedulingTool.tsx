@@ -32,6 +32,7 @@ import type {
   SchedulingRequest,
 } from "@/lib/scheduling/types";
 import { cn } from "@/lib/utils";
+import { useAppNavigation } from "@/lib/app-navigation";
 
 export type SchedulingChoreographyOption = {
   id: string;
@@ -107,6 +108,7 @@ export function SchedulingTool({
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const navigation = useAppNavigation();
   const locale = useLocale();
   const dateLocale = locale === "fr" ? fr : enUS;
   const [step, setStep] = useState(0);
@@ -390,7 +392,7 @@ export function SchedulingTool({
       return;
     }
 
-    router.push("/events");
+    navigation.replace("/");
     router.refresh();
   }
 

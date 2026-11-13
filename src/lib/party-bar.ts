@@ -12,6 +12,7 @@ import {
 export type PartyBarPlanningReminder = {
   id: string;
   displayTitle: string;
+  startsAt: string;
   filledCount: number;
   slotCount: number;
 };
@@ -102,8 +103,13 @@ export async function listPastPartyBarEventsSinceSeasonStart(
   return serializePartyBarEvents(events);
 }
 
+/**
+ * Parties in the next two weeks that still need bar volunteers. With `userId`, parties where
+ * that user already holds a slot are left out (no point reminding them).
+ */
 export async function listPartyBarPlanningReminders(
   now = new Date(),
+  userId?: string,
 ): Promise<PartyBarPlanningReminder[]> {
   const rangeEnd = addDays(now, 14);
 
@@ -112,11 +118,13 @@ export async function listPartyBarPlanningReminders(
       partyBarSlotsEnabled: true,
       type: { kind: "PARTY" },
       startsAt: { gte: now, lte: rangeEnd },
+      ...(userId ? { partyBarSlots: { none: { userId } } } : {}),
     },
     orderBy: { startsAt: "asc" },
     select: {
       id: true,
       title: true,
+      startsAt: true,
       type: { select: { name: true } },
       _count: { select: { partyBarSlots: true } },
     },
@@ -132,6 +140,7 @@ export async function listPartyBarPlanningReminders(
     .map((event) => ({
       id: event.id,
       displayTitle: event.title.trim() || event.type.name,
+      startsAt: event.startsAt.toISOString(),
       filledCount: event._count.partyBarSlots,
       slotCount: PARTY_BAR_SLOT_COUNT,
     }));

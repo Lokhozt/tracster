@@ -66,7 +66,7 @@ export default async function NewEventPage({ searchParams }: PageProps) {
     requestedType?.kind ?? null,
   );
   if (!copyFrom && needsGenericCreate && !(await canCreateEvent(user.id))) {
-    redirect("/events");
+    redirect("/");
   }
 
   const [users, choreographies] = await Promise.all([

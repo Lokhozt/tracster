@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
+import { cache } from "react";
 import type { DisplayLanguage, UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { formatUserName } from "@/lib/users";
@@ -81,7 +82,7 @@ export async function destroySession(): Promise<void> {
   }
 }
 
-export async function getCurrentUser(): Promise<AuthUser | null> {
+async function loadCurrentUser(): Promise<AuthUser | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
 
@@ -119,6 +120,9 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
   return serializeAuthUser(session.user);
 }
+
+/** Memoized per request: the app frame (root layout) and the page both need the user. */
+export const getCurrentUser = cache(loadCurrentUser);
 
 export async function requireUser(): Promise<AuthUser> {
   const user = await getCurrentUser();

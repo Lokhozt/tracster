@@ -25,6 +25,7 @@ import {
   defaultStartDateTime,
   type DateTimeParts,
 } from "@/lib/datetime";
+import { useAppNavigation } from "@/lib/app-navigation";
 
 export type RepresentationItem = {
   id: string;
@@ -175,6 +176,7 @@ export function CreateRepresentationForm({
   const t = useTranslations("Components");
   const localizedSubmitLabel = submitLabel ?? t("createRepresentation");
   const router = useRouter();
+  const navigation = useAppNavigation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -223,7 +225,7 @@ export function CreateRepresentationForm({
 
     const representationId = data.representation.id as string;
     if (redirectBasePath) {
-      router.push(`${redirectBasePath}/${representationId}`);
+      navigation.replace(`${redirectBasePath}/${representationId}`);
     } else {
       router.refresh();
     }
@@ -379,7 +381,7 @@ export function EditRepresentationForm({
         <DeleteEventButton
           deleteUrl={`/api/representations/${representation.id}`}
           confirmMessage={t("deleteRepresentationConfirm")}
-          redirectTo="/events"
+          redirectTo="/"
           className="inline-block"
         />
       </div>

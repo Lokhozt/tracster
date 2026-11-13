@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BackLink } from "@/components/BackLink";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
@@ -38,6 +39,7 @@ import {
 } from "@/lib/users";
 import { getServerTranslator } from "@/i18n/server";
 import { isAtLeastManager } from "@/lib/roles";
+import { canCreateEvent } from "@/lib/site-settings";
 import { PinnedChoreographyResources } from "@/components/PinnedChoreographyResources";
 import { WhatsAppLink } from "@/components/WhatsAppLink";
 import { getPinnedChoreographyResources } from "@/lib/choreography-resources";
@@ -67,7 +69,10 @@ export default async function EventDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const canEdit = await canEditEvent(id, user.id);
+  const [canEdit, canCreate] = await Promise.all([
+    canEditEvent(id, user.id),
+    canCreateEvent(user.id),
+  ]);
 
   const [eventRecord, users] = await Promise.all([
     prisma.event.findUnique({
@@ -234,9 +239,10 @@ export default async function EventDetailPage({ params }: PageProps) {
             {t("openChoreography", { title: event.choreographyTitle ?? "" })}
           </Link>
         )}
-        <Link href="/events" className="text-sm text-stone-600 hover:text-stone-900">
-          {t("backToEvents")}
-        </Link>
+        {/* Generic label: the previous page may be the planning or a choreography. */}
+        <BackLink href="/" className="text-sm text-stone-600 hover:text-stone-900">
+          {t("back")}
+        </BackLink>
       </div>
 
       <p className="mb-4 text-xs font-medium uppercase tracking-wide text-stone-500">
@@ -301,16 +307,25 @@ export default async function EventDetailPage({ params }: PageProps) {
             </p>
           )}
         </div>
-        {canEdit && (
-          <div className="mt-4">
-            <Link
-              href={`/events/${id}/edit`}
-              className={cn(
-                "inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-900 transition hover:bg-stone-100",
-              )}
-            >
-              {t("editEvent")}
-            </Link>
+        {(canEdit || canCreate) && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {canEdit && (
+              <Link
+                href={`/events/${id}/edit`}
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-900 transition hover:bg-stone-100"
+              >
+                {t("editEvent")}
+              </Link>
+            )}
+            {/* Duplicating moved here from the former events list. */}
+            {canCreate && (
+              <Link
+                href={`/events/new?copyFrom=${id}`}
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-900 transition hover:bg-stone-100"
+              >
+                {t("duplicateEvent")}
+              </Link>
+            )}
           </div>
         )}
       </Card>

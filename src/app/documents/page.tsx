@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { Documents } from "@/components/Documents";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { getCurrentUser } from "@/lib/auth";
 import {
   canManageDocuments,
@@ -56,7 +57,7 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
     <AppShell title={t("title")} wide>
       <div className="space-y-6">
         {canEdit && (
-          <div className="flex justify-end">
+          <div className="hidden justify-end lg:flex">
             <Link
               href="/documents/new"
               className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
@@ -64,6 +65,9 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
               {t("newDocument")}
             </Link>
           </div>
+        )}
+        {canEdit && (
+          <FloatingActionButton actions={[{ href: "/documents/new", label: t("newDocument") }]} />
         )}
         <Documents
           documents={documents}

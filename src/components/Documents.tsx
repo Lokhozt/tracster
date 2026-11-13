@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   useEffect,
   useRef,
@@ -21,6 +20,7 @@ import { TracBarCategoryPanel } from "@/components/PartyBarSlots";
 import type { SerializedDocument, SerializedDocumentCategory } from "@/lib/documents";
 import { TRAC_BAR_DOCUMENTS_SECTION_ID, type PartyBarSlot } from "@/lib/party-bar-shared";
 import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
+import { useAppNavigation } from "@/lib/app-navigation";
 
 async function responseError(response: Response, fallback: string) {
   const body = await response.json().catch(() => null);
@@ -305,7 +305,7 @@ export function DocumentCard({
   canEdit: boolean;
 }) {
   const t = useTranslations("Components");
-  const router = useRouter();
+  const navigation = useAppNavigation();
   const displayType = documentDisplayType(document);
   const typeLabel = t(`documentTypes.${displayType}`);
   const [deleting, setDeleting] = useState(false);
@@ -321,7 +321,7 @@ export function DocumentCard({
       setError(await responseError(response, t("documentDeleteError")));
       return;
     }
-    router.push(`/documents?category=${encodeURIComponent(document.category.id)}`);
+    navigation.returnTo(`/documents?category=${encodeURIComponent(document.category.id)}`);
   }
 
   return (
@@ -392,7 +392,7 @@ function uploadFile(
 
 export function DocumentForm({ categories }: { categories: SerializedDocumentCategory[] }) {
   const t = useTranslations("Components");
-  const router = useRouter();
+  const navigation = useAppNavigation();
   const [kind, setKind] = useState<"LINK" | "FILE">("LINK");
   const [title, setTitle] = useState("");
   const [categoryChoice, setCategoryChoice] = useState(categories[0]?.id ?? "__new__");
@@ -428,7 +428,7 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
         });
         if (!response.ok) throw new Error(await responseError(response, t("documentCreateError")));
         const created = (await response.json()) as { document: SerializedDocument };
-        router.push(`/documents?category=${encodeURIComponent(created.document.category.id)}`);
+        navigation.returnTo(`/documents?category=${encodeURIComponent(created.document.category.id)}`);
         return;
       } else {
         if (!file) throw new Error(t("selectResourceFile"));
@@ -454,7 +454,7 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
         if (!complete.ok) throw new Error(await responseError(complete, t("documentUploadError")));
         const created = (await complete.json()) as { document: SerializedDocument };
         pendingDocumentId = null;
-        router.push(`/documents?category=${encodeURIComponent(created.document.category.id)}`);
+        navigation.returnTo(`/documents?category=${encodeURIComponent(created.document.category.id)}`);
         return;
       }
     } catch (reason) {
@@ -679,6 +679,7 @@ export function Documents({
     <SectionNav
       sections={sections}
       initialSectionId={initialCategoryId}
+      sectionParam="category"
       categoriesLabel={t("documentCategories")}
       backLabel={t("backToDocumentCategories")}
     />

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink } from "@/components/BackLink";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
@@ -29,12 +29,12 @@ export default async function DocumentPage({ params }: PageProps) {
   return (
     <AppShell title={document.title} wide>
       <div className="space-y-4">
-        <Link
+        <BackLink
           href={`/documents?category=${encodeURIComponent(document.category.id)}`}
           className="inline-flex text-sm font-medium text-stone-600 hover:text-stone-900"
         >
           {t("backToCategory", { category: document.category.name })}
-        </Link>
+        </BackLink>
         <DocumentCard document={document} canEdit={canEdit} />
       </div>
     </AppShell>

@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
+import { previousAppPath, replaceUrlInPlace, toAppPath } from "@/lib/app-navigation";
 import { cn } from "@/lib/utils";
 
 export type NavSection = {
@@ -12,55 +14,77 @@ export type NavSection = {
 
 export type SettingsSection = NavSection;
 
-function resolveSelectedId(
-  sections: NavSection[],
-  initialSectionId?: string,
-): string | undefined {
-  if (initialSectionId && sections.some((section) => section.id === initialSectionId)) {
-    return initialSectionId;
-  }
-  return sections[0]?.id;
+function validSectionId(sections: NavSection[], id: string | null | undefined): string | undefined {
+  return id && sections.some((section) => section.id === id) ? id : undefined;
 }
 
+function urlWithSection(sectionParam: string, sectionId: string | null): string {
+  const url = new URL(window.location.href);
+  if (sectionId) {
+    url.searchParams.set(sectionParam, sectionId);
+  } else {
+    url.searchParams.delete(sectionParam);
+  }
+  return url.pathname + url.search;
+}
+
+/**
+ * The open section lives in the URL (`?section=…` by default), added with the native History API
+ * (no server round-trip), so the phone's back button closes a section like in a native app.
+ */
 export function SectionNav({
   sections,
   intro,
   initialSectionId,
+  sectionParam = "section",
   categoriesLabel,
   backLabel,
 }: {
   sections: NavSection[];
   intro?: string;
+  /** Section to open on arrival when the URL does not name one (e.g. after an OAuth return). */
   initialSectionId?: string;
+  sectionParam?: string;
   categoriesLabel: string;
   backLabel: string;
 }) {
-  const [selectedId, setSelectedId] = useState(() =>
-    resolveSelectedId(sections, initialSectionId),
-  );
-  const [mobileOpen, setMobileOpen] = useState(
-    () =>
-      Boolean(
-        initialSectionId && sections.some((section) => section.id === initialSectionId),
-      ),
-  );
+  const searchParams = useSearchParams();
+  const urlSectionId = validSectionId(sections, searchParams.get(sectionParam));
+  // `initialSectionId` only applies until the user picks or closes a section.
+  const [initialConsumed, setInitialConsumed] = useState(false);
+  const [lastSelectedId, setLastSelectedId] = useState<string | undefined>(undefined);
+  const openSectionId =
+    urlSectionId ?? (initialConsumed ? undefined : validSectionId(sections, initialSectionId));
+  const mobileOpen = Boolean(openSectionId);
   const panelId = useId();
-  const activeId = selectedId ?? sections[0]?.id;
-
-  useEffect(() => {
-    const nextId = resolveSelectedId(sections, initialSectionId);
-    if (!nextId) {
-      return;
-    }
-    setSelectedId(nextId);
-    if (initialSectionId && sections.some((section) => section.id === initialSectionId)) {
-      setMobileOpen(true);
-    }
-  }, [initialSectionId, sections]);
+  const activeId = openSectionId ?? lastSelectedId ?? sections[0]?.id;
 
   function selectSection(sectionId: string) {
-    setSelectedId(sectionId);
-    setMobileOpen(true);
+    setInitialConsumed(true);
+    setLastSelectedId(sectionId);
+    if (urlSectionId === sectionId) {
+      return;
+    }
+    const href = urlWithSection(sectionParam, sectionId);
+    if (urlSectionId) {
+      // Switching sections (desktop sidebar): no need to stack every switch.
+      replaceUrlInPlace(href);
+    } else {
+      window.history.pushState(null, "", href);
+    }
+  }
+
+  function closeSection() {
+    setInitialConsumed(true);
+    if (!urlSectionId) {
+      return;
+    }
+    const listHref = urlWithSection(sectionParam, null);
+    if (previousAppPath() === toAppPath(listHref)) {
+      window.history.back();
+    } else {
+      replaceUrlInPlace(listHref);
+    }
   }
 
   return (
@@ -111,7 +135,7 @@ export function SectionNav({
         >
           <button
             type="button"
-            onClick={() => setMobileOpen(false)}
+            onClick={closeSection}
             className="mb-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-stone-600 transition hover:text-stone-900 lg:hidden"
           >
             <ChevronLeftIcon />

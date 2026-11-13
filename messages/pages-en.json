@@ -71,7 +71,7 @@
       "title": "New event"
     },
     "EventDetail": {
-      "backToEvents": "← Back to events",
+      "back": "← Back",
       "openChoreography": "View choreography: {title}",
       "start": "Start",
       "end": "End",
@@ -97,6 +97,7 @@
       "representationPieces": "Pieces performed in this representation.",
       "participants": "Participants",
       "partyBarSectionTitle": "Bar volunteers",
+      "duplicateEvent": "Duplicate",
       "editEvent": "Edit event",
       "openWhatsapp": "Open WhatsApp"
     },

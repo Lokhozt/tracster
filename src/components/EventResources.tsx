@@ -19,6 +19,7 @@ import type {
 import { OfficeFileViewer } from "@/components/OfficeFileViewer";
 import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
 import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
+import { useAppNavigation } from "@/lib/app-navigation";
 
 async function responseError(response: Response, fallback: string) {
   const body = await response.json().catch(() => null);
@@ -473,7 +474,7 @@ function uploadFile(
 
 export function ResourceForm({ choreographyId }: { choreographyId: string }) {
   const t = useTranslations("Components");
-  const router = useRouter();
+  const navigation = useAppNavigation();
   const [kind, setKind] = useState<"LINK" | "FILE">("LINK");
   const [visibility, setVisibility] = useState<ChoreographyResourceVisibility>("ALL");
   const [description, setDescription] = useState("");
@@ -497,7 +498,7 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
           body: JSON.stringify({ url, description: description || undefined, visibility }),
         });
         if (!response.ok) throw new Error(await responseError(response, t("resourceCreateError")));
-        router.push(`/choreographies/${choreographyId}?section=resources`);
+        navigation.returnTo(`/choreographies/${choreographyId}?section=resources`);
         return;
       } else {
         if (!file) throw new Error(t("selectResourceFile"));
@@ -522,7 +523,7 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
         );
         if (!complete.ok) throw new Error(await responseError(complete, t("resourceUploadError")));
         pendingResourceId = null;
-        router.push(`/choreographies/${choreographyId}?section=resources`);
+        navigation.returnTo(`/choreographies/${choreographyId}?section=resources`);
         return;
       }
     } catch (reason) {

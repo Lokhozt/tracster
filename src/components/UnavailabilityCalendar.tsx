@@ -9,6 +9,7 @@ import {
   differenceInCalendarDays,
   differenceInMinutes,
   format,
+  isSameMonth,
   isToday,
   parseISO,
   setHours,
@@ -26,7 +27,11 @@ import { cn } from "@/lib/utils";
 
 const SLOT_MINUTES = 30;
 const END_HOUR = 24;
-const SLOT_HEIGHT_PX = 24;
+// Half-hour rows shrink so the whole day fits on screen without vertical scrolling.
+const MAX_SLOT_HEIGHT_PX = 24;
+const MIN_SLOT_HEIGHT_PX = 10;
+/** Space kept under the grid (card padding and a little air) when fitting it on screen. */
+const FIT_BOTTOM_MARGIN_PX = 24;
 const RESIZE_HANDLE_PX = 6;
 const LONG_PRESS_MS = 400;
 // Long enough that a tap or the start of a swipe never shows the hint.
@@ -121,18 +126,58 @@ function normalizeSlotRange(startSlot: number, endSlot: number): [number, number
   return [start, Math.max(start + 1, end + 1)];
 }
 
-function blockStyle(startSlot: number, endSlot: number) {
+function blockStyle(startSlot: number, endSlot: number, slotHeightPx: number) {
   if (endSlot <= startSlot) {
     return {
-      top: startSlot * SLOT_HEIGHT_PX,
+      top: startSlot * slotHeightPx,
       height: 2,
     };
   }
 
   return {
-    top: startSlot * SLOT_HEIGHT_PX,
-    height: (endSlot - startSlot) * SLOT_HEIGHT_PX,
+    top: startSlot * slotHeightPx,
+    height: (endSlot - startSlot) * slotHeightPx,
   };
+}
+
+/**
+ * Row height that makes the grid end above the bottom tab bar when the page is scrolled to the
+ * top, between MIN and MAX. Measured from the slots row, so everything above it is accounted for.
+ */
+function useFittedSlotHeight(
+  slotsRowRef: React.RefObject<HTMLDivElement | null>,
+  slotsPerDay: number,
+): number {
+  const [slotHeightPx, setSlotHeightPx] = useState(MAX_SLOT_HEIGHT_PX);
+
+  useEffect(() => {
+    let frame = 0;
+    function measure() {
+      const slotsRow = slotsRowRef.current;
+      if (!slotsRow) {
+        return;
+      }
+      const top = slotsRow.getBoundingClientRect().top + window.scrollY;
+      const bottomBar = document.querySelector<HTMLElement>("[data-bottom-tab-bar]");
+      const bottomBarHeight =
+        bottomBar && window.getComputedStyle(bottomBar).display !== "none" ? bottomBar.offsetHeight : 0;
+      const available = window.innerHeight - top - bottomBarHeight - FIT_BOTTOM_MARGIN_PX;
+      const fitted = Math.floor(available / slotsPerDay);
+      setSlotHeightPx(Math.max(MIN_SLOT_HEIGHT_PX, Math.min(MAX_SLOT_HEIGHT_PX, fitted)));
+    }
+    function scheduleMeasure() {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    }
+    scheduleMeasure();
+    window.addEventListener("resize", scheduleMeasure);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", scheduleMeasure);
+    };
+  }, [slotsRowRef, slotsPerDay]);
+
+  return slotHeightPx;
 }
 
 function isZeroDuration(startsAt: Date, endsAt: Date) {
@@ -231,7 +276,9 @@ export function UnavailabilityCalendar({
     timeStyle: "short",
   });
   const grid = dayGrid(startOfDayHour);
-  const gridHeightPx = grid.slotsPerDay * SLOT_HEIGHT_PX;
+  const slotsRowRef = useRef<HTMLDivElement>(null);
+  const slotHeightPx = useFittedSlotHeight(slotsRowRef, grid.slotsPerDay);
+  const gridHeightPx = grid.slotsPerDay * slotHeightPx;
   // Earliest week the user can reach: unavailability is only useful going forward.
   const firstWeekStart = useMemo(
     () => startOfWeek(parseISO(initialWeekStart), { weekStartsOn: 1 }),
@@ -316,7 +363,7 @@ export function UnavailabilityCalendar({
 
     const rect = column.getBoundingClientRect();
     const y = clientY - rect.top;
-    const slot = Math.floor(y / SLOT_HEIGHT_PX);
+    const slot = Math.floor(y / slotHeightPx);
     return Math.max(0, Math.min(grid.slotsPerDay - 1, slot));
   }
 
@@ -690,7 +737,7 @@ export function UnavailabilityCalendar({
         interaction.anchorSlot,
         interaction.currentSlot,
       );
-      const style = blockStyle(startSlot, endSlot);
+      const style = blockStyle(startSlot, endSlot, slotHeightPx);
       return [{ dayIndex: interaction.dayIndex, ...style, draft: true }];
     }
 
@@ -711,7 +758,7 @@ export function UnavailabilityCalendar({
       return [
         {
           dayIndex: interaction.dayIndex,
-          ...blockStyle(startSlot, endSlot),
+          ...blockStyle(startSlot, endSlot, slotHeightPx),
           draft: true,
         },
       ];
@@ -721,7 +768,7 @@ export function UnavailabilityCalendar({
       return [
         {
           dayIndex: interaction.dayIndex,
-          ...blockStyle(interaction.currentSlot, interaction.endSlot),
+          ...blockStyle(interaction.currentSlot, interaction.endSlot, slotHeightPx),
           draft: true,
         },
       ];
@@ -730,20 +777,27 @@ export function UnavailabilityCalendar({
     return [
       {
         dayIndex: interaction.dayIndex,
-        ...blockStyle(interaction.startSlot, interaction.currentSlot + 1),
+        ...blockStyle(interaction.startSlot, interaction.currentSlot + 1, slotHeightPx),
         draft: true,
       },
     ];
-  }, [interaction, timeframes, weekStart, grid]);
+  }, [interaction, timeframes, weekStart, grid, slotHeightPx]);
 
   const periodLabel = `${format(weekDays[0], "d MMM", {locale: dateLocale})} – ${format(weekDays[6], "d MMM yyyy", {locale: dateLocale})}`;
+  // Phones: "9 – 15 nov." (or "30 nov. – 6 déc.") so the toolbar stays on one line.
+  const shortPeriodLabel = isSameMonth(weekDays[0], weekDays[6])
+    ? `${format(weekDays[0], "d", { locale: dateLocale })} – ${format(weekDays[6], "d MMM", { locale: dateLocale })}`
+    : `${format(weekDays[0], "d MMM", { locale: dateLocale })} – ${format(weekDays[6], "d MMM", { locale: dateLocale })}`;
 
   return (
     <div className={cn("space-y-4", selectedTimeframe && "pb-24 sm:pb-0")}>
       <Card>
         {users && users.length > 0 && (
-          <div className="mb-4 max-w-md">
-            <Label htmlFor="unavailability-user">{t("unavailabilityUser")}</Label>
+          <div className="mb-3 max-w-md sm:mb-4">
+            {/* Phones: the select already shows whose calendar this is. */}
+            <Label htmlFor="unavailability-user" className="max-sm:sr-only">
+              {t("unavailabilityUser")}
+            </Label>
             <Select
               id="unavailability-user"
               className="w-full"
@@ -767,14 +821,15 @@ export function UnavailabilityCalendar({
             </Select>
           </div>
         )}
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 sm:mb-4">
+          {/* Shown in the page's "?" help on phones. */}
+          <div className="max-sm:hidden">
             <h2 className="text-lg font-semibold">{t("weekView")}</h2>
             <p className="mt-1 text-sm text-stone-500">
               {t("unavailabilityHelp")}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-wrap">
             <button
               type="button"
               onClick={() => setWeekStart((date) => subWeeks(date, 1))}
@@ -784,8 +839,9 @@ export function UnavailabilityCalendar({
             >
               ←
             </button>
-            <span className="min-w-0 flex-1 text-center text-sm font-medium sm:min-w-44 sm:flex-none">
-              {periodLabel}
+            <span className="min-w-0 flex-1 text-center text-sm font-medium whitespace-nowrap sm:min-w-44 sm:flex-none">
+              <span className="sm:hidden">{shortPeriodLabel}</span>
+              <span className="max-sm:hidden">{periodLabel}</span>
             </span>
             <button
               type="button"
@@ -803,9 +859,25 @@ export function UnavailabilityCalendar({
                   current.getTime() < firstWeekStart.getTime() ? firstWeekStart : current,
                 );
               }}
-              className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
+              aria-label={t("today")}
+              title={t("today")}
+              className="inline-flex items-center rounded-lg border border-stone-300 px-2.5 py-1.5 text-sm hover:bg-stone-100 sm:px-3"
             >
-              {t("today")}
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5 sm:hidden"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="4" y="5" width="16" height="15" rx="2" />
+                <path d="M8 3v4M16 3v4M4 10h16" />
+                <circle cx="12" cy="15" r="1.25" fill="currentColor" stroke="none" />
+              </svg>
+              <span className="max-sm:hidden">{t("today")}</span>
             </button>
           </div>
         </div>
@@ -817,7 +889,9 @@ export function UnavailabilityCalendar({
 
         <div
           className={cn(
-            "-mx-4 px-4 sm:mx-0 sm:px-0",
+            // No left padding on phones: the sticky hours column must reach the card edge,
+            // otherwise days scrolling underneath show through the padding gutter.
+            "-mx-4 pr-4 sm:mx-0 sm:pr-0",
             scrollLocked ? "overflow-hidden" : "overflow-x-auto",
           )}
         >
@@ -855,14 +929,14 @@ export function UnavailabilityCalendar({
               </div>
             </div>
 
-            <div className="flex">
+            <div ref={slotsRowRef} className="flex">
               <div className={HOUR_COLUMN_CLASS} style={{ height: gridHeightPx }}>
                 {Array.from({ length: grid.slotsPerDay }, (_, slotIndex) =>
                   slotIndex % 2 === 0 ? (
                     <div
                       key={slotIndex}
                       className="absolute right-2 -translate-y-1/2 text-xs text-stone-400"
-                      style={{ top: slotIndex * SLOT_HEIGHT_PX }}
+                      style={{ top: slotIndex * slotHeightPx }}
                     >
                       {format(
                         slotToDate(weekStart, 0, slotIndex, grid),
@@ -921,14 +995,14 @@ export function UnavailabilityCalendar({
                             slotIndex % 2 === 0 && "border-stone-200",
                           )}
                           style={{
-                            top: slotIndex * SLOT_HEIGHT_PX,
-                            height: SLOT_HEIGHT_PX,
+                            top: slotIndex * slotHeightPx,
+                            height: slotHeightPx,
                           }}
                         />
                       ))}
 
                       {dayBlocks.map(({ entry, position }) => {
-                        const style = blockStyle(position.startSlot, position.endSlot);
+                        const style = blockStyle(position.startSlot, position.endSlot, slotHeightPx);
                         const durationSlots = Math.max(1, position.endSlot - position.startSlot);
                         const isSelected = selectedId === entry.id;
                         const isDragging =

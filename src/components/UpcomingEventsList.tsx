@@ -4,8 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { EditIconLink } from "@/components/EditIconLink";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
 import { ParticipationStatus } from "@/components/ParticipationStatus";
 import { EventCard } from "@/components/EventCard";
@@ -14,10 +13,8 @@ import { eventScheduleKindClassName } from "@/lib/event-category-filter";
 import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 
 import {
-  filterUpcomingScheduleEvents,
   isScheduleEventHappeningNow,
   scheduleEventEnd,
-  type UpcomingEventRange,
 } from "@/lib/schedule-filters";
 import { isBirthdayScheduleEvent } from "@/lib/schedule-birthdays";
 import {
@@ -136,21 +133,49 @@ function defaultEventTitle(event: SerializedScheduleEvent) {
   return scheduleEventLabel(event);
 }
 
-const rangeOptions: UpcomingEventRange[] = ["all", "week", "month"];
 const UPCOMING_PAGE_SIZE = 10;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** "ven. 13 nov., 22:30 – 01:30": the end shows only its time when it is less than a day later. */
+function compactEventRange(
+  startsAt: string,
+  endsAt: string | null,
+  dayFormatter: Intl.DateTimeFormat,
+  timeFormatter: Intl.DateTimeFormat,
+): string {
+  const start = new Date(startsAt);
+  const startLabel = dayFormatter.format(start);
+  if (!endsAt) {
+    return startLabel;
+  }
+  const end = new Date(endsAt);
+  const endLabel =
+    end.getTime() - start.getTime() < DAY_MS ? timeFormatter.format(end) : dayFormatter.format(end);
+  return `${startLabel} – ${endLabel}`;
+}
 
 export function UpcomingEventsList({
   events,
   categoriesFiltered = false,
+  includePast = false,
 }: {
   events: SerializedScheduleEvent[];
   categoriesFiltered?: boolean;
+  /** Also list finished events, most recent first, under a "past" heading. */
+  includePast?: boolean;
 }) {
   const t = useTranslations("Components");
-  const [range, setRange] = useState<UpcomingEventRange>("all");
   const [now, setNow] = useState(() => new Date());
   const locale = useLocale();
-  const dateFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
+  const dayFormatter = new Intl.DateTimeFormat(locale, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const timeFormatter = new Intl.DateTimeFormat(locale, { timeStyle: "short" });
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
@@ -161,11 +186,18 @@ export function UpcomingEventsList({
     () => events.filter((event) => scheduleEventEnd(event) > now),
     [events, now],
   );
-  const filteredEvents = useMemo(
-    () => filterUpcomingScheduleEvents(activeEvents, { range, hideNonParticipating: false, now }),
-    [activeEvents, now, range],
+  const pastEvents = useMemo(
+    () =>
+      includePast
+        ? events
+            .filter((event) => scheduleEventEnd(event) <= now)
+            .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime())
+        : [],
+    [events, includePast, now],
   );
-  const listKey = `${range}:${filteredEvents.map((event) => event.id).join("|")}`;
+  const filteredEvents = useMemo(() => [...activeEvents, ...pastEvents], [activeEvents, pastEvents]);
+  const firstPastEventId = pastEvents[0]?.id;
+  const listKey = filteredEvents.map((event) => event.id).join("|");
   const [scrollWindow, setScrollWindow] = useState({
     listKey,
     visibleCount: UPCOMING_PAGE_SIZE,
@@ -210,32 +242,11 @@ export function UpcomingEventsList({
     return () => observer.disconnect();
   }, [filteredEvents.length, hasMore, listKey, visibleCount]);
 
-  const filtersActive = range !== "all" || categoriesFiltered;
+  const filtersActive = categoriesFiltered;
 
   return (
-    <section>
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <h2 className="text-lg font-semibold">{t("upcomingEvents")}</h2>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex rounded-lg border border-stone-300 p-0.5">
-            {rangeOptions.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setRange(option)}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-sm font-medium transition",
-                  range === option
-                    ? "bg-stone-900 text-white"
-                    : "text-stone-600 hover:bg-stone-100",
-                )}
-              >
-                {t(`range${option}`)}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+    <section className="@container">
+      <h2 className="mb-3 text-lg font-semibold">{t("upcomingEvents")}</h2>
 
       {events.length === 0 && !filtersActive ? (
         <Card>
@@ -250,89 +261,83 @@ export function UpcomingEventsList({
           </p>
         </Card>
       ) : (
-        <div className="space-y-3">
+        // Two columns only when the list itself is wide (not in the desktop side column).
+        <div className="grid gap-3 @2xl:grid-cols-2">
           {visibleEvents.map((event) => (
-            <EventCard key={event.id} kind={event.typeKind} className="relative">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {event.choreographyTitle && (
-                      <div className="text-sm font-medium text-stone-500">
-                        <p>{event.choreographyTitle}</p>
-                        {event.groupName && (
-                          <p className="text-xs font-normal text-stone-400">{event.groupName}</p>
-                        )}
-                      </div>
-                    )}
+            <Fragment key={event.id}>
+              {event.id === firstPastEventId && (
+                <h2 className="mt-3 text-lg font-semibold @2xl:col-span-2">{t("pastEventsHeading")}</h2>
+              )}
+              <EventCard kind={event.typeKind} className="relative">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                     <EventTypeBadge event={event} />
+                    {event.choreographyTitle && (
+                      <span className="text-sm font-medium text-stone-500">
+                        {event.choreographyTitle}
+                        {event.groupName && (
+                          <span className="font-normal text-stone-400"> · {event.groupName}</span>
+                        )}
+                      </span>
+                    )}
                     {isScheduleEventHappeningNow(event, now) && (
                       <span className="text-sm font-semibold text-emerald-700">{t("rightNow")}</span>
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {event.href ? (
-                      <Link
-                        href={event.href}
-                        className={cn("text-base font-semibold hover:underline", cardLink)}
-                      >
-                        {defaultEventTitle(event)}
-                      </Link>
-                    ) : (
-                      <span className="text-base font-semibold">{defaultEventTitle(event)}</span>
-                    )}
-                    {!isBirthdayScheduleEvent(event) && (
-                      <ParticipationStatus participating={event.isParticipating} />
-                    )}
-                  </div>
-                  <p className="text-sm text-stone-600">
-                    {dateFormatter.format(new Date(event.startsAt))}
-                    {event.endsAt && ` – ${dateFormatter.format(new Date(event.endsAt))}`}
-                  </p>
-                  {event.location && (
-                    <p className="text-sm text-stone-500">{event.location}</p>
-                  )}
-                </div>
-
-                <div className={cn("flex flex-wrap items-center gap-2", aboveCardLink)}>
                   {isRehearsalScheduleEvent(event) && event.isMember && (
-                    <AvailabilityBadge status={event.availabilityStatus} />
+                    <div className={cn("shrink-0", aboveCardLink)}>
+                      <AvailabilityBadge status={event.availabilityStatus} />
+                    </div>
                   )}
-                  {event.canEdit && (
-                    <EditIconLink
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-x-2">
+                  {event.href ? (
+                    <Link
                       href={event.href}
-                      label={t("editNamed", {name: event.typeName.toLocaleLowerCase(locale)})}
-                    />
+                      className={cn("text-base font-semibold hover:underline", cardLink)}
+                    >
+                      {defaultEventTitle(event)}
+                    </Link>
+                  ) : (
+                    <span className="text-base font-semibold">{defaultEventTitle(event)}</span>
+                  )}
+                  {!isBirthdayScheduleEvent(event) && (
+                    <ParticipationStatus participating={event.isParticipating} />
                   )}
                 </div>
-              </div>
+                <p className="mt-0.5 text-sm text-stone-600">
+                  {compactEventRange(event.startsAt, event.endsAt, dayFormatter, timeFormatter)}
+                  {event.location && <span className="text-stone-500"> · {event.location}</span>}
+                </p>
 
-              {isRehearsalScheduleEvent(event) && event.isMember && (
-                <div className={cn("mt-4 border-t border-stone-100 pt-4", aboveCardLink)}>
-                  <AvailabilityQuickReply
-                    rehearsalId={event.id}
-                    currentStatus={event.availabilityStatus}
-                  />
-                </div>
-              )}
-              {isGenericScheduleEvent(event) &&
-                (event.isEventParticipant ||
-                  event.allowParticipantJoin ||
-                  event.allowJoinRequests ||
-                  event.hasPendingJoinRequest) && (
-                <div className={cn("mt-4 border-t border-stone-100 pt-4", aboveCardLink)}>
-                  <JoinAsParticipantControls
-                    joinUrl={`/api/events/${event.id}/join`}
-                    requestUrl={`/api/events/${event.id}/join-requests`}
-                    allowJoin={event.allowParticipantJoin}
-                    allowRequest={event.allowJoinRequests}
-                    allowLeave
-                    isParticipant={event.isEventParticipant}
-                    hasPendingRequest={event.hasPendingJoinRequest}
-                    hasUpcomingSeries={event.hasUpcomingSeriesEvents}
-                  />
-                </div>
-              )}
-            </EventCard>
+                {isRehearsalScheduleEvent(event) && event.isMember && (
+                  <div className={cn("mt-3 border-t border-stone-100 pt-3", aboveCardLink)}>
+                    <AvailabilityQuickReply
+                      rehearsalId={event.id}
+                      currentStatus={event.availabilityStatus}
+                    />
+                  </div>
+                )}
+                {isGenericScheduleEvent(event) &&
+                  (event.isEventParticipant ||
+                    event.allowParticipantJoin ||
+                    event.allowJoinRequests ||
+                    event.hasPendingJoinRequest) && (
+                  <div className={cn("mt-3 border-t border-stone-100 pt-3", aboveCardLink)}>
+                    <JoinAsParticipantControls
+                      joinUrl={`/api/events/${event.id}/join`}
+                      requestUrl={`/api/events/${event.id}/join-requests`}
+                      allowJoin={event.allowParticipantJoin}
+                      allowRequest={event.allowJoinRequests}
+                      allowLeave
+                      isParticipant={event.isEventParticipant}
+                      hasPendingRequest={event.hasPendingJoinRequest}
+                      hasUpcomingSeries={event.hasUpcomingSeriesEvents}
+                    />
+                  </div>
+                )}
+              </EventCard>
+            </Fragment>
           ))}
           {hasMore && <div ref={sentinelRef} aria-hidden="true" className="h-px" />}
         </div>

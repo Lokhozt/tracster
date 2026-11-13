@@ -11,10 +11,12 @@ import {
   defaultParticipationSettings,
   type ParticipationSettings,
 } from "@/lib/participation";
+import { useAppNavigation } from "@/lib/app-navigation";
 
 export function CreateChoreographyForm() {
   const t = useTranslations("Components");
   const router = useRouter();
+  const navigation = useAppNavigation();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [participation, setParticipation] = useState<ParticipationSettings>(
@@ -46,7 +48,7 @@ export function CreateChoreographyForm() {
       return;
     }
 
-    router.push(`/choreographies/${data.choreography.id}`);
+    navigation.replace(`/choreographies/${data.choreography.id}`);
     router.refresh();
   }
 
