@@ -1,15 +1,44 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: oklch(97.2% 0.004 285);
+  --foreground: oklch(22.9% 0.044 302);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-archivo);
   --font-mono: var(--font-geist-mono);
+}
+
+/*
+ * "Rehearsal call sheet" palette: the neutral scale is tinted towards aubergine (ink
+ * #231B33 at 900) over a cool studio white (50), instead of plain grey. Dark mode mirrors it
+ * below. Accents: spotlight amber (today, open slots, active), velvet (destructive/admin).
+ */
+@theme {
+  --color-stone-50: oklch(97.2% 0.004 285);
+  --color-stone-100: oklch(94.6% 0.008 290);
+  --color-stone-200: oklch(90.4% 0.012 292);
+  --color-stone-300: oklch(83.5% 0.018 295);
+  --color-stone-400: oklch(68.5% 0.026 297);
+  --color-stone-500: oklch(54.5% 0.032 299);
+  --color-stone-600: oklch(44.5% 0.037 300);
+  --color-stone-700: oklch(35.5% 0.042 302);
+  --color-stone-800: oklch(28.5% 0.045 303);
+  --color-stone-900: oklch(22.9% 0.044 302);
+  --color-stone-950: oklch(16% 0.035 304);
+  --color-spotlight: #ffb000;
+  --color-spotlight-ink: #3d2a00;
+  --color-velvet: #8c2a46;
+}
+
+/* Titles, times and day numbers: Archivo condensed and heavy, like a show poster. */
+@utility font-display {
+  font-stretch: 72%;
+  font-weight: 800;
+  letter-spacing: -0.005em;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -39,7 +68,7 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   overflow-x: clip;
 }
 
@@ -423,17 +452,17 @@ body {
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-white: oklch(21.6% 0.006 56.043);
-    --color-stone-50: oklch(14.7% 0.004 49.25);
-    --color-stone-100: oklch(26.8% 0.007 34.298);
-    --color-stone-200: color-mix(in oklab, oklch(37.4% 0.01 67.558) 45%, oklch(26.8% 0.007 34.298));
-    --color-stone-300: oklch(37.4% 0.01 67.558);
-    --color-stone-400: oklch(44.4% 0.011 73.639);
-    --color-stone-500: oklch(70.9% 0.01 56.259);
-    --color-stone-600: oklch(86.9% 0.005 56.366);
-    --color-stone-700: oklch(92.3% 0.003 48.717);
-    --color-stone-800: oklch(97% 0.001 106.424);
-    --color-stone-900: oklch(98.5% 0.001 106.423);
+    --color-white: oklch(22% 0.024 300);
+    --color-stone-50: oklch(16.2% 0.02 300);
+    --color-stone-100: oklch(27% 0.028 300);
+    --color-stone-200: color-mix(in oklab, oklch(38% 0.032 300) 45%, oklch(27% 0.028 300));
+    --color-stone-300: oklch(38% 0.032 300);
+    --color-stone-400: oklch(46% 0.03 300);
+    --color-stone-500: oklch(71% 0.02 298);
+    --color-stone-600: oklch(86.5% 0.012 296);
+    --color-stone-700: oklch(92.5% 0.008 294);
+    --color-stone-800: oklch(96.8% 0.004 290);
+    --color-stone-900: oklch(98.6% 0.002 290);
     --color-stone-950: #fff;
     --color-red-50: color-mix(in oklab, oklch(39.6% 0.141 25.723) 22%, oklch(21.6% 0.006 56.043));
     --color-red-100: color-mix(in oklab, oklch(39.6% 0.141 25.723) 45%, oklch(21.6% 0.006 56.043));
@@ -646,17 +675,17 @@ body {
 }
 
 :root[data-theme="dark"] {
-  --color-white: oklch(21.6% 0.006 56.043);
-  --color-stone-50: oklch(14.7% 0.004 49.25);
-  --color-stone-100: oklch(26.8% 0.007 34.298);
-  --color-stone-200: color-mix(in oklab, oklch(37.4% 0.01 67.558) 45%, oklch(26.8% 0.007 34.298));
-  --color-stone-300: oklch(37.4% 0.01 67.558);
-  --color-stone-400: oklch(44.4% 0.011 73.639);
-  --color-stone-500: oklch(70.9% 0.01 56.259);
-  --color-stone-600: oklch(86.9% 0.005 56.366);
-  --color-stone-700: oklch(92.3% 0.003 48.717);
-  --color-stone-800: oklch(97% 0.001 106.424);
-  --color-stone-900: oklch(98.5% 0.001 106.423);
+  --color-white: oklch(22% 0.024 300);
+  --color-stone-50: oklch(16.2% 0.02 300);
+  --color-stone-100: oklch(27% 0.028 300);
+  --color-stone-200: color-mix(in oklab, oklch(38% 0.032 300) 45%, oklch(27% 0.028 300));
+  --color-stone-300: oklch(38% 0.032 300);
+  --color-stone-400: oklch(46% 0.03 300);
+  --color-stone-500: oklch(71% 0.02 298);
+  --color-stone-600: oklch(86.5% 0.012 296);
+  --color-stone-700: oklch(92.5% 0.008 294);
+  --color-stone-800: oklch(96.8% 0.004 290);
+  --color-stone-900: oklch(98.6% 0.002 290);
   --color-stone-950: #fff;
   --color-red-50: color-mix(in oklab, oklch(39.6% 0.141 25.723) 22%, oklch(21.6% 0.006 56.043));
   --color-red-100: color-mix(in oklab, oklch(39.6% 0.141 25.723) 45%, oklch(21.6% 0.006 56.043));

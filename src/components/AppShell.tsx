@@ -147,7 +147,7 @@ export async function AppShell({
                 <PageBackButton />
               </Suspense>
             )}
-            <h1 className="flex min-w-0 flex-1 items-center gap-2 text-2xl font-semibold tracking-tight break-words sm:text-3xl">
+            <h1 className="flex min-w-0 flex-1 items-center gap-2 font-display text-3xl break-words sm:text-4xl">
               {title}
             </h1>
             {titleActions}

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Archivo, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { cookies } from "next/headers";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
@@ -15,9 +15,11 @@ import {
 } from "@/lib/theme";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+// One family at two widths: condensed for titles (see .font-display), normal for text.
+const archivo = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin", "latin-ext"],
+  axes: ["wdth"],
 });
 
 const geistMono = Geist_Mono({
@@ -82,7 +84,7 @@ export default async function RootLayout({
       lang={locale}
       data-theme={theme === "system" ? undefined : theme}
       data-sidebar={sidebarCollapsed ? "collapsed" : undefined}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider messages={messages}>
