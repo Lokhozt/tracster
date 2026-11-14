@@ -270,7 +270,16 @@ export default async function EventDetailPage({ params }: PageProps) {
           {event.choreographyTitle && (
             <p>
               <span className="font-medium text-stone-900">{t("choreography")}:</span>{" "}
-              {event.choreographyTitle}
+              {event.choreographyId ? (
+                <Link
+                  href={`/choreographies/${event.choreographyId}`}
+                  className="font-medium text-stone-900 underline decoration-stone-300 underline-offset-2 hover:decoration-stone-900"
+                >
+                  {event.choreographyTitle} ›
+                </Link>
+              ) : (
+                event.choreographyTitle
+              )}
             </p>
           )}
           {event.groupName && (
