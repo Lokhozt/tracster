@@ -1,5 +1,8 @@
 {
   "Components": {
+    "undo": "Undo",
+    "unavailabilitySaved": "Unavailability saved",
+    "addUnavailability": "Add a period",
     "offlineRetry": "No connection. Try again.",
     "noUpcomingMine": "Nothing planned for you yet. Choose “All” to see the association’s planning.",
     "barTakeSlotError": "Could not take the slot. Try again.",
@@ -490,7 +493,7 @@
     "unavailabilityUserSelf": "{name} (you)",
     "unavailabilityDeleteConfirm": "Delete this unavailability period?",
     "weekView": "Week view",
-    "unavailabilityHelp": "Click a date to mark the whole day unavailable, and click it again to clear it. Click and drag on the grid to add periods. Drag blocks to move, or resize from the edges. On a touch screen, press and hold to start drawing — a plain swipe scrolls. Tap a period to select it and lock scrolling so you can drag or resize. Press Delete to remove a selected period, or tap empty space to deselect. Collapse a period to nothing to remove it.",
+    "unavailabilityHelp": "Tap a date to mark the whole day (tap it again to clear it). For a precise period: press and hold in the grid, then drag, or use the + button. Tap a period to move, resize or delete it.",
     "previousWeek": "Previous week",
     "nextWeek": "Next week",
     "clearDayUnavailability": "Clear unavailability on {date}",

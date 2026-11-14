@@ -1,5 +1,8 @@
 {
   "Components": {
+    "undo": "Annuler",
+    "unavailabilitySaved": "Indisponibilité enregistrée",
+    "addUnavailability": "Ajouter une période",
     "offlineRetry": "Pas de connexion. Réessayez.",
     "noUpcomingMine": "Rien de prévu pour vous pour l’instant. Choisissez « Tous » pour voir le planning de l’association.",
     "barTakeSlotError": "Impossible de prendre le créneau. Réessayez.",
@@ -490,7 +493,7 @@
     "unavailabilityUserSelf": "{name} (vous)",
     "unavailabilityDeleteConfirm": "Supprimer cette période d’indisponibilité ?",
     "weekView": "Vue hebdomadaire",
-    "unavailabilityHelp": "Cliquez sur une date pour marquer toute la journée comme indisponible, puis recliquez pour l’effacer. Cliquez-glissez dans la grille pour ajouter une période. Faites glisser les blocs pour les déplacer ou redimensionnez-les par les bords. Sur écran tactile, maintenez l’appui pour commencer à dessiner ; un simple balayage fait défiler. Touchez une période pour la sélectionner. Appuyez sur Supprimer pour l’effacer ou touchez une zone vide pour la désélectionner.",
+    "unavailabilityHelp": "Touchez une date pour marquer toute la journée (touchez-la à nouveau pour l’effacer). Pour une période précise : appuyez longuement dans la grille puis glissez, ou utilisez le bouton +. Touchez une période pour la déplacer, la redimensionner ou la supprimer.",
     "previousWeek": "Semaine précédente",
     "nextWeek": "Semaine suivante",
     "clearDayUnavailability": "Effacer l’indisponibilité du {date}",

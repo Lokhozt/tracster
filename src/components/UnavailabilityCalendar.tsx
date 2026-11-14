@@ -20,8 +20,16 @@ import {
 } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Card, Label, Select } from "@/components/ui";
-import { formatTime } from "@/lib/datetime";
+import { DateTime24Input } from "@/components/DateTime24Input";
+import { FormSheet } from "@/components/Sheet";
+import { Button, Card, FormActions, FormError, Label, Select } from "@/components/ui";
+import { useCreateSheet } from "@/lib/create-sheet";
+import {
+  type DateTimeParts,
+  dateTimePartsToDate,
+  dateToDateTimeParts,
+  formatTime,
+} from "@/lib/datetime";
 import type { SerializedUnavailability } from "@/lib/unavailability";
 import { cn } from "@/lib/utils";
 
@@ -289,6 +297,24 @@ export function UnavailabilityCalendar({
   const [timeframes, setTimeframes] = useState(initialTimeframes);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [interaction, setInteraction] = useState<Interaction | null>(null);
+  // "Annuler" right after a new period is saved (drawn, typed or a whole day).
+  const [undoId, setUndoId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!undoId) {
+      return;
+    }
+    const timer = window.setTimeout(() => setUndoId(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [undoId]);
+  // Typing a period instead of drawing it (keyboard, screen readers, precise times).
+  const addSheet = useCreateSheet("unavailability");
+  const [addStart, setAddStart] = useState<DateTimeParts>(() =>
+    dateToDateTimeParts(setMinutes(setHours(new Date(), 18), 0)),
+  );
+  const [addEnd, setAddEnd] = useState<DateTimeParts>(() =>
+    dateToDateTimeParts(setMinutes(setHours(new Date(), 22), 0)),
+  );
+  const [addError, setAddError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -556,6 +582,10 @@ export function UnavailabilityCalendar({
     if (select) {
       setSelectedId(saved.id);
     }
+    // Undoing a save that merged neighbouring periods would delete them too: no undo then.
+    if (!id && deletedIds.size === 0) {
+      setUndoId(saved.id);
+    }
     return saved;
   }
 
@@ -754,7 +784,7 @@ export function UnavailabilityCalendar({
         interaction.currentSlot,
       );
       const style = blockStyle(startSlot, endSlot, slotHeightPx);
-      return [{ dayIndex: interaction.dayIndex, ...style, draft: true }];
+      return [{ dayIndex: interaction.dayIndex, ...style, draft: true, startSlot, endSlot }];
     }
 
     const existing = timeframes.find((entry) => entry.id === interaction.id);
@@ -776,6 +806,8 @@ export function UnavailabilityCalendar({
           dayIndex: interaction.dayIndex,
           ...blockStyle(startSlot, endSlot, slotHeightPx),
           draft: true,
+          startSlot,
+          endSlot,
         },
       ];
     }
@@ -786,6 +818,8 @@ export function UnavailabilityCalendar({
           dayIndex: interaction.dayIndex,
           ...blockStyle(interaction.currentSlot, interaction.endSlot, slotHeightPx),
           draft: true,
+          startSlot: interaction.currentSlot,
+          endSlot: interaction.endSlot,
         },
       ];
     }
@@ -795,6 +829,8 @@ export function UnavailabilityCalendar({
         dayIndex: interaction.dayIndex,
         ...blockStyle(interaction.startSlot, interaction.currentSlot + 1, slotHeightPx),
         draft: true,
+        startSlot: interaction.startSlot,
+        endSlot: interaction.currentSlot + 1,
       },
     ];
   }, [interaction, timeframes, weekStart, grid, slotHeightPx]);
@@ -898,6 +934,21 @@ export function UnavailabilityCalendar({
                 <circle cx="12" cy="15" r="1.25" fill="currentColor" stroke="none" />
               </svg>
               <span className="max-sm:hidden">{t("today")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAddError(null);
+                addSheet.show();
+              }}
+              aria-label={t("addUnavailability")}
+              title={t("addUnavailability")}
+              className="inline-flex items-center gap-1 rounded-lg bg-stone-900 px-2.5 py-1.5 text-sm font-medium text-white hover:bg-stone-700 sm:px-3"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              <span className="max-sm:hidden">{t("addUnavailability")}</span>
             </button>
           </div>
         </div>
@@ -1138,7 +1189,19 @@ export function UnavailabilityCalendar({
                           key={`draft-${index}`}
                           className="pointer-events-none absolute inset-x-1 z-20 rounded-md border border-dashed border-red-400 bg-red-100/80"
                           style={{ top: block.top, height: block.height }}
-                        />
+                        >
+                          {/* Live times while drawing or moving (wider than a phone column). */}
+                          <span
+                            className={cn(
+                              "absolute -top-7 z-30 rounded-full bg-stone-900 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-white tabular-nums shadow",
+                              dayIndex === 0 ? "left-0" : dayIndex === 6 ? "right-0" : "left-1/2 -translate-x-1/2",
+                            )}
+                          >
+                            {format(slotToDate(weekStart, dayIndex, block.startSlot, grid), "HH:mm")}
+                            {" → "}
+                            {format(slotToDate(weekStart, dayIndex, block.endSlot, grid), "HH:mm")}
+                          </span>
+                        </div>
                       ))}
                     </div>
                   );
@@ -1148,6 +1211,78 @@ export function UnavailabilityCalendar({
           </div>
         </div>
       </Card>
+
+      <FormSheet open={addSheet.open} onClose={addSheet.close} title={t("addUnavailability")}>
+        <form
+          className="space-y-5"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const startsAt = dateTimePartsToDate(addStart);
+            const endsAt = dateTimePartsToDate(addEnd);
+            if (!startsAt || !endsAt || endsAt <= startsAt) {
+              setAddError(t("endAfterStart"));
+              return;
+            }
+            const saved = await persistTimeframe(null, startsAt, endsAt, { select: false });
+            if (saved) {
+              setWeekStart(startOfWeek(startsAt, { weekStartsOn: 1 }));
+              addSheet.close();
+            }
+          }}
+        >
+          <DateTime24Input
+            name="unavailabilityStart"
+            label={t("start")}
+            value={addStart}
+            onChange={(next) => {
+              setAddStart(next);
+              const nextStart = dateTimePartsToDate(next);
+              const currentEnd = dateTimePartsToDate(addEnd);
+              // Keep the end after the start (same length as before).
+              if (nextStart && currentEnd && currentEnd <= nextStart) {
+                setAddEnd(dateToDateTimeParts(addMinutes(nextStart, 240)));
+              }
+            }}
+          />
+          <DateTime24Input name="unavailabilityEnd" label={t("end")} value={addEnd} onChange={setAddEnd} />
+          <FormError>{addError ?? error}</FormError>
+          <FormActions>
+            <Button type="button" variant="secondary" onClick={addSheet.close}>
+              {t("cancel")}
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? t("saving") : t("addUnavailability")}
+            </Button>
+          </FormActions>
+        </form>
+      </FormSheet>
+
+      {undoId && (
+        <div
+          role="status"
+          className={cn(
+            "fixed inset-x-3 z-40 mx-auto flex max-w-md items-center justify-between gap-3 rounded-xl bg-stone-900 px-4 py-3 text-sm text-white shadow-lg",
+            "lg:right-6 lg:bottom-6 lg:left-auto",
+            // Above the selection panel when one is open.
+            selectedTimeframe
+              ? "bottom-[calc(11rem+env(safe-area-inset-bottom))]"
+              : "bottom-[calc(5.5rem+env(safe-area-inset-bottom))]",
+          )}
+        >
+          <span>{t("unavailabilitySaved")}</span>
+          <button
+            type="button"
+            className="min-h-10 rounded-lg px-3 font-semibold text-spotlight hover:bg-white/10"
+            onClick={() => {
+              const id = undoId;
+              setUndoId(null);
+              void removeTimeframe(id);
+            }}
+          >
+            {t("undo")}
+          </button>
+        </div>
+      )}
 
       {selectedTimeframe && (
         <Card
