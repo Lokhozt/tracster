@@ -57,6 +57,11 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
         select: {
           id: true,
           title: true,
+          createdById: true,
+          choreographers: {
+            where: { userId },
+            select: { userId: true },
+          },
           members: {
             select: {
               userId: true,
@@ -136,7 +141,16 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
       const isEventParticipant = event.participants.some(
         (participant) => participant.userId === userId,
       );
+      // Choreographers lead their rehearsals: they count as taking part ("Chorégraphe").
+      const isChoreographer =
+        kind === "REHEARSAL" &&
+        Boolean(
+          event.choreography &&
+            (event.choreography.createdById === userId ||
+              event.choreography.choreographers.length > 0),
+        );
       const isParticipating =
+        isChoreographer ||
         isEventParticipant ||
         (kind === "REHEARSAL" && rehearsalMember) ||
         (eventKindAllowsChoreographyLinks(kind) && involvedInLinkedChoreography);
@@ -182,6 +196,9 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
         allowJoinRequests: event.allowJoinRequests,
         hasPendingJoinRequest: event.joinRequests.length > 0,
         isBarVolunteer: event.partyBarSlots.length > 0,
+        isChoreographer,
+        barSlotsFilled:
+          isPartyEventKind(kind) && event.partyBarSlotsEnabled ? event._count.partyBarSlots : null,
         hasFreeBarSlot:
           isPartyEventKind(kind) &&
           isPartyBarSignupOpen({

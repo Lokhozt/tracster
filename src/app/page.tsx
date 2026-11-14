@@ -168,9 +168,13 @@ export default async function HomePage() {
     const hiddenTypeIds = parseHiddenEventTypeIds(
       cookieStore.get(EVENT_TYPE_FILTER_COOKIE)?.value,
     );
-    const hideNonParticipating = parseHideNonParticipating(
-      cookieStore.get(HIDE_NON_PARTICIPATING_COOKIE)?.value,
-    );
+    // Members start on "Les miens" (their own events); admins on everything. A choice made
+    // with the toggle is remembered in the cookie.
+    const hideNonParticipatingCookie = cookieStore.get(HIDE_NON_PARTICIPATING_COOKIE)?.value;
+    const hideNonParticipating =
+      hideNonParticipatingCookie === undefined
+        ? !admin
+        : parseHideNonParticipating(hideNonParticipatingCookie);
     const birthdayGreeting = settings.showBirthdaysOnPlanning
       ? formatBirthdayGreeting(
           birthdayUsers.filter((birthdayUser) => isBirthdayOnDate(birthdayUser.dateOfBirth, new Date())),

@@ -68,6 +68,8 @@ export function planningBirthdayEvents(
           hasPendingJoinRequest: false,
           isBarVolunteer: false,
           hasFreeBarSlot: false,
+          barSlotsFilled: null,
+          isChoreographer: false,
           hasUpcomingSeriesEvents: false,
           availabilityStatus: null,
           href: "",

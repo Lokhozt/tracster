@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { AvailabilityButtons } from "@/components/AvailabilityButtons";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
 import { ParticipationStatus } from "@/components/ParticipationStatus";
 import { EventCard } from "@/components/EventCard";
@@ -16,6 +17,7 @@ import {
   scheduleEventEnd,
 } from "@/lib/schedule-filters";
 import { isBirthdayScheduleEvent } from "@/lib/schedule-birthdays";
+import { PARTY_BAR_SLOT_COUNT } from "@/lib/event-type-helpers";
 import {
   isGenericScheduleEvent,
   isRehearsalScheduleEvent,
@@ -23,7 +25,6 @@ import {
   type SerializedScheduleEvent,
 } from "@/lib/schedule-filters";
 
-type AvailabilityStatus = "AVAILABLE" | "UNAVAILABLE";
 
 
 
@@ -56,60 +57,68 @@ function AvailabilityBadge({
   );
 }
 
-function AvailabilityQuickReply({
-  rehearsalId,
-  currentStatus,
+
+/**
+ * Bar state of a party, on its row: "✓ Au bar" when you hold a slot, else "Bar 2/3" (amber
+ * while a slot is free). With `showSignup` ("Places libres"), a button takes a slot directly,
+ * so the bar sign-up is not confused with attending the party ("Participer").
+ */
+function BarSlotRow({
+  event,
+  showSignup,
 }: {
-  rehearsalId: string;
-  currentStatus: SerializedScheduleEvent["availabilityStatus"];
+  event: SerializedScheduleEvent;
+  showSignup: boolean;
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
-  const [loading, setLoading] = useState<AvailabilityStatus | null>(null);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function submitStatus(status: AvailabilityStatus) {
-    setLoading(status);
+  async function takeSlot() {
+    setSaving(true);
     setError(null);
-
-    const response = await fetch(`/api/events/${rehearsalId}/availability`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-
-    const data = await response.json();
-    setLoading(null);
-
-    if (!response.ok) {
-      setError(data.error ?? t("availabilitySaveError"));
-      return;
+    try {
+      const response = await fetch(`/api/events/${event.id}/bar-slots`, { method: "POST" });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error ?? t("barTakeSlotError"));
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError(t("barTakeSlotError"));
+    } finally {
+      setSaving(false);
     }
-
-    router.refresh();
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          variant={currentStatus === "AVAILABLE" ? "primary" : "secondary"}
-          disabled={loading !== null}
-          onClick={() => submitStatus("AVAILABLE")}
+    <div className={cn("mt-2 flex flex-wrap items-center gap-2", aboveCardLink)}>
+      {event.isBarVolunteer ? (
+        <span className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-xs font-semibold text-[#fff]">
+          {t("barChipMine")}
+        </span>
+      ) : (
+        <span
+          className={cn(
+            "rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums",
+            event.hasFreeBarSlot ? "bg-spotlight text-spotlight-ink" : "bg-stone-100 text-stone-600",
+          )}
         >
-          {loading === "AVAILABLE" ? t("saving") : t("statusAVAILABLE")}
+          {t("barChip", { filled: event.barSlotsFilled ?? 0, total: PARTY_BAR_SLOT_COUNT })}
+        </span>
+      )}
+      {showSignup && event.hasFreeBarSlot && !event.isBarVolunteer && (
+        <Button type="button" variant="secondary" disabled={saving} onClick={() => void takeSlot()}>
+          {saving ? t("saving") : t("barTakeSlot")}
         </Button>
-        <Button
-          type="button"
-          variant={currentStatus === "UNAVAILABLE" ? "primary" : "secondary"}
-          disabled={loading !== null}
-          onClick={() => submitStatus("UNAVAILABLE")}
-        >
-          {loading === "UNAVAILABLE" ? t("saving") : t("statusUNAVAILABLE")}
-        </Button>
-      </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      )}
+      {error && (
+        <p role="alert" className="w-full text-sm text-red-600">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -185,9 +194,15 @@ export function UpcomingEventsList({
   events,
   categoriesFiltered = false,
   includePast = false,
+  showBarSignup = false,
+  mineOnly = false,
 }: {
   events: SerializedScheduleEvent[];
   categoriesFiltered?: boolean;
+  /** "Places libres": a "take a slot" button right on the party rows. */
+  showBarSignup?: boolean;
+  /** Only the viewer's events are shown (for the empty message). */
+  mineOnly?: boolean;
   /** Also list finished events, most recent first, under a "past" heading. */
   includePast?: boolean;
 }) {
@@ -282,9 +297,11 @@ export function UpcomingEventsList({
       ) : filteredEvents.length === 0 ? (
         <Card>
           <p className="text-stone-600">
-            {filtersActive
-              ? t("noUpcomingFilterMatches")
-              : t("noUpcomingEvents")}
+            {mineOnly
+              ? t("noUpcomingMine")
+              : filtersActive
+                ? t("noUpcomingFilterMatches")
+                : t("noUpcomingEvents")}
           </p>
         </Card>
       ) : (
@@ -339,7 +356,10 @@ export function UpcomingEventsList({
                         <span className="text-base font-semibold">{defaultEventTitle(event)}</span>
                       )}
                       {!isBirthdayScheduleEvent(event) && !hasJoinPill(event) && (
-                        <ParticipationStatus participating={event.isParticipating} />
+                        <ParticipationStatus
+                          participating={event.isParticipating}
+                          choreographer={event.isChoreographer}
+                        />
                       )}
                     </div>
                     {(event.choreographyTitle || event.location) && (
@@ -372,9 +392,12 @@ export function UpcomingEventsList({
                   )}
                 </div>
 
+                {event.barSlotsFilled !== null && (
+                  <BarSlotRow event={event} showSignup={showBarSignup} />
+                )}
                 {isRehearsalScheduleEvent(event) && event.isMember && (
                   <div className={cn("mt-3 border-t border-stone-100 pt-3", aboveCardLink)}>
-                    <AvailabilityQuickReply
+                    <AvailabilityButtons
                       rehearsalId={event.id}
                       currentStatus={event.availabilityStatus}
                     />

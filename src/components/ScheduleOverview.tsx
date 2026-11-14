@@ -14,6 +14,7 @@ import { NextUpCard } from "@/components/NextUpCard";
 import { PartyBarPlanningReminders } from "@/components/PartyBarPlanningReminders";
 import { UpcomingEventsList } from "@/components/UpcomingEventsList";
 import { SearchInput, SegmentedControl } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import type { PartyBarPlanningReminder } from "@/lib/party-bar";
 import {
   persistHiddenEventTypeIds,
@@ -134,7 +135,7 @@ export function ScheduleOverview({
     [filteredEvents],
   );
   const activeFilterCount =
-    (barMode ? 1 : hiddenTypeIds.length + (hideNonParticipating ? 1 : 0)) +
+    (barMode ? 1 : hiddenTypeIds.length) +
     (showPast ? 1 : 0);
 
   function updateHiddenTypeIds(ids: string[]) {
@@ -159,15 +160,12 @@ export function ScheduleOverview({
       } else {
         parts.push(t("planningFiltersSummaryAllTypes"));
       }
-      if (hideNonParticipating) {
-        parts.push(t("planningFiltersSummaryParticipatingOnly"));
-      }
     }
     if (showPast) {
       parts.push(t("pastEventsShown"));
     }
     return parts.join(" · ");
-  }, [barFilter, freeBarSlots, hiddenTypeIds.length, hideNonParticipating, showPast, t]);
+  }, [barFilter, freeBarSlots, hiddenTypeIds.length, showPast, t]);
 
   return (
     // Wide screens (xl+): fills the window; only the calendar body and the event list scroll.
@@ -179,7 +177,12 @@ export function ScheduleOverview({
             href={nextUp.href}
             startsAt={nextUp.startsAt}
             endsAt={nextUp.endsAt}
-            title={scheduleEventLabel(nextUp)}
+            // A rehearsal is named by its choreography ("Jazz Funk Showcase"), not "Répétition".
+            title={
+              nextUp.typeKind === "REHEARSAL" && nextUp.choreographyTitle
+                ? nextUp.choreographyTitle
+                : scheduleEventLabel(nextUp)
+            }
             subtitle={[nextUp.typeName, nextUp.groupName].filter(Boolean).join(" · ")}
             location={nextUp.location}
           />
@@ -200,6 +203,17 @@ export function ScheduleOverview({
         </div>
         <FilterButton activeFilterCount={activeFilterCount} onClick={() => setFilterSheetOpen(true)} />
       </div>
+      {/* The most used filter, always in sight: my events or everyone's (paused by a bar choice). */}
+      <SegmentedControl
+        className={cn("mb-4", barMode && "pointer-events-none opacity-40")}
+        label={t("planningScopeLabel")}
+        value={hideNonParticipating ? "mine" : "all"}
+        onChange={(value) => updateHideNonParticipating(value === "mine")}
+        options={[
+          { value: "mine", label: t("planningScopeMine") },
+          { value: "all", label: t("planningScopeAll") },
+        ]}
+      />
       <FloatingActionButton actions={createActions} />
       <FilterSheet
         open={filterSheetOpen}
@@ -232,9 +246,6 @@ export function ScheduleOverview({
         </FilterCheckbox>
         {/* Paused (greyed, values kept) while looking for free bar slots. */}
         <fieldset disabled={barMode} className="transition disabled:opacity-40">
-          <FilterCheckbox checked={hideNonParticipating} onChange={updateHideNonParticipating}>
-            {t("hideNonParticipatingEvents")}
-          </FilterCheckbox>
           <EventTypeFilter
             eventTypes={eventTypes}
             hiddenTypeIds={hiddenTypeIds}
@@ -269,8 +280,12 @@ export function ScheduleOverview({
         <div className="[overflow-anchor:none] xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain xl:pr-1">
           <UpcomingEventsList
             events={listEvents}
+            showBarSignup={freeBarSlots}
             includePast={showPast}
-            categoriesFiltered={activeFilterCount - (showPast ? 1 : 0) > 0 || search.trim() !== ""}
+            categoriesFiltered={
+              activeFilterCount - (showPast ? 1 : 0) > 0 || hideNonParticipating || search.trim() !== ""
+            }
+            mineOnly={hideNonParticipating && !barMode && search.trim() === ""}
           />
         </div>
       </div>

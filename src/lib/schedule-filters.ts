@@ -26,6 +26,10 @@ export type SerializedScheduleEvent = {
   isBarVolunteer: boolean;
   /** A party whose bar still has a free slot. */
   hasFreeBarSlot: boolean;
+  /** Bar slots taken at a party with bar slots (null otherwise). */
+  barSlotsFilled: number | null;
+  /** A rehearsal of a choreography the viewer leads. */
+  isChoreographer: boolean;
   hasUpcomingSeriesEvents: boolean;
   availabilityStatus: "AVAILABLE" | "UNAVAILABLE" | "MAYBE" | null;
   href: string;
