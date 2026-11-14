@@ -493,7 +493,7 @@ function ResourceCard({
   }
 
   return (
-    <div className="rounded-lg border border-stone-200 p-4">
+    <Card>
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-stone-100 px-2 py-1 text-xs font-medium text-stone-700">
@@ -555,7 +555,7 @@ function ResourceCard({
       ) : (
         <FileResource choreographyId={choreographyId} resource={resource} />
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -728,13 +728,14 @@ export function ChoreographyResources({
   const addHref = `/choreographies/${choreographyId}/resources/new`;
   const showFloatingAdd =
     canEdit && tabSectionId !== undefined && searchParams.get("section") === tabSectionId;
+  // Same layout as the events sections: a plain heading row, then one card per resource.
   return (
-    <Card>
+    <section>
       {showFloatingAdd && (
         <FloatingActionButton actions={[{ href: addHref, label: t("addResource") }]} />
       )}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-semibold">{t("choreographyResources")}</h2>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold">{t("choreographyResources")}</h2>
         {canEdit && (
           <Link
             href={addHref}
@@ -748,14 +749,16 @@ export function ChoreographyResources({
         )}
       </div>
       {resources.length === 0 ? (
-        <p className="text-sm text-stone-600">{t("noChoreographyResources")}</p>
+        <Card>
+          <p className="text-stone-600">{t("noChoreographyResources")}</p>
+        </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="grid gap-4">
           {resources.map((resource) => (
             <ResourceCard key={resource.id} choreographyId={choreographyId} resource={resource} canEdit={canEdit} />
           ))}
         </div>
       )}
-    </Card>
+    </section>
   );
 }
