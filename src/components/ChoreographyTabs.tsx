@@ -2,17 +2,13 @@
 
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useId, useRef } from "react";
-import { replaceUrlInPlace } from "@/lib/app-navigation";
+import { previousAppPath, replaceUrlInPlace, toAppPath } from "@/lib/app-navigation";
 import { cn } from "@/lib/utils";
 
 const SECTION_PARAM = "section";
 
-export type ChoreographyTab = {
+export type ChoreographySection = {
   id: string;
-  label: string;
-  /** Shown as a small badge next to the label (e.g. number of participants). */
-  count?: number;
   content: React.ReactNode;
 };
 
@@ -27,16 +23,16 @@ function urlWithSection(sectionId: string | null): string {
 }
 
 /**
- * Opens a section that is not in the tab row (edit form, admin actions) as a new history entry,
- * so the phone's back button returns to the tab the user came from.
+ * Opens a section (edit form, admin actions…) as a new history entry, so the phone's back button
+ * returns to the overview.
  */
 export function openChoreographySection(sectionId: string): void {
   window.history.pushState(null, "", urlWithSection(sectionId));
 }
 
 /**
- * Link to another tab from a card on the overview. Unlike the tab row (which replaces the URL),
- * this is a step deeper: it adds a history entry, so the back button returns to the overview.
+ * Link from an overview card to its section: a step deeper, so it adds a history entry and the
+ * back button returns to the overview.
  */
 export function ChoreographyTabLink({
   sectionId,
@@ -63,87 +59,48 @@ export function ChoreographyTabLink({
 }
 
 /**
- * Choreography page sections as a horizontal, scrollable tab row (fewer taps than a drill-down
- * menu). The active section lives in `?section=`; switching tabs replaces the URL. All sections
- * stay mounted so switching keeps unsaved form input.
+ * Choreography page: the overview (first section) is a list of cards; each card opens its
+ * section (`?section=`), shown on its own with a "‹ Présentation" link back. All sections stay
+ * mounted so going back and forth keeps unsaved form input.
  */
-export function ChoreographyTabs({
-  tabs,
-  extraSections = [],
-}: {
-  tabs: ChoreographyTab[];
-  /** Reachable through `openChoreographySection` (header actions), not shown in the tab row. */
-  extraSections?: Array<{ id: string; content: React.ReactNode }>;
-}) {
+export function ChoreographySections({ sections }: { sections: ChoreographySection[] }) {
   const t = useTranslations("Pages.ChoreographyDetail");
   const searchParams = useSearchParams();
-  const panelId = useId();
-  const allIds = new Set([...tabs.map((tab) => tab.id), ...extraSections.map((section) => section.id)]);
+  const overviewId = sections[0]?.id;
+  const ids = new Set(sections.map((section) => section.id));
   // The URL is the only source of truth: a server-rendered copy of ?section can be stale after
-  // client-side tab switches (e.g. when the browser restores the page on "back").
+  // client-side switches (e.g. when the browser restores the page on "back").
   const urlSectionId = searchParams.get(SECTION_PARAM);
-  const activeId = (urlSectionId && allIds.has(urlSectionId) && urlSectionId) || tabs[0]?.id;
-  const activeTabRef = useRef<HTMLButtonElement>(null);
+  const activeId = (urlSectionId && ids.has(urlSectionId) && urlSectionId) || overviewId;
 
-  // Keep the active tab visible in the scrollable row.
-  useEffect(() => {
-    activeTabRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
-  }, [activeId]);
-
-  function selectTab(tabId: string) {
-    if (tabId !== activeId) {
-      replaceUrlInPlace(urlWithSection(tabId === tabs[0]?.id ? null : tabId));
+  function backToOverview() {
+    const overviewHref = urlWithSection(null);
+    // Coming from the overview: go back in history (like the phone's back button).
+    if (previousAppPath() === toAppPath(overviewHref)) {
+      window.history.back();
+    } else {
+      replaceUrlInPlace(overviewHref);
     }
+    window.scrollTo({ top: 0 });
   }
 
   return (
     <div>
-      <div
-        role="tablist"
-        aria-label={t("categories")}
-        className="-mx-4 mb-5 flex gap-1 overflow-x-auto border-b border-stone-200 px-4 sm:mx-0 sm:px-0"
-        data-no-swipe=""
-      >
-        {tabs.map((tab) => {
-          const isActive = tab.id === activeId;
-          return (
-            <button
-              key={tab.id}
-              ref={isActive ? activeTabRef : undefined}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              aria-controls={panelId}
-              onClick={() => selectTab(tab.id)}
-              className={cn(
-                "-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition",
-                isActive
-                  ? "border-stone-900 text-stone-900"
-                  : "border-transparent text-stone-500 hover:text-stone-900",
-              )}
-            >
-              {tab.label}
-              {tab.count !== undefined && (
-                <span
-                  className={cn(
-                    "rounded-full px-1.5 py-0.5 text-xs leading-none",
-                    isActive ? "bg-stone-900 text-white" : "bg-stone-100 text-stone-600",
-                  )}
-                >
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      <div id={panelId} role="tabpanel">
-        {[...tabs, ...extraSections].map((section) => (
-          <div key={section.id} className={cn(section.id !== activeId && "hidden")}>
-            {section.content}
-          </div>
-        ))}
-      </div>
+      {activeId !== overviewId && (
+        <button
+          type="button"
+          onClick={backToOverview}
+          className="mb-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-stone-600 hover:text-stone-900"
+        >
+          <span aria-hidden="true">‹</span>
+          {t("overview")}
+        </button>
+      )}
+      {sections.map((section) => (
+        <div key={section.id} className={cn(section.id !== activeId && "hidden")}>
+          {section.content}
+        </div>
+      ))}
     </div>
   );
 }

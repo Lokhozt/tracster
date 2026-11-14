@@ -23,7 +23,7 @@ import { ChoreographyTagsEditor } from "@/components/ChoreographyTagsEditor";
 import { TagBubbles } from "@/components/TagBubbles";
 import { ChoreographyHeaderActions } from "@/components/ChoreographyHeaderActions";
 import { ChoreographyTeamActions } from "@/components/ChoreographyTeamActions";
-import { type ChoreographyTab, ChoreographyTabLink, ChoreographyTabs } from "@/components/ChoreographyTabs";
+import { type ChoreographySection, ChoreographySections, ChoreographyTabLink } from "@/components/ChoreographyTabs";
 import { AvailabilityButtons } from "@/components/AvailabilityButtons";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { Card } from "@/components/ui";
@@ -41,6 +41,22 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { serializeTag } from "@/lib/tags";
 import { isWhatsAppUrl } from "@/lib/whatsapp";
 import { aboveCardLink, cardLink, cn } from "@/lib/utils";
+
+/**
+ * Dates lists: upcoming first (closest at the top), then past ones (most recent first).
+ * An event counts as upcoming until it ends.
+ */
+function upcomingFirst<T>(items: T[], event: (item: T) => { startsAt: Date; endsAt: Date | null }, now: Date): T[] {
+  const start = (item: T) => event(item).startsAt.getTime();
+  const isUpcoming = (item: T) => (event(item).endsAt ?? event(item).startsAt) >= now;
+  return [
+    ...items.filter(isUpcoming).sort((left, right) => start(left) - start(right)),
+    ...items.filter((item) => !isUpcoming(item)).sort((left, right) => start(right) - start(left)),
+  ];
+}
+
+/** How many upcoming dates the overview's Events card lists. */
+const UPCOMING_PREVIEW_COUNT = 2;
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -174,14 +190,28 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
   );
   const nextPerformance = upcomingEventLinks[0] ?? null;
   const pinnedResources = resources.filter((resource) => resource.pinned);
+  // Every upcoming date (rehearsals, representations, demonstrations), soonest first.
+  const upcomingItems = [
+    ...upcomingRehearsals.map((rehearsal) => ({
+      id: rehearsal.id,
+      startsAt: rehearsal.startsAt.toISOString(),
+      label: [tc("rehearsal"), rehearsal.group?.name].filter(Boolean).join(" · "),
+    })),
+    ...upcomingEventLinks.map((link) => ({
+      id: link.event.id,
+      startsAt: link.event.startsAt.toISOString(),
+      label:
+        link.event.title ||
+        (link.event.type.kind === "DEMONSTRATION" ? t("demonstration") : tc("representation")),
+    })),
+  ].sort((left, right) => left.startsAt.localeCompare(right.startsAt));
   const isChoreographer = choreographers.some((entry) => entry.id === user.id);
   const showGroups = canEdit || groups.length > 0;
   const assignedTags = choreography.tags.map((item) => serializeTag(item.tag));
 
-  const tabs: ChoreographyTab[] = [
+  const sections: ChoreographySection[] = [
     {
       id: "overview",
-      label: t("overview"),
       content: (
         // Overview first: next rehearsal, pinned resources, team, description (two per row on desktops).
         <div className="grid gap-4 lg:grid-cols-2">
@@ -238,6 +268,33 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
                   <LocalDateTime value={nextPerformance.event.startsAt.toISOString()} />
                 </span>
               </Link>
+            )}
+          </Card>
+          {/* All upcoming dates of the choreography; opens the full events section. */}
+          <Card className="relative transition hover:border-stone-400">
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
+              <ChoreographyTabLink
+                sectionId="events"
+                className={cn("flex items-center justify-between gap-3", cardLink)}
+              >
+                {t("eventsTab")}
+                <span aria-hidden="true" className="text-base text-stone-400">›</span>
+              </ChoreographyTabLink>
+            </h2>
+            <p className="text-sm text-stone-600">
+              {t("upcomingEventCount", { count: upcomingItems.length })}
+            </p>
+            {upcomingItems.length > 0 && (
+              <ul className="mt-2 divide-y divide-stone-100">
+                {upcomingItems.slice(0, UPCOMING_PREVIEW_COUNT).map((item) => (
+                  <li key={item.id} className="flex min-h-10 items-center justify-between gap-3 py-1.5">
+                    <span className="min-w-0 truncate text-stone-900">{item.label}</span>
+                    <span className="shrink-0 text-sm text-stone-500">
+                      <LocalDateTime value={item.startsAt} />
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
           </Card>
           {pinnedResources.length > 0 && (
@@ -368,8 +425,6 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
     },
     {
       id: "resources",
-      label: t("resources"),
-      count: resources.length,
       content: (
         <ChoreographyResources
           choreographyId={id}
@@ -381,8 +436,6 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
     },
     {
       id: "participants",
-      label: t("people"),
-      count: participants.length,
       content: (
         <div className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
@@ -492,8 +545,6 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
       ? [
           {
             id: "groups",
-            label: tc("groups"),
-            count: groups.length,
             content: (
               <GroupsSection
                 choreographyId={id}
@@ -509,8 +560,6 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
     {
       // Rehearsals, representations and demonstrations in one place, like the planning.
       id: "events",
-      label: t("eventsTab"),
-      count: upcomingRehearsals.length + upcomingEventLinks.length,
       content: (
         <div className="space-y-8">
           <section>
@@ -524,7 +573,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
                 memberCount: group.members.length,
               }))}
               eventTypes={eventTypes}
-              rehearsals={choreography.rehearsals.map((rehearsal) => {
+              rehearsals={upcomingFirst(choreography.rehearsals, (rehearsal) => rehearsal, now).map((rehearsal) => {
                 const targetUserIds = new Set(
                   rehearsal.group
                     ? rehearsal.group.members.map((member) => member.userId)
@@ -562,7 +611,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
                 choreographyId={id}
                 canEdit={canEdit}
                 eventTypes={eventTypes}
-                representations={representationLinks.map((link) => ({
+                representations={upcomingFirst(representationLinks, (link) => link.event, now).map((link) => ({
                   id: link.event.id,
                   title: link.event.title || null,
                   startsAt: link.event.startsAt.toISOString(),
@@ -587,7 +636,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
                   name: group.name,
                   memberCount: group.members.length,
                 }))}
-                demonstrations={demonstrationLinks.map((link) => ({
+                demonstrations={upcomingFirst(demonstrationLinks, (link) => link.event, now).map((link) => ({
                   id: link.event.id,
                   title: link.event.title || null,
                   startsAt: link.event.startsAt.toISOString(),
@@ -603,7 +652,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
     },
   ];
 
-  // Edit form and admin actions: opened from the title-row actions, not shown as tabs.
+  // Edit form and admin actions: opened from the title-row edit button and the admin card.
   const extraSections: Array<{ id: string; content: React.ReactNode }> = [];
   if (canEdit || canManageTags) {
     extraSections.push({
@@ -692,7 +741,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           </span>
         </p>
       )}
-      <ChoreographyTabs tabs={tabs} extraSections={extraSections} />
+      <ChoreographySections sections={[...sections, ...extraSections]} />
     </AppShell>
   );
 }

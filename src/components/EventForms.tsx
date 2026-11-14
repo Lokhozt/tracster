@@ -1100,12 +1100,12 @@ export function DemonstrationsSection({
   return (
     <LinkedEventKindSection
       kind="DEMONSTRATION"
-      heading="Demonstrations"
+      heading={t("demonstrations")}
       addLabel={t("addDemonstration")}
       emptyLabel={t("noDemonstrations")}
-      fallbackTitle="Demonstration"
+      fallbackTitle={t("demonstration")}
       editLabel={t("editDemonstration")}
-      unlinkConfirm="Remove this demonstration from the choreography? The demonstration itself will not be deleted."
+      unlinkConfirm={t("unlinkDemonstrationConfirm")}
       choreographyId={choreographyId}
       choreographyTitle={choreographyTitle}
       items={demonstrations}

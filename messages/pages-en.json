@@ -137,7 +137,8 @@
       "youAreChoreographer": "You are a choreographer",
       "pinnedResources": "Pinned resources",
       "openResource": "Open",
-      "categories": "Choreography sections",
+      "demonstration": "Demonstration",
+      "upcomingEventCount": "{count, plural, =0 {No upcoming dates} one {# upcoming date} other {# upcoming dates}}",
       "openWhatsapp": "Open WhatsApp"
     },
     "ChoreographyRehearsalStatistics": {
