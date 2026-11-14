@@ -1,53 +1,23 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useId, useRef, useState } from "react";
 import { openChoreographySection } from "@/components/ChoreographyTabs";
-import { cn } from "@/lib/utils";
 
 const ICON_BUTTON =
   "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-100 hover:text-stone-900";
 
 /**
- * Title-row actions of a choreography: WhatsApp group, edit, and a "more" menu for admin actions.
- * Management lives here instead of in the section list, so the page leads with content.
+ * Title-row actions of a choreography: WhatsApp group and edit. Admin actions are reached from
+ * the red card at the end of the overview.
  */
 export function ChoreographyHeaderActions({
   whatsappUrl,
   canEdit,
-  canManageLifecycle,
 }: {
   whatsappUrl: string | null;
   canEdit: boolean;
-  canManageLifecycle: boolean;
 }) {
   const t = useTranslations("Pages.ChoreographyDetail");
-  const tc = useTranslations("Components");
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuId = useId();
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!menuOpen) {
-      return;
-    }
-    function onPointerDown(event: PointerEvent) {
-      if (!menuRef.current?.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setMenuOpen(false);
-      }
-    }
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [menuOpen]);
 
   return (
     <div className="flex shrink-0 items-center gap-2 text-base font-normal tracking-normal">
@@ -78,44 +48,6 @@ export function ChoreographyHeaderActions({
             <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
           </svg>
         </button>
-      )}
-      {canManageLifecycle && (
-        <div ref={menuRef} className="relative">
-          <button
-            type="button"
-            onClick={() => setMenuOpen((open) => !open)}
-            aria-expanded={menuOpen}
-            aria-controls={menuId}
-            aria-label={t("moreActions")}
-            title={t("moreActions")}
-            className={ICON_BUTTON}
-          >
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
-              <circle cx="5" cy="12" r="1.75" />
-              <circle cx="12" cy="12" r="1.75" />
-              <circle cx="19" cy="12" r="1.75" />
-            </svg>
-          </button>
-          {menuOpen && (
-            <div
-              id={menuId}
-              className={cn(
-                "absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 text-sm shadow-lg",
-              )}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  openChoreographySection("admin");
-                }}
-                className="block w-full px-4 py-2.5 text-left hover:bg-stone-100"
-              >
-                {tc("adminActions")}
-              </button>
-            </div>
-          )}
-        </div>
       )}
     </div>
   );

@@ -135,7 +135,6 @@
       "participantCount": "{count, plural, =0 {Aucun participant} one {# participant} other {# participants}}",
       "eventsTab": "Événements",
       "youAreChoreographer": "Vous êtes chorégraphe",
-      "moreActions": "Plus d’actions",
       "pinnedResources": "Ressources épinglées",
       "openResource": "Ouvrir",
       "categories": "Rubriques de la chorégraphie",

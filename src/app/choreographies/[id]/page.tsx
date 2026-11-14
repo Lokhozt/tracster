@@ -306,6 +306,34 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
               />
             </div>
           </Card>
+          {showGroups && (
+            // Like the other cards: the whole card opens the Groupes tab.
+            <Card className="relative transition hover:border-stone-400">
+              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
+                <ChoreographyTabLink
+                  sectionId="groups"
+                  className={cn("flex items-center justify-between gap-3", cardLink)}
+                >
+                  {tc("groups")}
+                  <span aria-hidden="true" className="text-base text-stone-400">›</span>
+                </ChoreographyTabLink>
+              </h2>
+              {groups.length === 0 ? (
+                <p className="text-sm text-stone-600">{tc("noGroups")}</p>
+              ) : (
+                <ul className="divide-y divide-stone-100">
+                  {groups.map((group) => (
+                    <li key={group.id} className="flex min-h-10 items-center justify-between gap-3 py-1.5">
+                      <span className="min-w-0 truncate text-stone-900">{group.name}</span>
+                      <span className="shrink-0 text-sm text-stone-500">
+                        {t("participantCount", { count: group.members.length })}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          )}
           {/* Assigned tags first, then the description; tags are edited from the edit section. */}
           {(choreography.description || (settings.showChoreographyTags && assignedTags.length > 0)) && (
             <Card className="space-y-3">
@@ -316,6 +344,23 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
               {choreography.description && (
                 <p className="whitespace-pre-wrap text-stone-700">{choreography.description}</p>
               )}
+            </Card>
+          )}
+          {canManageLifecycle && (
+            // Admins only, last and in red: it leads to archive / delete.
+            <Card className="relative border-red-200 transition hover:border-red-400">
+              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-red-700">
+                <ChoreographyTabLink
+                  sectionId="admin"
+                  className={cn("flex items-center justify-between gap-3", cardLink)}
+                >
+                  {tc("adminActions")}
+                  <span aria-hidden="true" className="text-base text-red-400">›</span>
+                </ChoreographyTabLink>
+              </h2>
+              <p className="text-sm text-red-700">
+                {tc("archiveChoreography")} · {tc("deleteChoreography")}
+              </p>
             </Card>
           )}
         </div>
@@ -636,7 +681,6 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
               : null
           }
           canEdit={canEdit || canManageTags}
-          canManageLifecycle={canManageLifecycle}
         />
       }
     >
