@@ -103,16 +103,25 @@ export function ResourceLink({
     );
   }
 
+  // Readable link: its title (the description) first, the site small below; the raw URL only
+  // when there is nothing better.
+  let host = url;
+  try {
+    host = new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    // Not a parseable URL: show it as is.
+  }
   return (
     <div>
       <a
-        className="break-all font-medium text-stone-800 underline hover:text-stone-600"
+        className="line-clamp-2 font-medium break-words text-stone-900 underline decoration-stone-300 underline-offset-2 hover:decoration-stone-900"
         href={url}
         target="_blank"
         rel="noopener noreferrer"
       >
-        {url}
+        {title || url}
       </a>
+      {title && <p className="mt-0.5 text-xs text-stone-500">{host} ↗</p>}
     </div>
   );
 }

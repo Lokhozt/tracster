@@ -283,7 +283,8 @@ function DayCell({
         {events.map((event) => {
           const hasGroupLine = event.typeKind === "REHEARSAL" && Boolean(event.groupName);
           const className = cn(
-            "rounded px-1.5 py-0.5 text-xs break-words",
+            // Hyphenate (page language) rather than split a word anywhere ("Assem-blée", not "Assembl/ée").
+            "rounded px-1.5 py-0.5 text-xs break-words hyphens-auto",
             wrapLabels ? "block" : hasGroupLine ? "line-clamp-4" : "line-clamp-2",
             hasGroupLine && "min-h-[3.25rem]",
             eventCellClassName(event),

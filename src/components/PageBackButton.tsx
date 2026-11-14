@@ -50,8 +50,9 @@ function parentHref(pathname: string, search: URLSearchParams): string {
 }
 
 /**
- * Desktop "←" before the page title on detail pages (event, choreography, user…): goes back
- * to the previous app page, or up to the parent page. Phones use the system back instead.
+ * "←" before the page title on detail pages (event, choreography, user…): goes back to the
+ * previous app page, or up to the parent page. Also on phones: an installed app (standalone)
+ * has no browser back button.
  */
 export function PageBackButton() {
   const t = useTranslations("Components");
@@ -69,7 +70,7 @@ export function PageBackButton() {
       onClick={() => navigation.back(parentHref(pathname, new URLSearchParams(searchParams)))}
       aria-label={t("back")}
       title={t("back")}
-      className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-100 hover:text-stone-900 lg:inline-flex"
+      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-100 hover:text-stone-900"
     >
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M19 12H5M11 6l-6 6 6 6" />

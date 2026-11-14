@@ -30,6 +30,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { useAppNavigation } from "@/lib/app-navigation";
+import { withUrlScheme } from "@/lib/utils";
 
 async function responseError(response: Response, fallback: string) {
   const body = await response.json().catch(() => null);
@@ -434,7 +435,7 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title,
-            url,
+            url: withUrlScheme(url),
             description: description || undefined,
             ...category,
           }),
@@ -549,8 +550,11 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
               <Input
                 key="document-link"
                 id="document-url"
-                type="url"
+                type="text"
                 inputMode="url"
+                autoComplete="url"
+                autoCapitalize="none"
+                spellCheck={false}
                 required
                 value={url}
                 onChange={(event) => setUrl(event.target.value)}

@@ -10,3 +10,12 @@ export function cn(...classes: Array<string | false | null | undefined>) {
 export const cardLink = "after:absolute after:inset-0";
 
 export const aboveCardLink = "relative z-10";
+
+/** "drive.google.com/x" → "https://drive.google.com/x": people rarely type the scheme. */
+export function withUrlScheme(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed || /^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed.replace(/^\/+/, "")}`;
+}

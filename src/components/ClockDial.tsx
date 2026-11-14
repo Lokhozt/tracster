@@ -60,7 +60,8 @@ export function ClockDial({
     const degrees = (Math.atan2(dx, -dy) * 180) / Math.PI;
     const angle = (degrees + 360) % 360;
     if (mode === "minute") {
-      return Math.round(angle / 6) % 60;
+      // Fingers are not precise: snap to 5 minutes (arrow keys still move by one).
+      return (Math.round(angle / 30) * 5) % 60;
     }
     const step = Math.round(angle / 30) % 12;
     const inner = Math.hypot(dx, dy) < (INNER_RADIUS + OUTER_RADIUS) / 2;

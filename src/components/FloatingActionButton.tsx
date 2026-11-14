@@ -78,6 +78,7 @@ function FloatingActionButtonContent({
         href={action.href}
         aria-label={action.label}
         title={action.label}
+        data-fab=""
         className={cn(FAB_POSITION, FAB_BUTTON)}
       >
         <PlusIcon />
@@ -95,7 +96,7 @@ function FloatingActionButtonContent({
         />
       )}
       {/* Toggle first in the DOM so Tab moves from it into the opened menu; reversed visually. */}
-      <div className={cn(FAB_POSITION, "flex flex-col-reverse items-end gap-3")}>
+      <div data-fab="" className={cn(FAB_POSITION, "flex flex-col-reverse items-end gap-3")}>
         <button
           type="button"
           aria-expanded={open}

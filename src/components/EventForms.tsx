@@ -171,6 +171,16 @@ function selectedEventType(eventTypes: SerializedEventType[], typeId: string) {
   return eventTypes.find((type) => type.id === typeId) ?? eventTypes[0];
 }
 
+/** Default length of a new event: parties run late, everything else defaults to an hour. */
+function defaultDurationMinutes(kind: string | null | undefined): number {
+  return kind === "PARTY" ? 180 : 60;
+}
+
+function partsPlusMinutes(parts: DateTimeParts, minutes: number): DateTimeParts {
+  const start = dateTimePartsToDate(parts);
+  return start ? dateToDateTimeParts(new Date(start.getTime() + minutes * 60_000)) : parts;
+}
+
 export function CreateEventForm({
   eventTypes,
   participantOptions,
@@ -214,7 +224,7 @@ export function CreateEventForm({
     ? dateToDateTimeParts(new Date(copyFrom.endsAt))
     : copyFrom
       ? addOneHour(dateToDateTimeParts(new Date(copyFrom.startsAt)))
-      : addOneHour(defaultStartDateTime());
+      : partsPlusMinutes(defaultStartDateTime(), defaultDurationMinutes(initialEventType?.kind));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [typeId, setTypeId] = useState(initialTypeId);
@@ -316,7 +326,7 @@ export function CreateEventForm({
 
   function handleStartChange(nextStart: DateTimeParts) {
     setStart(nextStart);
-    setEnd(addOneHour(nextStart));
+    setEnd(partsPlusMinutes(nextStart, defaultDurationMinutes(eventType?.kind)));
     setRepeatWeekday(weekdayFromParts(nextStart));
   }
 
@@ -429,6 +439,7 @@ export function CreateEventForm({
                 const nextTypeId = event.target.value;
                 const nextType = selectedEventType(eventTypes, nextTypeId);
                 setTypeId(nextTypeId);
+                setEnd(partsPlusMinutes(start, defaultDurationMinutes(nextType?.kind)));
                 if (nextType?.kind === "REHEARSAL") {
                   const choreographyTitle = choreographyOptions?.find(
                     (choreography) => choreography.id === choreographyId,

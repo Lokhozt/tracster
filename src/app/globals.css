@@ -77,6 +77,13 @@ html {
   overflow-x: clip;
 }
 
+/* Pages with the floating "+": extra room at the end so nothing stays hidden under it. */
+@media (max-width: 1023px) {
+  body:has([data-fab]) #main {
+    padding-bottom: calc(10rem + env(safe-area-inset-bottom));
+  }
+}
+
 /* Phones/tablets: keyboard focus never lands under the sticky header or the bottom tab bar. */
 @media (max-width: 1023px) {
   html {

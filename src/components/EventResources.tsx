@@ -33,7 +33,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { useAppNavigation } from "@/lib/app-navigation";
-import { cn } from "@/lib/utils";
+import { cn, withUrlScheme } from "@/lib/utils";
 
 async function responseError(response: Response, fallback: string) {
   const body = await response.json().catch(() => null);
@@ -418,7 +418,7 @@ function EditResourceForm({
     const response = await fetch(`/api/choreographies/${choreographyId}/resources/${resource.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ description, visibility, ...(isLink ? { url } : {}) }),
+      body: JSON.stringify({ description, visibility, ...(isLink ? { url: withUrlScheme(url) } : {}) }),
     });
     setSaving(false);
     if (!response.ok) {
@@ -436,7 +436,11 @@ function EditResourceForm({
           <Label htmlFor={`resource-url-${resource.id}`}>{t("resourceUrl")}</Label>
           <Input
             id={`resource-url-${resource.id}`}
-            type="url"
+            type="text"
+            inputMode="url"
+            autoComplete="url"
+            autoCapitalize="none"
+            spellCheck={false}
             required
             value={url}
             onChange={(event) => setUrl(event.target.value)}
@@ -562,7 +566,10 @@ function ResourceCard({
           </div>
         </FilterSheet>
       )}
-      {resource.description && <p className="mb-3 whitespace-pre-wrap text-sm text-stone-600">{resource.description}</p>}
+      {/* A plain link uses its description as link text (see ResourceLink): not shown twice. */}
+      {resource.description && !(resource.type === "LINK" && resource.url && !resource.embed) && (
+        <p className="mb-3 whitespace-pre-wrap text-sm text-stone-600">{resource.description}</p>
+      )}
       {resource.type === "LINK" && resource.url ? (
         <ResourceLink url={resource.url} embed={resource.embed} title={resource.description} />
       ) : (
@@ -621,7 +628,7 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
         const response = await fetch(`/api/choreographies/${choreographyId}/resources`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, description: description || undefined, visibility }),
+          body: JSON.stringify({ url: withUrlScheme(url), description: description || undefined, visibility }),
         });
         if (!response.ok) throw new Error(await responseError(response, t("resourceCreateError")));
         navigation.returnTo(`/choreographies/${choreographyId}?section=resources`);
@@ -698,7 +705,7 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
           {kind === "LINK" ? (
             <>
               <Label htmlFor={`resource-url-${choreographyId}`}>{t("resourceUrl")}</Label>
-              <Input key="resource-link" id={`resource-url-${choreographyId}`} type="url" inputMode="url" required value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://…" />
+              <Input key="resource-link" id={`resource-url-${choreographyId}`} type="text" inputMode="url" autoComplete="url" autoCapitalize="none" spellCheck={false} required value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://…" />
             </>
           ) : (
             <>
