@@ -1,5 +1,7 @@
 {
   "Components": {
+    "eventFinished": "Terminé",
+    "upcomingAfterPast": "À venir",
     "addBarVolunteers": "Ajouter des bénévoles",
     "assignUsersSelected": "{count, plural, =0 {Personne de sélectionné} one {# sélectionné} other {# sélectionnés}}",
     "assignUsersAll": "Tout",

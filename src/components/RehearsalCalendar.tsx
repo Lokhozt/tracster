@@ -32,6 +32,8 @@ import {
 } from "@/lib/schedule-filters";
 import { isBirthdayScheduleEvent } from "@/lib/schedule-birthdays";
 import { ArrowLeftIcon, ArrowRightIcon } from "@/components/icons";
+import { useNow } from "@/lib/use-now";
+import { scheduleEventEnd } from "@/lib/schedule-filters";
 
 type CalendarView = "day" | "week" | "month";
 type DateLocale = typeof fr;
@@ -125,11 +127,13 @@ function eventCellTitle(event: SerializedScheduleEvent): string {
   );
 }
 
-function eventCellClassName(event: SerializedScheduleEvent): string {
-  if (isBirthdayScheduleEvent(event)) {
-    return "bg-pink-100 text-pink-900";
-  }
-  return eventScheduleKindClassName(event.typeKind, { hover: true });
+function eventCellClassName(event: SerializedScheduleEvent, now: number | null): string {
+  // Finished events stay visible but recede (today's Day view still lists last night's party).
+  const finished = now !== null && scheduleEventEnd(event).getTime() <= now;
+  const base = isBirthdayScheduleEvent(event)
+    ? "bg-pink-100 text-pink-900"
+    : eventScheduleKindClassName(event.typeKind, { hover: true });
+  return finished ? `${base} opacity-55` : base;
 }
 
 /** Solid version of the event-kind hue, for the small dots in the day strip and compact month. */
@@ -257,6 +261,7 @@ function DayCell({
   tall?: boolean;
   wrapLabels?: boolean;
 }) {
+  const now = useNow();
   const t = useTranslations("Components");
   const slotRem = tall ? 2.75 : 1.75;
   const eventsAreaMinHeight =
@@ -288,7 +293,7 @@ function DayCell({
             "rounded px-1.5 py-0.5 text-xs break-words hyphens-auto",
             wrapLabels ? "block" : hasGroupLine ? "line-clamp-4" : "line-clamp-2",
             hasGroupLine && "min-h-[3.25rem]",
-            eventCellClassName(event),
+            eventCellClassName(event, now),
             event.href && "hover:opacity-90",
           );
           const content = (
@@ -379,6 +384,8 @@ function DayDotsButton({
 
 function AgendaEvent({ event, day }: { event: SerializedScheduleEvent; day: Date }) {
   const t = useTranslations("Components");
+  const now = useNow();
+  const finished = now !== null && scheduleEventEnd(event).getTime() <= now;
   const isBirthday = isBirthdayScheduleEvent(event);
   const details = [
     event.typeName,
@@ -389,7 +396,7 @@ function AgendaEvent({ event, day }: { event: SerializedScheduleEvent; day: Date
     .join(" · ");
   const className = cn(
     "block rounded-lg px-3 py-2.5 text-sm",
-    eventCellClassName(event),
+    eventCellClassName(event, now),
     event.href && "hover:opacity-90",
   );
   const content = (
@@ -397,6 +404,7 @@ function AgendaEvent({ event, day }: { event: SerializedScheduleEvent; day: Date
       {!isBirthday && (
         <span className="block text-xs font-medium opacity-80">
           {agendaTimeLabel(event, day, t("allDay"))}
+          {finished && <span className="ml-2 font-semibold">· {t("eventFinished")}</span>}
         </span>
       )}
       <span className="block font-semibold leading-snug">{eventCellLabel(event)}</span>

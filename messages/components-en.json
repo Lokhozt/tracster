@@ -1,5 +1,7 @@
 {
   "Components": {
+    "eventFinished": "Finished",
+    "upcomingAfterPast": "Upcoming",
     "addBarVolunteers": "Add bar volunteers",
     "assignUsersSelected": "{count, plural, =0 {Nobody selected} one {# selected} other {# selected}}",
     "assignUsersAll": "All",

@@ -171,17 +171,21 @@ type DayGroup = {
 };
 
 /**
- * Consecutive events of the same local day (the list is already in display order). The first
- * past event always starts a new group, under the "past" heading.
+ * Consecutive events of the same local day (the list is already in display order). Each
+ * section start (first past event, first upcoming one after them) begins a new group.
  */
-function groupByDay(events: SerializedScheduleEvent[], firstPastEventId?: string): DayGroup[] {
+function groupByDay(
+  events: SerializedScheduleEvent[],
+  sectionStartIds: (string | undefined)[] = [],
+): DayGroup[] {
+  const sectionStarts = new Set(sectionStartIds.filter(Boolean));
   const todayKey = new Date().toDateString();
   const groups: DayGroup[] = [];
   for (const event of events) {
     const start = new Date(event.startsAt);
     const key = start.toDateString();
     const last = groups.at(-1);
-    if (last && last.key === key && event.id !== firstPastEventId) {
+    if (last && last.key === key && !sectionStarts.has(event.id)) {
       last.events.push(event);
     } else {
       groups.push({ key, day: start, isToday: key === todayKey, events: [event] });
@@ -237,8 +241,11 @@ export function UpcomingEventsList({
         : [],
     [events, includePast, now],
   );
-  const filteredEvents = useMemo(() => [...activeEvents, ...pastEvents], [activeEvents, pastEvents]);
+  // Showing past events is about looking back: they come first (most recent first), then the
+  // upcoming ones. Appended at the end they only appeared after the whole season.
+  const filteredEvents = useMemo(() => [...pastEvents, ...activeEvents], [activeEvents, pastEvents]);
   const firstPastEventId = pastEvents[0]?.id;
+  const firstUpcomingAfterPastId = pastEvents.length > 0 ? activeEvents[0]?.id : undefined;
   const listKey = filteredEvents.map((event) => event.id).join("|");
   const [scrollWindow, setScrollWindow] = useState({
     listKey,
@@ -285,6 +292,8 @@ export function UpcomingEventsList({
   }, [filteredEvents.length, hasMore, listKey, visibleCount]);
 
   const filtersActive = categoriesFiltered;
+  // A finished event can't be joined any more: its row shows the participation status instead.
+  const isFinished = (event: SerializedScheduleEvent) => scheduleEventEnd(event) <= now;
 
   return (
     <section className="@container">
@@ -308,10 +317,13 @@ export function UpcomingEventsList({
         // Call sheet: one group per day, the day number in a gutter on the left; the rows of
         // that day on the right (two columns only when the list itself is wide).
         <div className="space-y-5">
-          {groupByDay(visibleEvents, firstPastEventId).map((group) => (
+          {groupByDay(visibleEvents, [firstPastEventId, firstUpcomingAfterPastId]).map((group) => (
             <Fragment key={`${group.key}-${group.events[0].id}`}>
               {group.events[0].id === firstPastEventId && (
-                <h2 className="text-lg font-semibold">{t("pastEventsHeading")}</h2>
+                <h3 className="text-base font-semibold text-stone-600">{t("pastEventsHeading")}</h3>
+              )}
+              {group.events[0].id === firstUpcomingAfterPastId && (
+                <h3 className="pt-2 text-base font-semibold text-stone-600">{t("upcomingAfterPast")}</h3>
               )}
               <div className="flex gap-3">
                 <div className="w-11 shrink-0 pt-0.5 text-center" suppressHydrationWarning>
@@ -355,7 +367,7 @@ export function UpcomingEventsList({
                       ) : (
                         <span className="text-base font-semibold">{defaultEventTitle(event)}</span>
                       )}
-                      {!isBirthdayScheduleEvent(event) && !hasJoinPill(event) && (
+                      {!isBirthdayScheduleEvent(event) && !(hasJoinPill(event) && !isFinished(event)) && (
                         <ParticipationStatus
                           participating={event.isParticipating}
                           choreographer={event.isChoreographer}
@@ -376,7 +388,7 @@ export function UpcomingEventsList({
                     </div>
                   )}
                   {/* Join/leave pill: shows the participation state and toggles it. */}
-                  {hasJoinPill(event) && (
+                  {hasJoinPill(event) && !isFinished(event) && (
                     <div className={cn("shrink-0", aboveCardLink)}>
                       <JoinAsParticipantControls
                         joinUrl={`/api/events/${event.id}/join`}
@@ -393,7 +405,7 @@ export function UpcomingEventsList({
                 </div>
 
                 {event.barSlotsFilled !== null && (
-                  <BarSlotRow event={event} showSignup={showBarSignup} />
+                  <BarSlotRow event={event} showSignup={showBarSignup && !isFinished(event)} />
                 )}
                 {isRehearsalScheduleEvent(event) && event.isMember && (
                   <div className={cn("mt-3 border-t border-stone-100 pt-3", aboveCardLink)}>
