@@ -1,10 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useId, useRef } from "react";
+import { Sheet } from "@/components/Sheet";
 import { cn } from "@/lib/utils";
-
-const SWIPE_DOWN_CLOSE_DISTANCE_PX = 80;
 
 /** Toolbar button that opens a `FilterSheet`; the badge counts active filters. */
 export function FilterButton({
@@ -63,85 +61,24 @@ export function FilterSheet({
   children: React.ReactNode;
 }) {
   const t = useTranslations("Components");
-  const titleId = useId();
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const swipeStartY = useRef<number | null>(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) {
-      return;
-    }
-    if (open && !dialog.open) {
-      dialog.showModal();
-    } else if (!open && dialog.open) {
-      dialog.close();
-    }
-    if (!open) {
-      return;
-    }
-    // A modal <dialog> does not stop the page behind it from scrolling.
-    const rootStyle = document.documentElement.style;
-    rootStyle.overflow = "hidden";
-    return () => {
-      rootStyle.overflow = "";
-    };
-  }, [open]);
-
-  function onTouchEnd(event: React.TouchEvent) {
-    const startY = swipeStartY.current;
-    swipeStartY.current = null;
-    if (startY !== null && event.changedTouches[0].clientY - startY >= SWIPE_DOWN_CLOSE_DISTANCE_PX) {
-      onClose();
-    }
-  }
-
   return (
-    <dialog
-      ref={dialogRef}
-      aria-labelledby={titleId}
+    <Sheet
+      open={open}
       onClose={onClose}
-      onClick={(event) => {
-        // Clicks on the ::backdrop target the <dialog> element itself.
-        if (event.target === event.currentTarget) {
-          onClose();
-        }
-      }}
-      className={cn(
-        "m-0 mt-auto max-h-[85dvh] w-full max-w-none rounded-t-2xl bg-white p-0 text-stone-900 shadow-xl backdrop:bg-stone-900/40",
-        "md:m-auto md:max-w-lg md:rounded-2xl",
-      )}
-    >
-      <div className="flex max-h-[85dvh] flex-col pb-[env(safe-area-inset-bottom)]">
-        <div
-          className="shrink-0 px-5 pt-2 pb-3"
-          onTouchStart={(event) => {
-            swipeStartY.current = event.touches[0].clientY;
-          }}
-          onTouchEnd={onTouchEnd}
+      title={title}
+      summary={summary}
+      headerAction={
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
         >
-          <div aria-hidden="true" className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-stone-300 md:hidden" />
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h2 id={titleId} className="text-base font-semibold">
-                {title}
-              </h2>
-              {summary && <p className="mt-0.5 text-sm text-stone-500">{summary}</p>}
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="shrink-0 rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
-            >
-              {t("done")}
-            </button>
-          </div>
-        </div>
-        <div className="overflow-y-auto overscroll-contain border-t border-stone-100 px-5 pt-4 pb-6">
-          {children}
-        </div>
-      </div>
-    </dialog>
+          {t("done")}
+        </button>
+      }
+    >
+      {children}
+    </Sheet>
   );
 }
 

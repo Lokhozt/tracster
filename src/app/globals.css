@@ -858,3 +858,9 @@ body {
 :root[data-theme="dark"] .festive-surface {
   background: linear-gradient(165deg, #1f1714 0%, #21141a 12%, #121a14 28%, #0c0a09 55%, #0c0a09 100%);
 }
+
+/* Checkboxes and radios in the app's ink colour (mirrored in dark mode like the palette). */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-stone-900);
+}

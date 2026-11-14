@@ -23,16 +23,20 @@ export function Button({
   );
 }
 
+/**
+ * Shared look of text inputs, selects and text areas (width and height are set per control:
+ * `cn` does not resolve conflicting classes).
+ */
+export const FIELD_CONTROL_CLASS =
+  "rounded-lg border border-stone-300 bg-white px-3 py-2 text-base text-stone-900 shadow-xs outline-none transition placeholder:text-stone-400 focus:border-stone-500 focus:ring-3 focus:ring-stone-900/10 disabled:bg-stone-100 disabled:text-stone-500 sm:text-sm file:mr-3 file:rounded-md file:border-0 file:bg-stone-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-stone-800";
+
 export function Input({
   className,
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className={cn(
-        "w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base outline-none ring-stone-400 focus:ring-2 sm:text-sm",
-        className,
-      )}
+      className={cn(FIELD_CONTROL_CLASS, "min-h-11 w-full", className)}
       {...props}
     />
   );
@@ -68,10 +72,7 @@ export function Textarea({
 }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
-      className={cn(
-        "w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-base outline-none ring-stone-400 focus:ring-2 sm:text-sm",
-        className,
-      )}
+      className={cn(FIELD_CONTROL_CLASS, "w-full", className)}
       {...props}
     />
   );
@@ -82,7 +83,7 @@ export function Label({
   ...props
 }: React.LabelHTMLAttributes<HTMLLabelElement>) {
   return (
-    <label className={cn("mb-1 block text-sm font-medium text-stone-700", className)} {...props} />
+    <label className={cn("mb-1.5 block text-sm font-medium text-stone-800", className)} {...props} />
   );
 }
 
@@ -92,10 +93,8 @@ export function Select({
 }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
-      className={cn(
-        "rounded-lg border border-stone-300 bg-white px-3 py-2 text-base outline-none ring-stone-400 focus:ring-2 sm:text-sm",
-        className,
-      )}
+      // Width stays with the caller (selects are also used inline in toolbars).
+      className={cn(FIELD_CONTROL_CLASS, "min-h-11", className)}
       {...props}
     />
   );
@@ -138,6 +137,74 @@ export function Switch({
   );
 }
 
+/** A choice between a few options, as joined buttons (e.g. "Créer" / "Lier"). */
+export function SegmentedControl<Value extends string>({
+  label,
+  value,
+  options,
+  onChange,
+  className,
+}: {
+  /** Accessible name of the group. */
+  label: string;
+  value: Value;
+  options: { value: Value; label: React.ReactNode }[];
+  onChange: (value: Value) => void;
+  className?: string;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label={label}
+      className={cn("flex rounded-xl bg-stone-100 p-1", className)}
+    >
+      {options.map((option) => {
+        const selected = option.value === value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onChange(option.value)}
+            className={cn(
+              "min-h-10 flex-1 rounded-lg px-3 text-sm font-medium transition",
+              selected ? "bg-white text-stone-900 shadow-sm" : "text-stone-600 hover:text-stone-900",
+            )}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** A form option as a row: label (and hint) on the left, a switch on the right. */
+export function ToggleRow({
+  label,
+  hint,
+  checked,
+  onChange,
+  disabled = false,
+}: {
+  label: string;
+  hint?: React.ReactNode;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-stone-200 px-3 py-2.5">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-stone-800">{label}</p>
+        {hint && <p className="mt-0.5 text-xs text-stone-500">{hint}</p>}
+      </div>
+      <Switch checked={checked} onChange={onChange} label={label} disabled={disabled} />
+    </div>
+  );
+}
+
 /**
  * Buttons at the end of a form. Write them in reading order, secondary first (e.g. Annuler),
  * primary last. Phones: full width, stacked, primary on top (easy to reach with a thumb).
@@ -152,6 +219,8 @@ export function FormActions({
 }) {
   return (
     <div
+      // In a FormSheet, the form's last FormActions sticks to the bottom (see FormSheet).
+      data-form-actions=""
       className={cn(
         "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end [&>*]:w-full sm:[&>*]:w-auto",
         className,
@@ -159,6 +228,79 @@ export function FormActions({
     >
       {children}
     </div>
+  );
+}
+
+/**
+ * A form field: label, control, then an optional hint and error. Pass the control's id as
+ * `htmlFor`.
+ */
+export function Field({
+  label,
+  htmlFor,
+  hint,
+  error,
+  optional,
+  className,
+  children,
+}: {
+  label: React.ReactNode;
+  htmlFor?: string;
+  hint?: React.ReactNode;
+  error?: string | null;
+  /** Shown after the label, e.g. "(optional)". */
+  optional?: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={className}>
+      <Label htmlFor={htmlFor}>
+        {label}
+        {optional && <span className="ml-1 font-normal text-stone-500">{optional}</span>}
+      </Label>
+      {children}
+      {hint && <p className="mt-1.5 text-xs text-stone-500">{hint}</p>}
+      {error && <p className="mt-1.5 text-sm text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+/** A group of related fields in a form, under a small heading (e.g. "Quand", "Où"). */
+export function FormSection({
+  title,
+  description,
+  className,
+  children,
+}: {
+  /** Null for no heading (a group of one field reads better under its own label). */
+  title: React.ReactNode | null;
+  description?: React.ReactNode;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className={cn("space-y-4", className)}>
+      {title && (
+        <div>
+          <h3 className="text-xs font-semibold tracking-wide text-stone-500 uppercase">{title}</h3>
+          {description && <p className="mt-1 text-sm text-stone-500">{description}</p>}
+        </div>
+      )}
+      {children}
+    </section>
+  );
+}
+
+/** Error message of a whole form, shown just above its buttons. */
+export function FormError({ children }: { children: React.ReactNode }) {
+  if (!children) {
+    return null;
+  }
+  return (
+    <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+      {children}
+    </p>
   );
 }
 
