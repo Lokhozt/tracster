@@ -14,10 +14,10 @@ type TabLabel = NavItem["label"];
 
 /** Visual order of the bar; swiping follows the same order. Planning sits in the center. */
 const TAB_ORDER: TabLabel[] = [
-  "choreographies",
   "documents",
-  "schedule",
   "unavailability",
+  "schedule",
+  "choreographies",
   "account",
 ];
 
