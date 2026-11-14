@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BackLink } from "@/components/BackLink";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
@@ -14,7 +14,6 @@ import { JoinRequestsList } from "@/components/JoinRequestsList";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import { RepresentationChoreographiesSection } from "@/components/RepresentationForms";
 import { Card } from "@/components/ui";
-import { cn } from "@/lib/utils";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canEditEvent, canViewEvent, serializeEvent } from "@/lib/events";
@@ -40,9 +39,7 @@ import {
 import { getServerTranslator } from "@/i18n/server";
 import { isAtLeastManager } from "@/lib/roles";
 import { canCreateEvent } from "@/lib/site-settings";
-import { PinnedChoreographyResources } from "@/components/PinnedChoreographyResources";
 import { WhatsAppLink } from "@/components/WhatsAppLink";
-import { getPinnedChoreographyResources } from "@/lib/choreography-resources";
 import { isWhatsAppUrl } from "@/lib/whatsapp";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -204,50 +201,38 @@ export default async function EventDetailPage({ params }: PageProps) {
     ),
   ).length;
 
-  const choreographyHref =
-    event.type.kind === "REHEARSAL" && event.choreographyId
-      ? `/choreographies/${event.choreographyId}`
-      : null;
-
-  const pinnedChoreographyResources =
-    event.type.kind === "REHEARSAL" && event.choreographyId
-      ? await getPinnedChoreographyResources(event.choreographyId, user.id)
-      : [];
+  // Phones/tablets: edit and duplicate live in the floating "+" button.
+  const eventActions = [
+    ...(canEdit ? [{ href: `/events/${id}/edit`, label: t("editEvent") }] : []),
+    ...(canCreate ? [{ href: `/events/new?copyFrom=${id}`, label: t("duplicateEvent") }] : []),
+  ];
 
   return (
     <AppShell
-      title={
-        <>
-          <span className="min-w-0">{event.displayTitle}</span>
-          {event.type.kind === "DEMONSTRATION" &&
-            event.whatsappUrl &&
-            isWhatsAppUrl(event.whatsappUrl) && (
-              <WhatsAppLink href={event.whatsappUrl} label={t("openWhatsapp")} />
-            )}
-        </>
+      title={event.displayTitle}
+      titleActions={
+        event.type.kind === "DEMONSTRATION" &&
+        event.whatsappUrl &&
+        isWhatsAppUrl(event.whatsappUrl) ? (
+          <WhatsAppLink href={event.whatsappUrl} label={t("openWhatsapp")} />
+        ) : undefined
       }
     >
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        {choreographyHref && (
-          <Link
-            href={choreographyHref}
-            className={cn(
-              "inline-flex min-h-11 items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition",
-              "bg-stone-900 text-white hover:bg-stone-700",
-            )}
-          >
-            {t("openChoreography", { title: event.choreographyTitle ?? "" })}
-          </Link>
-        )}
-        {/* Generic label: the previous page may be the planning or a choreography. */}
-        <BackLink href="/" className="text-sm text-stone-600 hover:text-stone-900">
-          {t("back")}
-        </BackLink>
-      </div>
+      <FloatingActionButton
+        actions={eventActions}
+        extraItems={
+          event.type.kind === "REHEARSAL" && canViewRehearsalParticipants && canManualAvailabilityCheck
+            ? [<ManualAvailabilityCheckButton key="check" eventId={eventRecord.id} variant="menuItem" />]
+            : []
+        }
+      />
 
-      <p className="mb-4 text-xs font-medium uppercase tracking-wide text-stone-500">
-        {event.type.name}
-      </p>
+      {/* The type label only adds information when the title is not the type itself. */}
+      {event.displayTitle !== event.type.name && (
+        <p className="mb-4 text-xs font-medium uppercase tracking-wide text-stone-500">
+          {event.type.name}
+        </p>
+      )}
 
       {generic && (
         <div className="mb-6">
@@ -308,7 +293,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           )}
         </div>
         {(canEdit || canCreate) && (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 hidden flex-wrap gap-2 lg:flex">
             {canEdit && (
               <Link
                 href={`/events/${id}/edit`}
@@ -329,13 +314,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           </div>
         )}
       </Card>
-
-      {event.type.kind === "REHEARSAL" && event.choreographyId && (
-        <PinnedChoreographyResources
-          choreographyId={event.choreographyId}
-          resources={pinnedChoreographyResources}
-        />
-      )}
 
       {generic && canEdit && (eventRecord.allowJoinRequests || eventRecord.joinRequests.length > 0) && (
         <div className="mb-6">
@@ -362,8 +340,9 @@ export default async function EventDetailPage({ params }: PageProps) {
       {event.type.kind === "REHEARSAL" && canViewRehearsalParticipants && (
         <Card className="mb-6">
           <h2 className="mb-4 text-lg font-semibold">{t("participantAvailability")}</h2>
+          {/* Phones/tablets: in the floating "+" menu instead. */}
           {canManualAvailabilityCheck && (
-            <div className="mb-4">
+            <div className="mb-4 hidden lg:block">
               <ManualAvailabilityCheckButton eventId={eventRecord.id} />
             </div>
           )}

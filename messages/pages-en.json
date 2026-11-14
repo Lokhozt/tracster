@@ -71,8 +71,6 @@
       "title": "New event"
     },
     "EventDetail": {
-      "back": "← Back",
-      "openChoreography": "View choreography: {title}",
       "start": "Start",
       "end": "End",
       "location": "Location",

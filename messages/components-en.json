@@ -659,7 +659,6 @@
     "removeMemberConfirm": "Remove {name} from this choreography?",
     "twentyFourHour": "24h",
     "choreographyResources": "Resources",
-    "pinnedChoreographyResources": "Pinned resources",
     "pinResource": "Pin to rehearsals",
     "unpinResource": "Unpin from rehearsals",
     "resourcePinError": "Unable to update the pin.",

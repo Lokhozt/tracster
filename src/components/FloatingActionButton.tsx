@@ -11,6 +11,10 @@ export type FloatingAction = {
   label: string;
 };
 
+/** Style of an entry in the "+" menu; shared with non-link entries passed as `extraItems`. */
+export const FAB_MENU_ITEM_CLASS =
+  "inline-flex min-h-11 items-center rounded-full bg-white px-4 py-2 text-sm font-medium text-stone-900 shadow-lg ring-1 ring-stone-200";
+
 const FAB_POSITION = "fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 lg:hidden";
 const FAB_BUTTON =
   "inline-flex h-14 w-14 items-center justify-center rounded-full bg-stone-900 text-white shadow-lg transition active:scale-95";
@@ -23,16 +27,29 @@ function subscribeNothing(): () => void {
  * Rendered into <body>: the page content (<main>) is transformed during tab swipe animations,
  * which would otherwise make this `fixed` button move with it.
  */
-export function FloatingActionButton({ actions }: { actions: FloatingAction[] }) {
+export function FloatingActionButton({
+  actions,
+  extraItems = [],
+}: {
+  actions: FloatingAction[];
+  /** Extra menu entries that are not links (e.g. a button running an action). */
+  extraItems?: React.ReactNode[];
+}) {
   const isClient = useSyncExternalStore(subscribeNothing, () => true, () => false);
-  return isClient ? createPortal(<FloatingActionButtonContent actions={actions} />, document.body) : null;
+  return isClient ? createPortal(<FloatingActionButtonContent actions={actions} extraItems={extraItems} />, document.body) : null;
 }
 
 /**
  * Phone/tablet "+" button (below `lg`; desktops use the sidebar and page buttons) floating above the bottom tab bar. With one action it links straight to
  * it; with several it opens a small menu of labelled actions above the button.
  */
-function FloatingActionButtonContent({ actions }: { actions: FloatingAction[] }) {
+function FloatingActionButtonContent({
+  actions,
+  extraItems,
+}: {
+  actions: FloatingAction[];
+  extraItems: React.ReactNode[];
+}) {
   const t = useTranslations("Components");
   const [open, setOpen] = useState(false);
   const menuId = useId();
@@ -50,11 +67,11 @@ function FloatingActionButtonContent({ actions }: { actions: FloatingAction[] })
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
-  if (actions.length === 0) {
+  if (actions.length + extraItems.length === 0) {
     return null;
   }
 
-  if (actions.length === 1) {
+  if (actions.length === 1 && extraItems.length === 0) {
     const [action] = actions;
     return (
       <Link
@@ -79,17 +96,29 @@ function FloatingActionButtonContent({ actions }: { actions: FloatingAction[] })
       )}
       <div className={cn(FAB_POSITION, "flex flex-col items-end gap-3")}>
         {open && (
-          <ul id={menuId} className="flex flex-col items-end gap-2">
+          <ul
+            id={menuId}
+            className="flex flex-col items-end gap-2"
+            // Entries marked data-fab-close (e.g. opening a sheet) close the menu when picked.
+            onClick={(event) => {
+              if ((event.target as Element).closest("[data-fab-close]")) {
+                setOpen(false);
+              }
+            }}
+          >
             {actions.map((action) => (
               <li key={action.href}>
                 <Link
                   href={action.href}
                   onClick={() => setOpen(false)}
-                  className="inline-flex min-h-11 items-center rounded-full bg-white px-4 py-2 text-sm font-medium text-stone-900 shadow-lg ring-1 ring-stone-200"
+                  className={FAB_MENU_ITEM_CLASS}
                 >
                   {action.label}
                 </Link>
               </li>
+            ))}
+            {extraItems.map((item, index) => (
+              <li key={`extra-${index}`}>{item}</li>
             ))}
           </ul>
         )}

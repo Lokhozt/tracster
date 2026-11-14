@@ -599,32 +599,6 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
   );
 }
 
-export function PinnedChoreographyResources({
-  choreographyId,
-  resources,
-}: {
-  choreographyId: string;
-  resources: SerializedChoreographyResource[];
-}) {
-  const t = useTranslations("Components");
-  if (resources.length === 0) return null;
-  return (
-    <Card className="mb-6">
-      <h2 className="mb-4 text-lg font-semibold">{t("pinnedChoreographyResources")}</h2>
-      <div className="space-y-4">
-        {resources.map((resource) => (
-          <ResourceCard
-            key={resource.id}
-            choreographyId={choreographyId}
-            resource={resource}
-            canEdit={false}
-          />
-        ))}
-      </div>
-    </Card>
-  );
-}
-
 export function ChoreographyResources({
   choreographyId,
   resources,
