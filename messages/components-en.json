@@ -1,5 +1,11 @@
 {
   "Components": {
+    "seasonPreviewTitle": "Seasonal theme (preview)",
+    "seasonPreviewHint": "Only for you, on this device. Members see the season's theme.",
+    "seasonPreviewAuto": "Auto",
+    "seasonPreviewAutumn": "Autumn",
+    "seasonPreviewChristmas": "Christmas",
+    "seasonPreviewNone": "None",
     "eventFinished": "Finished",
     "upcomingAfterPast": "Upcoming",
     "addBarVolunteers": "Add bar volunteers",

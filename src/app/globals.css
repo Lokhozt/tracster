@@ -969,3 +969,30 @@ input[type="radio"] {
     -webkit-tap-highlight-color: transparent;
   }
 }
+
+/*
+ * "Prochain rendez-vous" dressed for the season (the frame carries autumn-surface or
+ * festive-surface): an illustration on the right, fading out under the time and title.
+ */
+.next-up-art {
+  display: none;
+  position: absolute;
+  inset: 0;
+  /* Behind the text (the block is an isolated stacking context), above its background. */
+  z-index: -1;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: auto 100%;
+  mask-image: linear-gradient(to right, transparent 40%, black 82%);
+}
+
+.autumn-surface .next-up-art {
+  display: block;
+  background-image: url("/seasonal/next-up-autumn.svg");
+}
+
+.festive-surface .next-up-art {
+  display: block;
+  background-image: url("/seasonal/next-up-christmas.svg");
+}

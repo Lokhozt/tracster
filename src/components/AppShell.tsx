@@ -17,6 +17,8 @@ import { getMessageOfTheDay } from "@/lib/motd";
 import { getAppLogoSrc } from "@/lib/s3";
 import { canCreateEvent } from "@/lib/site-settings";
 import { SIDEBAR_COOKIE, parseSidebarCollapsed } from "@/lib/sidebar";
+import { hasAdminPrivileges } from "@/lib/privileges";
+import { SEASON_PREVIEW_COOKIE, applySeasonPreview, parseSeasonPreview } from "@/lib/season-preview";
 import { THEME_COOKIE, parseThemePreference } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
@@ -33,9 +35,15 @@ export async function AppFrame({ children }: { children: React.ReactNode }) {
   ]);
   const themePreference = parseThemePreference(cookieStore.get(THEME_COOKIE)?.value);
   const sidebarCollapsed = parseSidebarCollapsed(cookieStore.get(SIDEBAR_COOKIE)?.value);
-  const seasonalTheme = getSeasonalTheme(new Date(), {
+  const dateTheme = getSeasonalTheme(new Date(), {
     userDisableSeasonalStyle: user?.disableSeasonalStyle,
   });
+  // Admins may preview a theme on their own interface (Compte → Administration); everyone
+  // else always gets the date-based one.
+  const seasonalTheme =
+    user && hasAdminPrivileges(user)
+      ? applySeasonPreview(parseSeasonPreview(cookieStore.get(SEASON_PREVIEW_COOKIE)?.value), dateTheme)
+      : dateTheme;
   const logoSrc = getAppLogoSrc();
   const userCanCreateEvent = user ? await canCreateEvent(user.id) : false;
 

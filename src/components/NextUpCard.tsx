@@ -82,10 +82,12 @@ export function NextUpCard({
     <div className="space-y-2">
       <div
         className={cn(
-          "next-up-in relative overflow-hidden rounded-2xl bg-stage p-5 text-[#fff] shadow-lg sm:p-6",
+          "next-up-in relative isolate overflow-hidden rounded-2xl bg-stage p-5 text-[#fff] shadow-lg sm:p-6",
           strip && "xl:flex xl:items-center xl:gap-8 xl:py-4",
         )}
       >
+        {/* Seasonal illustration (autumn leaves, christmas snow), set by the frame's theme in CSS. */}
+        <span aria-hidden="true" className="next-up-art" />
         <div className={cn("flex items-center justify-between gap-3", strip && "xl:hidden")}>
           {href ? (
             <Link href={href} className={cn("text-sm font-semibold text-[#fff]/75", cardLink)}>

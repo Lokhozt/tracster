@@ -16,6 +16,8 @@ import { prisma } from "@/lib/db";
 import { canHoldAdminPrivileges, hasAdminPrivileges } from "@/lib/privileges";
 import { canManageAssociationGoogleCalendar } from "@/lib/roles";
 import { THEME_COOKIE, parseThemePreference } from "@/lib/theme";
+import { SEASON_PREVIEW_COOKIE, parseSeasonPreview } from "@/lib/season-preview";
+import { SeasonPreviewSetting } from "@/components/SeasonPreviewSetting";
 import {
   associationCalendarFollowUrl,
   connectionIdFor,
@@ -99,6 +101,10 @@ export default async function AccountPage({ searchParams }: PageProps) {
                   {tComponents(link.label)}
                 </AccountLink>
               ))}
+              {/* Admin only, this browser only: try a seasonal theme whatever the date. */}
+              <SeasonPreviewSetting
+                initial={parseSeasonPreview(cookieStore.get(SEASON_PREVIEW_COOKIE)?.value)}
+              />
             </div>
           </section>
         )}

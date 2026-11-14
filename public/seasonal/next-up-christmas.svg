@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">
+  <!-- Christmas for the "Prochain rendez-vous" block: snow, gold stars and a fir sprig. -->
+  <defs>
+    <g id="flake" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" fill="none">
+      <g id="arm"><path d="M0 0 V-14 M0 -8 L-4 -12 M0 -8 L4 -12"/></g>
+      <use href="#arm" transform="rotate(60)"/>
+      <use href="#arm" transform="rotate(120)"/>
+      <use href="#arm" transform="rotate(180)"/>
+      <use href="#arm" transform="rotate(240)"/>
+      <use href="#arm" transform="rotate(300)"/>
+    </g>
+    <path id="star" d="M0 -10 L2.9 -3.1 L10 -3.1 L4.3 1.2 L6.2 8.1 L0 4 L-6.2 8.1 L-4.3 1.2 L-10 -3.1 L-2.9 -3.1 Z"/>
+  </defs>
+  <!-- Fir sprig from the bottom-right corner, with one red bauble. -->
+  <g stroke="#3f8f62" stroke-width="2.2" stroke-linecap="round" fill="none" opacity=".9">
+    <path d="M320 196 C 290 178 262 170 232 168"/>
+    <path d="M300 186 l-6 -12 M300 186 l-2 13 M284 179 l-7 -11 M284 179 l-3 12 M268 174 l-7 -10 M268 174 l-4 11 M252 170 l-6 -9 M252 170 l-4 10 M240 169 l-5 -8 M240 169 l-4 8"/>
+  </g>
+  <circle cx="276" cy="186" r="7" fill="#d43c4f"/>
+  <circle cx="273.5" cy="183.5" r="2" fill="#ffffff" fill-opacity=".7"/>
+  <g fill="#ffd166">
+    <use href="#star" transform="translate(266 46) scale(1.3)"/>
+    <use href="#star" transform="translate(208 92) scale(.7)"/>
+    <use href="#star" transform="translate(304 104) scale(.8)"/>
+  </g>
+  <g opacity=".85">
+    <use href="#flake" transform="translate(228 38) scale(1.1)"/>
+    <use href="#flake" transform="translate(300 64) scale(.8)"/>
+    <use href="#flake" transform="translate(246 128) scale(.9)"/>
+    <use href="#flake" transform="translate(172 60) scale(.6)"/>
+  </g>
+  <g fill="#ffffff" fill-opacity=".7">
+    <circle cx="190" cy="140" r="2"/><circle cx="150" cy="30" r="1.6"/><circle cx="286" cy="148" r="2.2"/>
+    <circle cx="216" cy="16" r="1.4"/><circle cx="132" cy="110" r="1.4"/><circle cx="310" cy="24" r="1.8"/>
+    <circle cx="160" cy="170" r="1.6"/><circle cx="240" cy="92" r="1.2"/>
+  </g>
+</svg>

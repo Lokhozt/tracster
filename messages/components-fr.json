@@ -1,5 +1,11 @@
 {
   "Components": {
+    "seasonPreviewTitle": "Thème saisonnier (aperçu)",
+    "seasonPreviewHint": "Uniquement pour vous, sur cet appareil. Les membres voient le thème de la saison.",
+    "seasonPreviewAuto": "Auto",
+    "seasonPreviewAutumn": "Automne",
+    "seasonPreviewChristmas": "Noël",
+    "seasonPreviewNone": "Aucun",
     "eventFinished": "Terminé",
     "upcomingAfterPast": "À venir",
     "addBarVolunteers": "Ajouter des bénévoles",
