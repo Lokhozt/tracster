@@ -18,7 +18,7 @@ import {
   selectionFromRecord,
 } from "@/components/LocationPicker";
 import { AssignUsersMatrixForm } from "@/components/AssignUsersMatrixForm";
-import { Button, Card, Input, Label, Textarea } from "@/components/ui";
+import { Button, Card, FormActions, Input, Label, Textarea } from "@/components/ui";
 import { type GroupOption } from "@/components/GroupForms";
 import { CreateEventForm } from "@/components/EventForms";
 import { matchesSearch } from "@/lib/search";
@@ -133,9 +133,11 @@ export function AssignChoreographerForm({
         </select>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading || !userId} variant="secondary">
-        {loading ? t("adding") : t("addChoreographer")}
-      </Button>
+      <FormActions>
+        <Button type="submit" disabled={loading || !userId} variant="secondary">
+          {loading ? t("adding") : t("addChoreographer")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -296,9 +298,11 @@ export function EditRehearsalForm({ rehearsal }: { rehearsal: RehearsalDetailIte
         />
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading}>
-        {loading ? t("saving") : t("saveChanges")}
-      </Button>
+      <FormActions>
+        <Button type="submit" disabled={loading}>
+          {loading ? t("saving") : t("saveChanges")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -585,9 +589,11 @@ export function TransferChoreographyOwnershipForm({
         </select>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading || !userId} variant="secondary">
-        {loading ? t("transferring") : t("transferOwnership")}
-      </Button>
+      <FormActions>
+        <Button type="submit" disabled={loading || !userId} variant="secondary">
+          {loading ? t("transferring") : t("transferOwnership")}
+        </Button>
+      </FormActions>
     </form>
   );
 }

@@ -17,7 +17,7 @@ import {
   selectionFromRecord,
   type LocationSelection,
 } from "@/components/LocationPicker";
-import { Button, Card, Input, Label, Textarea } from "@/components/ui";
+import { Button, Card, FormActions, Input, Label, Textarea } from "@/components/ui";
 import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 import {
   addOneHour,
@@ -276,9 +276,11 @@ export function CreateRepresentationForm({
         </fieldset>
       )}
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading}>
-        {loading ? t("creating") : localizedSubmitLabel}
-      </Button>
+      <FormActions>
+        <Button type="submit" disabled={loading}>
+          {loading ? t("creating") : localizedSubmitLabel}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -365,16 +367,16 @@ export function EditRepresentationForm({
           showNotes
         />
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <div className="flex flex-wrap gap-2">
-          <Button type="submit" disabled={loading}>
-            {loading ? t("saving") : t("saveChanges")}
-          </Button>
+        <FormActions>
           {onCancel && (
             <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
               {t("cancel")}
             </Button>
           )}
-        </div>
+          <Button type="submit" disabled={loading}>
+            {loading ? t("saving") : t("saveChanges")}
+          </Button>
+        </FormActions>
       </form>
 
       <div className="border-t border-stone-100 pt-4">
@@ -483,16 +485,16 @@ function CreateRepresentationForChoreographyForm({
         locationId="choreography-representation-location"
       />
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={loading}>
-          {loading ? t("adding") : t("createAndLink")}
-        </Button>
+      <FormActions>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
             {t("cancel")}
           </Button>
         )}
-      </div>
+        <Button type="submit" disabled={loading}>
+          {loading ? t("adding") : t("createAndLink")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -613,16 +615,16 @@ function LinkRepresentationForm({
         </select>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={loading || !representationId}>
-          {loading ? t("linking") : t("linkRepresentation")}
-        </Button>
+      <FormActions>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
             {t("cancel")}
           </Button>
         )}
-      </div>
+        <Button type="submit" disabled={loading || !representationId}>
+          {loading ? t("linking") : t("linkRepresentation")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -920,16 +922,16 @@ function LinkChoreographyForm({
         </div>
       )}
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={loading || !choreographyId}>
-          {loading ? t("linking") : t("linkChoreography")}
-        </Button>
+      <FormActions>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
             {t("cancel")}
           </Button>
         )}
-      </div>
+        <Button type="submit" disabled={loading || !choreographyId}>
+          {loading ? t("linking") : t("linkChoreography")}
+        </Button>
+      </FormActions>
     </form>
   );
 }

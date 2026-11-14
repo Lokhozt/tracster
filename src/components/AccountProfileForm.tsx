@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Button, Card, Input, Label } from "@/components/ui";
+import { Button, Card, FormActions, Input, Label } from "@/components/ui";
 import type { Language } from "@/i18n/config";
 
 type ProfileFields = {
@@ -132,9 +132,11 @@ export function AccountProfileForm({
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         {saved && !error && <p className="text-sm text-stone-600">{t("saved")}</p>}
-        <Button type="submit" disabled={saving}>
-          {saving ? common("saving") : t("saveProfile")}
-        </Button>
+        <FormActions>
+          <Button type="submit" disabled={saving}>
+            {saving ? common("saving") : t("saveProfile")}
+          </Button>
+        </FormActions>
       </form>
     </Card>
   );

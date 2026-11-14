@@ -20,7 +20,7 @@ import type {
 } from "@/lib/choreography-resources";
 import { OfficeFileViewer } from "@/components/OfficeFileViewer";
 import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
-import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
+import { Button, Card, FormActions, Input, Label, Select, Textarea } from "@/components/ui";
 import { useAppNavigation } from "@/lib/app-navigation";
 import { cn } from "@/lib/utils";
 
@@ -455,9 +455,11 @@ function EditResourceForm({
         </Select>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={saving}>
-        {saving ? t("saving") : t("save")}
-      </Button>
+      <FormActions>
+        <Button type="submit" disabled={saving}>
+          {saving ? t("saving") : t("save")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -701,9 +703,11 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
         </div>
       )}
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-      <Button className="mt-4" type="submit" disabled={saving}>
-        {saving ? t("savingResource") : t("addResource")}
-      </Button>
+      <FormActions className="mt-4">
+        <Button type="submit" disabled={saving}>
+          {saving ? t("savingResource") : t("addResource")}
+        </Button>
+      </FormActions>
     </form>
   );
 }

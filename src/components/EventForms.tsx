@@ -19,7 +19,7 @@ import {
 import type { EventCreateCopy } from "@/lib/event-create-copy";
 import { ParticipantConflictWarnings } from "@/components/ParticipantConflictWarnings";
 import { RehearsalAudienceSelect, type GroupOption } from "@/components/GroupForms";
-import { Button, Input, Label, Select, Textarea } from "@/components/ui";
+import { Button, FormActions, Input, Label, Select, Textarea } from "@/components/ui";
 import { sortUsersByName } from "@/lib/users";
 import { AssignUsersMatrixForm } from "@/components/AssignUsersMatrixForm";
 import { UserSelectionMatrix } from "@/components/UserSelectionMatrix";
@@ -606,9 +606,11 @@ export function CreateEventForm({
         />
       )}
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading || !typeId}>
-        {loading ? t("creating") : t("createEvent")}
-      </Button>
+      <FormActions>
+        <Button type="submit" disabled={loading || !typeId}>
+          {loading ? t("creating") : t("createEvent")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -860,9 +862,11 @@ export function EditEventForm({
           />
         )}
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <Button type="submit" disabled={loading}>
-          {loading ? t("saving") : t("saveChanges")}
-        </Button>
+        <FormActions>
+          <Button type="submit" disabled={loading}>
+            {loading ? t("saving") : t("saveChanges")}
+          </Button>
+        </FormActions>
       </form>
 
       <div className="border-t border-stone-100 pt-4">

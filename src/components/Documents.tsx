@@ -19,7 +19,7 @@ import { documentDisplayType } from "@/lib/document-type";
 import { TracBarCategoryPanel } from "@/components/PartyBarSlots";
 import type { SerializedDocument, SerializedDocumentCategory } from "@/lib/documents";
 import { TRAC_BAR_DOCUMENTS_SECTION_ID, type PartyBarSlot } from "@/lib/party-bar-shared";
-import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
+import { Button, Card, FormActions, Input, Label, Select, Textarea } from "@/components/ui";
 import { useAppNavigation } from "@/lib/app-navigation";
 
 async function responseError(response: Response, fallback: string) {
@@ -573,9 +573,11 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
         </div>
       )}
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-      <Button className="mt-4" type="submit" disabled={saving}>
-        {saving ? t("savingDocument") : t("addDocument")}
-      </Button>
+      <FormActions className="mt-4">
+        <Button type="submit" disabled={saving}>
+          {saving ? t("savingDocument") : t("addDocument")}
+        </Button>
+      </FormActions>
     </form>
   );
 }

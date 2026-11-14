@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, Label, Select } from "@/components/ui";
+import { Button, Card, FormActions, Label, Select } from "@/components/ui";
 import { HOURS_24 } from "@/lib/datetime";
 import type { SiteSettingsRecord } from "@/lib/site-settings";
 
@@ -120,9 +120,11 @@ export function SiteSettingsForm({ settings }: { settings: SiteSettingsRecord })
         </label>
         {error && <p className="text-sm text-red-600">{error}</p>}
         {saved && !error && <p className="text-sm text-stone-600">{t("settingsSaved")}</p>}
-        <Button type="submit" disabled={saving}>
-          {saving ? t("saving") : t("saveSettings")}
-        </Button>
+        <FormActions>
+          <Button type="submit" disabled={saving}>
+            {saving ? t("saving") : t("saveSettings")}
+          </Button>
+        </FormActions>
       </form>
     </Card>
   );

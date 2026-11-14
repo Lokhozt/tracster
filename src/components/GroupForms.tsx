@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FilterSheet } from "@/components/FilterSheet";
 import { FAB_MENU_ITEM_CLASS, FloatingActionButton } from "@/components/FloatingActionButton";
-import { Button, Card, Input, Label } from "@/components/ui";
+import { Button, Card, FormActions, Input, Label } from "@/components/ui";
 import type { SerializedGroup } from "@/lib/groups";
 import { cn } from "@/lib/utils";
 import { UserSelectionMatrix } from "@/components/UserSelectionMatrix";
@@ -109,16 +109,16 @@ function CreateGroupForm({
         </div>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={loading || !name.trim() || selectedMemberIds.length === 0}>
-          {loading ? t("creating") : t("createGroup")}
-        </Button>
+      <FormActions>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
             {t("cancel")}
           </Button>
         )}
-      </div>
+        <Button type="submit" disabled={loading || !name.trim() || selectedMemberIds.length === 0}>
+          {loading ? t("creating") : t("createGroup")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -197,14 +197,14 @@ function EditGroupForm({
         </div>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={loading || !name.trim() || selectedMemberIds.length === 0}>
-          {loading ? t("saving") : t("saveGroup")}
-        </Button>
+      <FormActions>
         <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
           {t("cancel")}
         </Button>
-      </div>
+        <Button type="submit" disabled={loading || !name.trim() || selectedMemberIds.length === 0}>
+          {loading ? t("saving") : t("saveGroup")}
+        </Button>
+      </FormActions>
     </form>
   );
 }

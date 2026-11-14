@@ -101,6 +101,30 @@ export function Select({
   );
 }
 
+/**
+ * Buttons at the end of a form. Write them in reading order, secondary first (e.g. Annuler),
+ * primary last. Phones: full width, stacked, primary on top (easy to reach with a thumb).
+ * From `sm`: right-aligned on one row, the secondary to the left of the primary.
+ */
+export function FormActions({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end [&>*]:w-full sm:[&>*]:w-auto",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function Card({
   className,
   ...props

@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button, Input, Label, Select } from "@/components/ui";
+import { Button, FormActions, Input, Label, Select } from "@/components/ui";
 import type { UserRole } from "@/generated/prisma/client";
 import { type AdminUser } from "@/lib/users";
 import { useAppNavigation } from "@/lib/app-navigation";
@@ -102,9 +102,11 @@ export function EditUserForm({ user }: { user: AdminUser }) {
         />
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading}>
-        {loading ? t("saving") : t("saveChanges")}
-      </Button>
+      <FormActions>
+        <Button type="submit" disabled={loading}>
+          {loading ? t("saving") : t("saveChanges")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -187,9 +189,11 @@ export function UserRoleForm({
         )}
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading || role === user.role}>
-        {loading ? t("updating") : t("updateRole")}
-      </Button>
+      <FormActions>
+        <Button type="submit" disabled={loading || role === user.role}>
+          {loading ? t("updating") : t("updateRole")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -269,9 +273,11 @@ export function TransferOwnershipForm({
         </Select>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading || !userId} variant="secondary">
-        {loading ? t("transferring") : t("transferOwnership")}
-      </Button>
+      <FormActions>
+        <Button type="submit" disabled={loading || !userId} variant="secondary">
+          {loading ? t("transferring") : t("transferOwnership")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -447,9 +453,11 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
         </span>
       </label>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading}>
-        {loading ? t("creating") : t("createUser")}
-      </Button>
+      <FormActions>
+        <Button type="submit" disabled={loading}>
+          {loading ? t("creating") : t("createUser")}
+        </Button>
+      </FormActions>
     </form>
   );
 }

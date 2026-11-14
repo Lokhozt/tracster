@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui";
+import { Button, FormActions } from "@/components/ui";
 import {
   UserSelectionMatrix,
   type AssignUserOption,
@@ -88,14 +88,16 @@ export function AssignUsersMatrixForm({
         maxSelection={maxSelection}
       />
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading || selectedUserIds.length === 0} variant={buttonVariant}>
-        {loading
-          ? t("adding")
-          : submitLabel ??
-            (selectedUserIds.length > 1
-              ? t("addParticipantsCount", { count: selectedUserIds.length })
-              : label ?? t("addParticipant"))}
-      </Button>
+      <FormActions>
+        <Button type="submit" disabled={loading || selectedUserIds.length === 0} variant={buttonVariant}>
+          {loading
+            ? t("adding")
+            : submitLabel ??
+              (selectedUserIds.length > 1
+                ? t("addParticipantsCount", { count: selectedUserIds.length })
+                : label ?? t("addParticipant"))}
+        </Button>
+      </FormActions>
     </form>
   );
 }

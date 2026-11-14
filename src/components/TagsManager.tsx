@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, Input, Label } from "@/components/ui";
+import { Button, Card, FormActions, Input, Label } from "@/components/ui";
 import { TagBubble } from "@/components/TagBubbles";
 import {
   DEFAULT_TAG_COLOR,
@@ -181,9 +181,11 @@ export function TagsManager({
           onChange={setColor}
         />
         {createError && <p className="text-sm text-red-600">{createError}</p>}
-        <Button type="submit" disabled={creating || !name.trim()}>
-          {creating ? t("adding") : t("addTag")}
-        </Button>
+        <FormActions>
+          <Button type="submit" disabled={creating || !name.trim()}>
+            {creating ? t("adding") : t("addTag")}
+          </Button>
+        </FormActions>
       </form>
 
       <div className="mt-6 border-t border-stone-100 pt-4">
