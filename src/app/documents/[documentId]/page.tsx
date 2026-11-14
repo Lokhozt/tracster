@@ -1,6 +1,4 @@
-import { BackLink } from "@/components/BackLink";
 import { notFound, redirect } from "next/navigation";
-import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { DocumentCard } from "@/components/Documents";
 import { getCurrentUser } from "@/lib/auth";
@@ -17,8 +15,7 @@ export default async function DocumentPage({ params }: PageProps) {
   }
 
   const { documentId } = await params;
-  const [t, document, canEdit] = await Promise.all([
-    getTranslations("Pages.DocumentDetail"),
+  const [document, canEdit] = await Promise.all([
     getActiveDocument(documentId),
     canManageDocuments(user.id),
   ]);
@@ -29,12 +26,6 @@ export default async function DocumentPage({ params }: PageProps) {
   return (
     <AppShell title={document.title} wide>
       <div className="space-y-4">
-        <BackLink
-          href={`/documents?category=${encodeURIComponent(document.category.id)}`}
-          className="inline-flex text-sm font-medium text-stone-600 hover:text-stone-900"
-        >
-          {t("backToCategory", { category: document.category.name })}
-        </BackLink>
         <DocumentCard document={document} canEdit={canEdit} />
       </div>
     </AppShell>

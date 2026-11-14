@@ -61,11 +61,7 @@
       "newDocument": "New document"
     },
     "NewDocument": {
-      "title": "New document",
-      "backToDocuments": "← Back to documents"
-    },
-    "DocumentDetail": {
-      "backToCategory": "← Back to {category}"
+      "title": "New document"
     },
     "NewEvent": {
       "title": "New event"
@@ -100,14 +96,12 @@
       "openWhatsapp": "Open WhatsApp"
     },
     "EditEvent": {
-      "title": "Edit event",
-      "backToEvent": "← Back to event"
+      "title": "Edit event"
     },
     "Settings": {
       "title": "Settings",
       "intro": "Configure association-wide options, listed locations, tags, and members.",
-      "categories": "Setting categories",
-      "backToCategories": "All settings"
+      "categories": "Setting categories"
     },
     "Choreographies": {
       "title": "Choreographies",
@@ -118,8 +112,7 @@
       "title": "New choreography"
     },
     "NewChoreographyResource": {
-      "title": "New resource",
-      "backToChoreography": "← Back to choreography"
+      "title": "New resource"
     },
     "ChoreographyDetail": {
       "choreographers": "Choreographers",
@@ -143,7 +136,6 @@
     },
     "ChoreographyRehearsalStatistics": {
       "title": "Rehearsal statistics",
-      "backToRehearsals": "← Back to rehearsals",
       "rehearsalCountLabel": "Rehearsals",
       "rehearsalHoursLabel": "Rehearsal time",
       "durationHours": "{hours} h",
@@ -156,11 +148,9 @@
       "attendanceRate": "{rate}%"
     },
     "NewUser": {
-      "title": "New user",
-      "backToSettings": "← Back to settings"
+      "title": "New user"
     },
     "UserDetail": {
-      "backToSettings": "← Back to settings",
       "profile": "Profile",
       "status": "Status",
       "role": "Role",

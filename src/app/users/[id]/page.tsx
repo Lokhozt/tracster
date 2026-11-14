@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
@@ -56,11 +55,6 @@ export default async function UserDetailPage({ params }: PageProps) {
 
   return (
     <AppShell title={user.name}>
-      <div className="mb-6">
-        <Link href="/settings" className="text-sm text-stone-600 hover:text-stone-900">
-          {t("backToSettings")}
-        </Link>
-      </div>
 
       <div className="mb-4 flex items-center gap-2">
         <RoleBadge role={user.role} />

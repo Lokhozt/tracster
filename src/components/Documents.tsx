@@ -681,7 +681,6 @@ export function Documents({
       initialSectionId={initialCategoryId}
       sectionParam="category"
       categoriesLabel={t("documentCategories")}
-      backLabel={t("backToDocumentCategories")}
     />
   );
 }

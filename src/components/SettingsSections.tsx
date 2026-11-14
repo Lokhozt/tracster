@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { previousAppPath, replaceUrlInPlace, toAppPath } from "@/lib/app-navigation";
+import { replaceUrlInPlace } from "@/lib/app-navigation";
 import { cn } from "@/lib/utils";
 
 export type NavSection = {
@@ -38,7 +38,6 @@ export function SectionNav({
   initialSectionId,
   sectionParam = "section",
   categoriesLabel,
-  backLabel,
 }: {
   sections: NavSection[];
   intro?: string;
@@ -46,7 +45,6 @@ export function SectionNav({
   initialSectionId?: string;
   sectionParam?: string;
   categoriesLabel: string;
-  backLabel: string;
 }) {
   const searchParams = useSearchParams();
   const urlSectionId = validSectionId(sections, searchParams.get(sectionParam));
@@ -71,19 +69,6 @@ export function SectionNav({
       replaceUrlInPlace(href);
     } else {
       window.history.pushState(null, "", href);
-    }
-  }
-
-  function closeSection() {
-    setInitialConsumed(true);
-    if (!urlSectionId) {
-      return;
-    }
-    const listHref = urlWithSection(sectionParam, null);
-    if (previousAppPath() === toAppPath(listHref)) {
-      window.history.back();
-    } else {
-      replaceUrlInPlace(listHref);
     }
   }
 
@@ -133,14 +118,6 @@ export function SectionNav({
           id={panelId}
           className={cn("min-w-0 block", !mobileOpen && "max-lg:hidden")}
         >
-          <button
-            type="button"
-            onClick={closeSection}
-            className="mb-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-stone-600 transition hover:text-stone-900 lg:hidden"
-          >
-            <ChevronLeftIcon />
-            {backLabel}
-          </button>
           {sections.map((section) => (
             <div key={section.id} className={cn(section.id !== activeId && "hidden")}>
               {section.content}
@@ -174,7 +151,6 @@ export function SettingsSections({
       intro={intro}
       initialSectionId={initialSectionId}
       categoriesLabel={t("categories")}
-      backLabel={t("backToCategories")}
     />
   );
 }
@@ -191,22 +167,6 @@ function ChevronRightIcon() {
       aria-hidden="true"
     >
       <path d="M9 6l6 6-6 6" />
-    </svg>
-  );
-}
-
-function ChevronLeftIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4 shrink-0"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      aria-hidden="true"
-    >
-      <path d="M15 6l-6 6 6 6" />
     </svg>
   );
 }

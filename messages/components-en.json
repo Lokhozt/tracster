@@ -720,7 +720,6 @@
     "documentTitle": "Title",
     "documentCategory": "Category",
     "documentCategories": "Document categories",
-    "backToDocumentCategories": "Back to categories",
     "createNewCategory": "Create a new category…",
     "newCategoryName": "New category name",
     "noDocumentsInCategory": "No documents have been added to this category yet.",

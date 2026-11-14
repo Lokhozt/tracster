@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
@@ -32,12 +31,6 @@ export default async function NewChoreographyResourcePage({ params }: PageProps)
   return (
     <AppShell title={t("title")}>
       <div className="mx-auto max-w-xl space-y-4">
-        <Link
-          href={`/choreographies/${id}?section=resources`}
-          className="inline-flex text-sm font-medium text-stone-600 hover:text-stone-900"
-        >
-          {t("backToChoreography")}
-        </Link>
         <Card>
           <ResourceForm choreographyId={id} />
         </Card>

@@ -1,9 +1,8 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useCallback } from "react";
-import { previousAppPath, replaceUrlInPlace, toAppPath } from "@/lib/app-navigation";
+import { replaceUrlInPlace } from "@/lib/app-navigation";
 import { cn } from "@/lib/utils";
 
 const SECTION_PARAM = "section";
@@ -90,11 +89,10 @@ export function useAddFormRequest(kind: string): { requested: boolean; clear: ()
 
 /**
  * Choreography page: the overview (first section) is a list of cards; each card opens its
- * section (`?section=`), shown on its own with a "‹ Présentation" link back. All sections stay
- * mounted so going back and forth keeps unsaved form input.
+ * section (`?section=`) as a history step, so the back button returns to the overview. All
+ * sections stay mounted so going back and forth keeps unsaved form input.
  */
 export function ChoreographySections({ sections }: { sections: ChoreographySection[] }) {
-  const t = useTranslations("Pages.ChoreographyDetail");
   const searchParams = useSearchParams();
   const overviewId = sections[0]?.id;
   const ids = new Set(sections.map((section) => section.id));
@@ -103,29 +101,8 @@ export function ChoreographySections({ sections }: { sections: ChoreographySecti
   const urlSectionId = searchParams.get(SECTION_PARAM);
   const activeId = (urlSectionId && ids.has(urlSectionId) && urlSectionId) || overviewId;
 
-  function backToOverview() {
-    const overviewHref = urlWithSection(null);
-    // Coming from the overview: go back in history (like the phone's back button).
-    if (previousAppPath() === toAppPath(overviewHref)) {
-      window.history.back();
-    } else {
-      replaceUrlInPlace(overviewHref);
-    }
-    window.scrollTo({ top: 0 });
-  }
-
   return (
     <div>
-      {activeId !== overviewId && (
-        <button
-          type="button"
-          onClick={backToOverview}
-          className="mb-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-stone-600 hover:text-stone-900"
-        >
-          <span aria-hidden="true">‹</span>
-          {t("overview")}
-        </button>
-      )}
       {sections.map((section) => (
         <div key={section.id} className={cn(section.id !== activeId && "hidden")}>
           {section.content}

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
@@ -24,9 +23,6 @@ export default async function NewDocumentPage() {
   return (
     <AppShell title={t("title")}>
       <div className="mx-auto max-w-xl space-y-4">
-        <Link href="/documents" className="inline-flex text-sm font-medium text-stone-600 hover:text-stone-900">
-          {t("backToDocuments")}
-        </Link>
         <Card>
           <DocumentForm categories={categories} />
         </Card>

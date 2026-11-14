@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
@@ -73,13 +72,6 @@ export default async function ChoreographyRehearsalStatisticsPage({ params }: Pa
   return (
     <AppShell title={t("title")}>
       <div className="mx-auto max-w-3xl space-y-6">
-        <Link
-          href={`/choreographies/${id}?section=rehearsals`}
-          className="inline-flex text-sm font-medium text-stone-600 hover:text-stone-900"
-        >
-          {t("backToRehearsals")}
-        </Link>
-
         <RehearsalStatisticsPanel
           rehearsalCount={statistics.rehearsalCount}
           totalMinutes={statistics.totalMinutes}
