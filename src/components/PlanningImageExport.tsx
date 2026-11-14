@@ -24,6 +24,7 @@ import {
   type SerializedScheduleEvent,
 } from "@/lib/schedule-filters";
 import { cn } from "@/lib/utils";
+import { useCreateSheet } from "@/lib/create-sheet";
 
 function ExportImageIcon({ className }: { className?: string }) {
   return (
@@ -631,6 +632,25 @@ export function PlanningImageExportButton({
   const [hideTitles, setHideTitles] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Also opened from the phone's "+" menu (?create=export-planning), so back closes it.
+  const urlRequest = useCreateSheet("export-planning");
+  const [urlRequested, setUrlRequested] = useState(false);
+  if (urlRequest.open !== urlRequested) {
+    setUrlRequested(urlRequest.open);
+    if (urlRequest.open && !open) {
+      setGreyNonParticipating(false);
+      setHideTitles(false);
+      setOpen(true);
+    } else if (!urlRequest.open && open) {
+      // Back button (or the param removed): close with it.
+      setOpen(false);
+    }
+  }
+
+  function closeDialog() {
+    setOpen(false);
+    urlRequest.close();
+  }
 
   useEffect(() => {
     if (!open) {
@@ -638,7 +658,7 @@ export function PlanningImageExportButton({
     }
     function closeOnEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setOpen(false);
+        closeDialog();
       }
     }
     window.addEventListener("keydown", closeOnEscape);
@@ -674,7 +694,7 @@ export function PlanningImageExportButton({
         title: t("planningImageTitle"),
         startHour: startOfDayHour,
       });
-      setOpen(false);
+      closeDialog();
     } catch {
       setError(t("exportImageError"));
     } finally {
@@ -693,7 +713,7 @@ export function PlanningImageExportButton({
           setHideTitles(false);
           setOpen(true);
         }}
-        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-900 hover:bg-stone-100 disabled:opacity-50"
+        className="hidden min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-900 hover:bg-stone-100 disabled:opacity-50 lg:inline-flex"
         aria-label={exportLabel}
         title={exportLabel}
       >
@@ -707,7 +727,7 @@ export function PlanningImageExportButton({
           aria-labelledby="planning-export-title"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
-              setOpen(false);
+              closeDialog();
             }
           }}
         >
@@ -766,7 +786,7 @@ export function PlanningImageExportButton({
             </div>
             {error && <p className="mt-3 text-sm text-red-700">{error}</p>}
             <div className="mt-5 flex justify-end gap-2">
-              <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
+              <Button type="button" variant="secondary" onClick={() => closeDialog()}>
                 {t("cancel")}
               </Button>
               <Button

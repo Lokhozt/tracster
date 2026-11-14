@@ -181,9 +181,16 @@ function useFittedSlotHeight(
     }
     scheduleMeasure();
     window.addEventListener("resize", scheduleMeasure);
+    // Re-fit when the page's layout moves after the first measure: the web font arriving
+    // (taller text), a status line, the header's seasonal strip… Measured once, a real phone
+    // could end up scrolling by a few pixels. Re-measuring converges (same size, no update).
+    const observer = new ResizeObserver(scheduleMeasure);
+    observer.observe(document.documentElement);
+    void document.fonts?.ready.then(scheduleMeasure);
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", scheduleMeasure);
+      observer.disconnect();
     };
   }, [slotsRowRef, slotsPerDay]);
 

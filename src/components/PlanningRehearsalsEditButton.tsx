@@ -15,6 +15,7 @@ import type {
   SchedulingPlacementConflicts,
 } from "@/lib/scheduling/types";
 import { cn } from "@/lib/utils";
+import { useCreateSheet } from "@/lib/create-sheet";
 
 function EditPlanningIcon({ className }: { className?: string }) {
   return (
@@ -67,6 +68,26 @@ export function PlanningRehearsalsEditButton({
   const [unavailableAllPeriod, setUnavailableAllPeriod] = useState<string[]>([]);
   const [checkingConflicts, setCheckingConflicts] = useState(false);
   const [conflictError, setConflictError] = useState<string | null>(null);
+  // Also opened from the phone's "+" menu (?create=edit-rehearsals), so back closes it.
+  const urlRequest = useCreateSheet("edit-rehearsals");
+  const [urlRequested, setUrlRequested] = useState(false);
+  if (urlRequest.open !== urlRequested) {
+    setUrlRequested(urlRequest.open);
+    if (urlRequest.open && !open) {
+      resetDialog();
+      setStartDate(format(currentWeek.start, "yyyy-MM-dd"));
+      setEndDate(format(currentWeek.end, "yyyy-MM-dd"));
+      setOpen(true);
+    } else if (!urlRequest.open && open) {
+      // Back button (or the param removed): close with it.
+      setOpen(false);
+    }
+  }
+
+  function closeDialog() {
+    setOpen(false);
+    urlRequest.close();
+  }
   const conflictRequestId = useRef(0);
 
   useEffect(() => {
@@ -75,7 +96,7 @@ export function PlanningRehearsalsEditButton({
     }
     function closeOnEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setOpen(false);
+        closeDialog();
       }
     }
     window.addEventListener("keydown", closeOnEscape);
@@ -252,7 +273,7 @@ export function PlanningRehearsalsEditButton({
       return;
     }
 
-    setOpen(false);
+    closeDialog();
     resetDialog();
     router.refresh();
   }
@@ -268,7 +289,7 @@ export function PlanningRehearsalsEditButton({
           setEndDate(format(currentWeek.end, "yyyy-MM-dd"));
           setOpen(true);
         }}
-        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-900 hover:bg-stone-100 disabled:opacity-50"
+        className="hidden min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-900 hover:bg-stone-100 disabled:opacity-50 lg:inline-flex"
         aria-label={editLabel}
         title={editLabel}
       >
@@ -282,7 +303,7 @@ export function PlanningRehearsalsEditButton({
           aria-labelledby="planning-edit-title"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
-              setOpen(false);
+              closeDialog();
             }
           }}
         >
@@ -387,7 +408,7 @@ export function PlanningRehearsalsEditButton({
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => setOpen(false)}
+                onClick={() => closeDialog()}
                 disabled={loading || applying}
               >
                 {t("cancel")}

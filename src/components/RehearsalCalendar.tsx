@@ -190,24 +190,6 @@ function smallScreenCellFrame(index: number, lastVisibleIndex: number, header: b
   );
 }
 
-function TodayIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="4" y="5" width="16" height="15" rx="2" />
-      <path d="M8 3v4M16 3v4M4 10h16" />
-      <circle cx="12" cy="15" r="1.25" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
 
 function buildEventsByDay(eventList: SerializedScheduleEvent[]) {
   const map = new Map<string, SerializedScheduleEvent[]>();
@@ -532,6 +514,29 @@ export function RehearsalCalendar({
     return `${format(first, "d MMM", {locale: dateLocale})} – ${format(last, "d MMM yyyy", {locale: dateLocale})}`;
   }, [calendarDays, dateLocale, focusDate, view]);
 
+  // Phones: a short title ("9 – 15 nov.", "novembre"), with the year only when it isn't this one.
+  const shortPeriodLabel = useMemo(() => {
+    const thisYear = new Date().getFullYear();
+    if (view === "month") {
+      const month = startOfMonth(focusDate);
+      return format(month, month.getFullYear() === thisYear ? "MMMM" : "MMMM yyyy", { locale: dateLocale });
+    }
+    const first = calendarDays[0];
+    const last = calendarDays[calendarDays.length - 1];
+    const range = isSameMonth(first, last)
+      ? `${format(first, "d")} – ${format(last, "d MMM", { locale: dateLocale })}`
+      : `${format(first, "d MMM", { locale: dateLocale })} – ${format(last, "d MMM", { locale: dateLocale })}`;
+    return last.getFullYear() === thisYear ? range : `${range} ${last.getFullYear()}`;
+  }, [calendarDays, dateLocale, focusDate, view]);
+
+  // "Aujourd'hui" only when the calendar isn't already showing today.
+  const showsToday =
+    view === "day"
+      ? isToday(focusDate)
+      : view === "month"
+        ? isSameMonth(focusDate, new Date())
+        : calendarDays.some((day) => isToday(day));
+
   // The day view shows a week strip, so its arrows move by week, keeping the weekday.
   const periodName = view === "month" ? t("month") : t("week");
 
@@ -578,8 +583,9 @@ export function RehearsalCalendar({
       )}
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        {/* Export/edit at the top: below the calendar they sat under the phone's floating "+". */}
-        {titleActions && <div className="flex shrink-0 gap-2">{titleActions}</div>}
+        {/* Export/edit (desktop). Phones and tablets reach them from the "+" menu; the
+            components stay mounted here so their dialogs can open from it. */}
+        {titleActions && <div className="flex shrink-0 gap-2 max-lg:contents">{titleActions}</div>}
         <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           {!isSmallScreen && (
             <div className="flex flex-wrap items-center gap-2">
@@ -595,18 +601,40 @@ export function RehearsalCalendar({
             </div>
           )}
 
-          <div className="flex items-center gap-2">
-            {isSmallScreen && (
+          {/* Phones: one line — the period as title, "Aujourd'hui" when away from it, ‹ ›. */}
+          {isSmallScreen ? (
+            <div className="flex items-center gap-1">
+              <p className="min-w-0 flex-1 truncate text-lg font-semibold first-letter:uppercase">
+                {shortPeriodLabel}
+              </p>
+              {!showsToday && (
+                <button
+                  type="button"
+                  onClick={goToToday}
+                  className="min-h-11 shrink-0 rounded-full px-3 text-sm font-medium text-stone-700 hover:bg-stone-100"
+                >
+                  {t("today")}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={goToToday}
-                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-900 hover:bg-stone-100"
-                aria-label={t("today")}
-                title={t("today")}
+                onClick={() => shiftFocus(-1)}
+                className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full hover:bg-stone-100"
+                aria-label={t("previousPeriod", {period: periodName})}
               >
-                <TodayIcon />
+                <ArrowLeftIcon className="h-5 w-5" />
               </button>
-            )}
+              <button
+                type="button"
+                onClick={() => shiftFocus(1)}
+                className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full hover:bg-stone-100"
+                aria-label={t("nextPeriod", {period: periodName})}
+              >
+                <ArrowRightIcon className="h-5 w-5" />
+              </button>
+            </div>
+          ) : (
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => shiftFocus(-1)}
@@ -627,6 +655,7 @@ export function RehearsalCalendar({
               <ArrowRightIcon />
             </button>
           </div>
+          )}
           {isSmallScreen && viewSwitch}
         </div>
       </div>

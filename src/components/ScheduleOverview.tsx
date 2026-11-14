@@ -6,7 +6,11 @@ import { useMemo, useState } from "react";
 import { FollowAssociationCalendarLink } from "@/components/FollowAssociationCalendarLink";
 import { EventTypeFilter } from "@/components/EventTypeFilter";
 import { FilterButton, FilterCheckbox, FilterSheet } from "@/components/FilterSheet";
-import { type FloatingAction, FloatingActionButton } from "@/components/FloatingActionButton";
+import {
+  CreateSheetMenuItem,
+  type FloatingAction,
+  FloatingActionButton,
+} from "@/components/FloatingActionButton";
 import { PlanningImageExportButton } from "@/components/PlanningImageExport";
 import { PlanningRehearsalsEditButton } from "@/components/PlanningRehearsalsEditButton";
 import { RehearsalCalendar } from "@/components/RehearsalCalendar";
@@ -226,7 +230,16 @@ export function ScheduleOverview({
       </div>
       {/* The most used filter, always in sight: my events or everyone's (paused by a bar choice). */}
       <div className="mb-4 lg:hidden">{scopeSwitch}</div>
-      <FloatingActionButton actions={createActions} />
+      {/* Phones/tablets: the calendar's export and edit tools live in the "+" menu. */}
+      <FloatingActionButton
+        actions={createActions}
+        extraItems={[
+          <CreateSheetMenuItem key="export" kind="export-planning" label={t("exportPlanningImage")} />,
+          ...(canEditPlanning && planningLocations && planningUsers
+            ? [<CreateSheetMenuItem key="edit" kind="edit-rehearsals" label={t("editPlanningRehearsals")} />]
+            : []),
+        ]}
+      />
       <FilterSheet
         open={filterSheetOpen}
         onClose={() => setFilterSheetOpen(false)}

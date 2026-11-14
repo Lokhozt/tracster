@@ -14,8 +14,12 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     start_url: "/",
     scope: "/",
     display: "standalone",
-    background_color: "#fafaf9",
-    theme_color: "#ffffff",
+    // Installed app: Android paints the system navigation-bar area (and the splash screen)
+    // with these fixed colours, whatever the page's light/dark theme. The app's aubergine ink
+    // blends with dark mode and reads as a base strip under the tab bar in light mode; the top
+    // status bar still follows the page's theme-color meta.
+    background_color: "#231b33",
+    theme_color: "#231b33",
     icons: [
       { src: "/app-icon/192", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/app-icon/512", sizes: "512x512", type: "image/png", purpose: "any" },
