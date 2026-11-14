@@ -109,7 +109,9 @@ export function EventTypeFilter({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      {/* Long press is a shortcut (solo / show all): keep the phone from selecting the text or
+          opening its copy menu instead. */}
+      <div className="flex flex-wrap gap-2 select-none [-webkit-touch-callout:none]">
         {eventTypes.map((type) => {
           const selected = !hidden.has(type.id);
           return (
@@ -122,8 +124,9 @@ export function EventTypeFilter({
               onPointerUp={clearLongPressTimer}
               onPointerCancel={clearLongPressTimer}
               onPointerLeave={clearLongPressTimer}
+              onContextMenu={(event) => event.preventDefault()}
               className={cn(
-                "inline-flex min-h-9 items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition",
+                "inline-flex min-h-9 select-none items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition [-webkit-touch-callout:none]",
                 eventCategoryClassName(type.kind),
                 selected
                   ? "shadow-sm"
