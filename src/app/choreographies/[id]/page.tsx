@@ -44,10 +44,9 @@ import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 
 type PageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ section?: string }>;
 };
 
-export default async function ChoreographyDetailPage({ params, searchParams }: PageProps) {
+export default async function ChoreographyDetailPage({ params }: PageProps) {
   const [user, t, tc] = await Promise.all([
     getCurrentUser(),
     getTranslations("Pages.ChoreographyDetail"),
@@ -57,7 +56,7 @@ export default async function ChoreographyDetailPage({ params, searchParams }: P
     redirect("/login");
   }
 
-  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const { id } = await params;
 
   if (!(await canViewChoreography(id, user.id))) {
     notFound();
@@ -646,7 +645,7 @@ export default async function ChoreographyDetailPage({ params, searchParams }: P
           </span>
         </p>
       )}
-      <ChoreographyTabs tabs={tabs} extraSections={extraSections} initialSectionId={query.section} />
+      <ChoreographyTabs tabs={tabs} extraSections={extraSections} />
     </AppShell>
   );
 }

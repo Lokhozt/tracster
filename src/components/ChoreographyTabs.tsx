@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef } from "react";
 import { replaceUrlInPlace } from "@/lib/app-navigation";
 import { cn } from "@/lib/utils";
 
@@ -70,24 +70,19 @@ export function ChoreographyTabLink({
 export function ChoreographyTabs({
   tabs,
   extraSections = [],
-  initialSectionId,
 }: {
   tabs: ChoreographyTab[];
   /** Reachable through `openChoreographySection` (header actions), not shown in the tab row. */
   extraSections?: Array<{ id: string; content: React.ReactNode }>;
-  initialSectionId?: string;
 }) {
   const t = useTranslations("Pages.ChoreographyDetail");
   const searchParams = useSearchParams();
   const panelId = useId();
   const allIds = new Set([...tabs.map((tab) => tab.id), ...extraSections.map((section) => section.id)]);
+  // The URL is the only source of truth: a server-rendered copy of ?section can be stale after
+  // client-side tab switches (e.g. when the browser restores the page on "back").
   const urlSectionId = searchParams.get(SECTION_PARAM);
-  // `initialSectionId` (server-side ?section) only applies until the user picks a tab.
-  const [initialConsumed, setInitialConsumed] = useState(false);
-  const activeId =
-    (urlSectionId && allIds.has(urlSectionId) && urlSectionId) ||
-    (!initialConsumed && initialSectionId && allIds.has(initialSectionId) && initialSectionId) ||
-    tabs[0]?.id;
+  const activeId = (urlSectionId && allIds.has(urlSectionId) && urlSectionId) || tabs[0]?.id;
   const activeTabRef = useRef<HTMLButtonElement>(null);
 
   // Keep the active tab visible in the scrollable row.
@@ -96,7 +91,6 @@ export function ChoreographyTabs({
   }, [activeId]);
 
   function selectTab(tabId: string) {
-    setInitialConsumed(true);
     if (tabId !== activeId) {
       replaceUrlInPlace(urlWithSection(tabId === tabs[0]?.id ? null : tabId));
     }
