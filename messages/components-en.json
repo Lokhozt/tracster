@@ -740,6 +740,7 @@
       "whatsapp": "WhatsApp",
       "link": "Link",
       "file": "File"
-    }
+    },
+    "locationsOneOffHint": "A one-off location can still be entered when scheduling."
   }
 }

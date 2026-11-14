@@ -105,8 +105,7 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
     <Card className="max-w-xl">
       <h2 className="mb-1 text-lg font-semibold">{t("locations")}</h2>
       <p className="mb-4 text-sm text-stone-500">
-        {t("locationsHelp")}
-        A unique location can still be entered when scheduling.
+        {t("locationsHelp")} {t("locationsOneOffHint")}
       </p>
 
       <form onSubmit={handleCreate} className="space-y-3">

@@ -740,6 +740,7 @@
       "whatsapp": "WhatsApp",
       "link": "Lien",
       "file": "Fichier"
-    }
+    },
+    "locationsOneOffHint": "Un lieu ponctuel peut toujours être saisi lors de la planification."
   }
 }
