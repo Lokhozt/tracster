@@ -42,6 +42,7 @@
     "description": "Plan rehearsals and track participant availability for your association."
   },
   "Account": {
+    "editProfile": "Edit profile",
     "title": "Account",
     "intro": "Update your contact details, competitor status, display language, seasonal display preferences, and personal Google Calendar connection.",
     "profile": "Profile",

@@ -101,6 +101,43 @@ export function Select({
   );
 }
 
+/** On/off switch (role="switch"): for settings that apply immediately. */
+export function Switch({
+  checked,
+  onChange,
+  label,
+  disabled = false,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  /** Accessible name (the visible label usually sits next to the switch). */
+  label: string;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition disabled:opacity-50",
+        checked ? "bg-emerald-600" : "bg-stone-300",
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "inline-block h-5 w-5 rounded-full bg-white shadow transition-transform",
+          checked ? "translate-x-6" : "translate-x-1",
+        )}
+      />
+    </button>
+  );
+}
+
 /**
  * Buttons at the end of a form. Write them in reading order, secondary first (e.g. Annuler),
  * primary last. Phones: full width, stacked, primary on top (easy to reach with a thumb).

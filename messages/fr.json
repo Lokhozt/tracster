@@ -42,6 +42,7 @@
     "description": "Planifiez les répétitions et suivez les disponibilités des participants de votre association."
   },
   "Account": {
+    "editProfile": "Modifier le profil",
     "title": "Compte",
     "intro": "Mettez à jour vos coordonnées, votre statut de compétiteur, votre langue d’affichage, l’affichage saisonnier et votre connexion personnelle à Google Agenda.",
     "profile": "Profil",
