@@ -475,6 +475,13 @@ export function UnavailabilityCalendar({
     });
 
     if (covering) {
+      // A longer period (e.g. a week away) would vanish with one tap on a date: confirm first.
+      const coversMoreThanThisDay =
+        new Date(covering.startsAt).getTime() < startsAt.getTime() ||
+        new Date(covering.endsAt).getTime() > endsAt.getTime();
+      if (coversMoreThanThisDay && !window.confirm(t("unavailabilityDeleteConfirm"))) {
+        return;
+      }
       await removeTimeframe(covering.id);
       return;
     }
@@ -506,16 +513,24 @@ export function UnavailabilityCalendar({
       endsAt: endsAt.toISOString(),
     };
 
-    const response = await fetch(
-      id ? `/api/unavailability/${id}` : `/api/users/${viewingUserId}/unavailability`,
-      {
-        method: id ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      },
-    );
-
-    const data = await response.json();
+    let response: Response;
+    let data: { error?: string; timeframe?: unknown; deletedIds?: unknown };
+    try {
+      response = await fetch(
+        id ? `/api/unavailability/${id}` : `/api/users/${viewingUserId}/unavailability`,
+        {
+          method: id ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+      data = await response.json().catch(() => ({}));
+    } catch {
+      // Network failure: never leave the calendar stuck in "saving".
+      setSaving(false);
+      setError(t("unavailabilitySaveError"));
+      return null;
+    }
     setSaving(false);
 
     if (!response.ok) {
@@ -720,7 +735,8 @@ export function UnavailabilityCalendar({
       }
 
       event.preventDefault();
-      void removeTimeframe(selectedId);
+      // Same confirmation as the "Supprimer" button.
+      void deleteSelected();
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -886,10 +902,17 @@ export function UnavailabilityCalendar({
           </div>
         </div>
 
-        {(loading || saving) && (
-          <p className="mb-3 text-sm text-stone-500">{saving ? t("saving") : t("loading")}</p>
+        {/* Announced to screen readers as they change. */}
+        <div role="status" aria-live="polite">
+          {(loading || saving) && (
+            <p className="mb-3 text-sm text-stone-500">{saving ? t("saving") : t("loading")}</p>
+          )}
+        </div>
+        {error && (
+          <p role="alert" className="mb-3 text-sm text-red-600">
+            {error}
+          </p>
         )}
-        {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
         <div
           className={cn(

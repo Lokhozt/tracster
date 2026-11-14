@@ -35,6 +35,7 @@ export function Sheet({
   className,
   bodyClassName,
   bodyPaddingBottom = true,
+  confirmClose,
   children,
 }: {
   open: boolean;
@@ -48,6 +49,8 @@ export function Sheet({
   bodyClassName?: string;
   /** False when the content brings its own bottom spacing (e.g. a sticky save bar). */
   bodyPaddingBottom?: boolean;
+  /** Asked before closing by Escape, back, a tap outside or a swipe; false keeps it open. */
+  confirmClose?: () => boolean;
   children: React.ReactNode;
 }) {
   const titleId = useId();
@@ -73,11 +76,17 @@ export function Sheet({
     return lockPageScroll();
   }, [open]);
 
+  function requestClose() {
+    if (!confirmClose || confirmClose()) {
+      onClose();
+    }
+  }
+
   function onTouchEnd(event: React.TouchEvent) {
     const startY = swipeStartY.current;
     swipeStartY.current = null;
     if (startY !== null && event.changedTouches[0].clientY - startY >= SWIPE_DOWN_CLOSE_DISTANCE_PX) {
-      onClose();
+      requestClose();
     }
   }
 
@@ -88,6 +97,12 @@ export function Sheet({
       ref={dialogRef}
       aria-labelledby={titleId}
       tabIndex={-1}
+      onCancel={(event) => {
+        // Escape / the phone's back gesture: keep the sheet when the user wants to stay.
+        if (event.target === event.currentTarget && confirmClose && !confirmClose()) {
+          event.preventDefault();
+        }
+      }}
       onClose={(event) => {
         // React passes a nested sheet's "close" up the component tree: only react to our own.
         if (event.target === event.currentTarget) {
@@ -97,12 +112,12 @@ export function Sheet({
       onClick={(event) => {
         // Clicks on the ::backdrop target the <dialog> element itself.
         if (event.target === event.currentTarget) {
-          onClose();
+          requestClose();
         }
       }}
       className={cn(
         "m-0 mt-auto w-full max-w-none rounded-t-2xl bg-white p-0 text-stone-900 shadow-xl outline-none backdrop:bg-stone-900/40",
-        "transition duration-200 ease-out starting:translate-y-6 starting:opacity-0",
+        "transition duration-200 ease-out starting:translate-y-6 starting:opacity-0 motion-reduce:transition-none",
         "md:m-auto md:rounded-2xl",
         size === "form" ? "md:max-w-xl" : "md:max-w-lg",
         maxHeight,
@@ -160,6 +175,14 @@ export function FormSheet({
 }) {
   const t = useTranslations("Components");
   const bodyRef = useRef<HTMLDivElement>(null);
+  // Something was typed or picked since the sheet opened: closing would lose it.
+  const dirty = useRef(false);
+  useEffect(() => {
+    if (open) {
+      dirty.current = false;
+    }
+  }, [open]);
+  const confirmDiscard = () => !dirty.current || window.confirm(t("discardChanges"));
 
   useEffect(() => {
     if (!open || !window.matchMedia(DESKTOP_MEDIA_QUERY).matches) {
@@ -179,6 +202,7 @@ export function FormSheet({
     <Sheet
       open={open}
       onClose={onClose}
+      confirmClose={confirmDiscard}
       title={title}
       size="form"
       bodyPaddingBottom={false}
@@ -198,7 +222,11 @@ export function FormSheet({
       headerAction={
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => {
+            if (confirmDiscard()) {
+              onClose();
+            }
+          }}
           aria-label={t("close")}
           title={t("close")}
           className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-100 hover:text-stone-900"
@@ -210,7 +238,13 @@ export function FormSheet({
       }
     >
       {/* Bottom room for forms whose last element is not a sticky save bar. */}
-      <div ref={bodyRef} className="pb-6 has-[form>[data-form-actions]:last-child]:pb-0">
+      <div
+        ref={bodyRef}
+        className="pb-6 has-[form>[data-form-actions]:last-child]:pb-0"
+        onInputCapture={() => {
+          dirty.current = true;
+        }}
+      >
         {children}
       </div>
     </Sheet>

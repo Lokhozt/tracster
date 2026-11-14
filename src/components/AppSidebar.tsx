@@ -133,6 +133,9 @@ export function AppSidebar({
           </div>
           <Link
             href={accountNavItem.href}
+            // The name stays reachable when the rail hides the label.
+            aria-label={user.name}
+            title={user.name}
             aria-current={accountNavItem.match(pathname) ? "page" : undefined}
             className={cn(
               "flex items-center gap-3 rounded-lg px-2 py-2 transition",
@@ -176,7 +179,12 @@ function SidebarBrand({ logoSrc }: { logoSrc: string | null }) {
   const [showLogo, setShowLogo] = useState(Boolean(logoSrc));
   const appName = getAppName();
   return (
-    <Link href="/" className="sidebar-brand flex min-h-11 min-w-0 items-center gap-3 px-2 font-semibold tracking-tight">
+    <Link
+      href="/"
+      aria-label={appName}
+      title={appName}
+      className="sidebar-brand flex min-h-11 min-w-0 items-center gap-3 px-2 font-semibold tracking-tight"
+    >
       {showLogo && logoSrc ? (
         // S3-backed logo is already sized; skip Next image optimization.
         // eslint-disable-next-line @next/next/no-img-element

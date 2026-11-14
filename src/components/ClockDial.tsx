@@ -116,7 +116,7 @@ export function ClockDial({
       aria-valuenow={value}
       aria-valuetext={String(value).padStart(2, "0")}
       // Fits short phones too: never taller than ~40% of the screen.
-      className="mx-auto block w-full max-w-[min(18rem,40dvh)] touch-none rounded-full outline-none select-none focus-visible:ring-3 focus-visible:ring-stone-900/20"
+      className="mx-auto block w-full max-w-[min(18rem,40dvh)] touch-none rounded-full outline-none select-none focus-visible:ring-3 focus-visible:ring-stone-900/60"
       onPointerDown={(event) => {
         event.preventDefault();
         dragging.current = true;

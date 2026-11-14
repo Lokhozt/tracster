@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { AccountProfileForm } from "@/components/AccountProfileForm";
-import { FilterSheet } from "@/components/FilterSheet";
+import { FormSheet } from "@/components/Sheet";
 import { NavIcon } from "@/components/NavIcon";
 import { RoleBadge } from "@/components/UserForms";
 import type { UserRole } from "@/generated/prisma/client";
@@ -67,14 +67,14 @@ export function AccountIdentityCard({
           <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
         </svg>
       </button>
-      <FilterSheet open={editing} onClose={() => setEditing(false)} title={t("editProfile")}>
+      <FormSheet open={editing} onClose={() => setEditing(false)} title={t("editProfile")}>
         <AccountProfileForm
           user={profile}
           seasonalStyleLockedByEnv={seasonalStyleLockedByEnv}
           bare
           onSaved={() => setEditing(false)}
         />
-      </FilterSheet>
+      </FormSheet>
     </div>
   );
 }

@@ -38,12 +38,12 @@ function parseDay(date: string): Date | null {
 export function DateTime24Input({
   name,
   label,
-  required = false,
   value,
   onChange,
 }: {
   name: string;
   label: string;
+  /** Kept for callers; required dates are checked by the forms themselves. */
   required?: boolean;
   value: DateTimeParts;
   onChange: (value: DateTimeParts) => void;
@@ -108,7 +108,8 @@ export function DateTime24Input({
         </button>
       </div>
       {/* Keeps the values in the form's data, like the inputs this replaced. */}
-      <input type="hidden" name={`${name}Date`} value={value.date} required={required} />
+      {/* Hidden inputs are never validated by the browser: forms check required dates in JS. */}
+      <input type="hidden" name={`${name}Date`} value={value.date} />
       <input type="hidden" name={`${name}Hour`} value={value.hour} />
       <input type="hidden" name={`${name}Minute`} value={value.minute} />
 
@@ -193,7 +194,7 @@ export function DateTime24Input({
               <button
                 type="button"
                 onClick={() => setStep("hour")}
-                aria-label={t("pickerHours")}
+                aria-label={`${t("pickerHours")} ${draft.hour}`}
                 className={cn("rounded-lg px-2", step === "hour" ? "bg-stone-100 text-stone-900" : "text-stone-400")}
               >
                 {draft.hour}
@@ -202,7 +203,7 @@ export function DateTime24Input({
               <button
                 type="button"
                 onClick={() => setStep("minute")}
-                aria-label={t("pickerMinutes")}
+                aria-label={`${t("pickerMinutes")} ${draft.minute}`}
                 className={cn("rounded-lg px-2", step === "minute" ? "bg-stone-100 text-stone-900" : "text-stone-400")}
               >
                 {draft.minute}

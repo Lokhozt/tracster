@@ -87,10 +87,11 @@ export function EventTypeFilter({
 
   return (
     <fieldset>
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <legend className="text-sm font-medium text-stone-700">
-          {t("eventTypeFilter")}
-        </legend>
+      {/* First child of the fieldset (names the group); floated to share the row with the buttons. */}
+      <legend className="float-left mb-2 text-sm font-medium text-stone-700">
+        {t("eventTypeFilter")}
+      </legend>
+      <div className="mb-2 flex flex-wrap items-center justify-end gap-2">
         <div className="flex gap-3 text-xs">
           <button
             type="button"
@@ -108,6 +109,7 @@ export function EventTypeFilter({
           </button>
         </div>
       </div>
+      <div className="clear-both" />
 
       {/* Long press is a shortcut (solo / show all): keep the phone from selecting the text or
           opening its copy menu instead. */}

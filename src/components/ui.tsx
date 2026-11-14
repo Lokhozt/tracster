@@ -1,3 +1,4 @@
+import { cloneElement, isValidElement } from "react";
 import { cn } from "@/lib/utils";
 
 export function Button({
@@ -28,7 +29,7 @@ export function Button({
  * `cn` does not resolve conflicting classes).
  */
 export const FIELD_CONTROL_CLASS =
-  "rounded-lg border border-stone-300 bg-white px-3 py-2 text-base text-stone-900 shadow-xs outline-none transition placeholder:text-stone-400 focus:border-stone-500 focus:ring-3 focus:ring-stone-900/10 disabled:bg-stone-100 disabled:text-stone-500 sm:text-sm file:mr-3 file:rounded-md file:border-0 file:bg-stone-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-stone-800";
+  "rounded-lg border border-stone-300 bg-white px-3 py-2 text-base text-stone-900 shadow-xs outline-none transition placeholder:text-stone-400 focus:border-stone-900 focus:ring-3 focus:ring-stone-900/15 disabled:bg-stone-100 disabled:text-stone-500 sm:text-sm file:mr-3 file:rounded-md file:border-0 file:bg-stone-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-stone-800";
 
 export function Input({
   className,
@@ -195,13 +196,14 @@ export function ToggleRow({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-stone-200 px-3 py-2.5">
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-stone-800">{label}</p>
-        {hint && <p className="mt-0.5 text-xs text-stone-500">{hint}</p>}
-      </div>
+    // A <label>: tapping the text toggles the switch as well.
+    <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border border-stone-200 px-3 py-2.5">
+      <span className="min-w-0">
+        <span className="block text-sm font-medium text-stone-800">{label}</span>
+        {hint && <span className="mt-0.5 block text-xs text-stone-500">{hint}</span>}
+      </span>
       <Switch checked={checked} onChange={onChange} label={label} disabled={disabled} />
-    </div>
+    </label>
   );
 }
 
@@ -253,15 +255,34 @@ export function Field({
   className?: string;
   children: React.ReactNode;
 }) {
+  const hintId = htmlFor && hint ? `${htmlFor}-hint` : undefined;
+  const errorId = htmlFor && error ? `${htmlFor}-error` : undefined;
+  const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
+  // The control (single element child) gets the hint/error as its description.
+  const control =
+    describedBy && isValidElement<{ "aria-describedby"?: string; "aria-invalid"?: boolean }>(children)
+      ? cloneElement(children, {
+          "aria-describedby": describedBy,
+          ...(error ? { "aria-invalid": true } : {}),
+        })
+      : children;
   return (
     <div className={className}>
       <Label htmlFor={htmlFor}>
         {label}
         {optional && <span className="ml-1 font-normal text-stone-500">{optional}</span>}
       </Label>
-      {children}
-      {hint && <p className="mt-1.5 text-xs text-stone-500">{hint}</p>}
-      {error && <p className="mt-1.5 text-sm text-red-600">{error}</p>}
+      {control}
+      {hint && (
+        <p id={hintId} className="mt-1.5 text-xs text-stone-500">
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p id={errorId} role="alert" className="mt-1.5 text-sm text-red-600">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

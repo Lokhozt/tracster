@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { getTranslations } from "next-intl/server";
 import { Suspense, ViewTransition } from "react";
 import { getCurrentUser } from "@/lib/auth";
 import { NavigationTracker } from "@/lib/app-navigation";
@@ -24,7 +25,11 @@ import { cn } from "@/lib/utils";
  * flicker, smooth tab swipes); only the page's `AppShell` content changes.
  */
 export async function AppFrame({ children }: { children: React.ReactNode }) {
-  const [user, cookieStore] = await Promise.all([getCurrentUser(), cookies()]);
+  const [user, cookieStore, tSkip] = await Promise.all([
+    getCurrentUser(),
+    cookies(),
+    getTranslations("Components"),
+  ]);
   const themePreference = parseThemePreference(cookieStore.get(THEME_COOKIE)?.value);
   const sidebarCollapsed = parseSidebarCollapsed(cookieStore.get(SIDEBAR_COOKIE)?.value);
   const seasonalTheme = getSeasonalTheme(new Date(), {
@@ -44,6 +49,13 @@ export async function AppFrame({ children }: { children: React.ReactNode }) {
         user && "app-frame",
       )}
     >
+      {/* Keyboard users skip the navigation (visible only when focused). */}
+      <a
+        href="#main"
+        className="sr-only z-50 rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+      >
+        {tSkip("skipToContent")}
+      </a>
       {user && (
         <AppSidebar
           user={{
@@ -115,6 +127,7 @@ export async function AppShell({
     // navigations swap instantly. Animations are defined in globals.css.
     <ViewTransition enter={TAB_TRANSITIONS} exit={TAB_TRANSITIONS} default="none">
       <main
+        id="main"
         className={cn(
           "mx-auto w-full flex-1 px-4 pt-6 sm:px-6 sm:pt-8",
           // Leave room for the fixed bottom tab bar (phones/tablets) or the visitors' fixed footer.

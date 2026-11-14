@@ -28,6 +28,14 @@ html {
   overflow-x: clip;
 }
 
+/* Phones/tablets: keyboard focus never lands under the sticky header or the bottom tab bar. */
+@media (max-width: 1023px) {
+  html {
+    scroll-padding-top: 4.5rem;
+    scroll-padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -872,5 +880,25 @@ input[type="radio"] {
   select:not(:disabled),
   summary {
     cursor: pointer;
+  }
+}
+
+@layer base {
+  /* Visible keyboard focus everywhere (also on dark buttons, thanks to the offset). */
+  :focus-visible {
+    outline: 2px solid var(--color-stone-900);
+    outline-offset: 2px;
+  }
+
+  /* No double-tap zoom delay on controls; no grey flash on tap. */
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  label,
+  [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 }

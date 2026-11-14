@@ -77,7 +77,7 @@
       "yourAvailability": "Your availability",
       "participantAvailability": "Participant availability",
       "manualAvailabilityCheck": "Manual Availability check",
-      "manualAvailabilityChecking": "Checking...",
+      "manualAvailabilityChecking": "Checking…",
       "manualAvailabilityCheckError": "Unable to update availability.",
       "availableParticipantCount": "{available}/{total} participants available",
       "noParticipantsAssigned": "No participants assigned yet.",

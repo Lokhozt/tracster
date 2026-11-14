@@ -572,6 +572,10 @@ function ResourceCard({
   );
 }
 
+
+/** A failed file upload (shown with a translated message, not the raw status). */
+class UploadFailedError extends Error {}
+
 function uploadFile(
   uploadUrl: string,
   file: File,
@@ -587,9 +591,9 @@ function uploadFile(
     };
     request.onload = () => {
       if (request.status >= 200 && request.status < 300) resolve();
-      else reject(new Error(`Upload failed (${request.status}).`));
+      else reject(new UploadFailedError(`Upload failed (${request.status}).`));
     };
-    request.onerror = () => reject(new Error("Upload failed."));
+    request.onerror = () => reject(new UploadFailedError("Upload failed."));
     request.send(file);
   });
 }
@@ -654,7 +658,13 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
           method: "DELETE",
         }).catch(() => undefined);
       }
-      setError(reason instanceof Error ? reason.message : t("resourceCreateError"));
+      setError(
+        reason instanceof UploadFailedError
+          ? t("uploadFailed")
+          : reason instanceof Error
+            ? reason.message
+            : t("resourceCreateError"),
+      );
     } finally {
       setSaving(false);
     }
@@ -713,7 +723,7 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
       {progress !== null && (
         <div className="mt-4">
           <p className="mb-1 text-sm text-stone-600">{t("uploadProgress", { progress })}</p>
-          <div className="h-2 overflow-hidden rounded bg-stone-200">
+          <div className="h-2 overflow-hidden rounded bg-stone-200" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
             <div className="h-full bg-stone-800 transition-[width]" style={{ width: `${progress}%` }} />
           </div>
         </div>

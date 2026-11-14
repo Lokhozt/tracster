@@ -94,7 +94,18 @@ function FloatingActionButtonContent({
           onClick={() => setOpen(false)}
         />
       )}
-      <div className={cn(FAB_POSITION, "flex flex-col items-end gap-3")}>
+      {/* Toggle first in the DOM so Tab moves from it into the opened menu; reversed visually. */}
+      <div className={cn(FAB_POSITION, "flex flex-col-reverse items-end gap-3")}>
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={menuId}
+          aria-label={open ? t("close") : t("createActions")}
+          onClick={() => setOpen((value) => !value)}
+          className={FAB_BUTTON}
+        >
+          <PlusIcon rotated={open} />
+        </button>
         {open && (
           <ul
             id={menuId}
@@ -122,16 +133,6 @@ function FloatingActionButtonContent({
             ))}
           </ul>
         )}
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls={menuId}
-          aria-label={open ? t("close") : t("createActions")}
-          onClick={() => setOpen((value) => !value)}
-          className={FAB_BUTTON}
-        >
-          <PlusIcon rotated={open} />
-        </button>
       </div>
     </>
   );
@@ -141,7 +142,7 @@ function PlusIcon({ rotated = false }: { rotated?: boolean }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      className={cn("h-6 w-6 transition-transform", rotated && "rotate-45")}
+      className={cn("h-6 w-6 transition-transform motion-reduce:transition-none", rotated && "rotate-45")}
       fill="none"
       stroke="currentColor"
       strokeWidth="2.25"

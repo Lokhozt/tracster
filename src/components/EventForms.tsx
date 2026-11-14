@@ -347,7 +347,10 @@ export function CreateEventForm({
     const startsAt = dateTimePartsToDate(start)!;
     const endsAt = dateTimePartsToDate(end);
 
-    const response = await fetch("/api/events", {
+    let response: Response;
+    let data: { error?: string; event?: { id: string } };
+    try {
+    response = await fetch("/api/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -389,16 +392,21 @@ export function CreateEventForm({
           : {}),
       }),
     });
-
-    const data = await response.json();
+    data = await response.json().catch(() => ({}));
+    } catch {
+      // Network failure: the button must not stay stuck on "Création…".
+      setLoading(false);
+      setError(t("eventCreateError"));
+      return;
+    }
     setLoading(false);
 
-    if (!response.ok) {
+    if (!response.ok || !data.event) {
       setError(data.error ?? t("eventCreateError"));
       return;
     }
 
-    const eventId = data.event.id as string;
+    const eventId = data.event.id;
     if (redirectBasePath) {
       navigation.replace(`${redirectBasePath}/${eventId}`);
     } else {
