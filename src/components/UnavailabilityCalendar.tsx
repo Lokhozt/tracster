@@ -29,21 +29,20 @@ const SLOT_MINUTES = 30;
 const END_HOUR = 24;
 // Half-hour rows shrink so the whole day fits on screen without vertical scrolling.
 const MAX_SLOT_HEIGHT_PX = 24;
-const MIN_SLOT_HEIGHT_PX = 10;
+const MIN_SLOT_HEIGHT_PX = 8;
 /** Space kept under the grid (card padding and a little air) when fitting it on screen. */
-const FIT_BOTTOM_MARGIN_PX = 24;
 const RESIZE_HANDLE_PX = 6;
 const LONG_PRESS_MS = 400;
 // Long enough that a tap or the start of a swipe never shows the hint.
 const LONG_PRESS_HINT_MS = 180;
 // A finger is never perfectly still; anything beyond this is a scroll, not a press.
 const LONG_PRESS_TOLERANCE_PX = 10;
-// The hour ruler stays pinned to the left edge while the week scrolls sideways on
-// narrow screens. Sticky needs room to move, so the ruler sits next to the day
+// The hour ruler stays pinned to the left edge if the week ever scrolls sideways
+// (phones fit the whole week to the screen width). Sticky needs room to move, so the ruler sits next to the day
 // grid rather than inside it. The shadow draws the separator that would otherwise
 // scroll away with the first day column.
 const HOUR_COLUMN_CLASS =
-  "sticky left-0 z-30 w-14 shrink-0 bg-white shadow-[1px_0_0_0_var(--color-stone-200)]";
+  "sticky left-0 z-30 w-10 shrink-0 sm:w-14 bg-white shadow-[1px_0_0_0_var(--color-stone-200)]";
 
 type Interaction =
   | {
@@ -141,8 +140,8 @@ function blockStyle(startSlot: number, endSlot: number, slotHeightPx: number) {
 }
 
 /**
- * Row height that makes the grid end above the bottom tab bar when the page is scrolled to the
- * top, between MIN and MAX. Measured from the slots row, so everything above it is accounted for.
+ * Row height that makes the whole page fit the window (no page scroll), between MIN and MAX.
+ * Measured from the slots row and the space under it, so everything around the grid counts.
  */
 function useFittedSlotHeight(
   slotsRowRef: React.RefObject<HTMLDivElement | null>,
@@ -157,11 +156,12 @@ function useFittedSlotHeight(
       if (!slotsRow) {
         return;
       }
-      const top = slotsRow.getBoundingClientRect().top + window.scrollY;
-      const bottomBar = document.querySelector<HTMLElement>("[data-bottom-tab-bar]");
-      const bottomBarHeight =
-        bottomBar && window.getComputedStyle(bottomBar).display !== "none" ? bottomBar.offsetHeight : 0;
-      const available = window.innerHeight - top - bottomBarHeight - FIT_BOTTOM_MARGIN_PX;
+      const rect = slotsRow.getBoundingClientRect();
+      const top = rect.top + window.scrollY;
+      // Everything under the grid (card padding, the page's room for the bottom tab bar…), so
+      // the whole page fits the window instead of scrolling by a few pixels.
+      const belowGrid = document.documentElement.scrollHeight - (rect.bottom + window.scrollY);
+      const available = window.innerHeight - top - belowGrid;
       const fitted = Math.floor(available / slotsPerDay);
       setSlotHeightPx(Math.max(MIN_SLOT_HEIGHT_PX, Math.min(MAX_SLOT_HEIGHT_PX, fitted)));
     }
@@ -790,7 +790,11 @@ export function UnavailabilityCalendar({
     : `${format(weekDays[0], "d MMM", { locale: dateLocale })} – ${format(weekDays[6], "d MMM", { locale: dateLocale })}`;
 
   return (
-    <div className={cn("space-y-4", selectedTimeframe && "pb-24 sm:pb-0")}>
+    <div
+      className={cn("space-y-4", selectedTimeframe && "pb-20 sm:pb-0")}
+      // Drawing or moving a period must not also swipe to another tab.
+      data-swipe-lock={scrollLocked || pressing ? "" : undefined}
+    >
       <Card>
         {users && users.length > 0 && (
           <div className="mb-3 max-w-md sm:mb-4">
@@ -895,7 +899,9 @@ export function UnavailabilityCalendar({
             scrollLocked ? "overflow-hidden" : "overflow-x-auto",
           )}
         >
-          <div className="min-w-[640px] sm:min-w-[760px]">
+          {/* Phones: the whole week fits the width, so nothing scrolls sideways and the page
+              swipe still changes tabs. */}
+          <div className="sm:min-w-[760px]">
             <div className="flex border-b border-stone-200">
               <div className={HOUR_COLUMN_CLASS} />
               <div className="grid flex-1 grid-cols-7">
@@ -906,7 +912,7 @@ export function UnavailabilityCalendar({
                   >
                     <button
                       type="button"
-                      className="w-full px-2 py-2 hover:bg-stone-100"
+                      className="w-full px-0.5 py-2 hover:bg-stone-100 sm:px-2"
                       disabled={saving}
                       aria-label={
                         fullDayIndexes.has(dayIndex)
@@ -918,10 +924,13 @@ export function UnavailabilityCalendar({
                       <span
                         className={cn(
                           isToday(day) &&
-                            "inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-stone-900 px-2 text-white",
+                            "inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-stone-900 px-1.5 whitespace-nowrap text-white sm:px-2",
                         )}
                       >
-                        {format(day, "EEE d", {locale: dateLocale})}
+                        <span className="sm:hidden">
+                          {format(day, "EEEEE", {locale: dateLocale})} {format(day, "d")}
+                        </span>
+                        <span className="max-sm:hidden">{format(day, "EEE d", {locale: dateLocale})}</span>
                       </span>
                     </button>
                   </div>
@@ -935,7 +944,7 @@ export function UnavailabilityCalendar({
                   slotIndex % 2 === 0 ? (
                     <div
                       key={slotIndex}
-                      className="absolute right-2 -translate-y-1/2 text-xs text-stone-400"
+                      className="absolute right-1 -translate-y-1/2 text-[11px] text-stone-400 sm:right-2 sm:text-xs"
                       style={{ top: slotIndex * slotHeightPx }}
                     >
                       {format(
@@ -1023,7 +1032,7 @@ export function UnavailabilityCalendar({
                             key={`${entry.id}-${dayIndex}`}
                             data-block
                             className={cn(
-                              "absolute inset-x-1 z-10 overflow-hidden rounded-md border border-red-300 bg-red-200/90 text-xs text-red-950 shadow-sm",
+                              "absolute inset-x-0.5 z-10 overflow-hidden rounded-md sm:inset-x-1 border border-red-300 bg-red-200/90 text-xs text-red-950 shadow-sm",
                               isSelected && "ring-2 ring-red-500",
                             )}
                             style={style}
@@ -1083,7 +1092,7 @@ export function UnavailabilityCalendar({
                                 style={{ height: handleHeight }}
                               />
                             )}
-                            <div className="pointer-events-none px-2 py-1">
+                            <div className="pointer-events-none px-1 py-0.5 sm:px-2 sm:py-1">
                               <p className="font-medium">
                                 {isFullDay
                                   ? t("allDay")
@@ -1120,10 +1129,11 @@ export function UnavailabilityCalendar({
       {selectedTimeframe && (
         <Card
           data-allow-scroll
-          className="fixed inset-x-0 bottom-0 z-30 rounded-none border-x-0 border-b-0 sm:static sm:rounded-xl sm:border"
+          // Phones: floats just above the bottom tab bar (and its raised Planning button).
+          className="fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 p-3 shadow-lg sm:static sm:p-5 sm:shadow-sm"
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
               <h3 className="text-sm font-semibold sm:text-lg">{t("selectedPeriod")}</h3>
               <p className="mt-1 text-sm text-stone-600">
                 {dateTimeFormatter.format(new Date(selectedTimeframe.startsAt))} –{" "}
@@ -1145,7 +1155,7 @@ export function UnavailabilityCalendar({
       {pressing && (
         <p
           aria-hidden
-          className="pointer-events-none fixed inset-x-0 bottom-6 z-50 mx-auto w-fit rounded-full bg-stone-900/90 px-4 py-2 text-sm text-white"
+          className="pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 lg:bottom-6 mx-auto w-fit rounded-full bg-stone-900/90 px-4 py-2 text-sm text-white"
         >
           {t("holdToDraw")}
         </p>

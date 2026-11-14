@@ -161,7 +161,8 @@ function setSwipeOffset(offsetX: number): void {
  * Horizontal swipe on a top-level tab page moves to the neighbouring tab (mobile/tablet only).
  * The page follows the finger, then slides out (and the next tab slides in) or springs back.
  * Ignored when the gesture starts in a form field, the header, an element marked `data-no-swipe`,
- * or anything that scrolls horizontally (e.g. a wide calendar).
+ * or anything that scrolls horizontally (e.g. a wide calendar), and cancelled while an element
+ * marked `data-swipe-lock` is on the page.
  */
 function useSwipeTabNavigation(tabItems: NavItem[], pathname: string): void {
   const navigation = useAppNavigation();
@@ -219,6 +220,11 @@ function useSwipeTabNavigation(tabItems: NavItem[], pathname: string): void {
 
     function onTouchMove(event: TouchEvent): void {
       if (!gesture || gesture.axis === "vertical") {
+        return;
+      }
+      // A widget is busy with this finger (e.g. drawing in a calendar).
+      if (document.querySelector("[data-swipe-lock]")) {
+        onTouchCancel();
         return;
       }
       const touch = event.touches[0];
