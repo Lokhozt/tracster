@@ -108,6 +108,10 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
         where: { userId },
         select: { status: true },
       },
+      partyBarSlots: {
+        where: { userId },
+        select: { userId: true },
+      },
     },
     orderBy: { startsAt: "asc" },
   });
@@ -175,6 +179,7 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
         allowParticipantJoin: event.allowParticipantJoin,
         allowJoinRequests: event.allowJoinRequests,
         hasPendingJoinRequest: event.joinRequests.length > 0,
+        isBarVolunteer: event.partyBarSlots.length > 0,
         hasUpcomingSeriesEvents: hasUpcomingSeriesEvents(event, siblings),
         availabilityStatus:
           kind === "REHEARSAL" ? (event.availabilities[0]?.status ?? null) : null,

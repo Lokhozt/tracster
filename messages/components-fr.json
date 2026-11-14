@@ -443,6 +443,8 @@
     "pastEventsHeading": "Événements passés",
     "planningSearchPlaceholder": "Titre, chorégraphie, lieu ou participant…",
     "rehearsalCountSummary": "{shown} sur {total, plural, one {# répétition} other {# répétitions}}",
+    "onlyMyBarShifts": "Uniquement mes soirées au bar",
+    "onlyMyBarShiftsSummary": "Mes soirées au bar",
     "calendarView": "Vue du calendrier",
     "noEventsOnDay": "Rien de prévu ce jour.",
     "dayEventCount": "{date} : {count, plural, =0 {aucun événement} one {# événement} other {# événements}}",

@@ -66,6 +66,7 @@ export function planningBirthdayEvents(
           allowParticipantJoin: false,
           allowJoinRequests: false,
           hasPendingJoinRequest: false,
+          isBarVolunteer: false,
           hasUpcomingSeriesEvents: false,
           availabilityStatus: null,
           href: "",

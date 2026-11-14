@@ -72,6 +72,7 @@ export function ScheduleOverview({
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [showPast, setShowPast] = useState(false);
+  const [onlyMyBarShifts, setOnlyMyBarShifts] = useState(false);
   const hidden = useMemo(() => new Set(hiddenTypeIds), [hiddenTypeIds]);
   const filteredEvents = useMemo(
     () =>
@@ -82,9 +83,12 @@ export function ScheduleOverview({
         if (hideNonParticipating && !event.isParticipating) {
           return false;
         }
+        if (onlyMyBarShifts && !event.isBarVolunteer) {
+          return false;
+        }
         return matchesScheduleSearch(event, search);
       }),
-    [events, hidden, hideNonParticipating, search],
+    [events, hidden, hideNonParticipating, onlyMyBarShifts, search],
   );
   const exportEvents = useMemo(
     () => filteredEvents.filter((event) => !isBirthdayScheduleEvent(event)),
@@ -94,7 +98,11 @@ export function ScheduleOverview({
     () => filteredEvents.filter((event) => !isBirthdayScheduleEvent(event)),
     [filteredEvents],
   );
-  const activeFilterCount = hiddenTypeIds.length + (hideNonParticipating ? 1 : 0) + (showPast ? 1 : 0);
+  const activeFilterCount =
+    hiddenTypeIds.length +
+    (hideNonParticipating ? 1 : 0) +
+    (showPast ? 1 : 0) +
+    (onlyMyBarShifts ? 1 : 0);
 
   function updateHiddenTypeIds(ids: string[]) {
     setHiddenTypeIds(ids);
@@ -119,8 +127,11 @@ export function ScheduleOverview({
     if (showPast) {
       parts.push(t("pastEventsShown"));
     }
+    if (onlyMyBarShifts) {
+      parts.push(t("onlyMyBarShiftsSummary"));
+    }
     return parts.join(" · ");
-  }, [hiddenTypeIds.length, hideNonParticipating, showPast, t]);
+  }, [hiddenTypeIds.length, hideNonParticipating, onlyMyBarShifts, showPast, t]);
 
   return (
     // Wide screens (xl+): fills the window; only the calendar body and the event list scroll.
@@ -149,6 +160,9 @@ export function ScheduleOverview({
         </FilterCheckbox>
         <FilterCheckbox checked={showPast} onChange={setShowPast}>
           {t("showPastEvents")}
+        </FilterCheckbox>
+        <FilterCheckbox checked={onlyMyBarShifts} onChange={setOnlyMyBarShifts}>
+          {t("onlyMyBarShifts")}
         </FilterCheckbox>
         <EventTypeFilter
           eventTypes={eventTypes}
@@ -184,7 +198,7 @@ export function ScheduleOverview({
           <UpcomingEventsList
             events={listEvents}
             includePast={showPast}
-            categoriesFiltered={hiddenTypeIds.length > 0 || hideNonParticipating || search.trim() !== ""}
+            categoriesFiltered={hiddenTypeIds.length > 0 || hideNonParticipating || onlyMyBarShifts || search.trim() !== ""}
           />
         </div>
       </div>
