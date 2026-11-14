@@ -7,8 +7,11 @@ import { replaceUrlInPlace } from "@/lib/app-navigation";
 const CREATE_PARAM = "create";
 const HISTORY_KEY = "createSheet";
 
-function urlWithCreate(kind: string | null): string {
+function urlWithCreate(kind: string | null, section?: string): string {
   const url = new URL(window.location.href);
+  if (section) {
+    url.searchParams.set("section", section);
+  }
   if (kind) {
     url.searchParams.set(CREATE_PARAM, kind);
   } else {
@@ -19,10 +22,12 @@ function urlWithCreate(kind: string | null): string {
 
 /**
  * Opens the create sheet `kind` of the current page (`?create=<kind>`) as a history step, so
- * the phone's back button closes it. Works from anywhere, e.g. the floating "+" menu.
+ * the phone's back button closes it. Works from anywhere, e.g. the floating "+" menu. With
+ * `section`, also switches to that in-page section (`?section=`): one step, so closing the
+ * sheet returns to where it was opened from.
  */
-export function openCreateSheet(kind: string): void {
-  window.history.pushState({ [HISTORY_KEY]: kind }, "", urlWithCreate(kind));
+export function openCreateSheet(kind: string, options?: { section?: string }): void {
+  window.history.pushState({ [HISTORY_KEY]: kind }, "", urlWithCreate(kind, options?.section));
 }
 
 /**

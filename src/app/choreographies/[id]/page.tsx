@@ -23,6 +23,10 @@ import { ChoreographyTagsEditor } from "@/components/ChoreographyTagsEditor";
 import { TagBubbles } from "@/components/TagBubbles";
 import { ChoreographyHeaderActions } from "@/components/ChoreographyHeaderActions";
 import { ChoreographyEventActions } from "@/components/ChoreographyEventActions";
+import {
+  ChoreographyOverviewActions,
+  type OverviewAddAction,
+} from "@/components/ChoreographyOverviewActions";
 import { ChoreographyTeamActions } from "@/components/ChoreographyTeamActions";
 import { type ChoreographySection, ChoreographySections, ChoreographyTabLink } from "@/components/ChoreographyTabs";
 import { AvailabilityButtons } from "@/components/AvailabilityButtons";
@@ -212,12 +216,30 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
   const showGroups = canEdit || groups.length > 0;
   const assignedTags = choreography.tags.map((item) => serializeTag(item.tag));
 
+  // The overview "+" (phones/tablets): every "add" of the sections below.
+  const overviewAddActions: OverviewAddAction[] = canEdit
+    ? [
+        { kind: "rehearsal", section: "events", label: tc("scheduleRehearsal") },
+        { kind: "representation", section: "events", label: tc("addRepresentation") },
+        ...(eventTypes.some((type) => type.kind === "DEMONSTRATION")
+          ? [{ kind: "demonstration", section: "events", label: tc("addDemonstration") }]
+          : []),
+        { href: `/choreographies/${id}/resources/new`, label: tc("addResource") },
+        { kind: "add-participant", section: "participants", label: tc("addParticipant") },
+        { kind: "add-choreographer", section: "participants", label: tc("addChoreographer") },
+        ...(participants.length > 0
+          ? [{ kind: "group", section: "groups", label: tc("newGroup") }]
+          : []),
+      ]
+    : [];
+
   const sections: ChoreographySection[] = [
     {
       id: "overview",
       content: (
         // Overview first: next rehearsal, pinned resources, team, description (two per row on desktops).
         <div className="grid gap-4 lg:grid-cols-2">
+          <ChoreographyOverviewActions actions={overviewAddActions} />
           {/* Like the other cards: the whole card opens the rehearsal (›); inner controls stay clickable. */}
           <Card className={cn(nextRehearsal && "relative transition hover:border-stone-400")}>
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
