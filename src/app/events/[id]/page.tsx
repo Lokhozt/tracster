@@ -229,7 +229,7 @@ export default async function EventDetailPage({ params }: PageProps) {
 
       {/* The type label only adds information when the title is not the type itself. */}
       {event.displayTitle !== event.type.name && (
-        <p className="mb-4 text-xs font-medium uppercase tracking-wide text-stone-500">
+        <p className="mb-4 text-xs font-medium text-stone-500">
           {event.type.name}
         </p>
       )}

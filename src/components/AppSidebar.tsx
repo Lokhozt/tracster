@@ -117,7 +117,7 @@ export function AppSidebar({
         {adminItems.length > 0 && (
           <nav aria-label={t("administration")} className="mt-5 flex flex-col gap-1">
             <p
-              className="sidebar-heading px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-stone-500"
+              className="sidebar-heading px-3 pb-1 text-xs font-semibold text-stone-500"
             >
               {t("administration")}
             </p>

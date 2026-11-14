@@ -32,29 +32,24 @@ export function persistHideNonParticipating(value: boolean) {
 }
 
 /** Light tint for event cards, matching the category chip colors at a readable contrast. */
+/** Left edge colour of an event row, by type (the rest of the row stays neutral). */
+const EVENT_EDGE: Record<string, string> = {
+  REHEARSAL: "border-l-stone-900",
+  REPRESENTATION: "border-l-amber-400",
+  COMPETITION: "border-l-violet-500",
+  DEMONSTRATION: "border-l-teal-500",
+  FESTIVAL: "border-l-rose-500",
+  TRAINING: "border-l-orange-500",
+  PARTY: "border-l-fuchsia-500",
+};
+
+/**
+ * Event row surface ("call sheet" rows): neutral, with the type as a coloured left edge.
+ * Hover lifts the row with a shadow (a border colour would hide the type edge).
+ */
 export function eventCardClassName(kind: EventKind | null): string {
-  if (kind === "REHEARSAL") {
-    return "border-stone-200 bg-stone-50 hover:border-stone-400";
-  }
-  if (kind === "REPRESENTATION") {
-    return "border-amber-200 bg-amber-50 hover:border-amber-400";
-  }
-  if (kind === "COMPETITION") {
-    return "border-violet-200 bg-violet-50 hover:border-violet-400";
-  }
-  if (kind === "DEMONSTRATION") {
-    return "border-teal-200 bg-teal-50 hover:border-teal-400";
-  }
-  if (kind === "FESTIVAL") {
-    return "border-rose-200 bg-rose-50 hover:border-rose-400";
-  }
-  if (kind === "TRAINING") {
-    return "border-orange-200 bg-orange-50 hover:border-orange-400";
-  }
-  if (kind === "PARTY") {
-    return "border-fuchsia-200 bg-fuchsia-50 hover:border-fuchsia-400";
-  }
-  return "border-sky-200 bg-sky-50 hover:border-sky-400";
+  const edge = (kind && EVENT_EDGE[kind]) ?? "border-l-sky-500";
+  return `border-stone-200 border-l-4 bg-white hover:shadow-md ${edge}`;
 }
 
 export function eventCategoryClassName(kind: EventKind | null): string {

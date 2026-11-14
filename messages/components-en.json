@@ -1,5 +1,6 @@
 {
   "Components": {
+    "nextUpTitle": "Next up",
     "discardChanges": "Discard unsaved changes?",
     "uploadFailed": "The file upload failed. Check your connection and try again.",
     "skipToContent": "Skip to content",

@@ -9,7 +9,6 @@ import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControl
 import { ParticipationStatus } from "@/components/ParticipationStatus";
 import { EventCard } from "@/components/EventCard";
 import { Card, Button } from "@/components/ui";
-import { eventScheduleKindClassName } from "@/lib/event-category-filter";
 import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 
 import {
@@ -27,20 +26,6 @@ import {
 type AvailabilityStatus = "AVAILABLE" | "UNAVAILABLE";
 
 
-function eventKindClassName(event: SerializedScheduleEvent) {
-  if (isBirthdayScheduleEvent(event)) {
-    return "bg-pink-100 text-pink-900";
-  }
-  return eventScheduleKindClassName(event.typeKind);
-}
-
-function EventTypeBadge({ event }: { event: SerializedScheduleEvent }) {
-  return (
-    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", eventKindClassName(event))}>
-      {event.typeName}
-    </span>
-  );
-}
 
 function AvailabilityBadge({
   status,
@@ -148,15 +133,18 @@ function hasJoinPill(event: SerializedScheduleEvent): boolean {
   );
 }
 
-/** "ven. 13 nov., 22:30 – 01:30": the end shows only its time when it is less than a day later. */
-function compactEventRange(
+/**
+ * Time of a row under its day ("17:00 – 18:30", "22:30 – 01:30"); an event lasting a day or
+ * more shows its end date.
+ */
+function timeRange(
   startsAt: string,
   endsAt: string | null,
   dayFormatter: Intl.DateTimeFormat,
   timeFormatter: Intl.DateTimeFormat,
 ): string {
   const start = new Date(startsAt);
-  const startLabel = dayFormatter.format(start);
+  const startLabel = timeFormatter.format(start);
   if (!endsAt) {
     return startLabel;
   }
@@ -164,6 +152,33 @@ function compactEventRange(
   const endLabel =
     end.getTime() - start.getTime() < DAY_MS ? timeFormatter.format(end) : dayFormatter.format(end);
   return `${startLabel} – ${endLabel}`;
+}
+
+type DayGroup = {
+  key: string;
+  day: Date;
+  isToday: boolean;
+  events: SerializedScheduleEvent[];
+};
+
+/**
+ * Consecutive events of the same local day (the list is already in display order). The first
+ * past event always starts a new group, under the "past" heading.
+ */
+function groupByDay(events: SerializedScheduleEvent[], firstPastEventId?: string): DayGroup[] {
+  const todayKey = new Date().toDateString();
+  const groups: DayGroup[] = [];
+  for (const event of events) {
+    const start = new Date(event.startsAt);
+    const key = start.toDateString();
+    const last = groups.at(-1);
+    if (last && last.key === key && event.id !== firstPastEventId) {
+      last.events.push(event);
+    } else {
+      groups.push({ key, day: start, isToday: key === todayKey, events: [event] });
+    }
+  }
+  return groups;
 }
 
 export function UpcomingEventsList({
@@ -187,6 +202,7 @@ export function UpcomingEventsList({
     minute: "2-digit",
   });
   const timeFormatter = new Intl.DateTimeFormat(locale, { timeStyle: "short" });
+  const weekdayFormatter = new Intl.DateTimeFormat(locale, { weekday: "short" });
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
@@ -272,27 +288,63 @@ export function UpcomingEventsList({
           </p>
         </Card>
       ) : (
-        // Two columns only when the list itself is wide (not in the desktop side column).
-        <div className="grid gap-3 @2xl:grid-cols-2">
-          {visibleEvents.map((event) => (
-            <Fragment key={event.id}>
-              {event.id === firstPastEventId && (
-                <h2 className="mt-3 text-lg font-semibold @2xl:col-span-2">{t("pastEventsHeading")}</h2>
+        // Call sheet: one group per day, the day number in a gutter on the left; the rows of
+        // that day on the right (two columns only when the list itself is wide).
+        <div className="space-y-5">
+          {groupByDay(visibleEvents, firstPastEventId).map((group) => (
+            <Fragment key={`${group.key}-${group.events[0].id}`}>
+              {group.events[0].id === firstPastEventId && (
+                <h2 className="text-lg font-semibold">{t("pastEventsHeading")}</h2>
               )}
-              <EventCard kind={event.typeKind} className="relative">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                    <EventTypeBadge event={event} />
-                    {event.choreographyTitle && (
-                      <span className="text-sm font-medium text-stone-500">
-                        {event.choreographyTitle}
-                        {event.groupName && (
-                          <span className="font-normal text-stone-400"> · {event.groupName}</span>
-                        )}
-                      </span>
+              <div className="flex gap-3">
+                <div className="w-11 shrink-0 pt-0.5 text-center" suppressHydrationWarning>
+                  <p
+                    className={cn(
+                      "inline-block font-display text-3xl leading-none tabular-nums",
+                      group.isToday && "border-b-4 border-spotlight pb-0.5",
                     )}
-                    {isScheduleEventHappeningNow(event, now) && (
-                      <span className="text-sm font-semibold text-emerald-700">{t("rightNow")}</span>
+                  >
+                    {group.day.getDate()}
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-stone-500">
+                    {weekdayFormatter.format(group.day)}
+                  </p>
+                </div>
+                <div className="grid min-w-0 flex-1 gap-2 @2xl:grid-cols-2">
+                  {group.events.map((event) => (
+              <EventCard key={event.id} kind={event.typeKind} className="relative">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
+                      <span className="font-semibold tabular-nums text-stone-900" suppressHydrationWarning>
+                        {timeRange(event.startsAt, event.endsAt, dayFormatter, timeFormatter)}
+                      </span>
+                      <span className="text-stone-500">{event.typeName}</span>
+                      {isScheduleEventHappeningNow(event, now) && (
+                        <span className="font-semibold text-emerald-700">{t("rightNow")}</span>
+                      )}
+                    </p>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2">
+                      {event.href ? (
+                        <Link
+                          href={event.href}
+                          className={cn("text-base font-semibold hover:underline", cardLink)}
+                        >
+                          {defaultEventTitle(event)}
+                        </Link>
+                      ) : (
+                        <span className="text-base font-semibold">{defaultEventTitle(event)}</span>
+                      )}
+                      {!isBirthdayScheduleEvent(event) && !hasJoinPill(event) && (
+                        <ParticipationStatus participating={event.isParticipating} />
+                      )}
+                    </div>
+                    {(event.choreographyTitle || event.location) && (
+                      <p className="mt-0.5 text-sm text-stone-600">
+                        {[event.choreographyTitle, event.groupName, event.location]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
                     )}
                   </div>
                   {isRehearsalScheduleEvent(event) && event.isMember && (
@@ -316,25 +368,6 @@ export function UpcomingEventsList({
                     </div>
                   )}
                 </div>
-                <div className="mt-1 flex flex-wrap items-center gap-x-2">
-                  {event.href ? (
-                    <Link
-                      href={event.href}
-                      className={cn("text-base font-semibold hover:underline", cardLink)}
-                    >
-                      {defaultEventTitle(event)}
-                    </Link>
-                  ) : (
-                    <span className="text-base font-semibold">{defaultEventTitle(event)}</span>
-                  )}
-                  {!isBirthdayScheduleEvent(event) && !hasJoinPill(event) && (
-                    <ParticipationStatus participating={event.isParticipating} />
-                  )}
-                </div>
-                <p className="mt-0.5 text-sm text-stone-600">
-                  {compactEventRange(event.startsAt, event.endsAt, dayFormatter, timeFormatter)}
-                  {event.location && <span className="text-stone-500"> · {event.location}</span>}
-                </p>
 
                 {isRehearsalScheduleEvent(event) && event.isMember && (
                   <div className={cn("mt-3 border-t border-stone-100 pt-3", aboveCardLink)}>
@@ -345,6 +378,9 @@ export function UpcomingEventsList({
                   </div>
                 )}
               </EventCard>
+                  ))}
+                </div>
+              </div>
             </Fragment>
           ))}
           {hasMore && <div ref={sentinelRef} aria-hidden="true" className="h-px" />}

@@ -64,7 +64,7 @@ export async function RehearsalStatisticsPanel({
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="relative overflow-hidden border-stone-200 bg-gradient-to-br from-white to-stone-50">
           <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-stone-900/5" />
-          <p className="text-sm font-medium uppercase tracking-wide text-stone-500">
+          <p className="text-sm font-medium text-stone-500">
             {t("rehearsalCountLabel")}
           </p>
           <p className="mt-2 text-4xl font-semibold tabular-nums text-stone-900">
@@ -73,7 +73,7 @@ export async function RehearsalStatisticsPanel({
         </Card>
         <Card className="relative overflow-hidden border-stone-200 bg-gradient-to-br from-white to-amber-50/60">
           <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-500/10" />
-          <p className="text-sm font-medium uppercase tracking-wide text-stone-500">
+          <p className="text-sm font-medium text-stone-500">
             {t("rehearsalHoursLabel")}
           </p>
           <p className="mt-2 text-4xl font-semibold tabular-nums text-stone-900">

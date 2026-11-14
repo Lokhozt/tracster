@@ -224,7 +224,7 @@ export default async function HomePage() {
           ) : null}
           {tCommon("appName")}
         </h1>
-        <p className="mb-3 text-sm font-medium uppercase tracking-wide text-stone-500">
+        <p className="mb-3 text-sm font-medium text-stone-500">
           {t("eyebrow")}
         </p>
         <p className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">

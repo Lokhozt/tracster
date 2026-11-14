@@ -67,7 +67,7 @@ function LeaderboardSortHeader({
         type="button"
         onClick={() => onSort(column)}
         className={cn(
-          "inline-flex items-center gap-1 uppercase tracking-wide transition hover:text-stone-900",
+          "inline-flex items-center gap-1 transition hover:text-stone-900",
           active ? "text-stone-900" : "text-stone-600",
         )}
       >
@@ -111,7 +111,7 @@ function sortLeaderboard(
 function StatTile({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-lg border border-stone-200 bg-stone-50/80 px-3 py-2">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-500">{label}</p>
+      <p className="text-xs font-semibold text-stone-500">{label}</p>
       <p className="mt-0.5 text-lg font-semibold tabular-nums leading-tight text-stone-900">
         {value}
       </p>
@@ -431,7 +431,7 @@ export function AssociationStatsPanel({
           {representationStats.choreographies.length > 0 && (
             <div className="overflow-hidden rounded-xl border border-stone-200">
               <table className="w-full text-left text-sm">
-                <thead className="bg-stone-100 text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                <thead className="bg-stone-100 text-xs font-semibold text-stone-600">
                   <tr>
                     <th className="px-3 py-2">{t("choreography")}</th>
                     <th className="hidden px-3 py-2 tabular-nums sm:table-cell">{t("rehearsals")}</th>
@@ -477,7 +477,7 @@ export function AssociationStatsPanel({
               <h3 className="text-sm font-semibold text-stone-900">{t("participantLeaderboard")}</h3>
               <div className="overflow-hidden rounded-xl border border-stone-200">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-stone-100 text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                  <thead className="bg-stone-100 text-xs font-semibold text-stone-600">
                     <tr>
                       <th className="w-8 px-2 py-2 tabular-nums">#</th>
                       <LeaderboardSortHeader
@@ -580,7 +580,7 @@ export function AssociationStatsPanel({
           </div>
           {userStats.choreographies.length > 0 && (
             <Card className="p-3">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-stone-500">
+              <p className="mb-2 text-xs font-semibold text-stone-500">
                 {t("memberChoreographies")}
               </p>
               <ul className="flex flex-wrap gap-1.5">

@@ -10,6 +10,7 @@ import { type FloatingAction, FloatingActionButton } from "@/components/Floating
 import { PlanningImageExportButton } from "@/components/PlanningImageExport";
 import { PlanningRehearsalsEditButton } from "@/components/PlanningRehearsalsEditButton";
 import { RehearsalCalendar } from "@/components/RehearsalCalendar";
+import { NextUpCard } from "@/components/NextUpCard";
 import { PartyBarPlanningReminders } from "@/components/PartyBarPlanningReminders";
 import { UpcomingEventsList } from "@/components/UpcomingEventsList";
 import { SearchInput, SegmentedControl } from "@/components/ui";
@@ -20,6 +21,7 @@ import {
 } from "@/lib/event-category-filter";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
 import { isBirthdayScheduleEvent } from "@/lib/schedule-birthdays";
+import { scheduleEventEnd, scheduleEventLabel } from "@/lib/schedule-filters";
 import type { SerializedScheduleEvent } from "@/lib/schedule-filters";
 import { matchesSearch } from "@/lib/search";
 
@@ -113,6 +115,16 @@ export function ScheduleOverview({
       }),
     [events, barFilter, barMode, hidden, hideNonParticipating, search],
   );
+  // "Next up": your next event (taking part or holding a bar slot), whatever the filters.
+  const nextUp = useMemo(() => {
+    const now = new Date();
+    return events.find(
+      (event) =>
+        !isBirthdayScheduleEvent(event) &&
+        (event.isParticipating || event.isBarVolunteer) &&
+        scheduleEventEnd(event) > now,
+    );
+  }, [events]);
   const exportEvents = useMemo(
     () => filteredEvents.filter((event) => !isBirthdayScheduleEvent(event)),
     [filteredEvents],
@@ -160,6 +172,19 @@ export function ScheduleOverview({
   return (
     // Wide screens (xl+): fills the window; only the calendar body and the event list scroll.
     <div className="xl:flex xl:min-h-0 xl:flex-1 xl:flex-col">
+      {nextUp && (
+        <div className="mb-4">
+          <NextUpCard
+            label={t("nextUpTitle")}
+            href={nextUp.href}
+            startsAt={nextUp.startsAt}
+            endsAt={nextUp.endsAt}
+            title={scheduleEventLabel(nextUp)}
+            subtitle={[nextUp.typeName, nextUp.groupName].filter(Boolean).join(" · ")}
+            location={nextUp.location}
+          />
+        </div>
+      )}
       <PartyBarPlanningReminders
         reminders={partyBarReminders}
         onShowFreeSlots={() => setBarFilter("free")}

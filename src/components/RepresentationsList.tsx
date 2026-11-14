@@ -68,7 +68,7 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
             <Card key={representation.id} className="relative transition hover:border-stone-400">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium uppercase tracking-wide text-amber-800">
+                  <p className="text-xs font-medium text-amber-800">
                     {t("representation")}
                   </p>
                   <Link
@@ -98,7 +98,7 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
               </div>
 
               <div className="mt-4 border-t border-stone-100 pt-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                <p className="text-xs font-medium text-stone-500">
                   {t("choreographies")}
                 </p>
                 {representation.choreographies.length === 0 ? (

@@ -1,5 +1,6 @@
 {
   "Components": {
+    "nextUpTitle": "Prochain rendez-vous",
     "discardChanges": "Abandonner les modifications non enregistrées ?",
     "uploadFailed": "L’envoi du fichier a échoué. Vérifiez votre connexion et réessayez.",
     "skipToContent": "Aller au contenu",

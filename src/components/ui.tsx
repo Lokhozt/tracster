@@ -304,7 +304,7 @@ export function FormSection({
     <section className={cn("space-y-4", className)}>
       {title && (
         <div>
-          <h3 className="text-xs font-semibold tracking-wide text-stone-500 uppercase">{title}</h3>
+          <h3 className="text-base font-semibold text-stone-900">{title}</h3>
           {description && <p className="mt-1 text-sm text-stone-500">{description}</p>}
         </div>
       )}

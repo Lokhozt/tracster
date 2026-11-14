@@ -87,7 +87,7 @@ export default async function AccountPage({ searchParams }: PageProps) {
         </div>
         {hasAdminPrivileges(user) && (
           <section className="max-w-xl">
-            <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-stone-500">
+            <h2 className="mb-2 px-1 text-xs font-semibold text-stone-500">
               {tNavigation("administration")}
             </h2>
             {/* Every settings category one tap away (opens /settings on that category). */}

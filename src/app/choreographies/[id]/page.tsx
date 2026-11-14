@@ -23,6 +23,7 @@ import { ChoreographyTagsEditor } from "@/components/ChoreographyTagsEditor";
 import { TagBubbles } from "@/components/TagBubbles";
 import { ChoreographyHeaderActions } from "@/components/ChoreographyHeaderActions";
 import { ChoreographyEventActions } from "@/components/ChoreographyEventActions";
+import { NextUpCard } from "@/components/NextUpCard";
 import {
   ChoreographyOverviewActions,
   type OverviewAddAction,
@@ -240,64 +241,50 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
         // Overview first: next rehearsal, pinned resources, team, description (two per row on desktops).
         <div className="grid gap-4 lg:grid-cols-2">
           <ChoreographyOverviewActions actions={overviewAddActions} />
-          {/* Like the other cards: the whole card opens the rehearsal (›); inner controls stay clickable. */}
-          <Card className={cn(nextRehearsal && "relative transition hover:border-stone-400")}>
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
-              {nextRehearsal ? (
-                <Link
-                  href={`/events/${nextRehearsal.id}`}
-                  className={cn("flex items-center justify-between gap-3", cardLink)}
-                >
-                  {t("nextRehearsal")}
-                  <span aria-hidden="true" className="text-base text-stone-400">›</span>
-                </Link>
-              ) : (
-                t("nextRehearsal")
+          {/* The page's one bold element: the next rehearsal, on the stage colour. */}
+          {nextRehearsal ? (
+            <NextUpCard
+              label={t("nextRehearsal")}
+              href={`/events/${nextRehearsal.id}`}
+              startsAt={nextRehearsal.startsAt.toISOString()}
+              endsAt={nextRehearsal.endsAt?.toISOString() ?? null}
+              title={nextRehearsal.title || tc("rehearsal")}
+              subtitle={nextRehearsal.group?.name}
+              location={displayLocation(nextRehearsal)}
+              footer={
+                nextPerformance && (
+                  <Link
+                    href={`/events/${nextPerformance.event.id}`}
+                    className="block px-1 text-sm hover:underline"
+                  >
+                    <span className="text-stone-500">{t("nextPerformance")} · </span>
+                    <span className="font-medium text-stone-900">
+                      {nextPerformance.event.title || tc("representation")}
+                    </span>
+                    <span className="text-stone-600">
+                      {" · "}
+                      <LocalDateTime value={nextPerformance.event.startsAt.toISOString()} />
+                    </span>
+                  </Link>
+                )
+              }
+            >
+              {userIsInNextRehearsal && (
+                <AvailabilityButtons
+                  rehearsalId={nextRehearsal.id}
+                  currentStatus={myNextRehearsalStatus}
+                />
               )}
-            </h2>
-            {nextRehearsal ? (
-              <div className="space-y-3">
-                <div>
-                  <p className="font-semibold text-stone-900">
-                    <LocalDateTime value={nextRehearsal.startsAt.toISOString()} />
-                  </p>
-                  <p className="text-sm text-stone-600">
-                    {[displayLocation(nextRehearsal), nextRehearsal.group?.name]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                </div>
-                {userIsInNextRehearsal && (
-                  <div className={aboveCardLink}>
-                    <AvailabilityButtons
-                      rehearsalId={nextRehearsal.id}
-                      currentStatus={myNextRehearsalStatus}
-                    />
-                  </div>
-                )}
-              </div>
-            ) : (
+            </NextUpCard>
+          ) : (
+            <Card>
+              <h2 className="mb-1 text-base font-semibold">{t("nextRehearsal")}</h2>
               <p className="text-sm text-stone-600">{t("noUpcomingRehearsal")}</p>
-            )}
-            {nextPerformance && (
-              <Link
-                href={`/events/${nextPerformance.event.id}`}
-                className={cn("mt-4 block border-t border-stone-100 pt-3 text-sm hover:underline", aboveCardLink)}
-              >
-                <span className="text-stone-500">{t("nextPerformance")} · </span>
-                <span className="font-medium text-stone-900">
-                  {nextPerformance.event.title || tc("representation")}
-                </span>
-                <span className="text-stone-600">
-                  {" · "}
-                  <LocalDateTime value={nextPerformance.event.startsAt.toISOString()} />
-                </span>
-              </Link>
-            )}
-          </Card>
+            </Card>
+          )}
           {/* All upcoming dates of the choreography; opens the full events section. */}
           <Card className="relative transition hover:border-stone-400">
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
+            <h2 className="mb-2 text-base font-semibold text-stone-900">
               <ChoreographyTabLink
                 sectionId="events"
                 className={cn("flex items-center justify-between gap-3", cardLink)}
@@ -326,7 +313,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
             // Like the team card: the whole card opens the Resources tab (full previews live there);
             // web links can still be opened directly.
             <Card className="relative transition hover:border-stone-400">
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
+              <h2 className="mb-2 text-base font-semibold text-stone-900">
                 <ChoreographyTabLink
                   sectionId="resources"
                   className={cn("flex items-center justify-between gap-3", cardLink)}
@@ -361,7 +348,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           )}
           {/* The whole card opens the team tab; the join controls stay clickable on their own. */}
           <Card className="relative transition hover:border-stone-400">
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
+            <h2 className="mb-2 text-base font-semibold text-stone-900">
               <ChoreographyTabLink
                 sectionId="participants"
                 className={cn("flex items-center justify-between gap-3", cardLink)}
@@ -391,7 +378,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           {showGroups && (
             // Like the other cards: the whole card opens the Groupes tab.
             <Card className="relative transition hover:border-stone-400">
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
+              <h2 className="mb-2 text-base font-semibold text-stone-900">
                 <ChoreographyTabLink
                   sectionId="groups"
                   className={cn("flex items-center justify-between gap-3", cardLink)}
@@ -419,7 +406,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           {/* Assigned tags first, then the description; tags are edited from the edit section. */}
           {(choreography.description || (settings.showChoreographyTags && assignedTags.length > 0)) && (
             <Card className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">
+              <h2 className="text-base font-semibold text-stone-900">
                 {tc("description")}
               </h2>
               {settings.showChoreographyTags && <TagBubbles tags={assignedTags} />}
@@ -431,7 +418,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           {canManageLifecycle && (
             // Admins only, last and in red: it leads to archive / delete.
             <Card className="relative border-red-200 transition hover:border-red-400">
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-red-700">
+              <h2 className="mb-2 text-base font-semibold text-red-700">
                 <ChoreographyTabLink
                   sectionId="admin"
                   className={cn("flex items-center justify-between gap-3", cardLink)}
