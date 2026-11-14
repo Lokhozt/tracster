@@ -1,5 +1,11 @@
 {
   "Components": {
+    "pickerChooseDate": "Choisir une date",
+    "pickerOk": "OK",
+    "pickerPreviousMonth": "Mois précédent",
+    "pickerNextMonth": "Mois suivant",
+    "pickerHours": "Heures",
+    "pickerMinutes": "Minutes",
     "formSectionWhen": "Quand",
     "formSectionWho": "Qui",
     "formSectionDetails": "Détails",
