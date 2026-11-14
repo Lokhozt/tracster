@@ -9,6 +9,7 @@ import { CompetitorBadge, RoleBadge } from "@/components/UserForms";
 import { Card, Input, Label, SETTINGS_LIST_CLASS, Select } from "@/components/ui";
 import type { UserRole } from "@/generated/prisma/client";
 import { type AdminUser, compareUsersByName } from "@/lib/users";
+import { ChevronRightIcon } from "@/components/icons";
 
 
 
@@ -143,7 +144,7 @@ export function UsersList({ users }: { users: AdminUser[] }) {
                     </span>
                     <span className="block truncate text-xs text-stone-500">{entry.email}</span>
                   </span>
-                  <span aria-hidden="true" className="text-stone-400">›</span>
+                  <ChevronRightIcon />
                 </Link>
               </li>
             ))}

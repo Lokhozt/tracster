@@ -167,31 +167,50 @@ export function ScheduleOverview({
     return parts.join(" · ");
   }, [barFilter, freeBarSlots, hiddenTypeIds.length, showPast, t]);
 
+  const scopeSwitch = (
+    <SegmentedControl
+      className={cn(barMode && "pointer-events-none opacity-40")}
+      label={t("planningScopeLabel")}
+      value={hideNonParticipating ? "mine" : "all"}
+      onChange={(value) => updateHideNonParticipating(value === "mine")}
+      options={[
+        { value: "mine", label: t("planningScopeMine") },
+        { value: "all", label: t("planningScopeAll") },
+      ]}
+    />
+  );
+
   return (
     // Wide screens (xl+): fills the window; only the calendar body and the event list scroll.
     <div className="xl:flex xl:min-h-0 xl:flex-1 xl:flex-col">
-      {nextUp && (
-        <div className="mb-4">
-          <NextUpCard
-            label={t("nextUpTitle")}
-            href={nextUp.href}
-            startsAt={nextUp.startsAt}
-            endsAt={nextUp.endsAt}
-            // A rehearsal is named by its choreography ("Jazz Funk Showcase"), not "Répétition".
-            title={
-              nextUp.typeKind === "REHEARSAL" && nextUp.choreographyTitle
-                ? nextUp.choreographyTitle
-                : scheduleEventLabel(nextUp)
-            }
-            subtitle={[nextUp.typeName, nextUp.groupName].filter(Boolean).join(" · ")}
-            location={nextUp.location}
+      {/* Desktop: "Next up" (one line) and the bar reminder side by side, so the calendar
+          starts high; phones stack them. */}
+      {(nextUp || partyBarReminders.length > 0) && (
+        <div className="mb-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] xl:items-stretch">
+          {nextUp && (
+            <NextUpCard
+              layout="strip"
+              label={t("nextUpTitle")}
+              href={nextUp.href}
+              startsAt={nextUp.startsAt}
+              endsAt={nextUp.endsAt}
+              // A rehearsal is named by its choreography ("Jazz Funk Showcase"), not "Répétition".
+              title={
+                nextUp.typeKind === "REHEARSAL" && nextUp.choreographyTitle
+                  ? nextUp.choreographyTitle
+                  : scheduleEventLabel(nextUp)
+              }
+              subtitle={[nextUp.typeName, nextUp.groupName].filter(Boolean).join(" · ")}
+              location={nextUp.location}
+            />
+          )}
+          <PartyBarPlanningReminders
+            className={cn(!nextUp && "xl:col-span-2")}
+            reminders={partyBarReminders}
+            onShowFreeSlots={() => setBarFilter("free")}
           />
         </div>
       )}
-      <PartyBarPlanningReminders
-        reminders={partyBarReminders}
-        onShowFreeSlots={() => setBarFilter("free")}
-      />
       <div className="mb-4 flex gap-2">
         <div className="min-w-0 flex-1">
           <SearchInput
@@ -201,19 +220,12 @@ export function ScheduleOverview({
             placeholder={t("planningSearchPlaceholder")}
           />
         </div>
+        {/* Desktop: the "Les miens / Tous" switch shares the search row. */}
+        <div className="hidden lg:block lg:w-64">{scopeSwitch}</div>
         <FilterButton activeFilterCount={activeFilterCount} onClick={() => setFilterSheetOpen(true)} />
       </div>
       {/* The most used filter, always in sight: my events or everyone's (paused by a bar choice). */}
-      <SegmentedControl
-        className={cn("mb-4", barMode && "pointer-events-none opacity-40")}
-        label={t("planningScopeLabel")}
-        value={hideNonParticipating ? "mine" : "all"}
-        onChange={(value) => updateHideNonParticipating(value === "mine")}
-        options={[
-          { value: "mine", label: t("planningScopeMine") },
-          { value: "all", label: t("planningScopeAll") },
-        ]}
-      />
+      <div className="mb-4 lg:hidden">{scopeSwitch}</div>
       <FloatingActionButton actions={createActions} />
       <FilterSheet
         open={filterSheetOpen}
@@ -254,7 +266,7 @@ export function ScheduleOverview({
         </fieldset>
       </FilterSheet>
       {/* Wide screens: calendar and event list side by side, sharing the window height. */}
-      <div className="xl:grid xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,1fr)_18rem] xl:gap-6 2xl:grid-cols-[minmax(0,1fr)_26rem]">
+      <div className="xl:grid xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,1fr)_24rem] xl:gap-6 2xl:grid-cols-[minmax(0,1fr)_26rem]">
         <RehearsalCalendar
           events={filteredEvents}
           fillHeight

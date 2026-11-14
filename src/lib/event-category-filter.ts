@@ -34,7 +34,7 @@ export function persistHideNonParticipating(value: boolean) {
 /** Light tint for event cards, matching the category chip colors at a readable contrast. */
 /** Left edge colour of an event row, by type (the rest of the row stays neutral). */
 const EVENT_EDGE: Record<string, string> = {
-  REHEARSAL: "border-l-stone-900",
+  REHEARSAL: "border-l-stone-500",
   REPRESENTATION: "border-l-amber-400",
   COMPETITION: "border-l-violet-500",
   DEMONSTRATION: "border-l-teal-500",

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import type { PartyBarSlot } from "@/lib/party-bar-shared";
 import { cn } from "@/lib/utils";
+import { ChevronRightIcon } from "@/components/icons";
 
 async function responseError(response: Response, fallback: string) {
   const body = await response.json().catch(() => null);
@@ -89,7 +90,7 @@ function SlotChip({
     const mine = <span className="truncate font-semibold">✓ {t("partyBarYou")}</span>;
     const leaveHint = <span aria-hidden="true" className={PHONE_HINT}>{t("partyBarLeaveShort")}</span>;
     if (readOnly) {
-      return <div className={cn(SLOT_CHIP, "bg-emerald-600 text-white")} aria-label={`${slotLabel} : ${slot.name}`}>{mine}</div>;
+      return <div className={cn(SLOT_CHIP, "bg-emerald-700 text-white")} aria-label={`${slotLabel} : ${slot.name}`}>{mine}</div>;
     }
     return (
       <button
@@ -102,7 +103,7 @@ function SlotChip({
         }}
         aria-label={`${t("partyBarLeaveSlot")} (${slotLabel})`}
         title={t("partyBarLeaveSlot")}
-        className={cn(SLOT_CHIP, "bg-emerald-600 text-white transition hover:bg-emerald-700 active:scale-95 disabled:opacity-50")}
+        className={cn(SLOT_CHIP, "bg-emerald-700 text-white transition hover:bg-emerald-800 active:scale-95 disabled:opacity-50")}
       >
         {loading ? t("saving") : <>{mine}{leaveHint}</>}
       </button>
@@ -179,7 +180,7 @@ export function PartyBarEventCard({
           {href ? (
             <Link href={href} className="font-semibold break-words text-stone-900 hover:text-stone-700">
               {title}
-              <span aria-hidden="true" className="ml-1 text-stone-400">›</span>
+              <ChevronRightIcon className="ml-1 inline" />
             </Link>
           ) : (
             <p className="font-semibold break-words text-stone-900">{title}</p>
@@ -189,7 +190,7 @@ export function PartyBarEventCard({
           </p>
         </div>
         {isRegistered ? (
-          <span className="shrink-0 whitespace-nowrap rounded-full bg-emerald-600 px-2 py-0.5 text-xs font-semibold text-white">
+          <span className="shrink-0 whitespace-nowrap rounded-full bg-emerald-700 px-2 py-0.5 text-xs font-semibold text-white">
             ✓ <span className="sm:hidden">{t("partyBarYouAreInShort")}</span>
             <span className="max-sm:hidden">{t("partyBarYouAreIn")}</span>
           </span>

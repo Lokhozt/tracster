@@ -1,5 +1,13 @@
 {
   "Pages": {
+    "NotFound": {
+      "title": "Page not found",
+      "body": "This page doesn’t exist (anymore). The link may be old.",
+      "backToPlanning": "Back to the planning",
+      "choreographyTitle": "Choreography not found",
+      "choreographyBody": "It doesn’t exist, was archived, or you are not part of it. Ask the choreographer to add you if you should have access.",
+      "backToChoreographies": "Back to choreographies"
+    },
     "Home": {
       "title": "Schedule",
       "eyebrow": "Rehearsal planning",

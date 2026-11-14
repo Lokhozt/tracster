@@ -116,8 +116,13 @@ export function Sheet({
         }
       }}
       className={cn(
-        "m-0 mt-auto w-full max-w-none rounded-t-2xl bg-white p-0 text-stone-900 shadow-xl outline-none backdrop:bg-stone-900/40",
-        "transition duration-200 ease-out starting:translate-y-6 starting:opacity-0 motion-reduce:transition-none",
+        "m-0 mt-auto w-full max-w-none rounded-t-2xl bg-white p-0 text-stone-900 shadow-xl outline-none backdrop:bg-black/50",
+        // Opens and closes smoothly (closing is quicker); the dimmed backdrop fades with it.
+        "transition-[translate,opacity,overlay,display] transition-discrete duration-(--duration-medium) ease-stage",
+        "starting:translate-y-6 starting:opacity-0 not-open:translate-y-6 not-open:opacity-0 not-open:duration-(--duration-short)",
+        "backdrop:transition-[opacity,overlay,display] backdrop:transition-discrete backdrop:duration-(--duration-medium)",
+        "starting:backdrop:opacity-0 not-open:backdrop:opacity-0",
+        "motion-reduce:transition-none motion-reduce:backdrop:transition-none",
         "md:m-auto md:rounded-2xl",
         size === "form" ? "md:max-w-xl" : "md:max-w-lg",
         maxHeight,
@@ -229,7 +234,7 @@ export function FormSheet({
           }}
           aria-label={t("close")}
           title={t("close")}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-100 hover:text-stone-900"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-100 hover:text-stone-900"
         >
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
             <path d="M6 6l12 12M18 6 6 18" />

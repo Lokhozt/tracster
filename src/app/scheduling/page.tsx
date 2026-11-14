@@ -61,7 +61,7 @@ export default async function SchedulingPage() {
 
   return (
     <AppShell title={t("title")}>
-      <p className="mb-6 text-stone-600">
+      <p className="mb-6 max-w-prose text-stone-600">
         {t("intro")}
       </p>
       <SchedulingTool

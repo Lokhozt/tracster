@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChoreographerBadge } from "@/components/CrownIcon";
-import { Card, Label, SearchInput, Select } from "@/components/ui";
+import { Card, Label, SearchInput, Select, SegmentedControl } from "@/components/ui";
 import { useLocale } from "next-intl";
 
 import { persistChoreographyRepresentationFilter } from "@/lib/choreography-list-filter";
@@ -129,31 +129,16 @@ export function ChoreographiesList({
         )}
       </div>
 
-      <div
-        role="group"
-        aria-label={t("choreographyScope")}
-        className="flex rounded-lg border border-stone-300 bg-white/60 p-0.5 sm:inline-flex"
-      >
-        {[
-          { value: false, label: t("myChoreographies") },
-          { value: true, label: t("allChoreographies") },
-        ].map((option) => (
-          <button
-            key={option.label}
-            type="button"
-            onClick={() => setShowAll(option.value)}
-            aria-pressed={showAll === option.value}
-            className={cn(
-              "flex-1 whitespace-nowrap rounded-md px-4 py-1.5 text-sm font-medium transition",
-              showAll === option.value
-                ? "bg-stone-900 text-white"
-                : "text-stone-600 hover:bg-stone-100",
-            )}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        className="sm:max-w-sm"
+        label={t("choreographyScope")}
+        value={showAll ? "all" : "mine"}
+        onChange={(value) => setShowAll(value === "all")}
+        options={[
+          { value: "mine", label: t("myChoreographies") },
+          { value: "all", label: t("allChoreographies") },
+        ]}
+      />
 
       {visible.length === 0 ? (
         <Card>

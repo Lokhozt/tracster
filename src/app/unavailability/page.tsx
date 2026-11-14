@@ -61,7 +61,7 @@ export default async function UnavailabilityPage() {
         </>
       }
     >
-      <p className="mb-6 hidden text-stone-600 sm:block">
+      <p className="mb-6 max-w-prose hidden text-stone-600 sm:block">
         {admin ? t("adminIntro") : t("intro")}
       </p>
       <UnavailabilityCalendar

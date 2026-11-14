@@ -3,6 +3,8 @@
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import type { PartyBarPlanningReminder } from "@/lib/party-bar";
+import { ChevronRightIcon } from "@/components/icons";
+import { cn } from "@/lib/utils";
 
 /**
  * One compact card listing the parties of the next two weeks that still need bar volunteers;
@@ -11,9 +13,11 @@ import type { PartyBarPlanningReminder } from "@/lib/party-bar";
 export function PartyBarPlanningReminders({
   reminders,
   onShowFreeSlots,
+  className,
 }: {
   reminders: PartyBarPlanningReminder[];
   onShowFreeSlots: () => void;
+  className?: string;
 }) {
   const t = useTranslations("Components");
   const locale = useLocale();
@@ -27,7 +31,7 @@ export function PartyBarPlanningReminders({
   });
 
   return (
-    <section className="mb-4 rounded-xl border border-stone-200 bg-white px-4 py-3">
+    <section className={cn("rounded-xl border border-stone-200 bg-white px-4 py-3", className)}>
       <div className="mb-1 flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-stone-900">
           {t("partyBarRemindersTitle", { count: reminders.length })}
@@ -63,7 +67,7 @@ export function PartyBarPlanningReminders({
               >
                 {reminder.filledCount}/{reminder.slotCount}
               </span>
-              <span aria-hidden="true" className="text-stone-400">›</span>
+              <ChevronRightIcon />
             </Link>
           </li>
         ))}

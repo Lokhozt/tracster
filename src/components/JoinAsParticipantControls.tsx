@@ -8,8 +8,8 @@ import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 const PILL =
-  "inline-flex min-h-9 items-center whitespace-nowrap rounded-full px-3 py-1 text-sm font-medium transition active:scale-95 disabled:opacity-60";
-const PILL_ON = "bg-emerald-600 text-white hover:bg-emerald-700";
+  "inline-flex min-h-9 items-center whitespace-nowrap rounded-full px-3 py-1 text-sm font-medium pointer-coarse:min-h-11 transition active:scale-95 disabled:opacity-60";
+const PILL_ON = "bg-emerald-700 text-white hover:bg-emerald-800";
 const PILL_OFF = "border border-stone-300 bg-white text-stone-900 hover:bg-stone-100";
 const PILL_PENDING = "bg-stone-200 text-stone-700 hover:bg-stone-300";
 

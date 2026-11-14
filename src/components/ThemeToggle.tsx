@@ -45,7 +45,7 @@ export function ThemeToggle({
           aria-label={option.label}
           title={option.label}
           className={cn(
-            "inline-flex h-8 w-8 items-center justify-center rounded-full transition",
+            "inline-flex h-9 w-9 items-center justify-center rounded-full transition pointer-coarse:h-11 pointer-coarse:w-11",
             preference === option.value
               ? "bg-stone-900 text-white"
               : "text-stone-500 hover:bg-stone-100 hover:text-stone-900",

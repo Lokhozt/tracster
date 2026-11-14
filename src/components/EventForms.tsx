@@ -65,6 +65,7 @@ import {
 import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 import { WhatsAppLinkField } from "@/components/WhatsAppLink";
 import { useAppNavigation } from "@/lib/app-navigation";
+import { eventCardClassName } from "@/lib/event-category-filter";
 
 type UserOption = { id: string; name: string; email: string; isCompetitor?: boolean };
 
@@ -1100,7 +1101,7 @@ function LinkedEventKindSection({
           {items.map((item) => (
             <div
               key={item.id}
-              className="relative rounded-xl border border-stone-200 bg-white p-5 transition hover:border-stone-400"
+              className={cn("relative rounded-lg border p-4 transition-shadow", eventCardClassName(kind))}
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>

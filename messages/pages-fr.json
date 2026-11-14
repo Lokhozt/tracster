@@ -1,5 +1,13 @@
 {
   "Pages": {
+    "NotFound": {
+      "title": "Page introuvable",
+      "body": "Cette page n’existe pas ou plus. Le lien est peut-être ancien.",
+      "backToPlanning": "Retour au planning",
+      "choreographyTitle": "Chorégraphie introuvable",
+      "choreographyBody": "Elle n’existe pas, a été archivée, ou vous n’en faites pas partie. Demandez au chorégraphe de vous ajouter si vous devriez y avoir accès.",
+      "backToChoreographies": "Retour aux chorégraphies"
+    },
     "Home": {
       "title": "Planning",
       "eyebrow": "Planification des répétitions",

@@ -37,6 +37,7 @@ import {
   type DateTimeParts,
 } from "@/lib/datetime";
 import { useAppNavigation } from "@/lib/app-navigation";
+import { eventCardClassName } from "@/lib/event-category-filter";
 
 export type RepresentationItem = {
   id: string;
@@ -639,7 +640,7 @@ function RepresentationCard({
     timeStyle: "short",
   });
   return (
-    <div className="relative rounded-xl border border-stone-200 bg-white p-5 transition hover:border-stone-400">
+    <div className={cn("relative rounded-lg border p-4 transition-shadow", eventCardClassName("REPRESENTATION"))}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Link

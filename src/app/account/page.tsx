@@ -22,6 +22,7 @@ import {
   isGoogleCalendarConfigured,
   serializeGoogleConnection,
 } from "@/lib/google-calendar";
+import { ChevronRightIcon } from "@/components/icons";
 
 type PageProps = {
   searchParams: Promise<{ googleCalendar?: string }>;
@@ -128,7 +129,7 @@ function AccountLink({ href, children }: { href: string; children: React.ReactNo
       className="flex min-h-12 items-center justify-between gap-3 px-4 py-3 font-medium transition hover:bg-stone-100"
     >
       {children}
-      <span aria-hidden="true" className="text-stone-400">›</span>
+      <ChevronRightIcon />
     </Link>
   );
 }

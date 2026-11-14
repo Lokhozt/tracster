@@ -50,12 +50,13 @@ export function AvailabilityButtons({
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {(["AVAILABLE", "UNAVAILABLE", "MAYBE"] as AvailabilityStatus[]).map((status) => (
           <Button
             key={status}
             type="button"
             variant={currentStatus === status ? "primary" : "secondary"}
+            className="w-full px-2"
             aria-pressed={currentStatus === status}
             disabled={loading !== null}
             onClick={() => submitStatus(status)}

@@ -33,6 +33,7 @@ import {
 } from "@/lib/datetime";
 import type { SerializedUnavailability } from "@/lib/unavailability";
 import { cn } from "@/lib/utils";
+import { ArrowLeftIcon, ArrowRightIcon } from "@/components/icons";
 
 const SLOT_MINUTES = 30;
 const END_HOUR = 24;
@@ -884,23 +885,18 @@ export function UnavailabilityCalendar({
             </Select>
           </div>
         )}
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 sm:mb-4">
-          {/* Shown in the page's "?" help on phones. */}
-          <div className="max-sm:hidden">
-            <h2 className="text-lg font-semibold">{t("weekView")}</h2>
-            <p className="mt-1 text-sm text-stone-500">
-              {t("unavailabilityHelp")}
-            </p>
-          </div>
+        <div className="mb-3 flex flex-wrap items-center justify-end gap-3 sm:mb-4">
+          {/* Instructions: the page intro (desktop) and its "?" help (phones), not repeated here. */}
+          <h2 className="sr-only">{t("weekView")}</h2>
           <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-wrap">
             <button
               type="button"
               onClick={() => setWeekStart((date) => subWeeks(date, 1))}
               disabled={!canGoBack}
-              className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
               aria-label={t("previousWeek")}
             >
-              ←
+              <ArrowLeftIcon />
             </button>
             <span className="min-w-0 flex-1 text-center text-sm font-medium whitespace-nowrap sm:min-w-44 sm:flex-none">
               <span className="sm:hidden">{shortPeriodLabel}</span>
@@ -909,10 +905,10 @@ export function UnavailabilityCalendar({
             <button
               type="button"
               onClick={() => setWeekStart((date) => addWeeks(date, 1))}
-              className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 hover:bg-stone-100"
               aria-label={t("nextWeek")}
             >
-              →
+              <ArrowRightIcon />
             </button>
             <button
               type="button"
@@ -924,7 +920,7 @@ export function UnavailabilityCalendar({
               }}
               aria-label={t("today")}
               title={t("today")}
-              className="inline-flex items-center rounded-lg border border-stone-300 px-2.5 py-1.5 text-sm hover:bg-stone-100 sm:px-3"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 px-2.5 text-sm hover:bg-stone-100 sm:px-3"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -948,7 +944,7 @@ export function UnavailabilityCalendar({
               onClick={openAddSheet}
               aria-label={t("addUnavailability")}
               title={t("addUnavailability")}
-              className="hidden items-center gap-1 rounded-lg bg-stone-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-stone-700 lg:inline-flex"
+              className="hidden min-h-11 items-center gap-1 rounded-lg bg-stone-900 px-3 text-sm font-medium text-white hover:bg-stone-700 lg:inline-flex"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                 <path d="M12 5v14M5 12h14" />
@@ -1003,7 +999,7 @@ export function UnavailabilityCalendar({
                       <span
                         className={cn(
                           isToday(day) &&
-                            "inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-stone-900 px-1.5 whitespace-nowrap text-white sm:px-2",
+                            "font-bold whitespace-nowrap underline decoration-spotlight decoration-4 underline-offset-4 sm:inline-flex sm:h-7 sm:min-w-7 sm:items-center sm:justify-center sm:rounded-full sm:bg-stone-900 sm:px-2 sm:text-white sm:no-underline",
                         )}
                       >
                         <span className="sm:hidden">
@@ -1023,7 +1019,7 @@ export function UnavailabilityCalendar({
                   slotIndex % 2 === 0 ? (
                     <div
                       key={slotIndex}
-                      className="absolute right-1 -translate-y-1/2 text-[11px] text-stone-400 sm:right-2 sm:text-xs"
+                      className="absolute right-1 -translate-y-1/2 text-xs text-stone-500 sm:right-2"
                       style={{ top: slotIndex * slotHeightPx }}
                     >
                       {format(

@@ -108,6 +108,7 @@ export async function AppShell({
   children,
   title,
   wide = false,
+  narrow = false,
   fillHeight = false,
   titleActions,
 }: {
@@ -116,6 +117,8 @@ export async function AppShell({
   /** Buttons on the title row, kept outside the <h1> so they don't become part of its name. */
   titleActions?: React.ReactNode;
   wide?: boolean;
+  /** Detail pages (an event…): a readable width on large screens instead of the full width. */
+  narrow?: boolean;
   /** Wide screens (xl+): exactly the window height, no page scroll (the content scrolls inside). */
   fillHeight?: boolean;
 }) {
@@ -134,7 +137,13 @@ export async function AppShell({
           user
             ? "pb-[calc(6rem+env(safe-area-inset-bottom))] lg:px-8 lg:pt-10 lg:pb-12"
             : "pb-6 sm:pb-[calc(5rem+env(safe-area-inset-bottom))]",
-          wide ? "max-w-screen-2xl" : user ? "max-w-5xl xl:max-w-6xl 2xl:max-w-[100rem]" : "max-w-5xl",
+          wide
+            ? "max-w-screen-2xl"
+            : narrow
+              ? "max-w-5xl"
+              : user
+                ? "max-w-5xl xl:max-w-6xl 2xl:max-w-[100rem]"
+                : "max-w-5xl",
           // flex-none: as a flex item, flex-1 would win over the fixed height.
           fillHeight && "xl:flex xl:h-dvh xl:flex-none xl:flex-col xl:overflow-hidden xl:pt-6 xl:pb-6",
         )}

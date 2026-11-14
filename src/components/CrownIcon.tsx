@@ -19,7 +19,10 @@ export function ChoreographerBadge({
       aria-label={accessibleLabel}
       role="img"
     >
-      👑
+      <svg viewBox="0 0 24 24" className="h-[1.1em] w-[1.1em] text-amber-500" fill="currentColor" aria-hidden="true">
+        <path d="M3 8.5l4.2 3.3L12 5l4.8 6.8L21 8.5l-1.8 9.5H4.8L3 8.5Z" />
+        <rect x="4.8" y="19" width="14.4" height="2" rx="1" />
+      </svg>
     </span>
   );
 }

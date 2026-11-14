@@ -27,7 +27,7 @@ export function HelpButton({
         aria-label={t("helpFor", { title })}
         title={t("help")}
         className={cn(
-          "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-300 bg-white text-base font-semibold text-stone-700 hover:bg-stone-100",
+          "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full pointer-coarse:h-11 pointer-coarse:w-11 border border-stone-300 bg-white text-base font-semibold text-stone-700 hover:bg-stone-100",
           className,
         )}
       >

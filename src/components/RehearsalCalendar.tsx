@@ -20,7 +20,7 @@ import {
   startOfWeek,
 } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
-import { Card } from "@/components/ui";
+import { Card, SegmentedControl } from "@/components/ui";
 import { eventScheduleKindClassName } from "@/lib/event-category-filter";
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/datetime";
@@ -31,6 +31,7 @@ import {
   type SerializedScheduleEvent,
 } from "@/lib/schedule-filters";
 import { isBirthdayScheduleEvent } from "@/lib/schedule-birthdays";
+import { ArrowLeftIcon, ArrowRightIcon } from "@/components/icons";
 
 type CalendarView = "day" | "week" | "month";
 type DateLocale = typeof fr;
@@ -547,28 +548,13 @@ export function RehearsalCalendar({
   );
 
   const viewSwitch = (
-    <div
-      role="group"
-      aria-label={t("calendarView")}
-      className="flex rounded-lg border border-stone-300 bg-white/60 p-0.5"
-    >
-      {viewOptions.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          onClick={() => setChosenView(option.value)}
-          aria-pressed={view === option.value}
-          className={cn(
-            "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition",
-            view === option.value
-              ? "bg-stone-900 text-white"
-              : "text-stone-600 hover:bg-stone-100",
-          )}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
+    <SegmentedControl
+      className="sm:min-w-64"
+      label={t("calendarView")}
+      value={view}
+      onChange={setChosenView}
+      options={viewOptions}
+    />
   );
 
   return (
@@ -579,6 +565,8 @@ export function RehearsalCalendar({
       )}
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        {/* Export/edit at the top: below the calendar they sat under the phone's floating "+". */}
+        {titleActions && <div className="flex shrink-0 gap-2">{titleActions}</div>}
         <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           {!isSmallScreen && (
             <div className="flex flex-wrap items-center gap-2">
@@ -587,7 +575,7 @@ export function RehearsalCalendar({
               <button
                 type="button"
                 onClick={goToToday}
-                className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
+                className="min-h-11 rounded-lg border border-stone-300 px-3 text-sm hover:bg-stone-100"
               >
                 {t("today")}
               </button>
@@ -609,10 +597,10 @@ export function RehearsalCalendar({
             <button
               type="button"
               onClick={() => shiftFocus(-1)}
-              className="rounded-lg border border-stone-300 px-3 py-2.5 text-sm hover:bg-stone-100 sm:py-1.5"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 hover:bg-stone-100"
               aria-label={t("previousPeriod", {period: periodName})}
             >
-              ←
+              <ArrowLeftIcon />
             </button>
             <span className="min-w-0 flex-1 text-center text-sm font-medium sm:min-w-40 sm:flex-none">
               {periodLabel}
@@ -620,10 +608,10 @@ export function RehearsalCalendar({
             <button
               type="button"
               onClick={() => shiftFocus(1)}
-              className="rounded-lg border border-stone-300 px-3 py-2.5 text-sm hover:bg-stone-100 sm:py-1.5"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 hover:bg-stone-100"
               aria-label={t("nextPeriod", {period: periodName})}
             >
-              →
+              <ArrowRightIcon />
             </button>
           </div>
           {isSmallScreen && viewSwitch}
@@ -778,7 +766,7 @@ export function RehearsalCalendar({
           </div>
         )}
       </div>
-      {titleActions && <div className="mt-3 flex shrink-0 justify-end gap-2">{titleActions}</div>}
+
     </Card>
   );
 }

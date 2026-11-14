@@ -32,6 +32,14 @@
   --color-spotlight: #ffb000;
   --color-spotlight-ink: #3d2a00;
   --color-velvet: #8c2a46;
+  /*
+   * Motion: one curve for everything that moves (tab pager, sheets, menus, "Next up"), and
+   * three durations — short (exits, small things), medium (sheets, menus), long (entrances).
+   */
+  --ease-stage: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-short: 150ms;
+  --duration-medium: 220ms;
+  --duration-long: 320ms;
   /* The "Next up" block: aubergine ink (lifted in dark mode so it still stands out). */
   --color-stage: #231b33;
 }
@@ -45,7 +53,7 @@
 }
 
 .next-up-in {
-  animation: next-up-in 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: next-up-in var(--duration-long) var(--ease-stage) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -63,13 +71,13 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --background: #0a0a0a;
+    --background: oklch(16.2% 0.02 300);
     --foreground: #ededed;
   }
 }
 
 :root[data-theme="dark"] {
-  --background: #0a0a0a;
+  --background: oklch(16.2% 0.02 300);
   --foreground: #ededed;
 }
 
@@ -639,7 +647,7 @@ body {
 
   :root:not([data-theme="light"]) .autumn-header,
   :root:not([data-theme="light"]) .autumn-surface .planning-calendar {
-    background: linear-gradient(180deg, #1c1917 0%, #261a12 45%, #4a230d 100%);
+    background: linear-gradient(180deg, #1b1724 0%, #22182a 45%, #3d2216 100%);
   }
 
   :root:not([data-theme="light"]) .autumn-surface .planning-calendar {
@@ -657,7 +665,7 @@ body {
   }
 
   :root:not([data-theme="light"]) .autumn-surface .planning-calendar-day {
-    background-color: #1c1917;
+    background-color: #1b1724;
   }
 
   :root:not([data-theme="light"]) .autumn-surface .planning-calendar-day-muted {
@@ -666,12 +674,12 @@ body {
   }
 
   :root:not([data-theme="light"]) .autumn-surface {
-    background: linear-gradient(165deg, #1f1510 0%, #22170f 18%, #1d1810 32%, #0c0a09 55%, #0c0a09 100%);
+    background: linear-gradient(165deg, #1d1520 0%, #211722 18%, #1c1622 32%, #110e18 55%, #110e18 100%);
   }
 
   :root:not([data-theme="light"]) .festive-header,
   :root:not([data-theme="light"]) .festive-surface .planning-calendar {
-    background: linear-gradient(180deg, #1c1917 0%, #221a16 48%, #2a1416 100%);
+    background: linear-gradient(180deg, #1b1724 0%, #201826 48%, #271526 100%);
   }
 
   :root:not([data-theme="light"]) .festive-surface .planning-calendar {
@@ -689,7 +697,7 @@ body {
   }
 
   :root:not([data-theme="light"]) .festive-surface .planning-calendar-day {
-    background-color: #1c1917;
+    background-color: #1b1724;
   }
 
   :root:not([data-theme="light"]) .festive-surface .planning-calendar-day-muted {
@@ -698,7 +706,7 @@ body {
   }
 
   :root:not([data-theme="light"]) .festive-surface {
-    background: linear-gradient(165deg, #1f1714 0%, #21141a 12%, #121a14 28%, #0c0a09 55%, #0c0a09 100%);
+    background: linear-gradient(165deg, #1e1622 0%, #22141f 12%, #141a1e 28%, #110e18 55%, #110e18 100%);
   }
 }
 
@@ -863,7 +871,7 @@ body {
 
 :root[data-theme="dark"] .autumn-header,
 :root[data-theme="dark"] .autumn-surface .planning-calendar {
-  background: linear-gradient(180deg, #1c1917 0%, #261a12 45%, #4a230d 100%);
+  background: linear-gradient(180deg, #1b1724 0%, #22182a 45%, #3d2216 100%);
 }
 
 :root[data-theme="dark"] .autumn-surface .planning-calendar {
@@ -881,7 +889,7 @@ body {
 }
 
 :root[data-theme="dark"] .autumn-surface .planning-calendar-day {
-  background-color: #1c1917;
+  background-color: #1b1724;
 }
 
 :root[data-theme="dark"] .autumn-surface .planning-calendar-day-muted {
@@ -890,12 +898,12 @@ body {
 }
 
 :root[data-theme="dark"] .autumn-surface {
-  background: linear-gradient(165deg, #1f1510 0%, #22170f 18%, #1d1810 32%, #0c0a09 55%, #0c0a09 100%);
+  background: linear-gradient(165deg, #1d1520 0%, #211722 18%, #1c1622 32%, #110e18 55%, #110e18 100%);
 }
 
 :root[data-theme="dark"] .festive-header,
 :root[data-theme="dark"] .festive-surface .planning-calendar {
-  background: linear-gradient(180deg, #1c1917 0%, #221a16 48%, #2a1416 100%);
+  background: linear-gradient(180deg, #1b1724 0%, #201826 48%, #271526 100%);
 }
 
 :root[data-theme="dark"] .festive-surface .planning-calendar {
@@ -913,7 +921,7 @@ body {
 }
 
 :root[data-theme="dark"] .festive-surface .planning-calendar-day {
-  background-color: #1c1917;
+  background-color: #1b1724;
 }
 
 :root[data-theme="dark"] .festive-surface .planning-calendar-day-muted {
@@ -922,7 +930,7 @@ body {
 }
 
 :root[data-theme="dark"] .festive-surface {
-  background: linear-gradient(165deg, #1f1714 0%, #21141a 12%, #121a14 28%, #0c0a09 55%, #0c0a09 100%);
+  background: linear-gradient(165deg, #1e1622 0%, #22141f 12%, #141a1e 28%, #110e18 55%, #110e18 100%);
 }
 
 /* Checkboxes and radios in the app's ink colour (mirrored in dark mode like the palette). */

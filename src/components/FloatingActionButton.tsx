@@ -18,7 +18,15 @@ export const FAB_MENU_ITEM_CLASS =
 
 const FAB_POSITION = "fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 lg:hidden";
 const FAB_BUTTON =
-  "inline-flex h-14 w-14 items-center justify-center rounded-full bg-stone-900 text-white shadow-lg transition active:scale-95";
+  "inline-flex h-14 w-14 items-center justify-center rounded-full bg-stage text-[#fff] shadow-lg ring-2 ring-spotlight/60 transition active:scale-95";
+
+/** Menu entries rise in one after another, starting next to the "+" (the last one). */
+const MENU_ENTRY_MOTION =
+  "transition-[opacity,translate] duration-(--duration-medium) ease-stage starting:translate-y-2 starting:opacity-0 motion-reduce:transition-none";
+
+function entryDelay(index: number, count: number): string {
+  return `${(count - 1 - index) * 35}ms`;
+}
 
 function subscribeNothing(): () => void {
   return () => {};
@@ -144,7 +152,7 @@ function FloatingActionButtonContent({
       {open && (
         <div
           aria-hidden="true"
-          className="fixed inset-0 z-30 bg-stone-900/30 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/40 transition-opacity duration-(--duration-medium) ease-stage starting:opacity-0 motion-reduce:transition-none lg:hidden"
           onClick={() => setOpen(false)}
         />
       )}
@@ -171,8 +179,12 @@ function FloatingActionButtonContent({
               }
             }}
           >
-            {actions.map((action) => (
-              <li key={action.href}>
+            {actions.map((action, index) => (
+              <li
+                key={action.href}
+                className={MENU_ENTRY_MOTION}
+                style={{ transitionDelay: entryDelay(index, actions.length + extraItems.length) }}
+              >
                 <Link
                   href={action.href}
                   onClick={() => setOpen(false)}
@@ -183,7 +195,15 @@ function FloatingActionButtonContent({
               </li>
             ))}
             {extraItems.map((item, index) => (
-              <li key={`extra-${index}`}>{item}</li>
+              <li
+                key={`extra-${index}`}
+                className={MENU_ENTRY_MOTION}
+                style={{
+                  transitionDelay: entryDelay(actions.length + index, actions.length + extraItems.length),
+                }}
+              >
+                {item}
+              </li>
             ))}
           </ul>
         )}

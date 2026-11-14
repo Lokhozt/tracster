@@ -123,7 +123,8 @@ export function Switch({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
-        "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition disabled:opacity-50",
+        // 44px hit area around the 28px track (after:), the look stays compact.
+        "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition after:absolute after:-inset-2 disabled:opacity-50",
         checked ? "bg-emerald-600" : "bg-stone-300",
       )}
     >
@@ -157,7 +158,7 @@ export function SegmentedControl<Value extends string>({
     <div
       role="radiogroup"
       aria-label={label}
-      className={cn("flex rounded-xl bg-stone-100 p-1", className)}
+      className={cn("flex gap-0.5 rounded-xl border border-stone-200 bg-white p-0.5", className)}
     >
       {options.map((option) => {
         const selected = option.value === value;
@@ -169,8 +170,8 @@ export function SegmentedControl<Value extends string>({
             aria-checked={selected}
             onClick={() => onChange(option.value)}
             className={cn(
-              "min-h-10 flex-1 rounded-lg px-3 text-sm font-medium transition",
-              selected ? "bg-white text-stone-900 shadow-sm" : "text-stone-600 hover:text-stone-900",
+              "min-h-11 flex-1 rounded-lg px-3 text-sm font-medium whitespace-nowrap transition",
+              selected ? "bg-stone-900 text-white" : "text-stone-600 hover:bg-stone-100 hover:text-stone-900",
             )}
           >
             {option.label}

@@ -47,6 +47,7 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { serializeTag } from "@/lib/tags";
 import { isWhatsAppUrl } from "@/lib/whatsapp";
 import { aboveCardLink, cardLink, cn } from "@/lib/utils";
+import { ChevronRightIcon } from "@/components/icons";
 
 /**
  * Dates lists: upcoming first (closest at the top), then past ones (most recent first).
@@ -290,7 +291,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
                 className={cn("flex items-center justify-between gap-3", cardLink)}
               >
                 {t("eventsTab")}
-                <span aria-hidden="true" className="text-base text-stone-400">›</span>
+                <ChevronRightIcon />
               </ChoreographyTabLink>
             </h2>
             <p className="text-sm text-stone-600">
@@ -319,7 +320,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
                   className={cn("flex items-center justify-between gap-3", cardLink)}
                 >
                   {t("pinnedResources")}
-                  <span aria-hidden="true" className="text-base text-stone-400">›</span>
+                  <ChevronRightIcon />
                 </ChoreographyTabLink>
               </h2>
               <ul className="divide-y divide-stone-100">
@@ -354,7 +355,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
                 className={cn("flex items-center justify-between gap-3", cardLink)}
               >
                 {t("people")}
-                <span aria-hidden="true" className="text-base text-stone-400">›</span>
+                <ChevronRightIcon />
               </ChoreographyTabLink>
             </h2>
             <p className="text-stone-900">
@@ -384,7 +385,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
                   className={cn("flex items-center justify-between gap-3", cardLink)}
                 >
                   {tc("groups")}
-                  <span aria-hidden="true" className="text-base text-stone-400">›</span>
+                  <ChevronRightIcon />
                 </ChoreographyTabLink>
               </h2>
               {groups.length === 0 ? (
@@ -424,7 +425,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
                   className={cn("flex items-center justify-between gap-3", cardLink)}
                 >
                   {tc("adminActions")}
-                  <span aria-hidden="true" className="text-base text-red-400">›</span>
+                  <ChevronRightIcon className="text-red-400" />
                 </ChoreographyTabLink>
               </h2>
               <p className="text-sm text-red-700">
@@ -744,6 +745,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
 
   return (
     <AppShell
+      narrow
       title={choreography.title}
       titleActions={
         <ChoreographyHeaderActions

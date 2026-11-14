@@ -28,6 +28,7 @@ export function NextUpCard({
   location,
   children,
   footer,
+  layout = "block",
 }: {
   label: string;
   href?: string;
@@ -41,6 +42,8 @@ export function NextUpCard({
   children?: React.ReactNode;
   /** A secondary line under the block (e.g. the next performance). */
   footer?: React.ReactNode;
+  /** "strip": a single line on wide screens (xl+: Planning, event page). */
+  layout?: "block" | "strip";
 }) {
   const t = useTranslations("Components");
   const locale = useLocale();
@@ -72,10 +75,18 @@ export function NextUpCard({
     }
   }
 
+  // "strip" (desktop only): one line — time, then label/title/details, then the pill — so the
+  // block does not push the calendar down. Phones always get the stacked block.
+  const strip = layout === "strip";
   return (
     <div className="space-y-2">
-      <div className="next-up-in relative overflow-hidden rounded-2xl bg-stage p-5 text-[#fff] shadow-lg sm:p-6">
-        <div className="flex items-center justify-between gap-3">
+      <div
+        className={cn(
+          "next-up-in relative overflow-hidden rounded-2xl bg-stage p-5 text-[#fff] shadow-lg sm:p-6",
+          strip && "xl:flex xl:items-center xl:gap-8 xl:py-4",
+        )}
+      >
+        <div className={cn("flex items-center justify-between gap-3", strip && "xl:hidden")}>
           {href ? (
             <Link href={href} className={cn("text-sm font-semibold text-[#fff]/75", cardLink)}>
               {label}
@@ -84,14 +95,17 @@ export function NextUpCard({
             <p className="text-sm font-semibold text-[#fff]/75">{label}</p>
           )}
           {relative && (
-            <span className="rounded-full bg-spotlight px-2.5 py-0.5 text-xs font-semibold text-spotlight-ink">
+            <span className="rounded-full bg-spotlight px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap text-spotlight-ink">
               {relative}
             </span>
           )}
         </div>
-        <div className="mt-3 flex items-end gap-3">
-          <span className="font-display text-6xl leading-[0.85] tabular-nums" suppressHydrationWarning>
-            {now ? time.format(start) : " "}
+        <div className={cn("mt-3 flex items-end gap-3", strip && "xl:mt-0 xl:shrink-0")}>
+          <span
+            className={cn("font-display text-6xl leading-[0.85] tabular-nums", strip && "xl:text-5xl")}
+            suppressHydrationWarning
+          >
+            {now ? time.format(start) : "\u00a0"}
           </span>
           <span className="pb-1 font-display text-xl text-[#fff]/80" suppressHydrationWarning>
             {now ? day.format(start) : ""}
@@ -105,12 +119,40 @@ export function NextUpCard({
             )}
           </span>
         </div>
-        {title && <p className="mt-3 text-lg font-semibold">{title}</p>}
-        {(subtitle || location) && (
-          <p className={cn("text-sm text-[#fff]/70", !title && "mt-3")}>{[subtitle, location].filter(Boolean).join(" · ")}</p>
+        <div className={cn(strip && "xl:min-w-0 xl:flex-1")}>
+          {strip && (
+            <div className="hidden xl:block">
+              {href ? (
+              <Link href={href} className={cn("text-sm font-semibold text-[#fff]/75", cardLink)}>
+                {label}
+              </Link>
+          ) : (
+              <p className="text-sm font-semibold text-[#fff]/75">{label}</p>
+            )}
+            </div>
+          )}
+          {title && <p className={cn("mt-3 text-lg font-semibold", strip && "xl:mt-0.5 xl:truncate")}>{title}</p>}
+          {(subtitle || location) && (
+            <p className={cn("text-sm text-[#fff]/70", !title && "mt-3", strip && "xl:mt-0 xl:truncate")}>
+              {[subtitle, location].filter(Boolean).join(" · ")}
+            </p>
+          )}
+        </div>
+        {strip && relative && (
+          <span className="hidden shrink-0 self-start rounded-full bg-spotlight px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap text-spotlight-ink xl:inline-block">
+            {relative}
+          </span>
         )}
         {children && (
-          <div className={cn("mt-4 rounded-xl bg-stone-50 p-3 text-stone-900", aboveCardLink)}>{children}</div>
+          <div
+            className={cn(
+              "mt-4 rounded-xl bg-stone-50 p-3 text-stone-900",
+              strip && "xl:mt-0 xl:shrink-0",
+              aboveCardLink,
+            )}
+          >
+            {children}
+          </div>
         )}
       </div>
       {footer}

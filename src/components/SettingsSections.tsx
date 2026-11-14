@@ -101,7 +101,7 @@ export function SectionNav({
               onClick={closeSection}
               aria-label={categoriesLabel}
               title={categoriesLabel}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-100 hover:text-stone-900 lg:hidden"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-100 hover:text-stone-900 lg:hidden"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M19 12H5M11 6l-6 6 6 6" />
@@ -116,7 +116,7 @@ export function SectionNav({
         </div>
       )}
       {intro && (
-        <p className={cn("mb-6 text-stone-600", mobileOpen && "max-lg:hidden")}>{intro}</p>
+        <p className={cn("mb-6 max-w-prose text-stone-600", mobileOpen && "max-lg:hidden")}>{intro}</p>
       )}
       <div className="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start lg:gap-8">
         <nav

@@ -99,7 +99,7 @@ export function BottomTabBar({ seasonalTheme = null }: { seasonalTheme?: Seasona
                   </span>
                   <span
                     className={cn(
-                      "text-[11px] leading-none max-[360px]:text-[10px]",
+                      "text-xs leading-none max-[360px]:text-[11px]",
                       isActive ? "font-semibold text-stone-900" : "text-stone-600",
                     )}
                   >
@@ -129,7 +129,7 @@ export function BottomTabBar({ seasonalTheme = null }: { seasonalTheme?: Seasona
                 </span>
                 <span
                   className={cn(
-                    "max-w-full truncate px-0.5 text-[11px] leading-none max-[360px]:text-[10px]",
+                    "max-w-full truncate px-0.5 text-xs leading-none max-[360px]:text-[11px]",
                     isActive ? "font-semibold text-stone-900" : "text-stone-600",
                   )}
                 >

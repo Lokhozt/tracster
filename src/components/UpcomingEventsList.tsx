@@ -96,7 +96,7 @@ function BarSlotRow({
   return (
     <div className={cn("mt-2 flex flex-wrap items-center gap-2", aboveCardLink)}>
       {event.isBarVolunteer ? (
-        <span className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-xs font-semibold text-[#fff]">
+        <span className="rounded-full bg-emerald-700 px-2.5 py-0.5 text-xs font-semibold text-white">
           {t("barChipMine")}
         </span>
       ) : (
@@ -327,7 +327,7 @@ export function UpcomingEventsList({
                     {weekdayFormatter.format(group.day)}
                   </p>
                 </div>
-                <div className="grid min-w-0 flex-1 gap-2 @2xl:grid-cols-2">
+                <div className="grid min-w-0 flex-1 gap-2 @2xl:has-[>:nth-child(2)]:grid-cols-2">
                   {group.events.map((event) => (
               <EventCard key={event.id} kind={event.typeKind} className="relative">
                 <div className="flex items-start justify-between gap-2">

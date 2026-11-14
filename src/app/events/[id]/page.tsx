@@ -12,7 +12,6 @@ import {
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
 import { JoinRequestsList } from "@/components/JoinRequestsList";
 import { NextUpCard } from "@/components/NextUpCard";
-import { cn } from "@/lib/utils";
 import { RepresentationChoreographiesSection } from "@/components/RepresentationForms";
 import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
@@ -215,12 +214,46 @@ export default async function EventDetailPage({ params }: PageProps) {
   return (
     <AppShell
       title={event.displayTitle}
+      narrow
       titleActions={
-        event.type.kind === "DEMONSTRATION" &&
-        event.whatsappUrl &&
-        isWhatsAppUrl(event.whatsappUrl) ? (
-          <WhatsAppLink href={event.whatsappUrl} label={t("openWhatsapp")} />
-        ) : undefined
+        <>
+          {event.type.kind === "DEMONSTRATION" &&
+            event.whatsappUrl &&
+            isWhatsAppUrl(event.whatsappUrl) && (
+              <WhatsAppLink href={event.whatsappUrl} label={t("openWhatsapp")} />
+            )}
+          {/* Desktop: the page's actions on the title row (phones: "Je viens" below, the rest in "+"). */}
+          <div className="hidden items-center gap-2 lg:flex">
+            {generic && (
+          <JoinAsParticipantControls
+            joinUrl={`/api/events/${id}/join`}
+            requestUrl={`/api/events/${id}/join-requests`}
+            allowJoin={eventRecord.allowParticipantJoin}
+            allowRequest={eventRecord.allowJoinRequests}
+            allowLeave
+            isParticipant={isParticipant}
+            hasPendingRequest={hasPendingRequest}
+            hasUpcomingSeries={event.hasUpcomingSeriesEvents}
+          />
+            )}
+            {canEdit && (
+              <Link
+                href={`/events/${id}/edit`}
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-4 text-sm font-medium text-stone-900 transition hover:bg-stone-100"
+              >
+                {t("editEvent")}
+              </Link>
+            )}
+            {canCreate && (
+              <Link
+                href={`/events/new?copyFrom=${id}`}
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-4 text-sm font-medium text-stone-900 transition hover:bg-stone-100"
+              >
+                {t("duplicateEvent")}
+              </Link>
+            )}
+          </div>
+        </>
       }
     >
       <FloatingActionButton
@@ -233,7 +266,7 @@ export default async function EventDetailPage({ params }: PageProps) {
       />
 
       {generic && (
-        <div className="mb-6">
+        <div className="mb-6 lg:hidden">
           <JoinAsParticipantControls
             joinUrl={`/api/events/${id}/join`}
             requestUrl={`/api/events/${id}/join-requests`}
@@ -250,6 +283,7 @@ export default async function EventDetailPage({ params }: PageProps) {
       {/* When and where: the page's bold element, like "Next up" on the planning. */}
       <div className="mb-6">
         <NextUpCard
+          layout="strip"
           label={event.type.name}
           startsAt={event.startsAt}
           endsAt={event.endsAt}
@@ -258,9 +292,9 @@ export default async function EventDetailPage({ params }: PageProps) {
         />
       </div>
 
-      {/* Other details, plus edit/duplicate on desktop (phones have them in the "+" menu). */}
-      {(hasDetails || canEdit || canCreate) && (
-      <Card className={cn("mb-6", !hasDetails && "max-lg:hidden")}>
+      {/* Other details (edit/duplicate: title row on desktop, "+" menu on phones). */}
+      {hasDetails && (
+      <Card className="mb-6">
         {hasDetails && (
         <div className="grid gap-2 text-sm text-stone-600">
           {event.choreographyTitle && (
@@ -297,27 +331,6 @@ export default async function EventDetailPage({ params }: PageProps) {
             </p>
           )}
         </div>
-        )}
-        {(canEdit || canCreate) && (
-          <div className={cn("hidden flex-wrap gap-2 lg:flex", hasDetails && "mt-4")}>
-            {canEdit && (
-              <Link
-                href={`/events/${id}/edit`}
-                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-900 transition hover:bg-stone-100"
-              >
-                {t("editEvent")}
-              </Link>
-            )}
-            {/* Duplicating moved here from the former events list. */}
-            {canCreate && (
-              <Link
-                href={`/events/new?copyFrom=${id}`}
-                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-900 transition hover:bg-stone-100"
-              >
-                {t("duplicateEvent")}
-              </Link>
-            )}
-          </div>
         )}
       </Card>
       )}
