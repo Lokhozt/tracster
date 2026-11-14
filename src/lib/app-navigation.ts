@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 /**
  * In-app navigation history for this tab, so that "back" behaves like a native app:
@@ -79,6 +79,7 @@ export function NavigationTracker(): null {
   const pathname = usePathname();
   const search = useSearchParams().toString();
   const router = useRouter();
+  const previousPathname = useRef(pathname);
 
   useEffect(() => {
     function onPopState() {
@@ -90,6 +91,13 @@ export function NavigationTracker(): null {
 
   useEffect(() => {
     const path = currentPath();
+    // A new page (not back/forward, not an in-page ?section= or ?create= change) opens at its
+    // top. The router only scrolls when the new page's top is off screen, so after a small
+    // scroll the page opened with its title under the sticky header.
+    if (pathname !== previousPathname.current && !pendingPop) {
+      window.scrollTo({ top: 0 });
+    }
+    previousPathname.current = pathname;
     const stack = readStack();
     let nextStack: string[];
     if (pendingPop) {

@@ -8,6 +8,7 @@ import { AutumnAccent } from "@/components/AutumnAccent";
 import { BottomTabBar } from "@/components/BottomTabBar";
 import { ChristmasLights } from "@/components/ChristmasLights";
 import { HeaderBar } from "@/components/HeaderBar";
+import { HeaderHeight } from "@/components/HeaderHeight";
 import { PageBackButton } from "@/components/PageBackButton";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getSeasonalTheme } from "@/lib/festive-season";
@@ -72,6 +73,7 @@ export async function AppFrame({ children }: { children: React.ReactNode }) {
       )}
       {/* Signed-in desktops navigate with the sidebar; the header is for phones, tablets and visitors. */}
       <div
+        data-app-header=""
         className={cn("sticky top-0 z-40", user && "lg:hidden")}
         // Stays put above the sliding pages during tab transitions.
         style={{ viewTransitionName: "app-header" }}
@@ -92,6 +94,7 @@ export async function AppFrame({ children }: { children: React.ReactNode }) {
         {seasonalTheme === "christmas" && <ChristmasLights />}
         {seasonalTheme === "autumn" && <AutumnAccent />}
       </div>
+      <HeaderHeight />
       {children}
       {/* Signed-in users find the legal links in the sidebar (desktop) or on the Compte page. */}
       {!user && <SiteFooter className="hidden sm:block" />}

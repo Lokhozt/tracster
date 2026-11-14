@@ -94,7 +94,7 @@ function BarSlotRow({
   }
 
   return (
-    <div className={cn("mt-2 flex flex-wrap items-center gap-2", aboveCardLink)}>
+    <div className="flex flex-wrap items-center gap-2">
       {event.isBarVolunteer ? (
         <span className="rounded-full bg-emerald-700 px-2.5 py-0.5 text-xs font-semibold text-white">
           {t("barChipMine")}
@@ -387,25 +387,31 @@ export function UpcomingEventsList({
                       <AvailabilityBadge status={event.availabilityStatus} />
                     </div>
                   )}
-                  {/* Join/leave pill: shows the participation state and toggles it. */}
-                  {hasJoinPill(event) && !isFinished(event) && (
-                    <div className={cn("shrink-0", aboveCardLink)}>
-                      <JoinAsParticipantControls
-                        joinUrl={`/api/events/${event.id}/join`}
-                        requestUrl={`/api/events/${event.id}/join-requests`}
-                        allowJoin={event.allowParticipantJoin}
-                        allowRequest={event.allowJoinRequests}
-                        allowLeave
-                        isParticipant={event.isEventParticipant}
-                        hasPendingRequest={event.hasPendingJoinRequest}
-                        hasUpcomingSeries={event.hasUpcomingSeriesEvents}
-                      />
-                    </div>
-                  )}
                 </div>
 
-                {event.barSlotsFilled !== null && (
-                  <BarSlotRow event={event} showSignup={showBarSignup && !isFinished(event)} />
+                {/* Bottom row: bar chip on the left, join/leave pill on the right. The pill lives
+                    here, not beside the title: "✓ Je participe" is wider than "Je viens", and
+                    next to the title it squeezed the text when you joined. */}
+                {(event.barSlotsFilled !== null || (hasJoinPill(event) && !isFinished(event))) && (
+                  <div className={cn("mt-2 flex flex-wrap items-center gap-2", aboveCardLink)}>
+                    {event.barSlotsFilled !== null && (
+                      <BarSlotRow event={event} showSignup={showBarSignup && !isFinished(event)} />
+                    )}
+                    {hasJoinPill(event) && !isFinished(event) && (
+                      <div className="ml-auto shrink-0">
+                        <JoinAsParticipantControls
+                          joinUrl={`/api/events/${event.id}/join`}
+                          requestUrl={`/api/events/${event.id}/join-requests`}
+                          allowJoin={event.allowParticipantJoin}
+                          allowRequest={event.allowJoinRequests}
+                          allowLeave
+                          isParticipant={event.isEventParticipant}
+                          hasPendingRequest={event.hasPendingJoinRequest}
+                          hasUpcomingSeries={event.hasUpcomingSeriesEvents}
+                        />
+                      </div>
+                    )}
+                  </div>
                 )}
                 {isRehearsalScheduleEvent(event) && event.isMember && (
                   <div className={cn("mt-3 border-t border-stone-100 pt-3", aboveCardLink)}>

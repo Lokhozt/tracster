@@ -95,7 +95,8 @@ html {
 /* Phones/tablets: keyboard focus never lands under the sticky header or the bottom tab bar. */
 @media (max-width: 1023px) {
   html {
-    scroll-padding-top: 4.5rem;
+    /* The header's measured height (HeaderHeight), so pages never open with their top hidden. */
+    scroll-padding-top: var(--app-header-h, 5.75rem);
     scroll-padding-bottom: calc(6rem + env(safe-area-inset-bottom));
   }
 }
