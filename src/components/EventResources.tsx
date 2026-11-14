@@ -20,7 +20,18 @@ import type {
 } from "@/lib/choreography-resources";
 import { OfficeFileViewer } from "@/components/OfficeFileViewer";
 import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
-import { Button, Card, FormActions, Input, Label, Select, Textarea } from "@/components/ui";
+import {
+  Button,
+  Card,
+  Field,
+  FormActions,
+  FormError,
+  Input,
+  Label,
+  SegmentedControl,
+  Select,
+  Textarea,
+} from "@/components/ui";
 import { useAppNavigation } from "@/lib/app-navigation";
 import { cn } from "@/lib/utils";
 
@@ -454,7 +465,7 @@ function EditResourceForm({
           <option value="CHOREOGRAPHER">{t("resourceVisibility.CHOREOGRAPHER")}</option>
         </Select>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <FormActions>
         <Button type="submit" disabled={saving}>
           {saving ? t("saving") : t("save")}
@@ -547,7 +558,7 @@ function ResourceCard({
             >
               {deleting ? t("deleting") : t("delete")}
             </button>
-            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+            <FormError>{error}</FormError>
           </div>
         </FilterSheet>
       )}
@@ -651,14 +662,19 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
 
   return (
     <form onSubmit={submit}>
-      <h3 className="mb-4 font-semibold">{t("addResource")}</h3>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor={`resource-kind-${choreographyId}`}>{t("resourceType")}</Label>
-          <Select id={`resource-kind-${choreographyId}`} className="w-full" value={kind} onChange={(event) => setKind(event.target.value as "LINK" | "FILE")}>
-            <option value="LINK">{t("resourceLink")}</option>
-            <option value="FILE">{t("resourceFile")}</option>
-          </Select>
+          <Field label={t("resourceType")}>
+            <SegmentedControl
+              label={t("resourceType")}
+              value={kind}
+              onChange={setKind}
+              options={[
+                { value: "LINK", label: t("resourceLink") },
+                { value: "FILE", label: t("resourceFile") },
+              ]}
+            />
+          </Field>
         </div>
         <div>
           <Label htmlFor={`resource-visibility-${choreographyId}`}>{t("visibility")}</Label>
@@ -702,7 +718,7 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
           </div>
         </div>
       )}
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <FormActions className="mt-4">
         <Button type="submit" disabled={saving}>
           {saving ? t("savingResource") : t("addResource")}

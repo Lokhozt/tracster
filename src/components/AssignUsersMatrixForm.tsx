@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Button, FormActions } from "@/components/ui";
+import { Button, FormActions, FormError } from "@/components/ui";
 import {
   UserSelectionMatrix,
   type AssignUserOption,
@@ -87,7 +87,7 @@ export function AssignUsersMatrixForm({
         excludedUserIds={assignedUserIds}
         maxSelection={maxSelection}
       />
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <FormActions>
         <Button type="submit" disabled={loading || selectedUserIds.length === 0} variant={buttonVariant}>
           {loading

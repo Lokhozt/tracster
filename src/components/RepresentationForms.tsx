@@ -3,11 +3,12 @@
 import { useLocale, useTranslations } from "next-intl";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
-import { useAddFormRequest } from "@/components/ChoreographyTabs";
+import { FormSheet } from "@/components/Sheet";
+import { useCreateSheet } from "@/lib/create-sheet";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
 import { EditIconLink } from "@/components/EditIconLink";
 import {
@@ -17,7 +18,16 @@ import {
   selectionFromRecord,
   type LocationSelection,
 } from "@/components/LocationPicker";
-import { Button, Card, FormActions, Input, Label, Textarea } from "@/components/ui";
+import {
+  Button,
+  Card,
+  FormActions,
+  FormError,
+  Input,
+  Label,
+  SegmentedControl,
+  Textarea,
+} from "@/components/ui";
 import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 import {
   addOneHour,
@@ -275,7 +285,7 @@ export function CreateRepresentationForm({
           ))}
         </fieldset>
       )}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <FormActions>
         <Button type="submit" disabled={loading}>
           {loading ? t("creating") : localizedSubmitLabel}
@@ -366,7 +376,7 @@ export function EditRepresentationForm({
           notesId={`edit-notes-${representation.id}`}
           showNotes
         />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        <FormError>{error}</FormError>
         <FormActions>
           {onCancel && (
             <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
@@ -394,18 +404,15 @@ export function EditRepresentationForm({
 
 function CreateRepresentationForChoreographyForm({
   choreographyId,
-  eventTypes,
   onSuccess,
   onCancel,
 }: {
   choreographyId: string;
-  eventTypes: SerializedEventType[];
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
-  const representationType = eventTypes.find((type) => type.kind === "REPRESENTATION");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -457,20 +464,7 @@ function CreateRepresentationForChoreographyForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <div>
-        <Label htmlFor="choreography-representation-type">{t("type")}</Label>
-        <select
-          id="choreography-representation-type"
-          disabled
-          value={representationType?.id ?? ""}
-          className="mt-1 w-full rounded-lg border border-stone-300 bg-stone-50 px-3 py-2 text-base sm:text-sm"
-        >
-          <option value={representationType?.id ?? ""}>
-            {representationType?.name ?? t("representation")}
-          </option>
-        </select>
-      </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
       <RepresentationFields
         title={title}
         locationSelection={locationSelection}
@@ -484,7 +478,7 @@ function CreateRepresentationForChoreographyForm({
         titleId="choreography-representation-title"
         locationId="choreography-representation-location"
       />
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <FormActions>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
@@ -614,7 +608,7 @@ function LinkRepresentationForm({
           ))}
         </select>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <FormActions>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
@@ -696,57 +690,39 @@ export function RepresentationsSection({
   actionsInFloatingMenu?: boolean;
 }) {
   const t = useTranslations("Components");
-  const [showAddForm, setShowAddForm] = useState(false);
-  const addRequest = useAddFormRequest("representation");
-  const addFormOpen = showAddForm || addRequest.requested;
-  const addFormRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (addRequest.requested) {
-      addFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [addRequest.requested]);
-  function closeAddForm() {
-    setShowAddForm(false);
-    addRequest.clear();
-  }
+  const addSheet = useCreateSheet("representation");
+  const closeAddForm = addSheet.close;
   const [addMode, setAddMode] = useState<"create" | "link">("create");
 
   return (
     <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">{t("representations")}</h2>
-        {canEdit && !addFormOpen && (
+        {canEdit && (
           <span className={cn(actionsInFloatingMenu && "hidden lg:inline")}>
-            <Button type="button" onClick={() => setShowAddForm(true)}>
+            <Button type="button" onClick={addSheet.show}>
               {t("addRepresentation")}
             </Button>
           </span>
         )}
       </div>
 
-      {canEdit && addFormOpen && (
-        <div ref={addFormRef} className="mb-6 scroll-mt-20 rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant={addMode === "create" ? "primary" : "secondary"}
-              onClick={() => setAddMode("create")}
-            >
-              {t("createNew")}
-            </Button>
-            <Button
-              type="button"
-              variant={addMode === "link" ? "primary" : "secondary"}
-              onClick={() => setAddMode("link")}
-            >
-              {t("linkExisting")}
-            </Button>
-          </div>
+      {canEdit && (
+        <FormSheet open={addSheet.open} onClose={addSheet.close} title={t("addRepresentation")}>
+          <SegmentedControl
+            className="mb-6"
+            label={t("addRepresentation")}
+            value={addMode}
+            onChange={setAddMode}
+            options={[
+              { value: "create", label: t("createNew") },
+              { value: "link", label: t("linkExisting") },
+            ]}
+          />
 
           {addMode === "create" ? (
             <CreateRepresentationForChoreographyForm
               choreographyId={choreographyId}
-              eventTypes={eventTypes}
               onSuccess={closeAddForm}
               onCancel={closeAddForm}
             />
@@ -757,7 +733,7 @@ export function RepresentationsSection({
               onCancel={closeAddForm}
             />
           )}
-        </div>
+        </FormSheet>
       )}
 
       {representations.length === 0 ? (
@@ -921,7 +897,7 @@ function LinkChoreographyForm({
           </select>
         </div>
       )}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <FormActions>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
@@ -958,7 +934,7 @@ export function RepresentationChoreographiesSection({
 }) {
   const t = useTranslations("Components");
   const localizedDescription = description ?? t("representationPiecesHelp");
-  const [showLinkForm, setShowLinkForm] = useState(false);
+  const linkSheet = useCreateSheet("linked-choreography");
 
   return (
     <section className="mt-2">
@@ -969,22 +945,22 @@ export function RepresentationChoreographiesSection({
             {localizedDescription}
           </p>
         </div>
-        {canEdit && !showLinkForm && (
-          <Button type="button" onClick={() => setShowLinkForm(true)}>
+        {canEdit && (
+          <Button type="button" onClick={linkSheet.show}>
             {t("linkChoreography")}
           </Button>
         )}
       </div>
 
-      {canEdit && showLinkForm && (
-        <Card className="mb-4">
+      {canEdit && (
+        <FormSheet open={linkSheet.open} onClose={linkSheet.close} title={t("linkChoreography")}>
           <LinkChoreographyForm
             representationId={representationId}
             allowGroup={allowGroup}
-            onSuccess={() => setShowLinkForm(false)}
-            onCancel={() => setShowLinkForm(false)}
+            onSuccess={linkSheet.close}
+            onCancel={linkSheet.close}
           />
-        </Card>
+        </FormSheet>
       )}
 
       {choreographies.length === 0 ? (

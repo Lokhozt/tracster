@@ -2,13 +2,13 @@
 
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { requestAddForm } from "@/components/ChoreographyTabs";
 import { FAB_MENU_ITEM_CLASS, FloatingActionButton } from "@/components/FloatingActionButton";
+import { openCreateSheet } from "@/lib/create-sheet";
 
 /**
  * Phones/tablets: the Events section's actions in the floating "+" menu (schedule a rehearsal,
  * add a representation / demonstration, rehearsal statistics for admins and the owner). Picking an "add" entry opens that
- * section's form via `?add=` (see useAddFormRequest). Only shown while the Events section is open.
+ * section's form sheet via `?create=` (see useCreateSheet). Only shown while the Events section is open.
  */
 export function ChoreographyEventActions({
   sectionId,
@@ -58,7 +58,7 @@ export function ChoreographyEventActions({
           type="button"
           data-fab-close=""
           className={FAB_MENU_ITEM_CLASS}
-          onClick={() => requestAddForm(item.kind)}
+          onClick={() => openCreateSheet(item.kind)}
         >
           {item.label}
         </button>

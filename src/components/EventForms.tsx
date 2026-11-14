@@ -4,10 +4,11 @@ import { useLocale, useTranslations } from "next-intl";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
-import { useAddFormRequest } from "@/components/ChoreographyTabs";
+import { FormSheet } from "@/components/Sheet";
+import { useCreateSheet } from "@/lib/create-sheet";
 import { EditIconLink } from "@/components/EditIconLink";
 import {
   emptyLocationSelection,
@@ -19,7 +20,18 @@ import {
 import type { EventCreateCopy } from "@/lib/event-create-copy";
 import { ParticipantConflictWarnings } from "@/components/ParticipantConflictWarnings";
 import { RehearsalAudienceSelect, type GroupOption } from "@/components/GroupForms";
-import { Button, FormActions, Input, Label, Select, Textarea } from "@/components/ui";
+import {
+  Button,
+  Field,
+  FormActions,
+  FormError,
+  FormSection,
+  Input,
+  Label,
+  Select,
+  Textarea,
+  ToggleRow,
+} from "@/components/ui";
 import { sortUsersByName } from "@/lib/users";
 import { AssignUsersMatrixForm } from "@/components/AssignUsersMatrixForm";
 import { UserSelectionMatrix } from "@/components/UserSelectionMatrix";
@@ -170,6 +182,7 @@ export function CreateEventForm({
   lockChoreography = false,
   copyFrom,
   onSuccess,
+  onCancel,
   redirectBasePath,
 }: {
   eventTypes: SerializedEventType[];
@@ -182,6 +195,8 @@ export function CreateEventForm({
   lockChoreography?: boolean;
   copyFrom?: EventCreateCopy;
   onSuccess?: (eventId: string) => void;
+  /** Adds an "Annuler" button next to the submit button. */
+  onCancel?: () => void;
   redirectBasePath?: string;
 }) {
   const t = useTranslations("Components");
@@ -393,220 +408,243 @@ export function CreateEventForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="event-type">{t("type")}</Label>
-        <Select
-          id="event-type"
-          className="mt-1 block w-full"
-          value={typeId}
-          disabled={lockType}
-          onChange={(event) => {
-            const nextTypeId = event.target.value;
-            const nextType = selectedEventType(eventTypes, nextTypeId);
-            setTypeId(nextTypeId);
-            if (nextType?.kind === "REHEARSAL") {
-              const choreographyTitle = choreographyOptions?.find(
-                (choreography) => choreography.id === choreographyId,
-              )?.title;
-              setTitle((current) => current || choreographyTitle || "");
-            }
-          }}
-        >
-          {eventTypes.map((type) => (
-            <option key={type.id} value={type.id}>
-              {type.name}
-            </option>
-          ))}
-        </Select>
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="space-y-4">
+        {/* A locked type is already in the sheet's title ("Programmer une répétition"…). */}
+        {!lockType && (
+          <Field label={t("type")} htmlFor="event-type">
+            <Select
+              id="event-type"
+              className="block w-full"
+              value={typeId}
+              onChange={(event) => {
+                const nextTypeId = event.target.value;
+                const nextType = selectedEventType(eventTypes, nextTypeId);
+                setTypeId(nextTypeId);
+                if (nextType?.kind === "REHEARSAL") {
+                  const choreographyTitle = choreographyOptions?.find(
+                    (choreography) => choreography.id === choreographyId,
+                  )?.title;
+                  setTitle((current) => current || choreographyTitle || "");
+                }
+              }}
+            >
+              {eventTypes.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        )}
+        <Field label={t("title")} htmlFor="event-title">
+          <Input
+            id="event-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required={generic}
+            placeholder={eventType?.name ?? t("event")}
+          />
+        </Field>
       </div>
-      <div>
-        <Label htmlFor="event-title">{t("title")}</Label>
-        <Input
-          id="event-title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required={generic}
-          placeholder={eventType?.name ?? t("event")}
+
+      <FormSection title={t("formSectionWhen")}>
+        <EventScheduleFields
+          start={start}
+          end={end}
+          onStartChange={handleStartChange}
+          onEndChange={setEnd}
         />
-      </div>
-      <EventScheduleFields
-        start={start}
-        end={end}
-        onStartChange={handleStartChange}
-        onEndChange={setEnd}
-      />
-      {allowsRepeat && (
-        <div className="space-y-3">
-          <label className="flex items-center gap-2 text-sm text-stone-700">
-            <input
-              type="checkbox"
-              checked={repeat}
-              onChange={(event) => setRepeat(event.target.checked)}
-              className="rounded border-stone-300"
-            />
-            {t("repeatEvent")}
-          </label>
-          {repeat && (
-            <EventRepeatFields
-              weekday={repeatWeekday}
-              weeks={repeatWeeks}
-              onWeekdayChange={setRepeatWeekday}
-              onWeeksChange={setRepeatWeeks}
-            />
-          )}
-        </div>
-      )}
+        {allowsRepeat && (
+          <div className="space-y-3">
+            <ToggleRow label={t("repeatEvent")} checked={repeat} onChange={setRepeat} />
+            {repeat && (
+              <EventRepeatFields
+                weekday={repeatWeekday}
+                weeks={repeatWeeks}
+                onWeekdayChange={setRepeatWeekday}
+                onWeeksChange={setRepeatWeeks}
+              />
+            )}
+          </div>
+        )}
+      </FormSection>
+
+      {/* One field: its own label is enough, no section heading. */}
       <LocationPicker
         id="event-location"
         value={locationSelection}
         onChange={setLocationSelection}
       />
-      {eventType?.kind === "REHEARSAL" && choreographyOptions && (
-        <div>
-          <Label htmlFor="event-choreography">{t("choreography")}</Label>
-          <Select
-            id="event-choreography"
-            className="mt-1 block w-full"
-            value={choreographyId}
-            disabled={lockChoreography}
-            onChange={(event) => {
-              const nextChoreographyId = event.target.value;
-              const currentChoreographyTitle = choreographyOptions.find(
-                (choreography) => choreography.id === choreographyId,
-              )?.title;
-              const nextChoreographyTitle = choreographyOptions.find(
-                (choreography) => choreography.id === nextChoreographyId,
-              )?.title;
-              setChoreographyId(nextChoreographyId);
-              setTitle((current) =>
-                !current || current === currentChoreographyTitle
-                  ? (nextChoreographyTitle ?? "")
-                  : current,
-              );
-              setAudience("");
-            }}
-          >
-            <option value="">{t("none")}</option>
-            {choreographyOptions.map((choreography) => (
-              <option key={choreography.id} value={choreography.id}>
-                {choreography.title}
-              </option>
-            ))}
-          </Select>
-        </div>
-      )}
-      {eventType?.kind === "REHEARSAL" && choreographyId && (
-        <>
-          <RehearsalAudienceSelect
-            groups={groupOptions}
-            value={audience}
-            onChange={setAudience}
-          />
-          <ParticipantConflictWarnings
-            choreographyId={choreographyId}
-            startsAt={dateTimePartsToDate(start)}
-            endsAt={dateTimePartsToDate(end)}
-            groupId={audience}
-          />
-        </>
-      )}
-      {eventType?.kind === "DEMONSTRATION" && demonstrationChoreographyId && (
-        <RehearsalAudienceSelect
-          id="demonstration-audience"
-          groups={groupOptions}
-          value={audience}
-          onChange={setAudience}
-        />
-      )}
-      {allowsChoreographyLinks && choreographyOptions && choreographyOptions.length > 0 && (
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-medium text-stone-700">
-            {t("linkChoreographiesOptional")}
-          </legend>
-          {choreographyOptions.map((choreography) => (
-            <label key={choreography.id} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={selectedChoreographyIds.includes(choreography.id)}
-                disabled={lockChoreography && choreography.id === defaultChoreographyId}
-                onChange={(event) => {
-                  setSelectedChoreographyIds((current) =>
-                    event.target.checked
-                      ? [...current, choreography.id]
-                      : current.filter((id) => id !== choreography.id),
-                  );
-                }}
-                className="rounded border-stone-300"
+
+      {(() => {
+        const showChoreographySelect =
+          eventType?.kind === "REHEARSAL" && choreographyOptions && !lockChoreography;
+        const showAudience =
+          (eventType?.kind === "REHEARSAL" && choreographyId) ||
+          (eventType?.kind === "DEMONSTRATION" && demonstrationChoreographyId);
+        const showLinks =
+          allowsChoreographyLinks && choreographyOptions && choreographyOptions.length > 0;
+        const showPeople = party || (generic && participantChoices.length > 0);
+        if (!showChoreographySelect && !showAudience && !showLinks && !showPeople) {
+          return null;
+        }
+        return (
+          <FormSection title={t("formSectionWho")}>
+            {showChoreographySelect && (
+              <Field label={t("choreography")} htmlFor="event-choreography">
+                <Select
+                  id="event-choreography"
+                  className="block w-full"
+                  value={choreographyId}
+                  onChange={(event) => {
+                    const nextChoreographyId = event.target.value;
+                    const currentChoreographyTitle = choreographyOptions.find(
+                      (choreography) => choreography.id === choreographyId,
+                    )?.title;
+                    const nextChoreographyTitle = choreographyOptions.find(
+                      (choreography) => choreography.id === nextChoreographyId,
+                    )?.title;
+                    setChoreographyId(nextChoreographyId);
+                    setTitle((current) =>
+                      !current || current === currentChoreographyTitle
+                        ? (nextChoreographyTitle ?? "")
+                        : current,
+                    );
+                    setAudience("");
+                  }}
+                >
+                  <option value="">{t("none")}</option>
+                  {choreographyOptions.map((choreography) => (
+                    <option key={choreography.id} value={choreography.id}>
+                      {choreography.title}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            )}
+            {eventType?.kind === "REHEARSAL" && choreographyId && (
+              <>
+                <RehearsalAudienceSelect
+                  groups={groupOptions}
+                  value={audience}
+                  onChange={setAudience}
+                />
+                <ParticipantConflictWarnings
+                  choreographyId={choreographyId}
+                  startsAt={dateTimePartsToDate(start)}
+                  endsAt={dateTimePartsToDate(end)}
+                  groupId={audience}
+                />
+              </>
+            )}
+            {eventType?.kind === "DEMONSTRATION" && demonstrationChoreographyId && (
+              <RehearsalAudienceSelect
+                id="demonstration-audience"
+                groups={groupOptions}
+                value={audience}
+                onChange={setAudience}
               />
-              {choreography.title}
-            </label>
-          ))}
-        </fieldset>
-      )}
-      <div>
-        <Label htmlFor="event-description">{generic ? t("description") : t("notes")}</Label>
-        <Textarea
-          id="event-description"
-          value={generic ? description : notes}
-          onChange={(e) =>
-            generic ? setDescription(e.target.value) : setNotes(e.target.value)
-          }
-          rows={4}
-          placeholder={generic ? t("optionalEventDetails") : t("optionalNotes")}
-        />
-      </div>
-      {eventType?.kind === "DEMONSTRATION" && (
-        <WhatsAppLinkField
-          id="event-whatsapp"
-          value={whatsappUrl}
-          onChange={setWhatsappUrl}
-        />
-      )}
-      {party && participantChoices.length > 0 && (
-        <UserSelectionMatrix
-          idPrefix="create-event-bar"
-          label={t("partyBarPrefillLegend")}
-          help={t("partyBarPrefillHelp")}
-          users={participantChoices}
-          selectedUserIds={selectedBarSlotUserIds}
-          onChange={setSelectedBarSlotUserIds}
-          maxSelection={PARTY_BAR_SLOT_COUNT}
-        />
-      )}
-      {generic && participantChoices.length > 0 && (
-        <UserSelectionMatrix
-          idPrefix="create-event-participants"
-          label={t("participantsOptional")}
-          users={participantChoices}
-          selectedUserIds={selectedParticipantIds}
-          onChange={setSelectedParticipantIds}
-        />
-      )}
-      {party && (
-        <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
-          <input
-            type="checkbox"
-            checked={partyBarSlotsEnabled}
-            onChange={(event) => setPartyBarSlotsEnabled(event.target.checked)}
-            className="mt-0.5 rounded border-stone-300"
+            )}
+            {showLinks && (
+              <fieldset className="space-y-2">
+                <legend className="mb-1.5 text-sm font-medium text-stone-800">
+                  {t("linkChoreographiesOptional")}
+                </legend>
+                {choreographyOptions.map((choreography) => (
+                  <label
+                    key={choreography.id}
+                    className="flex min-h-11 items-center gap-3 rounded-lg border border-stone-200 px-3 text-sm transition has-checked:border-stone-900 has-checked:bg-stone-50"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedChoreographyIds.includes(choreography.id)}
+                      disabled={lockChoreography && choreography.id === defaultChoreographyId}
+                      onChange={(event) => {
+                        setSelectedChoreographyIds((current) =>
+                          event.target.checked
+                            ? [...current, choreography.id]
+                            : current.filter((id) => id !== choreography.id),
+                        );
+                      }}
+                      className="h-4 w-4 rounded border-stone-300"
+                    />
+                    {choreography.title}
+                  </label>
+                ))}
+              </fieldset>
+            )}
+            {party && participantChoices.length > 0 && (
+              <UserSelectionMatrix
+                idPrefix="create-event-bar"
+                label={t("partyBarPrefillLegend")}
+                help={t("partyBarPrefillHelp")}
+                users={participantChoices}
+                selectedUserIds={selectedBarSlotUserIds}
+                onChange={setSelectedBarSlotUserIds}
+                maxSelection={PARTY_BAR_SLOT_COUNT}
+              />
+            )}
+            {generic && participantChoices.length > 0 && (
+              <UserSelectionMatrix
+                idPrefix="create-event-participants"
+                label={t("participantsOptional")}
+                users={participantChoices}
+                selectedUserIds={selectedParticipantIds}
+                onChange={setSelectedParticipantIds}
+              />
+            )}
+            {party && (
+              <ToggleRow
+                label={t("partyBarSlotsEnabled")}
+                hint={t("partyBarSlotsEnabledHelp")}
+                checked={partyBarSlotsEnabled}
+                onChange={setPartyBarSlotsEnabled}
+              />
+            )}
+          </FormSection>
+        );
+      })()}
+
+      {/* A heading only when there are several fields (not for a lone notes box). */}
+      <FormSection
+        title={generic || eventType?.kind === "DEMONSTRATION" ? t("formSectionDetails") : null}
+      >
+        <Field label={generic ? t("description") : t("notes")} htmlFor="event-description">
+          <Textarea
+            id="event-description"
+            value={generic ? description : notes}
+            onChange={(e) =>
+              generic ? setDescription(e.target.value) : setNotes(e.target.value)
+            }
+            rows={3}
+            placeholder={generic ? t("optionalEventDetails") : t("optionalNotes")}
           />
-          <span>
-            <span className="font-medium">{t("partyBarSlotsEnabled")}</span>
-            <span className="mt-0.5 block text-stone-500">{t("partyBarSlotsEnabledHelp")}</span>
-          </span>
-        </label>
-      )}
-      {generic && (
-        <ParticipationSettingsFields
-          idPrefix="create-event"
-          variant="event"
-          value={participation}
-          onChange={setParticipation}
-        />
-      )}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+        </Field>
+        {eventType?.kind === "DEMONSTRATION" && (
+          <WhatsAppLinkField
+            id="event-whatsapp"
+            value={whatsappUrl}
+            onChange={setWhatsappUrl}
+          />
+        )}
+        {generic && (
+          <ParticipationSettingsFields
+            idPrefix="create-event"
+            variant="event"
+            value={participation}
+            onChange={setParticipation}
+          />
+        )}
+      </FormSection>
+
+      <FormError>{error}</FormError>
       <FormActions>
+        {onCancel && (
+          <Button type="button" variant="secondary" onClick={onCancel}>
+            {t("cancel")}
+          </Button>
+        )}
         <Button type="submit" disabled={loading || !typeId}>
           {loading ? t("creating") : t("createEvent")}
         </Button>
@@ -861,7 +899,7 @@ export function EditEventForm({
             onChange={setParticipation}
           />
         )}
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        <FormError>{error}</FormError>
         <FormActions>
           <Button type="submit" disabled={loading}>
             {loading ? t("saving") : t("saveChanges")}
@@ -1000,36 +1038,24 @@ function LinkedEventKindSection({
     dateStyle: "medium",
     timeStyle: "short",
   });
-  const [showAddForm, setShowAddForm] = useState(false);
-  const addRequest = useAddFormRequest(kind.toLowerCase());
-  const addFormOpen = showAddForm || addRequest.requested;
-  const addFormRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (addRequest.requested) {
-      addFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [addRequest.requested]);
-  function closeAddForm() {
-    setShowAddForm(false);
-    addRequest.clear();
-  }
+  const addSheet = useCreateSheet(kind.toLowerCase());
   const eventType = eventTypes.find((type) => type.kind === kind);
 
   return (
     <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">{heading}</h2>
-        {canEdit && !addFormOpen && eventType && (
+        {canEdit && eventType && (
           <span className={cn(actionsInFloatingMenu && "hidden lg:inline")}>
-            <Button type="button" onClick={() => setShowAddForm(true)}>
+            <Button type="button" onClick={addSheet.show}>
               {addLabel}
             </Button>
           </span>
         )}
       </div>
 
-      {canEdit && addFormOpen && eventType && (
-        <div ref={addFormRef} className="mb-6 scroll-mt-20 rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+      {canEdit && eventType && (
+        <FormSheet open={addSheet.open} onClose={addSheet.close} title={addLabel}>
           <CreateEventForm
             eventTypes={eventTypes}
             participantOptions={participantOptions}
@@ -1039,15 +1065,11 @@ function LinkedEventKindSection({
             lockType
             defaultChoreographyId={choreographyId}
             lockChoreography
-            onSuccess={closeAddForm}
+            onSuccess={addSheet.close}
+            onCancel={addSheet.close}
             redirectBasePath="/events"
           />
-          <div className="mt-3">
-            <Button type="button" variant="secondary" onClick={closeAddForm}>
-              {t("cancel")}
-            </Button>
-          </div>
-        </div>
+        </FormSheet>
       )}
 
       {items.length === 0 ? (

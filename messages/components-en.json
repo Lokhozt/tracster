@@ -1,5 +1,8 @@
 {
   "Components": {
+    "formSectionWhen": "When",
+    "formSectionWho": "Who",
+    "formSectionDetails": "Details",
     "availabilitySaveError": "Unable to save availability.",
     "saving": "Saving...",
     "statusAVAILABLE": "Available",

@@ -4,12 +4,15 @@ import { useTranslations } from "next-intl";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, Input, Label } from "@/components/ui";
+import { FormSheet } from "@/components/Sheet";
+import { Button, Card, Field, FormActions, FormError, Input } from "@/components/ui";
+import { useCreateSheet } from "@/lib/create-sheet";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
 
 export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventType[] }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const createSheet = useCreateSheet("event-type");
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -37,6 +40,7 @@ export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventT
     }
 
     setName("");
+    createSheet.close();
     router.refresh();
   }
 
@@ -88,26 +92,37 @@ export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventT
 
   return (
     <Card className="max-w-xl">
-      <h2 className="mb-2 text-lg font-semibold">{t("eventTypes")}</h2>
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <h2 className="text-lg font-semibold">{t("eventTypes")}</h2>
+        <Button type="button" onClick={createSheet.show} className="shrink-0">
+          {t("addType")}
+        </Button>
+      </div>
       <p className="mb-4 text-sm text-stone-500">
         {t("eventTypesHelp")}
       </p>
-      <form onSubmit={handleCreate} className="mb-6 flex flex-wrap items-end gap-3">
-        <div className="min-w-48 flex-1">
-          <Label htmlFor="event-type-name">{t("newType")}</Label>
-          <Input
-            id="event-type-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder={t("workshopPlaceholder")}
-            required
-          />
-        </div>
-        <Button type="submit" disabled={creating || !name.trim()}>
-          {creating ? t("adding") : t("addType")}
-        </Button>
-      </form>
-      {createError && <p className="mb-4 text-sm text-red-600">{createError}</p>}
+      <FormSheet open={createSheet.open} onClose={createSheet.close} title={t("addType")}>
+        <form onSubmit={handleCreate} className="space-y-4">
+          <Field label={t("name")} htmlFor="event-type-name">
+            <Input
+              id="event-type-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder={t("workshopPlaceholder")}
+              required
+            />
+          </Field>
+          <FormError>{createError}</FormError>
+          <FormActions>
+            <Button type="button" variant="secondary" onClick={createSheet.close}>
+              {t("cancel")}
+            </Button>
+            <Button type="submit" disabled={creating || !name.trim()}>
+              {creating ? t("adding") : t("addType")}
+            </Button>
+          </FormActions>
+        </form>
+      </FormSheet>
       {rowError && <p className="mb-4 text-sm text-red-600">{rowError}</p>}
       <ul className="space-y-2">
         {eventTypes.map((type) => (

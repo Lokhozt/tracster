@@ -2,12 +2,13 @@
 
 import { useTranslations } from "next-intl";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
 import { StatisticsIconLink } from "@/components/StatisticsIconLink";
-import { useAddFormRequest } from "@/components/ChoreographyTabs";
+import { FormSheet } from "@/components/Sheet";
+import { useCreateSheet } from "@/lib/create-sheet";
 import {
   RehearsalEventCard,
   type RehearsalListItem,
@@ -18,7 +19,7 @@ import {
   selectionFromRecord,
 } from "@/components/LocationPicker";
 import { AssignUsersMatrixForm } from "@/components/AssignUsersMatrixForm";
-import { Button, Card, FormActions, Input, Label, Textarea } from "@/components/ui";
+import { Button, Card, FormActions, FormError, Input, Label, Textarea } from "@/components/ui";
 import { type GroupOption } from "@/components/GroupForms";
 import { CreateEventForm } from "@/components/EventForms";
 import { matchesSearch } from "@/lib/search";
@@ -132,7 +133,7 @@ export function AssignChoreographerForm({
           ))}
         </select>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <FormActions>
         <Button type="submit" disabled={loading || !userId} variant="secondary">
           {loading ? t("adding") : t("addChoreographer")}
@@ -165,23 +166,17 @@ export function CreateRehearsalForm({
   }
 
   return (
-    <div className="space-y-3">
-      <CreateEventForm
-        eventTypes={eventTypes}
-        defaultTypeId={rehearsalType.id}
-        lockType
-        defaultChoreographyId={choreographyId}
-        lockChoreography
-        groups={groups}
-        choreographyOptions={[{ id: choreographyId, title: choreographyTitle }]}
-        onSuccess={() => onSuccess?.()}
-      />
-      {onCancel && (
-        <Button type="button" variant="secondary" onClick={onCancel}>
-          {t("cancel")}
-        </Button>
-      )}
-    </div>
+    <CreateEventForm
+      eventTypes={eventTypes}
+      defaultTypeId={rehearsalType.id}
+      lockType
+      defaultChoreographyId={choreographyId}
+      lockChoreography
+      groups={groups}
+      choreographyOptions={[{ id: choreographyId, title: choreographyTitle }]}
+      onSuccess={() => onSuccess?.()}
+      onCancel={onCancel}
+    />
   );
 }
 
@@ -297,7 +292,7 @@ export function EditRehearsalForm({ rehearsal }: { rehearsal: RehearsalDetailIte
           rows={3}
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <FormActions>
         <Button type="submit" disabled={loading}>
           {loading ? t("saving") : t("saveChanges")}
@@ -329,19 +324,7 @@ export function RehearsalsSection({
   canViewStatistics?: boolean;
 }) {
   const t = useTranslations("Components");
-  const [showAddForm, setShowAddForm] = useState(false);
-  const addRequest = useAddFormRequest("rehearsal");
-  const addFormOpen = showAddForm || addRequest.requested;
-  const addFormRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (addRequest.requested) {
-      addFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [addRequest.requested]);
-  function closeAddForm() {
-    setShowAddForm(false);
-    addRequest.clear();
-  }
+  const addSheet = useCreateSheet("rehearsal");
   const [search, setSearch] = useState("");
 
   const filteredRehearsals = useMemo(() => {
@@ -367,9 +350,9 @@ export function RehearsalsSection({
               <StatisticsIconLink href={`/choreographies/${choreographyId}/rehearsals/statistics`} />
             </span>
           )}
-          {canEdit && !addFormOpen && (
+          {canEdit && (
             <span className={cn(actionsInFloatingMenu && "hidden lg:inline")}>
-              <Button type="button" onClick={() => setShowAddForm(true)}>
+              <Button type="button" onClick={addSheet.show}>
                 {t("scheduleRehearsal")}
               </Button>
             </span>
@@ -395,20 +378,17 @@ export function RehearsalsSection({
         </div>
       )}
 
-      {canEdit && addFormOpen && (
-        <div ref={addFormRef} className="scroll-mt-20">
-        <Card className="mb-6">
-          <h3 className="mb-4 font-medium">{t("scheduleRehearsal")}</h3>
+      {canEdit && (
+        <FormSheet open={addSheet.open} onClose={addSheet.close} title={t("scheduleRehearsal")}>
           <CreateRehearsalForm
             choreographyId={choreographyId}
             choreographyTitle={choreographyTitle}
             groups={groups}
             eventTypes={eventTypes}
-            onSuccess={closeAddForm}
-            onCancel={closeAddForm}
+            onSuccess={addSheet.close}
+            onCancel={addSheet.close}
           />
-        </Card>
-        </div>
+        </FormSheet>
       )}
 
       {rehearsals.length === 0 ? (
@@ -588,7 +568,7 @@ export function TransferChoreographyOwnershipForm({
           ))}
         </select>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <FormActions>
         <Button type="submit" disabled={loading || !userId} variant="secondary">
           {loading ? t("transferring") : t("transferOwnership")}

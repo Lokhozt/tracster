@@ -67,8 +67,11 @@ export async function generateViewport(): Promise<Viewport> {
 
 export default async function RootLayout({
   children,
+  modal,
 }: Readonly<{
   children: React.ReactNode;
+  /** Create forms opened from inside the app, as a sheet over the current page (see @modal). */
+  modal: React.ReactNode;
 }>) {
   const [locale, messages, cookieStore] = await Promise.all([getLocale(), getMessages(), cookies()]);
   const theme = parseThemePreference(cookieStore.get(THEME_COOKIE)?.value);
@@ -83,7 +86,10 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider messages={messages}>
-          <AppFrame>{children}</AppFrame>
+          <AppFrame>
+            {children}
+            {modal}
+          </AppFrame>
         </NextIntlClientProvider>
       </body>
     </html>

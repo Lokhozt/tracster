@@ -19,7 +19,18 @@ import { documentDisplayType } from "@/lib/document-type";
 import { TracBarCategoryPanel } from "@/components/PartyBarSlots";
 import type { SerializedDocument, SerializedDocumentCategory } from "@/lib/documents";
 import { TRAC_BAR_DOCUMENTS_SECTION_ID, type PartyBarSlot } from "@/lib/party-bar-shared";
-import { Button, Card, FormActions, Input, Label, Select, Textarea } from "@/components/ui";
+import {
+  Button,
+  Card,
+  Field,
+  FormActions,
+  FormError,
+  Input,
+  Label,
+  SegmentedControl,
+  Select,
+  Textarea,
+} from "@/components/ui";
 import { useAppNavigation } from "@/lib/app-navigation";
 
 async function responseError(response: Response, fallback: string) {
@@ -363,7 +374,7 @@ export function DocumentCard({
       ) : (
         <FileDocument document={document} />
       )}
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
     </div>
   );
 }
@@ -471,7 +482,6 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
 
   return (
     <form onSubmit={submit}>
-      <h3 className="mb-4 font-semibold">{t("addDocument")}</h3>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <Label htmlFor="document-title">{t("documentTitle")}</Label>
@@ -484,16 +494,17 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
           />
         </div>
         <div>
-          <Label htmlFor="document-kind">{t("resourceType")}</Label>
-          <Select
-            id="document-kind"
-            className="w-full"
-            value={kind}
-            onChange={(event) => setKind(event.target.value as "LINK" | "FILE")}
-          >
-            <option value="LINK">{t("resourceLink")}</option>
-            <option value="FILE">{t("resourceFile")}</option>
-          </Select>
+          <Field label={t("resourceType")}>
+            <SegmentedControl
+              label={t("resourceType")}
+              value={kind}
+              onChange={setKind}
+              options={[
+                { value: "LINK", label: t("resourceLink") },
+                { value: "FILE", label: t("resourceFile") },
+              ]}
+            />
+          </Field>
         </div>
         <div>
           <Label htmlFor="document-category">{t("documentCategory")}</Label>
@@ -572,7 +583,7 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
           </div>
         </div>
       )}
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <FormActions className="mt-4">
         <Button type="submit" disabled={saving}>
           {saving ? t("savingDocument") : t("addDocument")}

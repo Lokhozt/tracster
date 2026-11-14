@@ -4,9 +4,10 @@ import { useTranslations } from "next-intl";
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FilterSheet } from "@/components/FilterSheet";
+import { FormSheet } from "@/components/Sheet";
+import { useCreateSheet } from "@/lib/create-sheet";
 import { FAB_MENU_ITEM_CLASS, FloatingActionButton } from "@/components/FloatingActionButton";
-import { Button, Card, FormActions, Input, Label } from "@/components/ui";
+import { Button, Card, FormActions, FormError, Input, Label } from "@/components/ui";
 import type { SerializedGroup } from "@/lib/groups";
 import { cn } from "@/lib/utils";
 import { UserSelectionMatrix } from "@/components/UserSelectionMatrix";
@@ -108,7 +109,7 @@ function CreateGroupForm({
           />
         </div>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <FormActions>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
@@ -196,7 +197,7 @@ function EditGroupForm({
           />
         </div>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <FormActions>
         <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
           {t("cancel")}
@@ -271,8 +272,7 @@ export function GroupsSection({
 }) {
   const t = useTranslations("Components");
   const searchParams = useSearchParams();
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [createSheetOpen, setCreateSheetOpen] = useState(false);
+  const createSheet = useCreateSheet("group");
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const canCreate = canEdit && members.length > 0;
   const showFloatingCreate =
@@ -287,10 +287,10 @@ export function GroupsSection({
             {t("groupsHelp")}
           </p>
         </div>
-        {canCreate && !showCreateForm && (
+        {canCreate && (
           // With a floating "+" on phones/tablets, the inline button is for desktops only.
           <span className={cn(tabSectionId !== undefined && "hidden lg:block")}>
-            <Button type="button" onClick={() => setShowCreateForm(true)}>
+            <Button type="button" onClick={createSheet.show}>
               {t("newGroup")}
             </Button>
           </span>
@@ -298,7 +298,6 @@ export function GroupsSection({
       </div>
 
       {showFloatingCreate && (
-        <>
           <FloatingActionButton
             actions={[]}
             extraItems={[
@@ -307,37 +306,23 @@ export function GroupsSection({
                 type="button"
                 data-fab-close=""
                 className={FAB_MENU_ITEM_CLASS}
-                onClick={() => setCreateSheetOpen(true)}
+                onClick={createSheet.show}
               >
                 {t("newGroup")}
               </button>,
             ]}
           />
-          <FilterSheet
-            open={createSheetOpen}
-            onClose={() => setCreateSheetOpen(false)}
-            title={t("createGroup")}
-          >
-            <CreateGroupForm
-              choreographyId={choreographyId}
-              members={members}
-              onSuccess={() => setCreateSheetOpen(false)}
-              onCancel={() => setCreateSheetOpen(false)}
-            />
-          </FilterSheet>
-        </>
       )}
 
-      {canEdit && showCreateForm && (
-        <Card className="mb-6">
-          <h3 className="mb-4 font-medium">{t("createGroup")}</h3>
+      {canCreate && (
+        <FormSheet open={createSheet.open} onClose={createSheet.close} title={t("createGroup")}>
           <CreateGroupForm
             choreographyId={choreographyId}
             members={members}
-            onSuccess={() => setShowCreateForm(false)}
-            onCancel={() => setShowCreateForm(false)}
+            onSuccess={createSheet.close}
+            onCancel={createSheet.close}
           />
-        </Card>
+        </FormSheet>
       )}
 
       {groups.length === 0 ? (

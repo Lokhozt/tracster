@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Button, Input, Label } from "@/components/ui";
+import { Button, FormError, Input, Label } from "@/components/ui";
 
 export function RegisterForm({
   requiresRegistrationPassword,
@@ -89,7 +89,7 @@ export function RegisterForm({
             autoComplete="off"
           />
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        <FormError>{error}</FormError>
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? t("checking") : t("continue")}
         </Button>
@@ -138,7 +138,7 @@ export function RegisterForm({
           autoComplete="new-password"
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <Button type="submit" disabled={loading} className="w-full">
         {loading ? t("creatingAccount") : t("createAccount")}
       </Button>

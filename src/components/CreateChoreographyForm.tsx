@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, FormActions, Input, Label, Textarea } from "@/components/ui";
+import { Button, FormActions, FormError, Input, Label, Textarea } from "@/components/ui";
 import { WhatsAppLinkField } from "@/components/WhatsAppLink";
 import { ParticipationSettingsFields } from "@/components/ParticipationSettingsFields";
 import {
@@ -73,7 +73,7 @@ export function CreateChoreographyForm() {
         value={participation}
         onChange={setParticipation}
       />
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <FormActions>
         <Button type="submit" disabled={loading}>
           {loading ? t("creating") : t("createChoreography")}
@@ -166,7 +166,7 @@ export function EditChoreographyForm({
         value={participation}
         onChange={setParticipation}
       />
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <FormActions>
         <Button type="submit" disabled={loading}>
           {loading ? t("saving") : t("saveChanges")}

@@ -1,29 +1,12 @@
-import { redirect } from "next/navigation";
-import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
-import { CreateChoreographyForm } from "@/components/CreateChoreographyForm";
 import { Card } from "@/components/ui";
-import { getCurrentUser } from "@/lib/auth";
-import { canCreateChoreography } from "@/lib/site-settings";
+import { newChoreographyContent } from "./content";
 
 export default async function NewChoreographyPage() {
-  const [user, t] = await Promise.all([
-    getCurrentUser(),
-    getTranslations("Pages.NewChoreography"),
-  ]);
-  if (!user) {
-    redirect("/login");
-  }
-
-  if (!(await canCreateChoreography(user.id))) {
-    redirect("/choreographies");
-  }
-
+  const { title, form } = await newChoreographyContent();
   return (
-    <AppShell title={t("title")}>
-      <Card>
-        <CreateChoreographyForm />
-      </Card>
+    <AppShell title={title}>
+      <Card className="mx-auto max-w-xl">{form}</Card>
     </AppShell>
   );
 }

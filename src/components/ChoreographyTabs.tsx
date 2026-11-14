@@ -1,8 +1,6 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useCallback } from "react";
-import { replaceUrlInPlace } from "@/lib/app-navigation";
 import { cn } from "@/lib/utils";
 
 const SECTION_PARAM = "section";
@@ -56,35 +54,6 @@ export function ChoreographyTabLink({
       {children}
     </a>
   );
-}
-
-const ADD_PARAM = "add";
-
-/**
- * Asks a section to open its "add" form (e.g. from the floating "+" menu): sets `?add=<kind>`
- * without adding history. The section reads it with `useAddFormRequest`.
- */
-export function requestAddForm(kind: string): void {
-  const url = new URL(window.location.href);
-  url.searchParams.set(ADD_PARAM, kind);
-  replaceUrlInPlace(url.pathname + url.search);
-}
-
-/**
- * For a section whose add form can be opened from elsewhere: `requested` is true while
- * `?add=<kind>` is set; `clear()` removes it (call it when the form closes).
- */
-export function useAddFormRequest(kind: string): { requested: boolean; clear: () => void } {
-  const searchParams = useSearchParams();
-  const requested = searchParams.get(ADD_PARAM) === kind;
-  const clear = useCallback(() => {
-    const url = new URL(window.location.href);
-    if (url.searchParams.get(ADD_PARAM) === kind) {
-      url.searchParams.delete(ADD_PARAM);
-      replaceUrlInPlace(url.pathname + url.search);
-    }
-  }, [kind]);
-  return { requested, clear };
 }
 
 /**

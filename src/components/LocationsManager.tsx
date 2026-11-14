@@ -4,12 +4,15 @@ import { useTranslations } from "next-intl";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, FormActions, Input, Label } from "@/components/ui";
+import { FormSheet } from "@/components/Sheet";
+import { Button, Card, Field, FormActions, FormError, Input } from "@/components/ui";
+import { useCreateSheet } from "@/lib/create-sheet";
 import type { LocationRecord } from "@/lib/locations";
 
 export function LocationsManager({ locations }: { locations: LocationRecord[] }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const createSheet = useCreateSheet("location");
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -37,6 +40,7 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
     }
 
     setName("");
+    createSheet.close();
     router.refresh();
   }
 
@@ -103,31 +107,40 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
 
   return (
     <Card className="max-w-xl">
-      <h2 className="mb-1 text-lg font-semibold">{t("locations")}</h2>
+      <div className="mb-1 flex items-start justify-between gap-3">
+        <h2 className="text-lg font-semibold">{t("locations")}</h2>
+        <Button type="button" onClick={createSheet.show} className="shrink-0">
+          {t("addLocation")}
+        </Button>
+      </div>
       <p className="mb-4 text-sm text-stone-500">
         {t("locationsHelp")} {t("locationsOneOffHint")}
       </p>
 
-      <form onSubmit={handleCreate} className="space-y-3">
-        <div>
-          <Label htmlFor="new-location-name">{t("name")}</Label>
-          <Input
-            id="new-location-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder={t("studioPlaceholder")}
-            required
-          />
-        </div>
-        {createError && <p className="text-sm text-red-600">{createError}</p>}
-        <FormActions>
-          <Button type="submit" disabled={creating || !name.trim()}>
-            {creating ? t("adding") : t("addLocation")}
-          </Button>
-        </FormActions>
-      </form>
+      <FormSheet open={createSheet.open} onClose={createSheet.close} title={t("addLocation")}>
+        <form onSubmit={handleCreate} className="space-y-4">
+          <Field label={t("name")} htmlFor="new-location-name">
+            <Input
+              id="new-location-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder={t("studioPlaceholder")}
+              required
+            />
+          </Field>
+          <FormError>{createError}</FormError>
+          <FormActions>
+            <Button type="button" variant="secondary" onClick={createSheet.close}>
+              {t("cancel")}
+            </Button>
+            <Button type="submit" disabled={creating || !name.trim()}>
+              {creating ? t("adding") : t("addLocation")}
+            </Button>
+          </FormActions>
+        </form>
+      </FormSheet>
 
-      <div className="mt-6 border-t border-stone-100 pt-4">
+      <div className="border-t border-stone-100 pt-4">
         {locations.length === 0 ? (
           <p className="text-sm text-stone-600">{t("noLocations")}</p>
         ) : (

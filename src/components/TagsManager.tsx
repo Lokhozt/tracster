@@ -3,7 +3,9 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, FormActions, Input, Label } from "@/components/ui";
+import { FormSheet } from "@/components/Sheet";
+import { Button, Card, Field, FormActions, FormError, Input, Label } from "@/components/ui";
+import { useCreateSheet } from "@/lib/create-sheet";
 import { TagBubble } from "@/components/TagBubbles";
 import {
   DEFAULT_TAG_COLOR,
@@ -21,6 +23,7 @@ export function TagsManager({
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const createSheet = useCreateSheet("tag");
   const [name, setName] = useState("");
   const [color, setColor] = useState(DEFAULT_TAG_COLOR);
   const [creating, setCreating] = useState(false);
@@ -54,6 +57,7 @@ export function TagsManager({
 
     setName("");
     setColor(DEFAULT_TAG_COLOR);
+    createSheet.close();
     router.refresh();
   }
 
@@ -143,7 +147,12 @@ export function TagsManager({
 
   return (
     <Card className="max-w-xl">
-      <h2 className="mb-2 text-lg font-semibold">{t("tags")}</h2>
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <h2 className="text-lg font-semibold">{t("tags")}</h2>
+        <Button type="button" onClick={createSheet.show} className="shrink-0">
+          {t("addTag")}
+        </Button>
+      </div>
       <p className="mb-4 text-sm text-stone-500">{t("tagsHelp")}</p>
 
       <label className="mb-6 flex cursor-pointer items-start gap-2 text-sm text-stone-700">
@@ -163,32 +172,36 @@ export function TagsManager({
       </label>
       {visibilityError && <p className="mb-4 text-sm text-red-600">{visibilityError}</p>}
 
-      <form onSubmit={handleCreate} className="space-y-3">
-        <div>
-          <Label htmlFor="new-tag-name">{t("name")}</Label>
-          <Input
-            id="new-tag-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder={t("tagPlaceholder")}
-            required
+      <FormSheet open={createSheet.open} onClose={createSheet.close} title={t("addTag")}>
+        <form onSubmit={handleCreate} className="space-y-4">
+          <Field label={t("name")} htmlFor="new-tag-name">
+            <Input
+              id="new-tag-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder={t("tagPlaceholder")}
+              required
+            />
+          </Field>
+          <ColorField
+            id="new-tag-color"
+            label={t("tagColor")}
+            value={color}
+            onChange={setColor}
           />
-        </div>
-        <ColorField
-          id="new-tag-color"
-          label={t("tagColor")}
-          value={color}
-          onChange={setColor}
-        />
-        {createError && <p className="text-sm text-red-600">{createError}</p>}
-        <FormActions>
-          <Button type="submit" disabled={creating || !name.trim()}>
-            {creating ? t("adding") : t("addTag")}
-          </Button>
-        </FormActions>
-      </form>
+          <FormError>{createError}</FormError>
+          <FormActions>
+            <Button type="button" variant="secondary" onClick={createSheet.close}>
+              {t("cancel")}
+            </Button>
+            <Button type="submit" disabled={creating || !name.trim()}>
+              {creating ? t("adding") : t("addTag")}
+            </Button>
+          </FormActions>
+        </form>
+      </FormSheet>
 
-      <div className="mt-6 border-t border-stone-100 pt-4">
+      <div className="border-t border-stone-100 pt-4">
         {tags.length === 0 ? (
           <p className="text-sm text-stone-600">{t("noTags")}</p>
         ) : (
