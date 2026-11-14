@@ -5,6 +5,13 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui";
+import { cn } from "@/lib/utils";
+
+const PILL =
+  "inline-flex min-h-9 items-center whitespace-nowrap rounded-full px-3 py-1 text-sm font-medium transition active:scale-95 disabled:opacity-60";
+const PILL_ON = "bg-emerald-600 text-white hover:bg-emerald-700";
+const PILL_OFF = "border border-stone-300 bg-white text-stone-900 hover:bg-stone-100";
+const PILL_PENDING = "bg-stone-200 text-stone-700 hover:bg-stone-300";
 
 type PendingAction = { url: string; method: "POST" | "DELETE" };
 
@@ -46,10 +53,7 @@ export function JoinAsParticipantControls({
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [pending]);
 
-  if (
-    (isParticipant && !allowLeave) ||
-    (!isParticipant && !allowJoin && !allowRequest && !hasPendingRequest)
-  ) {
+  if (!isParticipant && !allowJoin && !allowRequest && !hasPendingRequest) {
     return null;
   }
 
@@ -92,46 +96,72 @@ export function JoinAsParticipantControls({
     void submit(action.url, action.method, applyToUpcoming);
   }
 
+  // One compact pill shows the current state and toggles it (no separate status + button row).
+  let pill: React.ReactNode;
+  if (isParticipant) {
+    pill = allowLeave ? (
+      <button
+        type="button"
+        className={cn(PILL, PILL_ON)}
+        disabled={loading}
+        aria-label={t("notParticipatingAction")}
+        title={t("notParticipatingAction")}
+        onClick={() => {
+          if (confirm(t("leaveParticipationConfirm"))) {
+            startAction(joinUrl, "DELETE");
+          }
+        }}
+      >
+        {loading ? t("leaving") : <>✓ {t("iAmParticipating")}</>}
+      </button>
+    ) : (
+      <span className={cn(PILL, PILL_ON)}>✓ {t("iAmParticipating")}</span>
+    );
+  } else if (hasPendingRequest) {
+    pill = (
+      <button
+        type="button"
+        className={cn(PILL, PILL_PENDING)}
+        disabled={loading}
+        aria-label={t("cancelRequest")}
+        title={t("joinRequestPending")}
+        onClick={() => {
+          if (confirm(t("cancelRequestConfirm"))) {
+            void submit(requestUrl, "DELETE", false);
+          }
+        }}
+      >
+        {loading ? t("cancelling") : t("requestSent")}
+      </button>
+    );
+  } else if (allowJoin) {
+    pill = (
+      <button
+        type="button"
+        className={cn(PILL, PILL_OFF)}
+        disabled={loading}
+        onClick={() => startAction(joinUrl, "POST")}
+      >
+        {loading ? t("joining") : t("joinAsParticipant")}
+      </button>
+    );
+  } else {
+    pill = (
+      <button
+        type="button"
+        className={cn(PILL, PILL_OFF)}
+        disabled={loading}
+        onClick={() => void submit(requestUrl, "POST", false)}
+      >
+        {loading ? t("sending") : t("requestToJoin")}
+      </button>
+    );
+  }
+
   return (
-    <div className="space-y-2">
-      {isParticipant && allowLeave && (
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={loading}
-          onClick={() => startAction(joinUrl, "DELETE")}
-        >
-          {loading ? t("leaving") : t("notParticipatingAction")}
-        </Button>
-      )}
-      {!isParticipant && allowJoin && (
-        <Button type="button" disabled={loading} onClick={() => startAction(joinUrl, "POST")}>
-          {loading ? t("joining") : t("joinAsParticipant")}
-        </Button>
-      )}
-      {!isParticipant && allowRequest && !hasPendingRequest && (
-        <Button
-          type="button"
-          disabled={loading}
-          onClick={() => void submit(requestUrl, "POST", false)}
-        >
-          {loading ? t("sending") : t("requestToJoin")}
-        </Button>
-      )}
-      {!isParticipant && hasPendingRequest && (
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm text-stone-600">{t("joinRequestPending")}</p>
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={loading}
-            onClick={() => void submit(requestUrl, "DELETE", false)}
-          >
-            {loading ? t("cancelling") : t("cancelRequest")}
-          </Button>
-        </div>
-      )}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+    <div className="flex flex-col items-end gap-1">
+      {pill}
+      {error && <p className="max-w-56 text-right text-xs text-red-600">{error}</p>}
       {pending && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"

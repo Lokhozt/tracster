@@ -137,6 +137,17 @@ const UPCOMING_PAGE_SIZE = 10;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Events the viewer can join, request, or leave get a participation pill on their card. */
+function hasJoinPill(event: SerializedScheduleEvent): boolean {
+  return (
+    isGenericScheduleEvent(event) &&
+    (event.isEventParticipant ||
+      event.allowParticipantJoin ||
+      event.allowJoinRequests ||
+      event.hasPendingJoinRequest)
+  );
+}
+
 /** "ven. 13 nov., 22:30 – 01:30": the end shows only its time when it is less than a day later. */
 function compactEventRange(
   startsAt: string,
@@ -289,6 +300,21 @@ export function UpcomingEventsList({
                       <AvailabilityBadge status={event.availabilityStatus} />
                     </div>
                   )}
+                  {/* Join/leave pill: shows the participation state and toggles it. */}
+                  {hasJoinPill(event) && (
+                    <div className={cn("shrink-0", aboveCardLink)}>
+                      <JoinAsParticipantControls
+                        joinUrl={`/api/events/${event.id}/join`}
+                        requestUrl={`/api/events/${event.id}/join-requests`}
+                        allowJoin={event.allowParticipantJoin}
+                        allowRequest={event.allowJoinRequests}
+                        allowLeave
+                        isParticipant={event.isEventParticipant}
+                        hasPendingRequest={event.hasPendingJoinRequest}
+                        hasUpcomingSeries={event.hasUpcomingSeriesEvents}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-x-2">
                   {event.href ? (
@@ -301,7 +327,7 @@ export function UpcomingEventsList({
                   ) : (
                     <span className="text-base font-semibold">{defaultEventTitle(event)}</span>
                   )}
-                  {!isBirthdayScheduleEvent(event) && (
+                  {!isBirthdayScheduleEvent(event) && !hasJoinPill(event) && (
                     <ParticipationStatus participating={event.isParticipating} />
                   )}
                 </div>
@@ -315,24 +341,6 @@ export function UpcomingEventsList({
                     <AvailabilityQuickReply
                       rehearsalId={event.id}
                       currentStatus={event.availabilityStatus}
-                    />
-                  </div>
-                )}
-                {isGenericScheduleEvent(event) &&
-                  (event.isEventParticipant ||
-                    event.allowParticipantJoin ||
-                    event.allowJoinRequests ||
-                    event.hasPendingJoinRequest) && (
-                  <div className={cn("mt-3 border-t border-stone-100 pt-3", aboveCardLink)}>
-                    <JoinAsParticipantControls
-                      joinUrl={`/api/events/${event.id}/join`}
-                      requestUrl={`/api/events/${event.id}/join-requests`}
-                      allowJoin={event.allowParticipantJoin}
-                      allowRequest={event.allowJoinRequests}
-                      allowLeave
-                      isParticipant={event.isEventParticipant}
-                      hasPendingRequest={event.hasPendingJoinRequest}
-                      hasUpcomingSeries={event.hasUpcomingSeriesEvents}
                     />
                   </div>
                 )}

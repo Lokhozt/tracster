@@ -741,6 +741,9 @@
       "link": "Link",
       "file": "File"
     },
-    "locationsOneOffHint": "A one-off location can still be entered when scheduling."
+    "locationsOneOffHint": "A one-off location can still be entered when scheduling.",
+    "requestSent": "Request sent",
+    "leaveParticipationConfirm": "Stop taking part in this event?",
+    "cancelRequestConfirm": "Cancel your participation request?"
   }
 }

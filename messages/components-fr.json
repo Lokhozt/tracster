@@ -741,6 +741,9 @@
       "link": "Lien",
       "file": "Fichier"
     },
-    "locationsOneOffHint": "Un lieu ponctuel peut toujours être saisi lors de la planification."
+    "locationsOneOffHint": "Un lieu ponctuel peut toujours être saisi lors de la planification.",
+    "requestSent": "Demande envoyée",
+    "leaveParticipationConfirm": "Ne plus participer à cet événement ?",
+    "cancelRequestConfirm": "Annuler votre demande de participation ?"
   }
 }
