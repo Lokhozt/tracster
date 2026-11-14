@@ -325,6 +325,43 @@ export function FormError({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * A tappable row in a settings list (place, tag, type…): its content on the left, a pencil on
+ * the right. Opens the item's edit sheet; the list stays one line per item.
+ */
+export function ListRowButton({
+  onClick,
+  actionLabel,
+  disabled = false,
+  children,
+}: {
+  onClick: () => void;
+  /** Accessible action, e.g. "Modifier". */
+  actionLabel: string;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex min-h-12 w-full items-center justify-between gap-3 px-3 py-2 text-left transition hover:bg-stone-50 disabled:opacity-50"
+    >
+      <span className="min-w-0 flex-1">{children}</span>
+      <span className="sr-only">{actionLabel}</span>
+      <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-stone-400" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+      </svg>
+    </button>
+  );
+}
+
+/** List of ListRowButton rows. */
+export const SETTINGS_LIST_CLASS =
+  "divide-y divide-stone-100 overflow-hidden rounded-lg border border-stone-200";
+
 export function Card({
   className,
   ...props

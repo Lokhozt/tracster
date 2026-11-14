@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, Card, Input, Label, Select } from "@/components/ui";
+import { Button, Card, Input, Label, Select, SegmentedControl } from "@/components/ui";
 import { formatDurationMinutes } from "@/lib/format-duration";
 import type {
   RepresentationParticipantLeaderboardEntry,
@@ -291,32 +291,16 @@ export function AssociationStatsPanel({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setMode("representation")}
-          className={cn(
-            "rounded-lg px-3 py-1.5 text-sm font-medium transition",
-            mode === "representation"
-              ? "bg-stone-900 text-white"
-              : "bg-stone-100 text-stone-700 hover:bg-stone-200",
-          )}
-        >
-          {t("modeRepresentation")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("user")}
-          className={cn(
-            "rounded-lg px-3 py-1.5 text-sm font-medium transition",
-            mode === "user"
-              ? "bg-stone-900 text-white"
-              : "bg-stone-100 text-stone-700 hover:bg-stone-200",
-          )}
-        >
-          {t("modeUser")}
-        </button>
-      </div>
+      <SegmentedControl
+        className="max-w-md"
+        label={t("stats")}
+        value={mode}
+        onChange={setMode}
+        options={[
+          { value: "representation", label: t("modeRepresentation") },
+          { value: "user", label: t("modeUser") },
+        ]}
+      />
 
       {mode === "representation" ? (
         <div className="space-y-1">
@@ -409,6 +393,13 @@ export function AssociationStatsPanel({
       )}
 
       {loading && <p className="text-sm text-stone-500">{t("loading")}</p>}
+      {/* Nothing chosen yet: say what to do instead of an empty page. */}
+      {!loading &&
+        ((mode === "representation" && !representationId) || (mode === "user" && !userId)) && (
+          <p className="rounded-xl border border-dashed border-stone-300 px-4 py-6 text-center text-sm text-stone-500">
+            {mode === "representation" ? t("statsPickRepresentation") : t("statsPickUser")}
+          </p>
+        )}
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {mode === "representation" && representationStats && !loading && (

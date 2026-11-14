@@ -134,8 +134,10 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   ];
 
   return (
-    <AppShell title={t("title")}>
+    // The title lives in SettingsSections: phones show the open section's name there.
+    <AppShell>
       <SettingsSections
+        title={t("title")}
         sections={sections}
         intro={t("intro")}
         // Returning from the Google consent screen should land on the calendar category.

@@ -1,5 +1,9 @@
 {
   "Components": {
+    "stepCounter": "Étape {current} / {total}",
+    "statsPickRepresentation": "Choisissez une représentation pour voir qui y a participé et l’assiduité de chacun aux répétitions.",
+    "statsPickUser": "Choisissez un membre pour voir ses représentations et son assiduité.",
+    "locationDeleteConfirm": "Supprimer « {name} » ? Les répétitions et événements existants garderont ce lieu comme lieu ponctuel.",
     "addUnavailability": "Ajouter une période",
     "unavailabilitySaved": "Indisponibilité enregistrée",
     "undo": "Annuler",

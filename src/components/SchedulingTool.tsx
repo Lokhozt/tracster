@@ -501,7 +501,32 @@ export function SchedulingTool({
 
   return (
     <div className="space-y-6">
-      <ol className="flex flex-wrap gap-2">
+      {/* Phones: one line and a progress bar (the six pills took three lines); tap to jump. */}
+      <div className="sm:hidden">
+        <p className="mb-1 text-sm font-semibold">
+          {t("stepCounter", { current: step + 1, total: STEPS.length })} · {t(`step${STEPS[step]}`)}
+        </p>
+        <div className="flex gap-1">
+          {STEPS.map((label, index) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => goTo(index)}
+              aria-label={`${index + 1}. ${t(`step${label}`)}`}
+              aria-current={index === step ? "step" : undefined}
+              className="flex-1 py-2"
+            >
+              <span
+                className={cn(
+                  "block h-1.5 rounded-full",
+                  index <= step ? "bg-stone-900" : "bg-stone-200",
+                )}
+              />
+            </button>
+          ))}
+        </div>
+      </div>
+      <ol className="hidden flex-wrap gap-2 sm:flex">
         {STEPS.map((label, index) => (
           <li key={label}>
             <button

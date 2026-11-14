@@ -1,5 +1,9 @@
 {
   "Components": {
+    "stepCounter": "Step {current} of {total}",
+    "statsPickRepresentation": "Pick a representation to see who took part and everyone's rehearsal attendance.",
+    "statsPickUser": "Pick a member to see their representations and attendance.",
+    "locationDeleteConfirm": "Delete “{name}”? Existing rehearsals and events keep it as a one-off location.",
     "addUnavailability": "Add a period",
     "unavailabilitySaved": "Unavailability saved",
     "undo": "Undo",

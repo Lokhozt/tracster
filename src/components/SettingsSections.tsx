@@ -38,6 +38,7 @@ export function SectionNav({
   initialSectionId,
   sectionParam = "section",
   categoriesLabel,
+  title,
 }: {
   sections: NavSection[];
   intro?: string;
@@ -45,6 +46,11 @@ export function SectionNav({
   initialSectionId?: string;
   sectionParam?: string;
   categoriesLabel: string;
+  /**
+   * Page title, rendered here so phones can show the open section's name instead (with a
+   * back arrow to the list). Without it, the page keeps its own title.
+   */
+  title?: string;
 }) {
   const searchParams = useSearchParams();
   const urlSectionId = validSectionId(sections, searchParams.get(sectionParam));
@@ -68,12 +74,47 @@ export function SectionNav({
       // Switching sections (desktop sidebar): no need to stack every switch.
       replaceUrlInPlace(href);
     } else {
-      window.history.pushState(null, "", href);
+      window.history.pushState({ sectionNav: true }, "", href);
     }
   }
 
+  // Phones: back to the category list (history step when we opened it, else drop the param).
+  function closeSection() {
+    setInitialConsumed(true);
+    const state: unknown = window.history.state;
+    if (urlSectionId && state && typeof state === "object" && "sectionNav" in state) {
+      window.history.back();
+    } else {
+      replaceUrlInPlace(urlWithSection(sectionParam, null));
+    }
+  }
+
+  const activeLabel = sections.find((section) => section.id === activeId)?.label;
+
   return (
     <div>
+      {title && (
+        <div className="mb-6 flex items-center gap-3">
+          {mobileOpen && (
+            <button
+              type="button"
+              onClick={closeSection}
+              aria-label={categoriesLabel}
+              title={categoriesLabel}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-100 hover:text-stone-900 lg:hidden"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M19 12H5M11 6l-6 6 6 6" />
+              </svg>
+            </button>
+          )}
+          <h1 className="min-w-0 flex-1 font-display text-3xl break-words sm:text-4xl">
+            {/* Phones show one section at a time: its name is the page title. */}
+            <span className="lg:hidden">{mobileOpen && activeLabel ? activeLabel : title}</span>
+            <span className="max-lg:hidden">{title}</span>
+          </h1>
+        </div>
+      )}
       {intro && (
         <p className={cn("mb-6 text-stone-600", mobileOpen && "max-lg:hidden")}>{intro}</p>
       )}
@@ -139,10 +180,12 @@ export function SettingsSections({
   sections,
   intro,
   initialSectionId,
+  title,
 }: {
   sections: SettingsSection[];
   intro?: string;
   initialSectionId?: string;
+  title?: string;
 }) {
   const t = useTranslations("Pages.Settings");
   return (
@@ -151,6 +194,7 @@ export function SettingsSections({
       intro={intro}
       initialSectionId={initialSectionId}
       categoriesLabel={t("categories")}
+      title={title}
     />
   );
 }
