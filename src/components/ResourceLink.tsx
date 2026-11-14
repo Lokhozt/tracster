@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { WhatsAppLink } from "@/components/WhatsAppLink";
-import { Button } from "@/components/ui";
 import type { LinkEmbed } from "@/lib/resource-media";
 
 export function PdfViewer({ src, title }: { src: string; title: string }) {
@@ -26,7 +24,6 @@ export function ResourceLink({
   title?: string | null;
 }) {
   const t = useTranslations("Components");
-  const [copied, setCopied] = useState(false);
   const label =
     title ||
     (embed?.provider === "youtube"
@@ -37,30 +34,17 @@ export function ResourceLink({
           ? t("googleDocument")
           : url);
 
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
-  }
-
+  // Plain links are real <a> elements: tap opens, long press copies/shares, so no extra buttons.
+  // Embedded players (YouTube, Spotify, Google) swallow the long press, so they get a small link.
   const actions = (
-    <div className="mb-3 flex flex-wrap gap-2">
-      <Button type="button" variant="secondary" onClick={copyLink}>
-        {copied ? t("linkCopied") : t("copyLink")}
-      </Button>
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-900 transition hover:bg-stone-100"
-      >
-        {t("openLink")}
-      </a>
-    </div>
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mb-2 inline-flex text-sm font-medium text-stone-600 hover:text-stone-900"
+    >
+      {t("openResourceLink")} ↗
+    </a>
   );
 
   if (embed?.provider === "youtube") {
@@ -114,9 +98,6 @@ export function ResourceLink({
   if (embed?.provider === "whatsapp") {
     return (
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" variant="secondary" onClick={copyLink}>
-          {copied ? t("linkCopied") : t("copyLink")}
-        </Button>
         <WhatsAppLink href={url} label={t("openWhatsapp")} />
       </div>
     );
@@ -124,7 +105,6 @@ export function ResourceLink({
 
   return (
     <div>
-      {actions}
       <a
         className="break-all font-medium text-stone-800 underline hover:text-stone-600"
         href={url}

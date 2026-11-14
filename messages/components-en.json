@@ -446,6 +446,9 @@
     "onlyMyBarShifts": "Only parties where I’m on bar duty",
     "onlyMyBarShiftsSummary": "My bar duties",
     "noGroupsCanCreate": "No groups yet. Create groups to schedule rehearsals for a subset of participants.",
+    "openResourceLink": "Open",
+    "editResource": "Edit resource",
+    "resourceUpdateError": "Could not save the resource.",
     "calendarView": "Calendar view",
     "noEventsOnDay": "Nothing planned this day.",
     "dayEventCount": "{date}: {count, plural, =0 {no events} one {# event} other {# events}}",
@@ -674,7 +677,7 @@
     "resourceVisibility": {
       "CHOREOGRAPHER": "Choreographers",
       "PARTICIPANT": "Participants",
-      "ALL": "Everyone with choreography access"
+      "ALL": "All"
     },
     "resourceDescriptionPlaceholder": "Optional context or instructions",
     "resourceFileHelp": "Images, audio, video, PDF, text, and common office documents. Maximum 250 MB.",
@@ -692,9 +695,6 @@
     "youtubeVideo": "YouTube video",
     "spotifyPlayer": "Spotify player",
     "googleDocument": "Google document",
-    "copyLink": "Copy link",
-    "linkCopied": "Link copied",
-    "openLink": "Open link",
     "openWhatsapp": "Open WhatsApp",
     "officePreviewError": "Unable to preview this file.",
     "showingFirstRows": "Showing the first {count} rows of this sheet.",

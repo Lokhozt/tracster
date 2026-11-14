@@ -446,6 +446,9 @@
     "onlyMyBarShifts": "Uniquement mes soirées au bar",
     "onlyMyBarShiftsSummary": "Mes soirées au bar",
     "noGroupsCanCreate": "Aucun groupe pour l’instant. Créez des groupes pour planifier des répétitions avec une partie des participants.",
+    "openResourceLink": "Ouvrir",
+    "editResource": "Modifier la ressource",
+    "resourceUpdateError": "Impossible d’enregistrer la ressource.",
     "calendarView": "Vue du calendrier",
     "noEventsOnDay": "Rien de prévu ce jour.",
     "dayEventCount": "{date} : {count, plural, =0 {aucun événement} one {# événement} other {# événements}}",
@@ -674,7 +677,7 @@
     "resourceVisibility": {
       "CHOREOGRAPHER": "Chorégraphes",
       "PARTICIPANT": "Participants",
-      "ALL": "Toute personne ayant accès à la chorégraphie"
+      "ALL": "Tous"
     },
     "resourceDescriptionPlaceholder": "Contexte ou instructions facultatifs",
     "resourceFileHelp": "Images, audio, vidéo, PDF, texte et documents bureautiques courants. 250 Mo maximum.",
@@ -692,9 +695,6 @@
     "youtubeVideo": "Vidéo YouTube",
     "spotifyPlayer": "Lecteur Spotify",
     "googleDocument": "Document Google",
-    "copyLink": "Copier le lien",
-    "linkCopied": "Lien copié",
-    "openLink": "Ouvrir le lien",
     "openWhatsapp": "Ouvrir WhatsApp",
     "officePreviewError": "Impossible d’afficher un aperçu de ce fichier.",
     "showingFirstRows": "Affichage des {count} premières lignes de cette feuille.",

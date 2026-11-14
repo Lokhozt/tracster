@@ -2,7 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FilterSheet } from "@/components/FilterSheet";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 import {
   useEffect,
   useRef,
@@ -20,6 +22,7 @@ import { OfficeFileViewer } from "@/components/OfficeFileViewer";
 import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
 import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
 import { useAppNavigation } from "@/lib/app-navigation";
+import { cn } from "@/lib/utils";
 
 async function responseError(response: Response, fallback: string) {
   const body = await response.json().catch(() => null);
@@ -378,6 +381,87 @@ function PinResourceButton({
   );
 }
 
+/** Edit a published resource: description, visibility and, for links, the URL. */
+function EditResourceForm({
+  choreographyId,
+  resource,
+  onSaved,
+}: {
+  choreographyId: string;
+  resource: SerializedChoreographyResource;
+  onSaved: () => void;
+}) {
+  const t = useTranslations("Components");
+  const router = useRouter();
+  const [description, setDescription] = useState(resource.description ?? "");
+  const [visibility, setVisibility] = useState(resource.visibility);
+  const [url, setUrl] = useState(resource.url ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const isLink = resource.type === "LINK";
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    setSaving(true);
+    setError(null);
+    const response = await fetch(`/api/choreographies/${choreographyId}/resources/${resource.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ description, visibility, ...(isLink ? { url } : {}) }),
+    });
+    setSaving(false);
+    if (!response.ok) {
+      setError(await responseError(response, t("resourceUpdateError")));
+      return;
+    }
+    router.refresh();
+    onSaved();
+  }
+
+  return (
+    <form onSubmit={save} className="space-y-4">
+      {isLink && (
+        <div>
+          <Label htmlFor={`resource-url-${resource.id}`}>{t("resourceUrl")}</Label>
+          <Input
+            id={`resource-url-${resource.id}`}
+            type="url"
+            required
+            value={url}
+            onChange={(event) => setUrl(event.target.value)}
+          />
+        </div>
+      )}
+      <div>
+        <Label htmlFor={`resource-description-${resource.id}`}>{t("description")}</Label>
+        <Textarea
+          id={`resource-description-${resource.id}`}
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          placeholder={t("resourceDescriptionPlaceholder")}
+        />
+      </div>
+      <div>
+        <Label htmlFor={`resource-visibility-${resource.id}`}>{t("visibility")}</Label>
+        <Select
+          id={`resource-visibility-${resource.id}`}
+          className="w-full"
+          value={visibility}
+          onChange={(event) => setVisibility(event.target.value as typeof visibility)}
+        >
+          <option value="ALL">{t("resourceVisibility.ALL")}</option>
+          <option value="PARTICIPANT">{t("resourceVisibility.PARTICIPANT")}</option>
+          <option value="CHOREOGRAPHER">{t("resourceVisibility.CHOREOGRAPHER")}</option>
+        </Select>
+      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <Button type="submit" disabled={saving}>
+        {saving ? t("saving") : t("save")}
+      </Button>
+    </form>
+  );
+}
+
 function ResourceCard({
   choreographyId,
   resource,
@@ -390,6 +474,7 @@ function ResourceCard({
   const t = useTranslations("Components");
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function remove() {
@@ -430,22 +515,46 @@ function ResourceCard({
           {canEdit && (
             <button
               type="button"
-              className="text-sm text-red-700 hover:text-red-900 disabled:opacity-50"
+              onClick={() => setEditing(true)}
+              aria-label={t("editResource")}
+              title={t("editResource")}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-stone-300 text-stone-600 transition hover:bg-stone-100 hover:text-stone-900"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+      {canEdit && (
+        <FilterSheet open={editing} onClose={() => setEditing(false)} title={t("editResource")}>
+          <EditResourceForm
+            choreographyId={choreographyId}
+            resource={resource}
+            onSaved={() => setEditing(false)}
+          />
+          {/* Deleting lives here so the card only shows one management action. */}
+          <div className="mt-6 border-t border-stone-100 pt-4">
+            <button
+              type="button"
+              className="text-sm font-medium text-red-700 hover:text-red-900 disabled:opacity-50"
               disabled={deleting}
               onClick={remove}
             >
               {deleting ? t("deleting") : t("delete")}
             </button>
-          )}
-        </div>
-      </div>
+            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+          </div>
+        </FilterSheet>
+      )}
       {resource.description && <p className="mb-3 whitespace-pre-wrap text-sm text-stone-600">{resource.description}</p>}
       {resource.type === "LINK" && resource.url ? (
         <ResourceLink url={resource.url} embed={resource.embed} title={resource.description} />
       ) : (
         <FileResource choreographyId={choreographyId} resource={resource} />
       )}
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
     </div>
   );
 }
@@ -603,20 +712,36 @@ export function ChoreographyResources({
   choreographyId,
   resources,
   canEdit,
+  tabSectionId,
 }: {
   choreographyId: string;
   resources: SerializedChoreographyResource[];
   canEdit: boolean;
+  /**
+   * When the section lives in a tab, its `?section=` id: phones/tablets then get the "add"
+   * action in the floating "+" (only while that tab is open) instead of the inline button.
+   */
+  tabSectionId?: string;
 }) {
   const t = useTranslations("Components");
+  const searchParams = useSearchParams();
+  const addHref = `/choreographies/${choreographyId}/resources/new`;
+  const showFloatingAdd =
+    canEdit && tabSectionId !== undefined && searchParams.get("section") === tabSectionId;
   return (
     <Card>
+      {showFloatingAdd && (
+        <FloatingActionButton actions={[{ href: addHref, label: t("addResource") }]} />
+      )}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-semibold">{t("choreographyResources")}</h2>
         {canEdit && (
           <Link
-            href={`/choreographies/${choreographyId}/resources/new`}
-            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
+            href={addHref}
+            className={cn(
+              "min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700",
+              tabSectionId !== undefined ? "hidden lg:inline-flex" : "inline-flex",
+            )}
           >
             {t("addResource")}
           </Link>

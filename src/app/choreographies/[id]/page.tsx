@@ -330,6 +330,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           choreographyId={id}
           resources={resources}
           canEdit={canEdit}
+          tabSectionId="resources"
         />
       ),
     },

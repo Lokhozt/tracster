@@ -257,22 +257,32 @@ export const choreographyResourceVisibilitySchema = z.enum([
 
 const choreographyResourceDescriptionSchema = z.string().trim().max(1000).optional();
 
+const choreographyResourceUrlSchema = z
+  .string()
+  .trim()
+  .url({ message: "Enter a valid resource URL." })
+  .max(2048, { message: "Resource URLs are limited to 2048 characters." })
+  .refine((value) => new URL(value).protocol === "https:", {
+    message: "Resource links must use HTTPS.",
+  });
+
 export const choreographyResourceLinkSchema = z.object({
-  url: z
-    .string()
-    .trim()
-    .url({ message: "Enter a valid resource URL." })
-    .max(2048, { message: "Resource URLs are limited to 2048 characters." })
-    .refine((value) => new URL(value).protocol === "https:", {
-      message: "Resource links must use HTTPS.",
-    }),
+  url: choreographyResourceUrlSchema,
   description: choreographyResourceDescriptionSchema,
   visibility: choreographyResourceVisibilitySchema,
 });
 
-export const choreographyResourcePinSchema = z.object({
-  pinned: z.boolean(),
-});
+/** Partial update of a published resource (pin, description, visibility, link URL). */
+export const choreographyResourceUpdateSchema = z
+  .object({
+    pinned: z.boolean().optional(),
+    description: choreographyResourceDescriptionSchema,
+    visibility: choreographyResourceVisibilitySchema.optional(),
+    url: choreographyResourceUrlSchema.optional(),
+  })
+  .refine((value) => Object.values(value).some((field) => field !== undefined), {
+    message: "Nothing to update.",
+  });
 
 export const choreographyResourceUploadSchema = z.object({
   fileName: z.string().trim().min(1).max(255),
