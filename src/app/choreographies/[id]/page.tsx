@@ -22,6 +22,7 @@ import { ChoreographyResources } from "@/components/ChoreographyResources";
 import { ChoreographyTagsEditor } from "@/components/ChoreographyTagsEditor";
 import { TagBubbles } from "@/components/TagBubbles";
 import { ChoreographyHeaderActions } from "@/components/ChoreographyHeaderActions";
+import { ChoreographyEventActions } from "@/components/ChoreographyEventActions";
 import { ChoreographyTeamActions } from "@/components/ChoreographyTeamActions";
 import { type ChoreographySection, ChoreographySections, ChoreographyTabLink } from "@/components/ChoreographyTabs";
 import { AvailabilityButtons } from "@/components/AvailabilityButtons";
@@ -562,8 +563,15 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
       id: "events",
       content: (
         <div className="space-y-8">
+          <ChoreographyEventActions
+            sectionId="events"
+            choreographyId={id}
+            canEdit={canEdit}
+            canAddDemonstration={eventTypes.some((type) => type.kind === "DEMONSTRATION")}
+          />
           <section>
             <RehearsalsSection
+              actionsInFloatingMenu
               choreographyId={id}
               choreographyTitle={choreography.title}
               canEdit={canEdit}
@@ -608,6 +616,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           {(canEdit || representationLinks.length > 0) && (
             <section>
               <RepresentationsSection
+                actionsInFloatingMenu
                 choreographyId={id}
                 canEdit={canEdit}
                 eventTypes={eventTypes}
@@ -626,6 +635,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
           {(canEdit || demonstrationLinks.length > 0) && (
             <section>
               <DemonstrationsSection
+                actionsInFloatingMenu
                 choreographyId={id}
                 choreographyTitle={choreography.title}
                 canEdit={canEdit}

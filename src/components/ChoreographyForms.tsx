@@ -2,11 +2,12 @@
 
 import { useTranslations } from "next-intl";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
 import { StatisticsIconLink } from "@/components/StatisticsIconLink";
+import { useAddFormRequest } from "@/components/ChoreographyTabs";
 import {
   RehearsalEventCard,
   type RehearsalListItem,
@@ -21,6 +22,7 @@ import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { type GroupOption } from "@/components/GroupForms";
 import { CreateEventForm } from "@/components/EventForms";
 import { matchesSearch } from "@/lib/search";
+import { cn } from "@/lib/utils";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
 import { compareUsersByName, sortUsersByName } from "@/lib/users";
 import {
@@ -308,6 +310,7 @@ export function RehearsalsSection({
   groups = [],
   rehearsals,
   eventTypes,
+  actionsInFloatingMenu = false,
 }: {
   choreographyId: string;
   choreographyTitle: string;
@@ -315,9 +318,23 @@ export function RehearsalsSection({
   groups?: GroupOption[];
   rehearsals: RehearsalListItem[];
   eventTypes: SerializedEventType[];
+  /** Phones/tablets: the add button lives in the floating "+" menu (ChoreographyEventActions). */
+  actionsInFloatingMenu?: boolean;
 }) {
   const t = useTranslations("Components");
   const [showAddForm, setShowAddForm] = useState(false);
+  const addRequest = useAddFormRequest("rehearsal");
+  const addFormOpen = showAddForm || addRequest.requested;
+  const addFormRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (addRequest.requested) {
+      addFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [addRequest.requested]);
+  function closeAddForm() {
+    setShowAddForm(false);
+    addRequest.clear();
+  }
   const [search, setSearch] = useState("");
 
   const filteredRehearsals = useMemo(() => {
@@ -338,11 +355,15 @@ export function RehearsalsSection({
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">{t("rehearsals")}</h2>
         <div className="flex flex-wrap items-center gap-2">
-          <StatisticsIconLink href={`/choreographies/${choreographyId}/rehearsals/statistics`} />
-          {canEdit && !showAddForm && (
-            <Button type="button" onClick={() => setShowAddForm(true)}>
-              {t("scheduleRehearsal")}
-            </Button>
+          <span className={cn(actionsInFloatingMenu && "hidden lg:inline")}>
+            <StatisticsIconLink href={`/choreographies/${choreographyId}/rehearsals/statistics`} />
+          </span>
+          {canEdit && !addFormOpen && (
+            <span className={cn(actionsInFloatingMenu && "hidden lg:inline")}>
+              <Button type="button" onClick={() => setShowAddForm(true)}>
+                {t("scheduleRehearsal")}
+              </Button>
+            </span>
           )}
         </div>
       </div>
@@ -365,7 +386,8 @@ export function RehearsalsSection({
         </div>
       )}
 
-      {canEdit && showAddForm && (
+      {canEdit && addFormOpen && (
+        <div ref={addFormRef} className="scroll-mt-20">
         <Card className="mb-6">
           <h3 className="mb-4 font-medium">{t("scheduleRehearsal")}</h3>
           <CreateRehearsalForm
@@ -373,10 +395,11 @@ export function RehearsalsSection({
             choreographyTitle={choreographyTitle}
             groups={groups}
             eventTypes={eventTypes}
-            onSuccess={() => setShowAddForm(false)}
-            onCancel={() => setShowAddForm(false)}
+            onSuccess={closeAddForm}
+            onCancel={closeAddForm}
           />
         </Card>
+        </div>
       )}
 
       {rehearsals.length === 0 ? (

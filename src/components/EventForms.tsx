@@ -4,9 +4,10 @@ import { useLocale, useTranslations } from "next-intl";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
+import { useAddFormRequest } from "@/components/ChoreographyTabs";
 import { EditIconLink } from "@/components/EditIconLink";
 import {
   emptyLocationSelection,
@@ -970,6 +971,7 @@ function LinkedEventKindSection({
   eventTypes,
   participantOptions,
   groups = [],
+  actionsInFloatingMenu = false,
 }: {
   kind: "DEMONSTRATION";
   heading: string;
@@ -985,6 +987,8 @@ function LinkedEventKindSection({
   eventTypes: SerializedEventType[];
   participantOptions: UserOption[];
   groups?: GroupOption[];
+  /** Phones/tablets: the add button lives in the floating "+" menu (ChoreographyEventActions). */
+  actionsInFloatingMenu?: boolean;
 }) {
   const t = useTranslations("Components");
   const locale = useLocale();
@@ -993,21 +997,35 @@ function LinkedEventKindSection({
     timeStyle: "short",
   });
   const [showAddForm, setShowAddForm] = useState(false);
+  const addRequest = useAddFormRequest(kind.toLowerCase());
+  const addFormOpen = showAddForm || addRequest.requested;
+  const addFormRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (addRequest.requested) {
+      addFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [addRequest.requested]);
+  function closeAddForm() {
+    setShowAddForm(false);
+    addRequest.clear();
+  }
   const eventType = eventTypes.find((type) => type.kind === kind);
 
   return (
     <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">{heading}</h2>
-        {canEdit && !showAddForm && eventType && (
-          <Button type="button" onClick={() => setShowAddForm(true)}>
-            {addLabel}
-          </Button>
+        {canEdit && !addFormOpen && eventType && (
+          <span className={cn(actionsInFloatingMenu && "hidden lg:inline")}>
+            <Button type="button" onClick={() => setShowAddForm(true)}>
+              {addLabel}
+            </Button>
+          </span>
         )}
       </div>
 
-      {canEdit && showAddForm && eventType && (
-        <div className="mb-6 rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+      {canEdit && addFormOpen && eventType && (
+        <div ref={addFormRef} className="mb-6 scroll-mt-20 rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
           <CreateEventForm
             eventTypes={eventTypes}
             participantOptions={participantOptions}
@@ -1017,11 +1035,11 @@ function LinkedEventKindSection({
             lockType
             defaultChoreographyId={choreographyId}
             lockChoreography
-            onSuccess={() => setShowAddForm(false)}
+            onSuccess={closeAddForm}
             redirectBasePath="/events"
           />
           <div className="mt-3">
-            <Button type="button" variant="secondary" onClick={() => setShowAddForm(false)}>
+            <Button type="button" variant="secondary" onClick={closeAddForm}>
               {t("cancel")}
             </Button>
           </div>
@@ -1087,6 +1105,7 @@ export function DemonstrationsSection({
   eventTypes,
   participantOptions,
   groups = [],
+  actionsInFloatingMenu = false,
 }: {
   choreographyId: string;
   choreographyTitle: string;
@@ -1095,6 +1114,8 @@ export function DemonstrationsSection({
   eventTypes: SerializedEventType[];
   participantOptions: UserOption[];
   groups?: GroupOption[];
+  /** Phones/tablets: the add button lives in the floating "+" menu (ChoreographyEventActions). */
+  actionsInFloatingMenu?: boolean;
 }) {
   const t = useTranslations("Components");
   return (
@@ -1113,6 +1134,7 @@ export function DemonstrationsSection({
       eventTypes={eventTypes}
       participantOptions={participantOptions}
       groups={groups}
+      actionsInFloatingMenu={actionsInFloatingMenu}
     />
   );
 }

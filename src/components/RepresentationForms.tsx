@@ -3,10 +3,11 @@
 import { useLocale, useTranslations } from "next-intl";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
+import { useAddFormRequest } from "@/components/ChoreographyTabs";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
 import { EditIconLink } from "@/components/EditIconLink";
 import {
@@ -683,29 +684,46 @@ export function RepresentationsSection({
   representations,
   canEdit,
   eventTypes,
+  actionsInFloatingMenu = false,
 }: {
   choreographyId: string;
   representations: RepresentationItem[];
   canEdit: boolean;
   eventTypes: SerializedEventType[];
+  /** Phones/tablets: the add button lives in the floating "+" menu (ChoreographyEventActions). */
+  actionsInFloatingMenu?: boolean;
 }) {
   const t = useTranslations("Components");
   const [showAddForm, setShowAddForm] = useState(false);
+  const addRequest = useAddFormRequest("representation");
+  const addFormOpen = showAddForm || addRequest.requested;
+  const addFormRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (addRequest.requested) {
+      addFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [addRequest.requested]);
+  function closeAddForm() {
+    setShowAddForm(false);
+    addRequest.clear();
+  }
   const [addMode, setAddMode] = useState<"create" | "link">("create");
 
   return (
     <section>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">{t("representations")}</h2>
-        {canEdit && !showAddForm && (
-          <Button type="button" onClick={() => setShowAddForm(true)}>
-            {t("addRepresentation")}
-          </Button>
+        {canEdit && !addFormOpen && (
+          <span className={cn(actionsInFloatingMenu && "hidden lg:inline")}>
+            <Button type="button" onClick={() => setShowAddForm(true)}>
+              {t("addRepresentation")}
+            </Button>
+          </span>
         )}
       </div>
 
-      {canEdit && showAddForm && (
-        <div className="mb-6 rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+      {canEdit && addFormOpen && (
+        <div ref={addFormRef} className="mb-6 scroll-mt-20 rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
           <div className="mb-4 flex flex-wrap gap-2">
             <Button
               type="button"
@@ -727,14 +745,14 @@ export function RepresentationsSection({
             <CreateRepresentationForChoreographyForm
               choreographyId={choreographyId}
               eventTypes={eventTypes}
-              onSuccess={() => setShowAddForm(false)}
-              onCancel={() => setShowAddForm(false)}
+              onSuccess={closeAddForm}
+              onCancel={closeAddForm}
             />
           ) : (
             <LinkRepresentationForm
               choreographyId={choreographyId}
-              onSuccess={() => setShowAddForm(false)}
-              onCancel={() => setShowAddForm(false)}
+              onSuccess={closeAddForm}
+              onCancel={closeAddForm}
             />
           )}
         </div>
