@@ -445,6 +445,7 @@
     "rehearsalCountSummary": "{shown} sur {total, plural, one {# répétition} other {# répétitions}}",
     "onlyMyBarShifts": "Uniquement mes soirées au bar",
     "onlyMyBarShiftsSummary": "Mes soirées au bar",
+    "noGroupsCanCreate": "Aucun groupe pour l’instant. Créez des groupes pour planifier des répétitions avec une partie des participants.",
     "calendarView": "Vue du calendrier",
     "noEventsOnDay": "Rien de prévu ce jour.",
     "dayEventCount": "{date} : {count, plural, =0 {aucun événement} one {# événement} other {# événements}}",

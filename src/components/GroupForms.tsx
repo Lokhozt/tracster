@@ -3,9 +3,12 @@
 import { useTranslations } from "next-intl";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FilterSheet } from "@/components/FilterSheet";
+import { FAB_MENU_ITEM_CLASS, FloatingActionButton } from "@/components/FloatingActionButton";
 import { Button, Card, Input, Label } from "@/components/ui";
 import type { SerializedGroup } from "@/lib/groups";
+import { cn } from "@/lib/utils";
 import { UserSelectionMatrix } from "@/components/UserSelectionMatrix";
 
 type MemberOption = { id: string; name: string; email: string; firstName?: string; lastName?: string };
@@ -254,15 +257,26 @@ export function GroupsSection({
   canEdit,
   groups,
   members,
+  tabSectionId,
 }: {
   choreographyId: string;
   canEdit: boolean;
   groups: SerializedGroup[];
   members: MemberOption[];
+  /**
+   * When the section lives in a tab, its `?section=` id: phones/tablets then get a floating "+"
+   * (only while that tab is open) that opens the create form in a bottom sheet.
+   */
+  tabSectionId?: string;
 }) {
   const t = useTranslations("Components");
+  const searchParams = useSearchParams();
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createSheetOpen, setCreateSheetOpen] = useState(false);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const canCreate = canEdit && members.length > 0;
+  const showFloatingCreate =
+    canCreate && tabSectionId !== undefined && searchParams.get("section") === tabSectionId;
 
   return (
     <section>
@@ -273,12 +287,46 @@ export function GroupsSection({
             {t("groupsHelp")}
           </p>
         </div>
-        {canEdit && !showCreateForm && members.length > 0 && (
-          <Button type="button" onClick={() => setShowCreateForm(true)}>
-            {t("newGroup")}
-          </Button>
+        {canCreate && !showCreateForm && (
+          // With a floating "+" on phones/tablets, the inline button is for desktops only.
+          <span className={cn(tabSectionId !== undefined && "hidden lg:block")}>
+            <Button type="button" onClick={() => setShowCreateForm(true)}>
+              {t("newGroup")}
+            </Button>
+          </span>
         )}
       </div>
+
+      {showFloatingCreate && (
+        <>
+          <FloatingActionButton
+            actions={[]}
+            extraItems={[
+              <button
+                key="new-group"
+                type="button"
+                data-fab-close=""
+                className={FAB_MENU_ITEM_CLASS}
+                onClick={() => setCreateSheetOpen(true)}
+              >
+                {t("newGroup")}
+              </button>,
+            ]}
+          />
+          <FilterSheet
+            open={createSheetOpen}
+            onClose={() => setCreateSheetOpen(false)}
+            title={t("createGroup")}
+          >
+            <CreateGroupForm
+              choreographyId={choreographyId}
+              members={members}
+              onSuccess={() => setCreateSheetOpen(false)}
+              onCancel={() => setCreateSheetOpen(false)}
+            />
+          </FilterSheet>
+        </>
+      )}
 
       {canEdit && showCreateForm && (
         <Card className="mb-6">
@@ -296,7 +344,7 @@ export function GroupsSection({
         <Card>
           <p className="text-stone-600">
             {canEdit
-              ? "No groups yet. Create groups to schedule rehearsals for a subset of participants."
+              ? t("noGroupsCanCreate")
               : t("noGroups")}
           </p>
         </Card>

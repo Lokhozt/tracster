@@ -183,94 +183,63 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
       id: "overview",
       label: t("overview"),
       content: (
-        // Overview first: what's next, the key resources and who is involved, without a tap.
-        <div className="space-y-4">
-          <div className="grid gap-4 lg:grid-cols-2">
-            {/* Like the other cards: the whole card opens the rehearsal (›); inner controls stay clickable. */}
-            <Card className={cn(nextRehearsal && "relative transition hover:border-stone-400")}>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
-                {nextRehearsal ? (
-                  <Link
-                    href={`/events/${nextRehearsal.id}`}
-                    className={cn("flex items-center justify-between gap-3", cardLink)}
-                  >
-                    {t("nextRehearsal")}
-                    <span aria-hidden="true" className="text-base text-stone-400">›</span>
-                  </Link>
-                ) : (
-                  t("nextRehearsal")
-                )}
-              </h2>
+        // Overview first: next rehearsal, pinned resources, team, description (two per row on desktops).
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* Like the other cards: the whole card opens the rehearsal (›); inner controls stay clickable. */}
+          <Card className={cn(nextRehearsal && "relative transition hover:border-stone-400")}>
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
               {nextRehearsal ? (
-                <div className="space-y-3">
-                  <div>
-                    <p className="font-semibold text-stone-900">
-                      <LocalDateTime value={nextRehearsal.startsAt.toISOString()} />
-                    </p>
-                    <p className="text-sm text-stone-600">
-                      {[displayLocation(nextRehearsal), nextRehearsal.group?.name]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                  </div>
-                  {userIsInNextRehearsal && (
-                    <div className={aboveCardLink}>
-                      <AvailabilityButtons
-                        rehearsalId={nextRehearsal.id}
-                        currentStatus={myNextRehearsalStatus}
-                      />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-stone-600">{t("noUpcomingRehearsal")}</p>
-              )}
-              {nextPerformance && (
                 <Link
-                  href={`/events/${nextPerformance.event.id}`}
-                  className={cn("mt-4 block border-t border-stone-100 pt-3 text-sm hover:underline", aboveCardLink)}
-                >
-                  <span className="text-stone-500">{t("nextPerformance")} · </span>
-                  <span className="font-medium text-stone-900">
-                    {nextPerformance.event.title || tc("representation")}
-                  </span>
-                  <span className="text-stone-600">
-                    {" · "}
-                    <LocalDateTime value={nextPerformance.event.startsAt.toISOString()} />
-                  </span>
-                </Link>
-              )}
-            </Card>
-            {/* The whole card opens the team tab; the join controls stay clickable on their own. */}
-            <Card className="relative transition hover:border-stone-400">
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
-                <ChoreographyTabLink
-                  sectionId="participants"
+                  href={`/events/${nextRehearsal.id}`}
                   className={cn("flex items-center justify-between gap-3", cardLink)}
                 >
-                  {t("people")}
+                  {t("nextRehearsal")}
                   <span aria-hidden="true" className="text-base text-stone-400">›</span>
-                </ChoreographyTabLink>
-              </h2>
-              <p className="text-stone-900">
-                <span className="text-stone-500">{t("choreographers")} : </span>
-                {choreographers.map((entry) => entry.name).join(", ") || "—"}
-              </p>
-              <p className="mt-1 text-stone-900">
-                {t("participantCount", { count: participants.length })}
-              </p>
-              <div className={cn("mt-3", aboveCardLink)}>
-                <JoinAsParticipantControls
-                  joinUrl={`/api/choreographies/${id}/join`}
-                  requestUrl={`/api/choreographies/${id}/join-requests`}
-                  allowJoin={choreography.allowParticipantJoin}
-                  allowRequest={choreography.allowJoinRequests}
-                  isParticipant={isMember}
-                  hasPendingRequest={hasPendingRequest}
-                />
+                </Link>
+              ) : (
+                t("nextRehearsal")
+              )}
+            </h2>
+            {nextRehearsal ? (
+              <div className="space-y-3">
+                <div>
+                  <p className="font-semibold text-stone-900">
+                    <LocalDateTime value={nextRehearsal.startsAt.toISOString()} />
+                  </p>
+                  <p className="text-sm text-stone-600">
+                    {[displayLocation(nextRehearsal), nextRehearsal.group?.name]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                </div>
+                {userIsInNextRehearsal && (
+                  <div className={aboveCardLink}>
+                    <AvailabilityButtons
+                      rehearsalId={nextRehearsal.id}
+                      currentStatus={myNextRehearsalStatus}
+                    />
+                  </div>
+                )}
               </div>
-            </Card>
-          </div>
+            ) : (
+              <p className="text-sm text-stone-600">{t("noUpcomingRehearsal")}</p>
+            )}
+            {nextPerformance && (
+              <Link
+                href={`/events/${nextPerformance.event.id}`}
+                className={cn("mt-4 block border-t border-stone-100 pt-3 text-sm hover:underline", aboveCardLink)}
+              >
+                <span className="text-stone-500">{t("nextPerformance")} · </span>
+                <span className="font-medium text-stone-900">
+                  {nextPerformance.event.title || tc("representation")}
+                </span>
+                <span className="text-stone-600">
+                  {" · "}
+                  <LocalDateTime value={nextPerformance.event.startsAt.toISOString()} />
+                </span>
+              </Link>
+            )}
+          </Card>
           {pinnedResources.length > 0 && (
             // Like the team card: the whole card opens the Resources tab (full previews live there);
             // web links can still be opened directly.
@@ -308,9 +277,41 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
               </ul>
             </Card>
           )}
+          {/* The whole card opens the team tab; the join controls stay clickable on their own. */}
+          <Card className="relative transition hover:border-stone-400">
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">
+              <ChoreographyTabLink
+                sectionId="participants"
+                className={cn("flex items-center justify-between gap-3", cardLink)}
+              >
+                {t("people")}
+                <span aria-hidden="true" className="text-base text-stone-400">›</span>
+              </ChoreographyTabLink>
+            </h2>
+            <p className="text-stone-900">
+              <span className="text-stone-500">{t("choreographers")} : </span>
+              {choreographers.map((entry) => entry.name).join(", ") || "—"}
+            </p>
+            <p className="mt-1 text-stone-900">
+              {t("participantCount", { count: participants.length })}
+            </p>
+            <div className={cn("mt-3", aboveCardLink)}>
+              <JoinAsParticipantControls
+                joinUrl={`/api/choreographies/${id}/join`}
+                requestUrl={`/api/choreographies/${id}/join-requests`}
+                allowJoin={choreography.allowParticipantJoin}
+                allowRequest={choreography.allowJoinRequests}
+                isParticipant={isMember}
+                hasPendingRequest={hasPendingRequest}
+              />
+            </div>
+          </Card>
           {/* Assigned tags first, then the description; tags are edited from the edit section. */}
           {(choreography.description || (settings.showChoreographyTags && assignedTags.length > 0)) && (
             <Card className="space-y-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">
+                {tc("description")}
+              </h2>
               {settings.showChoreographyTags && <TagBubbles tags={assignedTags} />}
               {choreography.description && (
                 <p className="whitespace-pre-wrap text-stone-700">{choreography.description}</p>
@@ -318,6 +319,18 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
             </Card>
           )}
         </div>
+      ),
+    },
+    {
+      id: "resources",
+      label: t("resources"),
+      count: resources.length,
+      content: (
+        <ChoreographyResources
+          choreographyId={id}
+          resources={resources}
+          canEdit={canEdit}
+        />
       ),
     },
     {
@@ -429,18 +442,6 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
         </div>
       ),
     },
-    {
-      id: "resources",
-      label: t("resources"),
-      count: resources.length,
-      content: (
-        <ChoreographyResources
-          choreographyId={id}
-          resources={resources}
-          canEdit={canEdit}
-        />
-      ),
-    },
     ...(showGroups
       ? [
           {
@@ -453,6 +454,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
                 canEdit={canEdit}
                 groups={groups.map(serializeGroup)}
                 members={participants}
+                tabSectionId="groups"
               />
             ),
           },
