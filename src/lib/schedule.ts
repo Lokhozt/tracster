@@ -2,7 +2,8 @@ import { visibleEventWhere } from "@/lib/participation";
 import { prisma } from "@/lib/db";
 import { canEditEvent } from "@/lib/events";
 import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series";
-import { eventKindAllowsChoreographyLinks } from "@/lib/event-type-helpers";
+import { eventKindAllowsChoreographyLinks, isPartyEventKind } from "@/lib/event-type-helpers";
+import { isPartyBarSignupOpen } from "@/lib/party-bar-shared";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { canManageAllEvents } from "@/lib/roles";
 import { scheduleEventEnd, type SerializedScheduleEvent } from "@/lib/schedule-filters";
@@ -112,6 +113,7 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
         where: { userId },
         select: { userId: true },
       },
+      _count: { select: { partyBarSlots: true } },
     },
     orderBy: { startsAt: "asc" },
   });
@@ -180,6 +182,12 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
         allowJoinRequests: event.allowJoinRequests,
         hasPendingJoinRequest: event.joinRequests.length > 0,
         isBarVolunteer: event.partyBarSlots.length > 0,
+        hasFreeBarSlot:
+          isPartyEventKind(kind) &&
+          isPartyBarSignupOpen({
+            enabled: event.partyBarSlotsEnabled,
+            participantCount: event._count.partyBarSlots,
+          }),
         hasUpcomingSeriesEvents: hasUpcomingSeriesEvents(event, siblings),
         availabilityStatus:
           kind === "REHEARSAL" ? (event.availabilities[0]?.status ?? null) : null,

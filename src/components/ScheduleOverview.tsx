@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FollowAssociationCalendarLink } from "@/components/FollowAssociationCalendarLink";
 import { EventTypeFilter } from "@/components/EventTypeFilter";
@@ -11,7 +12,7 @@ import { PlanningRehearsalsEditButton } from "@/components/PlanningRehearsalsEdi
 import { RehearsalCalendar } from "@/components/RehearsalCalendar";
 import { PartyBarPlanningReminders } from "@/components/PartyBarPlanningReminders";
 import { UpcomingEventsList } from "@/components/UpcomingEventsList";
-import { SearchInput } from "@/components/ui";
+import { SearchInput, SegmentedControl } from "@/components/ui";
 import type { PartyBarPlanningReminder } from "@/lib/party-bar";
 import {
   persistHiddenEventTypeIds,
@@ -21,6 +22,9 @@ import type { SerializedEventType } from "@/lib/event-type-helpers";
 import { isBirthdayScheduleEvent } from "@/lib/schedule-birthdays";
 import type { SerializedScheduleEvent } from "@/lib/schedule-filters";
 import { matchesSearch } from "@/lib/search";
+
+/** Bar filter: one choice, as "my shifts" and "free slots" contradict each other. */
+type BarFilter = "all" | "mine" | "free";
 
 function matchesScheduleSearch(event: SerializedScheduleEvent, query: string): boolean {
   return matchesSearch(
@@ -65,6 +69,7 @@ export function ScheduleOverview({
   createActions?: FloatingAction[];
 }) {
   const t = useTranslations("Components");
+  const searchParams = useSearchParams();
   const [hiddenTypeIds, setHiddenTypeIds] = useState(initialHiddenTypeIds);
   const [hideNonParticipating, setHideNonParticipating] = useState(
     initialHideNonParticipating,
@@ -72,23 +77,41 @@ export function ScheduleOverview({
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [showPast, setShowPast] = useState(false);
-  const [onlyMyBarShifts, setOnlyMyBarShifts] = useState(false);
+  // "?bar=free" (e.g. old links to the Trac bar page) opens on the free bar slots.
+  const [barFilter, setBarFilter] = useState<BarFilter>(() =>
+    searchParams.get("bar") === "free" ? "free" : "all",
+  );
   const hidden = useMemo(() => new Set(hiddenTypeIds), [hiddenTypeIds]);
+  // A bar choice ("my shifts" / "free slots") is a list of its own: "only events I take part in"
+  // and the type filters are paused meanwhile (greyed, values kept).
+  const barMode = barFilter !== "all";
+  const freeBarSlots = barFilter === "free";
+  // With the party type(s) hidden (outside a bar choice, which pauses types) there is no bar to
+  // filter on: the Bar choice disappears.
+  const partyTypes = eventTypes.filter((type) => type.kind === "PARTY");
+  const partiesHidden =
+    !barMode && partyTypes.length > 0 && partyTypes.every((type) => hidden.has(type.id));
   const filteredEvents = useMemo(
     () =>
       events.filter((event) => {
-        if (hidden.has(event.typeId)) {
+        if (barFilter === "free" && !event.hasFreeBarSlot) {
           return false;
         }
-        if (hideNonParticipating && !event.isParticipating) {
+        if (barFilter === "mine" && !event.isBarVolunteer) {
           return false;
         }
-        if (onlyMyBarShifts && !event.isBarVolunteer) {
-          return false;
+        if (!barMode) {
+          if (hidden.has(event.typeId)) {
+            return false;
+          }
+          // Holding a bar slot counts as taking part.
+          if (hideNonParticipating && !event.isParticipating && !event.isBarVolunteer) {
+            return false;
+          }
         }
         return matchesScheduleSearch(event, search);
       }),
-    [events, hidden, hideNonParticipating, onlyMyBarShifts, search],
+    [events, barFilter, barMode, hidden, hideNonParticipating, search],
   );
   const exportEvents = useMemo(
     () => filteredEvents.filter((event) => !isBirthdayScheduleEvent(event)),
@@ -99,10 +122,8 @@ export function ScheduleOverview({
     [filteredEvents],
   );
   const activeFilterCount =
-    hiddenTypeIds.length +
-    (hideNonParticipating ? 1 : 0) +
-    (showPast ? 1 : 0) +
-    (onlyMyBarShifts ? 1 : 0);
+    (barMode ? 1 : hiddenTypeIds.length + (hideNonParticipating ? 1 : 0)) +
+    (showPast ? 1 : 0);
 
   function updateHiddenTypeIds(ids: string[]) {
     setHiddenTypeIds(ids);
@@ -116,27 +137,33 @@ export function ScheduleOverview({
 
   const filtersSummary = useMemo(() => {
     const parts: string[] = [];
-    if (hiddenTypeIds.length > 0) {
-      parts.push(t("planningFiltersSummaryTypesHidden", { count: hiddenTypeIds.length }));
+    if (freeBarSlots) {
+      parts.push(t("barFilterFreeSummary"));
+    } else if (barFilter === "mine") {
+      parts.push(t("onlyMyBarShiftsSummary"));
     } else {
-      parts.push(t("planningFiltersSummaryAllTypes"));
-    }
-    if (hideNonParticipating) {
-      parts.push(t("planningFiltersSummaryParticipatingOnly"));
+      if (hiddenTypeIds.length > 0) {
+        parts.push(t("planningFiltersSummaryTypesHidden", { count: hiddenTypeIds.length }));
+      } else {
+        parts.push(t("planningFiltersSummaryAllTypes"));
+      }
+      if (hideNonParticipating) {
+        parts.push(t("planningFiltersSummaryParticipatingOnly"));
+      }
     }
     if (showPast) {
       parts.push(t("pastEventsShown"));
     }
-    if (onlyMyBarShifts) {
-      parts.push(t("onlyMyBarShiftsSummary"));
-    }
     return parts.join(" · ");
-  }, [hiddenTypeIds.length, hideNonParticipating, onlyMyBarShifts, showPast, t]);
+  }, [barFilter, freeBarSlots, hiddenTypeIds.length, hideNonParticipating, showPast, t]);
 
   return (
     // Wide screens (xl+): fills the window; only the calendar body and the event list scroll.
     <div className="xl:flex xl:min-h-0 xl:flex-1 xl:flex-col">
-      <PartyBarPlanningReminders reminders={partyBarReminders} />
+      <PartyBarPlanningReminders
+        reminders={partyBarReminders}
+        onShowFreeSlots={() => setBarFilter("free")}
+      />
       <div className="mb-4 flex gap-2">
         <div className="min-w-0 flex-1">
           <SearchInput
@@ -155,20 +182,40 @@ export function ScheduleOverview({
         title={t("planningFilters")}
         summary={filtersSummary}
       >
-        <FilterCheckbox checked={hideNonParticipating} onChange={updateHideNonParticipating}>
-          {t("hideNonParticipatingEvents")}
-        </FilterCheckbox>
+        {!partiesHidden && (
+        <div className="mb-5">
+          <p className="mb-2 text-sm font-medium text-stone-700">{t("barFilterLabel")}</p>
+          <SegmentedControl
+            label={t("barFilterLabel")}
+            value={barFilter}
+            onChange={setBarFilter}
+            options={[
+              { value: "all", label: t("barFilterAll") },
+              { value: "mine", label: t("barFilterMine") },
+              { value: "free", label: t("barFilterFree") },
+            ]}
+          />
+          {barMode && (
+            <p className="mt-2 text-xs text-stone-500">
+              {freeBarSlots ? t("barFilterFreeOverrides") : t("barFilterMineOverrides")}
+            </p>
+          )}
+        </div>
+        )}
         <FilterCheckbox checked={showPast} onChange={setShowPast}>
           {t("showPastEvents")}
         </FilterCheckbox>
-        <FilterCheckbox checked={onlyMyBarShifts} onChange={setOnlyMyBarShifts}>
-          {t("onlyMyBarShifts")}
-        </FilterCheckbox>
-        <EventTypeFilter
-          eventTypes={eventTypes}
-          hiddenTypeIds={hiddenTypeIds}
-          onChange={updateHiddenTypeIds}
-        />
+        {/* Paused (greyed, values kept) while looking for free bar slots. */}
+        <fieldset disabled={barMode} className="transition disabled:opacity-40">
+          <FilterCheckbox checked={hideNonParticipating} onChange={updateHideNonParticipating}>
+            {t("hideNonParticipatingEvents")}
+          </FilterCheckbox>
+          <EventTypeFilter
+            eventTypes={eventTypes}
+            hiddenTypeIds={hiddenTypeIds}
+            onChange={updateHiddenTypeIds}
+          />
+        </fieldset>
       </FilterSheet>
       {/* Wide screens: calendar and event list side by side, sharing the window height. */}
       <div className="xl:grid xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,1fr)_18rem] xl:gap-6 2xl:grid-cols-[minmax(0,1fr)_26rem]">
@@ -198,7 +245,7 @@ export function ScheduleOverview({
           <UpcomingEventsList
             events={listEvents}
             includePast={showPast}
-            categoriesFiltered={hiddenTypeIds.length > 0 || hideNonParticipating || onlyMyBarShifts || search.trim() !== ""}
+            categoriesFiltered={activeFilterCount - (showPast ? 1 : 0) > 0 || search.trim() !== ""}
           />
         </div>
       </div>

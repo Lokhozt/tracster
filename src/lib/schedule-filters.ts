@@ -24,6 +24,8 @@ export type SerializedScheduleEvent = {
   hasPendingJoinRequest: boolean;
   /** The viewer holds one of this party's bar slots. */
   isBarVolunteer: boolean;
+  /** A party whose bar still has a free slot. */
+  hasFreeBarSlot: boolean;
   hasUpcomingSeriesEvents: boolean;
   availabilityStatus: "AVAILABLE" | "UNAVAILABLE" | "MAYBE" | null;
   href: string;

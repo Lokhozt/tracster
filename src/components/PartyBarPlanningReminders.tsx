@@ -3,13 +3,17 @@
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import type { PartyBarPlanningReminder } from "@/lib/party-bar";
-import { TRAC_BAR_DOCUMENTS_SECTION_ID } from "@/lib/party-bar-shared";
 
-/** One compact card listing the parties of the next two weeks that still need bar volunteers. */
+/**
+ * One compact card listing the parties of the next two weeks that still need bar volunteers;
+ * "see all" switches the planning to every party with a free bar slot.
+ */
 export function PartyBarPlanningReminders({
   reminders,
+  onShowFreeSlots,
 }: {
   reminders: PartyBarPlanningReminder[];
+  onShowFreeSlots: () => void;
 }) {
   const t = useTranslations("Components");
   const locale = useLocale();
@@ -28,12 +32,13 @@ export function PartyBarPlanningReminders({
         <h2 className="text-sm font-semibold text-stone-900">
           {t("partyBarRemindersTitle", { count: reminders.length })}
         </h2>
-        <Link
-          href={`/documents?category=${TRAC_BAR_DOCUMENTS_SECTION_ID}`}
+        <button
+          type="button"
+          onClick={onShowFreeSlots}
           className="shrink-0 text-sm font-medium text-stone-600 hover:text-stone-900"
         >
           {t("partyBarRemindersSeeAll")}
-        </Link>
+        </button>
       </div>
       <ul className="divide-y divide-stone-100">
         {reminders.map((reminder) => (
