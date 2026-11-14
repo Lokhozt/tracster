@@ -1,5 +1,10 @@
 {
   "Components": {
+    "addBarVolunteers": "Add bar volunteers",
+    "assignUsersSelected": "{count, plural, =0 {Nobody selected} one {# selected} other {# selected}}",
+    "assignUsersAll": "All",
+    "assignUsersNone": "None",
+    "addParticipants": "Add participants",
     "stepCounter": "Step {current} of {total}",
     "statsPickRepresentation": "Pick a representation to see who took part and everyone's rehearsal attendance.",
     "statsPickUser": "Pick a member to see their representations and attendance.",
@@ -296,8 +301,6 @@
     "addParticipant": "Add participant",
     "addParticipantsCount": "Add {count} participants",
     "assignUsersSearchPlaceholder": "Search by name…",
-    "assignUsersSelectVisible": "Select visible",
-    "assignUsersClearSelection": "Clear selection",
     "assignUsersSelectionCount": "{selected} / {max} selected",
     "noUsersAvailableToAssign": "Everyone is already assigned.",
     "noUsersMatchSearch": "No users match your search.",

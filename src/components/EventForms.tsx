@@ -986,6 +986,8 @@ export function AssignEventParticipantForm({
   assignUrl,
   submitLabel,
   maxSelection,
+  onDone,
+  onCancel,
 }: {
   eventId: string;
   users: UserOption[];
@@ -993,6 +995,8 @@ export function AssignEventParticipantForm({
   assignUrl?: string;
   submitLabel?: string;
   maxSelection?: number;
+  onDone?: () => void;
+  onCancel?: () => void;
 }) {
   return (
     <AssignUsersMatrixForm
@@ -1003,7 +1007,58 @@ export function AssignEventParticipantForm({
       submitLabel={submitLabel}
       maxSelection={maxSelection}
       errorFallbackKey="assignParticipantError"
+      onDone={onDone}
+      onCancel={onCancel}
+      hideLabel={onDone !== undefined}
     />
+  );
+}
+
+/**
+ * Event page: adding participants opens a sheet (`?create=participants`), like every other
+ * "add" — a button here on desktop, an entry of the "+" menu on phones.
+ */
+export function AddEventParticipants({
+  eventId,
+  users,
+  assignedUserIds,
+  kind = "participants",
+  label,
+  assignUrl,
+  maxSelection,
+}: {
+  eventId: string;
+  users: UserOption[];
+  assignedUserIds: string[];
+  /** `?create=` id (also used by the "+" menu entry). */
+  kind?: string;
+  label?: string;
+  /** Bar volunteers: the bar-slots endpoint, with the free slots as the limit. */
+  assignUrl?: string;
+  maxSelection?: number;
+}) {
+  const t = useTranslations("Components");
+  const sheet = useCreateSheet(kind);
+  const title = label ?? t("addParticipants");
+  return (
+    <>
+      <span className="hidden shrink-0 lg:block">
+        <Button type="button" variant="secondary" onClick={sheet.show}>
+          {title}
+        </Button>
+      </span>
+      <FormSheet open={sheet.open} onClose={sheet.close} title={title}>
+        <AssignEventParticipantForm
+          eventId={eventId}
+          users={users}
+          assignedUserIds={assignedUserIds}
+          assignUrl={assignUrl}
+          maxSelection={maxSelection}
+          onDone={sheet.close}
+          onCancel={sheet.close}
+        />
+      </FormSheet>
+    </>
   );
 }
 

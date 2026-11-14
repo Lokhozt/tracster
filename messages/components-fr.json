@@ -1,5 +1,10 @@
 {
   "Components": {
+    "addBarVolunteers": "Ajouter des bénévoles",
+    "assignUsersSelected": "{count, plural, =0 {Personne de sélectionné} one {# sélectionné} other {# sélectionnés}}",
+    "assignUsersAll": "Tout",
+    "assignUsersNone": "Aucun",
+    "addParticipants": "Ajouter des participants",
     "stepCounter": "Étape {current} / {total}",
     "statsPickRepresentation": "Choisissez une représentation pour voir qui y a participé et l’assiduité de chacun aux répétitions.",
     "statsPickUser": "Choisissez un membre pour voir ses représentations et son assiduité.",
@@ -296,8 +301,6 @@
     "addParticipant": "Ajouter un participant",
     "addParticipantsCount": "Ajouter {count} participants",
     "assignUsersSearchPlaceholder": "Rechercher par nom…",
-    "assignUsersSelectVisible": "Sélectionner les visibles",
-    "assignUsersClearSelection": "Effacer la sélection",
     "assignUsersSelectionCount": "{selected} / {max} sélectionnés",
     "noUsersAvailableToAssign": "Tout le monde est déjà affecté.",
     "noUsersMatchSearch": "Aucun utilisateur ne correspond à la recherche.",

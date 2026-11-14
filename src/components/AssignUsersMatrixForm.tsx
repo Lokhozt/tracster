@@ -24,6 +24,9 @@ export function AssignUsersMatrixForm({
   buttonVariant = "primary",
   maxSelection,
   idPrefix = "assign-users",
+  onDone,
+  onCancel,
+  hideLabel = false,
 }: {
   users: AssignUserOption[];
   assignedUserIds: string[];
@@ -34,6 +37,12 @@ export function AssignUsersMatrixForm({
   buttonVariant?: "primary" | "secondary";
   maxSelection?: number;
   idPrefix?: string;
+  /** Called after a successful add (e.g. to close the sheet it is in). */
+  onDone?: () => void;
+  /** Adds an "Annuler" button. */
+  onCancel?: () => void;
+  /** In a sheet titled the same: label for screen readers only. */
+  hideLabel?: boolean;
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
@@ -74,6 +83,7 @@ export function AssignUsersMatrixForm({
 
     setSelectedUserIds([]);
     router.refresh();
+    onDone?.();
   }
 
   return (
@@ -86,9 +96,15 @@ export function AssignUsersMatrixForm({
         onChange={setSelectedUserIds}
         excludedUserIds={assignedUserIds}
         maxSelection={maxSelection}
+        hideLabel={hideLabel}
       />
       <FormError>{error}</FormError>
       <FormActions>
+        {onCancel && (
+          <Button type="button" variant="secondary" onClick={onCancel}>
+            {t("cancel")}
+          </Button>
+        )}
         <Button type="submit" disabled={loading || selectedUserIds.length === 0} variant={buttonVariant}>
           {loading
             ? t("adding")

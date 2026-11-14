@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { FloatingActionButton } from "@/components/FloatingActionButton";
+import { CreateSheetMenuItem, FloatingActionButton } from "@/components/FloatingActionButton";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { AvailabilityButtons } from "@/components/AvailabilityButtons";
 import { ManualAvailabilityCheckButton } from "@/components/ManualAvailabilityCheckButton";
 import {
-  AssignEventParticipantForm,
+  AddEventParticipants,
   EventParticipantsList,
 } from "@/components/EventForms";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
@@ -51,9 +51,10 @@ const statusStyles = {
 } as const;
 
 export default async function EventDetailPage({ params }: PageProps) {
-  const [user, t, serverT] = await Promise.all([
+  const [user, t, tc, serverT] = await Promise.all([
     getCurrentUser(),
     getTranslations("Pages.EventDetail"),
+    getTranslations("Components"),
     getServerTranslator(),
   ]);
   if (!user) {
@@ -258,11 +259,23 @@ export default async function EventDetailPage({ params }: PageProps) {
     >
       <FloatingActionButton
         actions={eventActions}
-        extraItems={
-          event.type.kind === "REHEARSAL" && canViewRehearsalParticipants && canManualAvailabilityCheck
+        extraItems={[
+          ...(generic && canEdit
+            ? [<CreateSheetMenuItem key="participants" kind="participants" label={tc("addParticipants")} />]
+            : []),
+          ...(party && canEdit && partySlots?.some((slot) => slot === null)
+            ? [
+                <CreateSheetMenuItem
+                  key="bar-volunteers"
+                  kind="bar-volunteers"
+                  label={tc("addBarVolunteers")}
+                />,
+              ]
+            : []),
+          ...(event.type.kind === "REHEARSAL" && canViewRehearsalParticipants && canManualAvailabilityCheck
             ? [<ManualAvailabilityCheckButton key="check" eventId={eventRecord.id} variant="menuItem" />]
-            : []
-        }
+            : []),
+        ]}
       />
 
       {generic && (
@@ -441,14 +454,17 @@ export default async function EventDetailPage({ params }: PageProps) {
             currentUserId={user.id}
             canManage={canEdit}
           />
+          {/* Admins fill free bar slots from a sheet (desktop button; "+" menu on phones). */}
           {canEdit && partySlots.some((slot) => slot === null) && (
-            <div className="mt-6 border-t border-stone-100 pt-6">
-              <AssignEventParticipantForm
+            <div className="mt-4 flex justify-end">
+              <AddEventParticipants
                 eventId={id}
+                kind="bar-volunteers"
+                label={tc("addBarVolunteers")}
                 users={users}
                 assignedUserIds={partyBarAssignedUserIds}
                 assignUrl={`/api/events/${id}/bar-slots`}
-                maxSelection={PARTY_BAR_SLOT_COUNT}
+                maxSelection={PARTY_BAR_SLOT_COUNT - partySlots.filter((slot) => slot !== null).length}
               />
             </div>
           )}
@@ -457,15 +473,10 @@ export default async function EventDetailPage({ params }: PageProps) {
 
       {generic && (
         <Card>
-          <h2 className="mb-4 text-lg font-semibold">{t("participants")}</h2>
-          <EventParticipantsList
-            eventId={id}
-            participants={event.participants}
-            canEdit={canEdit}
-          />
-          {canEdit && (
-            <div className="mt-6 border-t border-stone-100 pt-6">
-              <AssignEventParticipantForm
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold">{t("participants")}</h2>
+            {canEdit && (
+              <AddEventParticipants
                 eventId={id}
                 users={
                   eventKindRestrictedToCompetitors(event.type.kind)
@@ -474,8 +485,13 @@ export default async function EventDetailPage({ params }: PageProps) {
                 }
                 assignedUserIds={event.participants.map((p) => p.id)}
               />
-            </div>
-          )}
+            )}
+          </div>
+          <EventParticipantsList
+            eventId={id}
+            participants={event.participants}
+            canEdit={canEdit}
+          />
         </Card>
       )}
 

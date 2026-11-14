@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import { openCreateSheet } from "@/lib/create-sheet";
 import { cn } from "@/lib/utils";
 
 export type FloatingAction = {
@@ -54,6 +55,20 @@ export function FloatingActionButton({
         document.body,
       )
     : null;
+}
+
+/** A "+" menu entry opening a page's create sheet (`?create=<kind>`). */
+export function CreateSheetMenuItem({ kind, label }: { kind: string; label: string }) {
+  return (
+    <button
+      type="button"
+      data-fab-close=""
+      className={FAB_MENU_ITEM_CLASS}
+      onClick={() => openCreateSheet(kind)}
+    >
+      {label}
+    </button>
+  );
 }
 
 /**
