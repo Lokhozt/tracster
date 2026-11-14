@@ -41,7 +41,7 @@ export function AccountIdentityCard({
   const [editing, setEditing] = useState(false);
 
   return (
-    <div className="flex max-w-xl items-center gap-4 rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+    <div className="flex max-w-xl items-center gap-4 rounded-xl border border-stone-200 bg-white p-4">
       <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-stone-900 text-white">
         <NavIcon label="account" className="h-7 w-7" />
       </span>

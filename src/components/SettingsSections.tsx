@@ -84,7 +84,7 @@ export function SectionNav({
         >
           <ul
             className={cn(
-              "divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm",
+              "divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 bg-white",
               "lg:space-y-1 lg:divide-y-0 lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none",
             )}
           >

@@ -361,7 +361,7 @@ export function RehearsalsSection({
       </div>
 
       {rehearsals.length > 0 && (
-        <div className="mb-4 rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+        <div className="mb-4 rounded-xl border border-stone-200 bg-white p-4">
           <Label htmlFor="rehearsal-search">{t("search")}</Label>
           <Input
             id="rehearsal-search"

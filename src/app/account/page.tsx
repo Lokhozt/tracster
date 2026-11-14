@@ -75,7 +75,7 @@ export default async function AccountPage({ searchParams }: PageProps) {
           seasonalStyleLockedByEnv={isSeasonalStyleDisabledByEnv()}
         />
         {/* Preferences and shortcuts as compact rows. */}
-        <div className="max-w-xl divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
+        <div className="max-w-xl divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 bg-white">
           <div className="flex items-center justify-between gap-3 px-4 py-3">
             <span className="font-medium">{tComponents("themeTitle")}</span>
             <ThemeToggle initialPreference={themePreference} />
@@ -91,7 +91,7 @@ export default async function AccountPage({ searchParams }: PageProps) {
               {tNavigation("administration")}
             </h2>
             {/* Every settings category one tap away (opens /settings on that category). */}
-            <div className="divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
+            <div className="divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 bg-white">
               <AccountLink href="/scheduling">{tNavigation("scheduling")}</AccountLink>
               {settingsLinks.map((link) => (
                 <AccountLink key={link.section} href={`/settings?section=${link.section}`}>

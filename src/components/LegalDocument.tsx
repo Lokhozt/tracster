@@ -129,7 +129,7 @@ export async function LegalDocument({
         <section
           key={section.title}
           className={
-            section.highlight ? "rounded-xl border border-stone-200 bg-white p-5 shadow-sm" : undefined
+            section.highlight ? "rounded-xl border border-stone-200 bg-white p-5" : undefined
           }
         >
           <h2 className="mb-3 text-lg font-semibold text-stone-900">{fill(section.title, values)}</h2>

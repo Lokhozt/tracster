@@ -176,7 +176,7 @@ export function ChoreographiesList({
               <Card className="h-full p-3 transition hover:border-stone-400 sm:p-5">
                 <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
                   <div className="min-w-0 flex-1">
-                    <h2 className="flex items-center gap-2 text-base font-semibold sm:text-lg">
+                    <h2 className="flex items-center gap-2 font-display text-xl sm:text-2xl">
                       {choreography.isChoreographer && <ChoreographerBadge />}
                       <span>{choreography.title}</span>
                     </h2>
@@ -197,7 +197,13 @@ export function ChoreographiesList({
                         {t("participantCount", { count: choreography.memberCount })}
                       </span>
                     </p>
-                    <p className="mt-1 text-xs text-stone-500">
+                    {/* The next rehearsal is what dancers look for: it reads first among the details. */}
+                    <p
+                      className={cn(
+                        "mt-1 text-sm",
+                        choreography.nextRehearsalAt ? "font-medium text-stone-900" : "text-stone-500",
+                      )}
+                    >
                       {choreography.nextRehearsalAt
                         ? t("nextRehearsal", {
                             date: dateFormatter.format(new Date(choreography.nextRehearsalAt)),

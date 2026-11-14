@@ -27,7 +27,7 @@ export function PartyBarPlanningReminders({
   });
 
   return (
-    <section className="mb-4 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm">
+    <section className="mb-4 rounded-xl border border-stone-200 bg-white px-4 py-3">
       <div className="mb-1 flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-stone-900">
           {t("partyBarRemindersTitle", { count: reminders.length })}

@@ -11,7 +11,8 @@ import {
 } from "@/components/EventForms";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
 import { JoinRequestsList } from "@/components/JoinRequestsList";
-import { LocalDateTime } from "@/components/LocalDateTime";
+import { NextUpCard } from "@/components/NextUpCard";
+import { cn } from "@/lib/utils";
 import { RepresentationChoreographiesSection } from "@/components/RepresentationForms";
 import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
@@ -207,6 +208,10 @@ export default async function EventDetailPage({ params }: PageProps) {
     ...(canCreate ? [{ href: `/events/new?copyFrom=${id}`, label: t("duplicateEvent") }] : []),
   ];
 
+  const hasDetails = Boolean(
+    event.choreographyTitle || event.groupName || event.description || event.notes,
+  );
+
   return (
     <AppShell
       title={event.displayTitle}
@@ -227,13 +232,6 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
       />
 
-      {/* The type label only adds information when the title is not the type itself. */}
-      {event.displayTitle !== event.type.name && (
-        <p className="mb-4 text-xs font-medium text-stone-500">
-          {event.type.name}
-        </p>
-      )}
-
       {generic && (
         <div className="mb-6">
           <JoinAsParticipantControls
@@ -249,24 +247,22 @@ export default async function EventDetailPage({ params }: PageProps) {
         </div>
       )}
 
-      <Card className="mb-6">
+      {/* When and where: the page's bold element, like "Next up" on the planning. */}
+      <div className="mb-6">
+        <NextUpCard
+          label={event.type.name}
+          startsAt={event.startsAt}
+          endsAt={event.endsAt}
+          showEnd
+          location={event.location}
+        />
+      </div>
+
+      {/* Other details, plus edit/duplicate on desktop (phones have them in the "+" menu). */}
+      {(hasDetails || canEdit || canCreate) && (
+      <Card className={cn("mb-6", !hasDetails && "max-lg:hidden")}>
+        {hasDetails && (
         <div className="grid gap-2 text-sm text-stone-600">
-          <p>
-            <span className="font-medium text-stone-900">{t("start")}:</span>{" "}
-            <LocalDateTime value={event.startsAt} />
-          </p>
-          {event.endsAt && (
-            <p>
-              <span className="font-medium text-stone-900">{t("end")}:</span>{" "}
-              <LocalDateTime value={event.endsAt} />
-            </p>
-          )}
-          {event.location && (
-            <p>
-              <span className="font-medium text-stone-900">{t("location")}:</span>{" "}
-              {event.location}
-            </p>
-          )}
           {event.choreographyTitle && (
             <p>
               <span className="font-medium text-stone-900">{t("choreography")}:</span>{" "}
@@ -301,8 +297,9 @@ export default async function EventDetailPage({ params }: PageProps) {
             </p>
           )}
         </div>
+        )}
         {(canEdit || canCreate) && (
-          <div className="mt-4 hidden flex-wrap gap-2 lg:flex">
+          <div className={cn("hidden flex-wrap gap-2 lg:flex", hasDetails && "mt-4")}>
             {canEdit && (
               <Link
                 href={`/events/${id}/edit`}
@@ -323,6 +320,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           </div>
         )}
       </Card>
+      )}
 
       {generic && canEdit && (eventRecord.allowJoinRequests || eventRecord.joinRequests.length > 0) && (
         <div className="mb-6">

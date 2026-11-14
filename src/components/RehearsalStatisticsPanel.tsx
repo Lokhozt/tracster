@@ -90,7 +90,7 @@ export async function RehearsalStatisticsPanel({
             <p className="text-stone-600">{t("noParticipants")}</p>
           </Card>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-xl border border-stone-200 bg-white">
             <ul className="divide-y divide-stone-100">
               {ranked.map((participant) => {
                 const name = participantNames.get(participant.userId) ?? t("unknownParticipant");

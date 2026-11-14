@@ -1081,7 +1081,7 @@ function LinkedEventKindSection({
       )}
 
       {items.length === 0 ? (
-        <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-stone-200 bg-white p-5">
           <p className="text-stone-600">{emptyLabel}</p>
         </div>
       ) : (
@@ -1089,7 +1089,7 @@ function LinkedEventKindSection({
           {items.map((item) => (
             <div
               key={item.id}
-              className="relative rounded-xl border border-stone-200 bg-white p-5 shadow-sm transition hover:border-stone-400"
+              className="relative rounded-xl border border-stone-200 bg-white p-5 transition hover:border-stone-400"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>

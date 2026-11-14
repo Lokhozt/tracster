@@ -41,7 +41,7 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+      <div className="rounded-xl border border-stone-200 bg-white p-4">
         <div>
           <Label htmlFor="representation-search">{t("search")}</Label>
           <Input

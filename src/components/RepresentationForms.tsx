@@ -639,7 +639,7 @@ function RepresentationCard({
     timeStyle: "short",
   });
   return (
-    <div className="relative rounded-xl border border-stone-200 bg-white p-5 shadow-sm transition hover:border-stone-400">
+    <div className="relative rounded-xl border border-stone-200 bg-white p-5 transition hover:border-stone-400">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Link
@@ -737,7 +737,7 @@ export function RepresentationsSection({
       )}
 
       {representations.length === 0 ? (
-        <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-stone-200 bg-white p-5">
           <p className="text-stone-600">{t("noLinkedRepresentations")}</p>
         </div>
       ) : (

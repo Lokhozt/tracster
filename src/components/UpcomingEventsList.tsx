@@ -319,7 +319,10 @@ export function UpcomingEventsList({
                       <span className="font-semibold tabular-nums text-stone-900" suppressHydrationWarning>
                         {timeRange(event.startsAt, event.endsAt, dayFormatter, timeFormatter)}
                       </span>
-                      <span className="text-stone-500">{event.typeName}</span>
+                      {/* Rehearsals are often titled by their type: no "Répétition" twice. */}
+                      {event.typeName !== defaultEventTitle(event) && (
+                        <span className="text-stone-500">{event.typeName}</span>
+                      )}
                       {isScheduleEventHappeningNow(event, now) && (
                         <span className="font-semibold text-emerald-700">{t("rightNow")}</span>
                       )}
