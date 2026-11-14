@@ -864,3 +864,13 @@ input[type="checkbox"],
 input[type="radio"] {
   accent-color: var(--color-stone-900);
 }
+
+/* Tailwind v4 dropped the hand cursor on buttons: bring it back for everything clickable. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  select:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+}
