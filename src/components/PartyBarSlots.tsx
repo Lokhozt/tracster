@@ -3,10 +3,9 @@
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { LocalDateTime } from "@/components/LocalDateTime";
 import type { PartyBarSlot } from "@/lib/party-bar-shared";
-import { Card } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 async function responseError(response: Response, fallback: string) {
@@ -223,115 +222,5 @@ export function PartyBarEventCard({
       </ul>
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
     </div>
-  );
-}
-
-type TracBarListFilter = "open" | "all" | "past";
-
-function partyHasOpenBarSlot(slots: PartyBarSlot[]): boolean {
-  return slots.some((slot) => slot === null);
-}
-
-type TracBarParty = {
-  id: string;
-  displayTitle: string;
-  startsAt: string;
-  slots: PartyBarSlot[];
-};
-
-export function TracBarCategoryPanel({
-  parties,
-  pastParties = [],
-  currentUserId,
-  canManage,
-  showPastSeason = false,
-}: {
-  parties: TracBarParty[];
-  pastParties?: TracBarParty[];
-  currentUserId: string;
-  canManage: boolean;
-  showPastSeason?: boolean;
-}) {
-  const t = useTranslations("Components");
-  const [listFilter, setListFilter] = useState<TracBarListFilter>("open");
-
-  const visibleParties = useMemo(() => {
-    if (listFilter === "past") {
-      return pastParties;
-    }
-    if (listFilter === "all") {
-      return parties;
-    }
-    return parties.filter((party) => partyHasOpenBarSlot(party.slots));
-  }, [parties, pastParties, listFilter]);
-
-  const filterOptions: { value: TracBarListFilter; label: string }[] = [
-    { value: "open", label: t("tracBarFilterOpenShort") },
-    { value: "all", label: t("tracBarFilterAllShort") },
-    ...(showPastSeason ? [{ value: "past" as const, label: t("tracBarFilterPast") }] : []),
-  ];
-
-  const emptyMessage =
-    listFilter === "past"
-      ? t("tracBarPastSeasonEmpty")
-      : parties.length === 0
-        ? t("tracBarEmpty")
-        : listFilter === "open"
-          ? t("tracBarEmptyOpenSlots")
-          : t("tracBarEmpty");
-
-  return (
-    <Card className="p-3 sm:p-5">
-      <p className="mb-4 hidden text-sm text-stone-600 sm:block">{t("tracBarHelp")}</p>
-      {(parties.length > 0 || showPastSeason) && (
-        <div className="mb-3">
-          <div
-            role="group"
-            aria-label={t("tracBarTitle")}
-            className="flex rounded-lg border border-stone-300 bg-white/60 p-0.5 sm:max-w-md"
-          >
-            {filterOptions.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setListFilter(option.value)}
-                aria-pressed={listFilter === option.value}
-                className={cn(
-                  "flex-1 whitespace-nowrap rounded-md px-1 py-1.5 text-sm font-medium transition",
-                  listFilter === option.value
-                    ? "bg-stone-900 text-white"
-                    : "text-stone-600 hover:bg-stone-100",
-                )}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-          <p className="mt-1.5 text-xs text-stone-500 sm:hidden">{t("tracBarHelpShort")}</p>
-        </div>
-      )}
-      {listFilter === "past" && (
-        <h3 className="mb-2 text-sm font-semibold text-stone-900">{t("tracBarPastSeasonTitle")}</h3>
-      )}
-      {visibleParties.length === 0 ? (
-        <p className="text-sm text-stone-600">{emptyMessage}</p>
-      ) : (
-        <div className="space-y-3">
-          {visibleParties.map((party) => (
-            <PartyBarEventCard
-              key={party.id}
-              eventId={party.id}
-              title={party.displayTitle}
-              startsAt={party.startsAt}
-              href={`/events/${party.id}`}
-              slots={party.slots}
-              currentUserId={currentUserId}
-              canManage={listFilter === "past" ? false : canManage}
-              readOnly={listFilter === "past"}
-            />
-          ))}
-        </div>
-      )}
-    </Card>
   );
 }

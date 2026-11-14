@@ -14,11 +14,9 @@ import {
 import { DocumentTypeIcon } from "@/components/DocumentTypeIcon";
 import { OfficeFileViewer } from "@/components/OfficeFileViewer";
 import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
-import { SectionNav, type NavSection } from "@/components/SettingsSections";
+import { SectionNav } from "@/components/SettingsSections";
 import { documentDisplayType } from "@/lib/document-type";
-import { TracBarCategoryPanel } from "@/components/PartyBarSlots";
 import type { SerializedDocument, SerializedDocumentCategory } from "@/lib/documents";
-import { TRAC_BAR_DOCUMENTS_SECTION_ID, type PartyBarSlot } from "@/lib/party-bar-shared";
 import {
   Button,
   Card,
@@ -618,28 +616,10 @@ export function Documents({
   documents,
   categories,
   initialCategoryId,
-  tracBar,
 }: {
   documents: SerializedDocument[];
   categories: SerializedDocumentCategory[];
   initialCategoryId?: string;
-  tracBar?: {
-    parties: {
-      id: string;
-      displayTitle: string;
-      startsAt: string;
-      slots: PartyBarSlot[];
-    }[];
-    pastParties?: {
-      id: string;
-      displayTitle: string;
-      startsAt: string;
-      slots: PartyBarSlot[];
-    }[];
-    currentUserId: string;
-    canManage: boolean;
-    showPastSeason?: boolean;
-  };
 }) {
   const t = useTranslations("Components");
   const documentSections = categories.map((category) => {
@@ -665,32 +645,9 @@ export function Documents({
     };
   });
 
-  const tracBarSection: NavSection | null = tracBar
-    ? {
-        id: TRAC_BAR_DOCUMENTS_SECTION_ID,
-        label: t("tracBarTitle"),
-        content: (
-          <TracBarCategoryPanel
-            parties={tracBar.parties}
-            pastParties={tracBar.pastParties ?? []}
-            currentUserId={tracBar.currentUserId}
-            canManage={tracBar.canManage}
-            showPastSeason={tracBar.showPastSeason ?? false}
-          />
-        ),
-      }
-    : null;
-
-  const sections =
-    tracBarSection && documentSections.length > 0
-      ? [documentSections[0], tracBarSection, ...documentSections.slice(1)]
-      : tracBarSection
-        ? [tracBarSection]
-        : documentSections;
-
   return (
     <SectionNav
-      sections={sections}
+      sections={documentSections}
       initialSectionId={initialCategoryId}
       sectionParam="category"
       categoriesLabel={t("documentCategories")}

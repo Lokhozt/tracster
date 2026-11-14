@@ -10,12 +10,7 @@ import {
   listActiveDocuments,
   listDocumentCategories,
 } from "@/lib/documents";
-import {
-  listPastPartyBarEventsSinceSeasonStart,
-  listUpcomingPartyBarEvents,
-  TRAC_BAR_DOCUMENTS_SECTION_ID,
-} from "@/lib/party-bar";
-import { canManageAllEvents, isAdmin } from "@/lib/roles";
+import { TRAC_BAR_DOCUMENTS_SECTION_ID } from "@/lib/party-bar-shared";
 
 type PageProps = {
   searchParams: Promise<{ category?: string }>;
@@ -27,31 +22,20 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
     redirect("/login");
   }
 
-  const [
-    t,
-    documents,
-    categories,
-    canEdit,
-    upcomingParties,
-    canManageParties,
-    admin,
-    params,
-  ] = await Promise.all([
+  const [t, documents, categories, canEdit, params] = await Promise.all([
     getTranslations("Pages.Documents"),
     listActiveDocuments(),
     listDocumentCategories(),
     canManageDocuments(user.id),
-    listUpcomingPartyBarEvents(),
-    canManageAllEvents(user.id),
-    isAdmin(user.id),
     searchParams,
   ]);
-  const pastParties = admin ? await listPastPartyBarEventsSinceSeasonStart() : [];
-  const selectedCategoryId =
-    params.category === TRAC_BAR_DOCUMENTS_SECTION_ID ||
-    categories.some((category) => category.id === params.category)
-      ? params.category
-      : undefined;
+  // The Trac bar section moved to Planning ("Places libres" bar filter): keep old links working.
+  if (params.category === TRAC_BAR_DOCUMENTS_SECTION_ID) {
+    redirect("/?bar=free");
+  }
+  const selectedCategoryId = categories.some((category) => category.id === params.category)
+    ? params.category
+    : undefined;
 
   return (
     <AppShell title={t("title")} wide>
@@ -73,13 +57,6 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
           documents={documents}
           categories={categories}
           initialCategoryId={selectedCategoryId}
-          tracBar={{
-            parties: upcomingParties,
-            pastParties,
-            currentUserId: user.id,
-            canManage: canManageParties,
-            showPastSeason: admin,
-          }}
         />
       </div>
     </AppShell>
