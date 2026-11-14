@@ -6,6 +6,7 @@ import { RehearsalStatisticsPanel } from "@/components/RehearsalStatisticsPanel"
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canViewChoreography } from "@/lib/permissions";
+import { isAdmin } from "@/lib/roles";
 import { computeRehearsalStatistics } from "@/lib/rehearsal-statistics";
 import { basicUserSelect, formatUserName, nestedUserNameOrderBy } from "@/lib/users";
 
@@ -19,7 +20,10 @@ export default async function ChoreographyRehearsalStatisticsPage({ params }: Pa
 
   const { id } = await params;
 
-  if (!(await canViewChoreography(id, user.id))) {
+  // Rehearsal statistics: admins (with admin privileges enabled) and the choreography's owner.
+  const owner = await prisma.choreography.findUnique({ where: { id }, select: { createdById: true } });
+  const canViewStatistics = owner?.createdById === user.id || (await isAdmin(user.id));
+  if (!canViewStatistics || !(await canViewChoreography(id, user.id))) {
     notFound();
   }
 

@@ -311,6 +311,7 @@ export function RehearsalsSection({
   rehearsals,
   eventTypes,
   actionsInFloatingMenu = false,
+  canViewStatistics = false,
 }: {
   choreographyId: string;
   choreographyTitle: string;
@@ -320,6 +321,8 @@ export function RehearsalsSection({
   eventTypes: SerializedEventType[];
   /** Phones/tablets: the add button lives in the floating "+" menu (ChoreographyEventActions). */
   actionsInFloatingMenu?: boolean;
+  /** Rehearsal statistics: admins and the choreography's owner. */
+  canViewStatistics?: boolean;
 }) {
   const t = useTranslations("Components");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -355,9 +358,11 @@ export function RehearsalsSection({
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">{t("rehearsals")}</h2>
         <div className="flex flex-wrap items-center gap-2">
-          <span className={cn(actionsInFloatingMenu && "hidden lg:inline")}>
-            <StatisticsIconLink href={`/choreographies/${choreographyId}/rehearsals/statistics`} />
-          </span>
+          {canViewStatistics && (
+            <span className={cn(actionsInFloatingMenu && "hidden lg:inline")}>
+              <StatisticsIconLink href={`/choreographies/${choreographyId}/rehearsals/statistics`} />
+            </span>
+          )}
           {canEdit && !addFormOpen && (
             <span className={cn(actionsInFloatingMenu && "hidden lg:inline")}>
               <Button type="button" onClick={() => setShowAddForm(true)}>

@@ -7,7 +7,7 @@ import { FAB_MENU_ITEM_CLASS, FloatingActionButton } from "@/components/Floating
 
 /**
  * Phones/tablets: the Events section's actions in the floating "+" menu (schedule a rehearsal,
- * add a representation / demonstration, rehearsal statistics). Picking an "add" entry opens that
+ * add a representation / demonstration, rehearsal statistics for admins and the owner). Picking an "add" entry opens that
  * section's form via `?add=` (see useAddFormRequest). Only shown while the Events section is open.
  */
 export function ChoreographyEventActions({
@@ -15,6 +15,7 @@ export function ChoreographyEventActions({
   choreographyId,
   canEdit,
   canAddDemonstration,
+  canViewStatistics,
 }: {
   /** The Events section's id in `?section=`. */
   sectionId: string;
@@ -22,6 +23,8 @@ export function ChoreographyEventActions({
   canEdit: boolean;
   /** Demonstrations need the matching event type to exist. */
   canAddDemonstration: boolean;
+  /** Rehearsal statistics: admins and the choreography's owner. */
+  canViewStatistics: boolean;
 }) {
   const t = useTranslations("Components");
   const searchParams = useSearchParams();
@@ -39,12 +42,16 @@ export function ChoreographyEventActions({
 
   return (
     <FloatingActionButton
-      actions={[
-        {
-          href: `/choreographies/${choreographyId}/rehearsals/statistics`,
-          label: t("rehearsalStatistics"),
-        },
-      ]}
+      actions={
+        canViewStatistics
+          ? [
+              {
+                href: `/choreographies/${choreographyId}/rehearsals/statistics`,
+                label: t("rehearsalStatistics"),
+              },
+            ]
+          : []
+      }
       extraItems={addItems.map((item) => (
         <button
           key={item.kind}

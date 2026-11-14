@@ -207,6 +207,8 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
     })),
   ].sort((left, right) => left.startsAt.localeCompare(right.startsAt));
   const isChoreographer = choreographers.some((entry) => entry.id === user.id);
+  // Rehearsal statistics: admins and the choreography's owner.
+  const canViewStatistics = canManageLifecycle || choreography.createdById === user.id;
   const showGroups = canEdit || groups.length > 0;
   const assignedTags = choreography.tags.map((item) => serializeTag(item.tag));
 
@@ -568,10 +570,12 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
             choreographyId={id}
             canEdit={canEdit}
             canAddDemonstration={eventTypes.some((type) => type.kind === "DEMONSTRATION")}
+            canViewStatistics={canViewStatistics}
           />
           <section>
             <RehearsalsSection
               actionsInFloatingMenu
+              canViewStatistics={canViewStatistics}
               choreographyId={id}
               choreographyTitle={choreography.title}
               canEdit={canEdit}
