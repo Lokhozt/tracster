@@ -7,6 +7,7 @@ import { AutumnAccent } from "@/components/AutumnAccent";
 import { BottomTabBar } from "@/components/BottomTabBar";
 import { ChristmasLights } from "@/components/ChristmasLights";
 import { HeaderBar } from "@/components/HeaderBar";
+import { PageBackButton } from "@/components/PageBackButton";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getSeasonalTheme } from "@/lib/festive-season";
 import { MessageOfTheDayBanner } from "@/components/MessageOfTheDayBanner";
@@ -128,6 +129,11 @@ export async function AppShell({
         {messageOfTheDay && <MessageOfTheDayBanner message={messageOfTheDay} />}
         {title && (
           <div className="mb-6 flex items-center gap-3">
+            {user && (
+              <Suspense fallback={null}>
+                <PageBackButton />
+              </Suspense>
+            )}
             <h1 className="flex min-w-0 flex-1 items-center gap-2 text-2xl font-semibold tracking-tight break-words sm:text-3xl">
               {title}
             </h1>
