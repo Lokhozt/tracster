@@ -35,6 +35,34 @@ export function openChoreographySection(sectionId: string): void {
 }
 
 /**
+ * Link to another tab from a card on the overview. Unlike the tab row (which replaces the URL),
+ * this is a step deeper: it adds a history entry, so the back button returns to the overview.
+ */
+export function ChoreographyTabLink({
+  sectionId,
+  className,
+  children,
+}: {
+  sectionId: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a
+      href={`?${SECTION_PARAM}=${encodeURIComponent(sectionId)}`}
+      className={className}
+      onClick={(event) => {
+        event.preventDefault();
+        openChoreographySection(sectionId);
+        window.scrollTo({ top: 0 });
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
+/**
  * Choreography page sections as a horizontal, scrollable tab row (fewer taps than a drill-down
  * menu). The active section lives in `?section=`; switching tabs replaces the URL. All sections
  * stay mounted so switching keeps unsaved form input.
