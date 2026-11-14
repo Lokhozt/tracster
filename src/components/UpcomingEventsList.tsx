@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, ViewTransition } from "react";
 import { AvailabilityButtons } from "@/components/AvailabilityButtons";
 import { JoinAsParticipantControls } from "@/components/JoinAsParticipantControls";
 import { ParticipationStatus } from "@/components/ParticipationStatus";
@@ -96,7 +96,7 @@ function BarSlotRow({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {event.isBarVolunteer ? (
-        <span className="rounded-full bg-emerald-700 px-2.5 py-0.5 text-xs font-semibold text-white">
+        <span className="chip-pop rounded-full bg-emerald-700 px-2.5 py-0.5 text-xs font-semibold text-white">
           {t("barChipMine")}
         </span>
       ) : (
@@ -362,7 +362,10 @@ export function UpcomingEventsList({
                           href={event.href}
                           className={cn("text-base font-semibold hover:underline", cardLink)}
                         >
-                          {defaultEventTitle(event)}
+                          {/* Same name as the event page title: it glides there when you open it. */}
+                          <ViewTransition name={`event-title-${event.id}`} share="title-morph">
+                            <span>{defaultEventTitle(event)}</span>
+                          </ViewTransition>
                         </Link>
                       ) : (
                         <span className="text-base font-semibold">{defaultEventTitle(event)}</span>

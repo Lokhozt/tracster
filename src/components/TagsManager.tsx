@@ -25,6 +25,8 @@ import {
   type TagRecord,
 } from "@/lib/tags";
 import type { SiteSettingsRecord } from "@/lib/site-settings";
+import { useNewlyAdded } from "@/lib/use-newly-added";
+import { cn } from "@/lib/utils";
 
 export function TagsManager({
   tags,
@@ -34,6 +36,7 @@ export function TagsManager({
   settings: SiteSettingsRecord;
 }) {
   const t = useTranslations("Components");
+  const freshIds = useNewlyAdded(tags.map((item) => item.id));
   const router = useRouter();
   const createSheet = useCreateSheet("tag");
   const [name, setName] = useState("");
@@ -219,7 +222,7 @@ export function TagsManager({
         ) : (
           <ul className={SETTINGS_LIST_CLASS}>
             {tags.map((tag) => (
-              <li key={tag.id}>
+              <li key={tag.id} className={cn(freshIds.has(tag.id) && "row-new")}>
                 <ListRowButton
                   onClick={() => startEdit(tag)}
                   actionLabel={t("edit")}

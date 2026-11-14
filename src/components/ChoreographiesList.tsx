@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, ViewTransition } from "react";
 import { ChoreographerBadge } from "@/components/CrownIcon";
 import { Card, Label, SearchInput, Select, SegmentedControl } from "@/components/ui";
 import { useLocale } from "next-intl";
@@ -163,7 +163,9 @@ export function ChoreographiesList({
                   <div className="min-w-0 flex-1">
                     <h2 className="flex items-center gap-2 font-display text-xl sm:text-2xl">
                       {choreography.isChoreographer && <ChoreographerBadge />}
-                      <span>{choreography.title}</span>
+                      <ViewTransition name={`choreography-title-${choreography.id}`} share="title-morph">
+                        <span>{choreography.title}</span>
+                      </ViewTransition>
                     </h2>
                     {choreography.description && (
                       <p className="mt-1 line-clamp-2 text-sm text-stone-600 sm:line-clamp-none">

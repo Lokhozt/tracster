@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CreateSheetMenuItem, FloatingActionButton } from "@/components/FloatingActionButton";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { ViewTransition } from "react";
 import { AppShell } from "@/components/AppShell";
 import { AvailabilityButtons } from "@/components/AvailabilityButtons";
 import { ManualAvailabilityCheckButton } from "@/components/ManualAvailabilityCheckButton";
@@ -214,7 +215,12 @@ export default async function EventDetailPage({ params }: PageProps) {
 
   return (
     <AppShell
-      title={event.displayTitle}
+      title={
+        // Pairs with the title in the planning list: it glides into place on open and back.
+        <ViewTransition name={`event-title-${id}`} share="title-morph">
+          <span>{event.displayTitle}</span>
+        </ViewTransition>
+      }
       narrow
       titleActions={
         <>

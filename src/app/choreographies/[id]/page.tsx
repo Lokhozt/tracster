@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { ViewTransition } from "react";
 import { AppShell } from "@/components/AppShell";
 import {
   AssignChoreographerForm,
@@ -746,7 +747,12 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
   return (
     <AppShell
       narrow
-      title={choreography.title}
+      // Pairs with the card title in the choreography list (glides into place).
+      title={
+        <ViewTransition name={`choreography-title-${choreography.id}`} share="title-morph">
+          <span>{choreography.title}</span>
+        </ViewTransition>
+      }
       titleActions={
         <ChoreographyHeaderActions
           whatsappUrl={

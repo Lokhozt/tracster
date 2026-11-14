@@ -1266,7 +1266,7 @@ export function UnavailabilityCalendar({
         <div
           role="status"
           className={cn(
-            "fixed inset-x-3 z-40 mx-auto flex max-w-md items-center justify-between gap-3 rounded-xl bg-stone-900 px-4 py-3 text-sm text-white shadow-lg",
+            "fixed inset-x-3 z-40 mx-auto flex max-w-md items-center justify-between gap-3 overflow-hidden rounded-xl bg-stone-900 px-4 py-3 text-sm text-white shadow-lg",
             "lg:right-6 lg:bottom-6 lg:left-auto",
             // Above the selection panel when one is open.
             selectedTimeframe
@@ -1275,6 +1275,12 @@ export function UnavailabilityCalendar({
           )}
         >
           <span>{t("unavailabilitySaved")}</span>
+          {/* Time left to undo (same 6s as the toast). */}
+          <span
+            key={undoId}
+            aria-hidden="true"
+            className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-spotlight motion-safe:animate-[countdown_6s_linear_forwards]"
+          />
           <button
             type="button"
             className="min-h-10 rounded-lg px-3 font-semibold text-spotlight hover:bg-white/10"

@@ -61,7 +61,18 @@ export function AvailabilityButtons({
             disabled={loading !== null}
             onClick={() => submitStatus(status)}
           >
-            {loading === status ? t("saving") : t(`status${status}`)}
+            {loading === status ? (
+              t("saving")
+            ) : (
+              <>
+                {currentStatus === status && (
+                  <svg viewBox="0 0 24 24" className="chip-pop mr-1 h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 12l5 5 9-10" />
+                  </svg>
+                )}
+                {t(`status${status}`)}
+              </>
+            )}
           </Button>
         ))}
       </div>

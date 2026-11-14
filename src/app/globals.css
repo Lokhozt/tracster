@@ -387,19 +387,19 @@ body {
 }
 
 ::view-transition-old(.tab-forward) {
-  animation: tab-slide-old-forward 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: tab-slide-old-forward var(--tab-swipe-duration, 300ms) var(--ease-stage) both;
 }
 
 ::view-transition-new(.tab-forward) {
-  animation: tab-slide-new-forward 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: tab-slide-new-forward var(--tab-swipe-duration, 300ms) var(--ease-stage) both;
 }
 
 ::view-transition-old(.tab-back) {
-  animation: tab-slide-old-back 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: tab-slide-old-back var(--tab-swipe-duration, 300ms) var(--ease-stage) both;
 }
 
 ::view-transition-new(.tab-back) {
-  animation: tab-slide-new-back 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: tab-slide-new-back var(--tab-swipe-duration, 300ms) var(--ease-stage) both;
 }
 
 /* The old snapshot is already drawn where the finger released it, so it moves on from there. */
@@ -967,6 +967,128 @@ input[type="radio"] {
   [role="button"] {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Feedback motion (answers an action; off with reduced motion). */
+@keyframes chip-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Something that just appeared because of your action ("✓ Au bar", a check mark). */
+.chip-pop {
+  animation: chip-pop var(--duration-long) var(--ease-stage) both;
+}
+
+@keyframes row-new {
+  from {
+    background-color: color-mix(in oklab, var(--color-spotlight) 35%, transparent);
+  }
+}
+
+/* A row you just added: a brief amber glow that fades. */
+.row-new {
+  animation: row-new 1.4s ease-out;
+}
+
+@keyframes countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip-pop,
+  .row-new {
+    animation: none;
+  }
+}
+
+/* Spatial motion: going deeper slides in from the right, going back from the left. */
+@keyframes slide-in-forward {
+  from {
+    opacity: 0;
+    transform: translateX(2rem);
+  }
+}
+
+@keyframes slide-in-back {
+  from {
+    opacity: 0;
+    transform: translateX(-2rem);
+  }
+}
+
+/* Utilities (not plain classes) so breakpoint variants work, e.g. max-lg:slide-in-back. */
+@utility slide-in-forward {
+  animation: slide-in-forward var(--duration-medium) var(--ease-stage) both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility slide-in-back {
+  animation: slide-in-back var(--duration-medium) var(--ease-stage) both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/* Shared titles (planning row → event page, card → choreography page): a short glide. */
+::view-transition-group(.title-morph) {
+  animation-duration: var(--duration-long);
+  animation-timing-function: var(--ease-stage);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(.title-morph) {
+    animation: none;
+  }
+}
+
+/* "Next up" on the day itself: one soft spotlight sweep across the block on load. */
+@keyframes spotlight-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.next-up-today::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in oklab, var(--color-spotlight) 28%, transparent) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  animation: spotlight-sweep 1.6s var(--ease-stage) 0.5s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .next-up-today::after {
+    display: none;
   }
 }
 

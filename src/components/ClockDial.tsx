@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const SIZE = 280;
@@ -79,13 +79,21 @@ export function ClockDial({
     }
   }
 
-  const selected =
+  // The hand turns to the value (rotation) instead of jumping, always the short way round:
+  // 55 → 00 moves forward, not back across the whole dial.
+  const target =
     mode === "hour"
       ? (() => {
           const { step, radius } = hourPosition(value);
-          return pointAt(step, 12, radius);
+          return { angle: (step / 12) * 360, radius };
         })()
-      : pointAt(value, 60, OUTER_RADIUS);
+      : { angle: (value / 60) * 360, radius: OUTER_RADIUS };
+  const [handAngle, setHandAngle] = useState(target.angle);
+  const shown = ((handAngle % 360) + 360) % 360;
+  if (Math.abs(shown - target.angle) > 0.01) {
+    const delta = ((target.angle - shown + 540) % 360) - 180;
+    setHandAngle(handAngle + delta);
+  }
 
   const labels =
     mode === "hour"
@@ -156,9 +164,21 @@ export function ClockDial({
     >
       <circle cx={CENTER} cy={CENTER} r={CENTER} className="fill-stone-100" />
       {/* Hand and knob on the selected value. */}
-      <line x1={CENTER} y1={CENTER} x2={selected.x} y2={selected.y} strokeWidth={2} className="stroke-stone-900" />
+      <g
+        className="transition-transform duration-(--duration-short) ease-stage motion-reduce:transition-none"
+        style={{ transform: `rotate(${handAngle}deg)`, transformOrigin: `${CENTER}px ${CENTER}px` }}
+      >
+        <line
+          x1={CENTER}
+          y1={CENTER}
+          x2={CENTER}
+          y2={CENTER - target.radius}
+          strokeWidth={2}
+          className="stroke-stone-900"
+        />
+        <circle cx={CENTER} cy={CENTER - target.radius} r={KNOB_RADIUS} className="fill-stone-900" />
+      </g>
       <circle cx={CENTER} cy={CENTER} r={3.5} className="fill-stone-900" />
-      <circle cx={selected.x} cy={selected.y} r={KNOB_RADIUS} className="fill-stone-900" />
       {labels.map((item) => (
         <text
           key={item.value}

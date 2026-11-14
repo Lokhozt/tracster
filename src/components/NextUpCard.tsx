@@ -65,13 +65,24 @@ export function NextUpCard({
   const day = new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short" });
 
   let relative: string | null = null;
+  // The day of the event (or while it runs): the block's one decorative moment, a spotlight
+  // sweep on load.
+  let isToday = false;
   if (now) {
+    const minutesLeft = Math.round((start.getTime() - now.getTime()) / 60_000);
     if (start <= now && (!end || end > now)) {
       relative = t("rightNow");
+      isToday = true;
+    } else if (minutesLeft > 0 && minutesLeft < 60) {
+      // Last hour: a live countdown ("Dans 42 minutes"), refreshed every minute.
+      const formatted = new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(minutesLeft, "minute");
+      relative = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+      isToday = true;
     } else {
       const days = Math.round((startOfLocalDay(start) - startOfLocalDay(now)) / DAY_MS);
       const formatted = new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(days, "day");
       relative = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+      isToday = days === 0;
     }
   }
 
@@ -83,6 +94,7 @@ export function NextUpCard({
       <div
         className={cn(
           "next-up-in relative isolate overflow-hidden rounded-2xl bg-stage p-5 text-[#fff] shadow-lg sm:p-6",
+          isToday && "next-up-today",
           strip && "xl:flex xl:items-center xl:gap-8 xl:py-4",
         )}
       >

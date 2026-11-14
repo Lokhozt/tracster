@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { replaceUrlInPlace } from "@/lib/app-navigation";
+import { browserJustAnimated } from "@/lib/ua-transition";
 import { cn } from "@/lib/utils";
 
 export type NavSection = {
@@ -57,6 +58,17 @@ export function SectionNav({
   // `initialSectionId` only applies until the user picks or closes a section.
   const [initialConsumed, setInitialConsumed] = useState(false);
   const [lastSelectedId, setLastSelectedId] = useState<string | undefined>(undefined);
+  // Slides only after the user moved (not on page load): into a section, or back to the list.
+  const [motion, setMotion] = useState<"forward" | "back" | null>(null);
+  // The phone's back/forward gesture already animated the step: no in-app slide on top of it.
+  const urlKey = searchParams.toString();
+  const [lastUrlKey, setLastUrlKey] = useState(urlKey);
+  if (urlKey !== lastUrlKey) {
+    setLastUrlKey(urlKey);
+    if (browserJustAnimated()) {
+      setMotion(null);
+    }
+  }
   const openSectionId =
     urlSectionId ?? (initialConsumed ? undefined : validSectionId(sections, initialSectionId));
   const mobileOpen = Boolean(openSectionId);
@@ -65,6 +77,7 @@ export function SectionNav({
 
   function selectSection(sectionId: string) {
     setInitialConsumed(true);
+    setMotion("forward");
     setLastSelectedId(sectionId);
     if (urlSectionId === sectionId) {
       return;
@@ -81,6 +94,7 @@ export function SectionNav({
   // Phones: back to the category list (history step when we opened it, else drop the param).
   function closeSection() {
     setInitialConsumed(true);
+    setMotion("back");
     const state: unknown = window.history.state;
     if (urlSectionId && state && typeof state === "object" && "sectionNav" in state) {
       window.history.back();
@@ -121,7 +135,11 @@ export function SectionNav({
       <div className="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start lg:gap-8">
         <nav
           aria-label={categoriesLabel}
-          className={cn("block lg:sticky lg:top-24", mobileOpen && "max-lg:hidden")}
+          className={cn(
+            "block lg:sticky lg:top-24",
+            mobileOpen && "max-lg:hidden",
+            !mobileOpen && motion === "back" && "max-lg:slide-in-back",
+          )}
         >
           <ul
             className={cn(
@@ -160,7 +178,10 @@ export function SectionNav({
           className={cn("min-w-0 block", !mobileOpen && "max-lg:hidden")}
         >
           {sections.map((section) => (
-            <div key={section.id} className={cn(section.id !== activeId && "hidden")}>
+            <div
+              key={section.id}
+              className={cn(section.id !== activeId && "hidden", motion === "forward" && "slide-in-forward")}
+            >
               {section.content}
             </div>
           ))}

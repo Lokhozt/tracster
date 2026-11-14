@@ -18,9 +18,12 @@ import {
 } from "@/components/ui";
 import { useCreateSheet } from "@/lib/create-sheet";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
+import { useNewlyAdded } from "@/lib/use-newly-added";
+import { cn } from "@/lib/utils";
 
 export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventType[] }) {
   const t = useTranslations("Components");
+  const freshIds = useNewlyAdded(eventTypes.map((item) => item.id));
   const router = useRouter();
   const createSheet = useCreateSheet("event-type");
   const [name, setName] = useState("");
@@ -143,7 +146,7 @@ export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventT
       {/* Built-in types are fixed (lock); custom ones open their edit sheet. */}
       <ul className={SETTINGS_LIST_CLASS}>
         {eventTypes.map((type) => (
-          <li key={type.id}>
+          <li key={type.id} className={cn(freshIds.has(type.id) && "row-new")}>
             {type.immutable ? (
               <div className="flex min-h-12 items-center justify-between gap-3 px-3 py-2">
                 <span className="font-medium">{type.name}</span>

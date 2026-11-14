@@ -47,6 +47,16 @@ export function BottomTabBar({ seasonalTheme = null }: { seasonalTheme?: Seasona
 
   useSwipeTabNavigation(TAB_ITEMS, pathname);
 
+  // New tab shown: the highlight now sits on it (its `left`), so drop the swipe push instantly.
+  // Left in place, the push added to the new position and threw the circle past the tab.
+  useEffect(() => {
+    const indicator = document.querySelector<HTMLElement>("[data-tab-indicator]");
+    if (indicator) {
+      indicator.style.transition = "none";
+      indicator.style.setProperty("--tab-indicator-shift", "0px");
+    }
+  }, [pathname]);
+
   /** Direction tag for the pager slide when tapping another tab (see ViewTransition in AppShell). */
   function tabTransition(itemIndex: number): { transitionTypes?: string[]; onClick?: () => void } {
     if (currentIndex === -1 || itemIndex === currentIndex) {
@@ -71,7 +81,20 @@ export function BottomTabBar({ seasonalTheme = null }: { seasonalTheme?: Seasona
         !seasonalTheme && "border-stone-200 bg-white/95",
       )}
     >
-      <ul className="mx-auto grid h-16 max-w-xl grid-cols-5 items-end">
+      <ul className="relative mx-auto grid h-16 max-w-xl grid-cols-5 items-end">
+        {/* One highlight for the active tab; during a swipe it slides toward the target tab
+            (--tab-indicator-shift, set by the swipe handler). Hidden on the centre tab. */}
+        {currentIndex !== -1 && TAB_ITEMS[currentIndex]?.label !== CENTER_TAB && (
+          <span
+            aria-hidden="true"
+            data-tab-indicator=""
+            className="pointer-events-none absolute top-2 h-8 w-12 rounded-full bg-stone-900/10"
+            style={{
+              left: `calc(${currentIndex} * 20% + 10% - 1.5rem)`,
+              transform: "translateX(var(--tab-indicator-shift, 0px))",
+            }}
+          />
+        )}
         {TAB_ITEMS.map((item, itemIndex) => {
           const isActive = item.match(pathname);
           const shortLabelKey = SHORT_LABEL_KEYS[item.label];
@@ -121,8 +144,8 @@ export function BottomTabBar({ seasonalTheme = null }: { seasonalTheme?: Seasona
               >
                 <span
                   className={cn(
-                    "flex h-8 w-12 items-center justify-center rounded-full transition",
-                    isActive ? "bg-stone-900/10 text-stone-900" : "text-stone-500",
+                    "relative flex h-8 w-12 items-center justify-center rounded-full transition",
+                    isActive ? "text-stone-900" : "text-stone-500",
                   )}
                 >
                   <NavIcon label={item.label} className="h-5 w-5" />
@@ -191,7 +214,23 @@ function useSwipeTabNavigation(tabItems: NavItem[], pathname: string): void {
       startY: number;
       startTime: number;
       axis: "undecided" | "horizontal" | "vertical";
+      /** Last two samples, for the release speed. */
+      lastX: number;
+      lastTime: number;
+      velocity: number;
     } | null = null;
+
+    // The tab-bar highlight follows the finger: a full screen width of drag = one tab.
+    function setIndicatorShift(deltaX: number, transition: string): void {
+      const indicator = document.querySelector<HTMLElement>("[data-tab-indicator]");
+      const bar = document.querySelector<HTMLElement>("[data-bottom-tab-bar] ul");
+      if (!indicator || !bar) {
+        return;
+      }
+      const cell = bar.getBoundingClientRect().width / tabItems.length;
+      indicator.style.transition = transition;
+      indicator.style.setProperty("--tab-indicator-shift", `${(-deltaX / window.innerWidth) * cell}px`);
+    }
 
     function setPageOffset(main: HTMLElement, offsetX: number, transition: string): void {
       main.style.transition = transition;
@@ -215,6 +254,9 @@ function useSwipeTabNavigation(tabItems: NavItem[], pathname: string): void {
         startY: touch.clientY,
         startTime: event.timeStamp,
         axis: "undecided",
+        lastX: touch.clientX,
+        lastTime: event.timeStamp,
+        velocity: 0,
       };
     }
 
@@ -240,6 +282,16 @@ function useSwipeTabNavigation(tabItems: NavItem[], pathname: string): void {
           return;
         }
       }
+      // Horizontal swipe: the page must not also scroll up and down under the finger.
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+      const elapsed = event.timeStamp - gesture.lastTime;
+      if (elapsed > 0) {
+        gesture.velocity = (touch.clientX - gesture.lastX) / elapsed;
+      }
+      gesture.lastX = touch.clientX;
+      gesture.lastTime = event.timeStamp;
       const main = pageContent();
       if (!main || prefersReducedMotion()) {
         return;
@@ -247,6 +299,7 @@ function useSwipeTabNavigation(tabItems: NavItem[], pathname: string): void {
       // Resist when there is no tab on that side.
       const hasTarget = Boolean(tabItems[currentIndex + (deltaX < 0 ? 1 : -1)]);
       setPageOffset(main, hasTarget ? deltaX : deltaX * 0.25, "none");
+      setIndicatorShift(hasTarget ? deltaX : 0, "none");
     }
 
     function onTouchEnd(event: TouchEvent): void {
@@ -257,6 +310,7 @@ function useSwipeTabNavigation(tabItems: NavItem[], pathname: string): void {
       const touch = event.changedTouches[0];
       const deltaX = touch.clientX - gesture.startX;
       const duration = event.timeStamp - gesture.startTime;
+      const velocity = gesture.velocity;
       gesture = null;
 
       const main = pageContent();
@@ -268,8 +322,17 @@ function useSwipeTabNavigation(tabItems: NavItem[], pathname: string): void {
         if (main) {
           setPageOffset(main, 0, "transform 200ms ease-out");
         }
+        setIndicatorShift(0, "transform 200ms ease-out");
         return;
       }
+      // Finish at the finger's speed: a fast flick completes quickly, a slow drag glides.
+      const remaining = window.innerWidth - Math.abs(deltaX);
+      const speed = Math.abs(velocity);
+      const finishMs = Math.round(Math.min(320, Math.max(140, speed > 0.1 ? remaining / speed : 320)));
+      document.documentElement.style.setProperty("--tab-swipe-duration", `${finishMs}ms`);
+      // The highlight finishes its slide onto the target tab, at the same pace as the page.
+      setIndicatorShift(deltaX < 0 ? -window.innerWidth : window.innerWidth, `transform ${finishMs}ms var(--ease-stage)`);
+      window.setTimeout(() => document.documentElement.style.removeProperty("--tab-swipe-duration"), finishMs + 400);
       // The page stays where the finger left it (no snap back); the view transition then slides
       // it out from that exact position while the next tab slides in beside it.
       setSwipeOffset(main && !prefersReducedMotion() ? deltaX : 0);
@@ -284,10 +347,12 @@ function useSwipeTabNavigation(tabItems: NavItem[], pathname: string): void {
       if (main) {
         setPageOffset(main, 0, "transform 200ms ease-out");
       }
+      setIndicatorShift(0, "transform 200ms ease-out");
     }
 
     document.addEventListener("touchstart", onTouchStart, { passive: true });
-    document.addEventListener("touchmove", onTouchMove, { passive: true });
+    // Not passive: a horizontal swipe cancels the vertical scroll (see onTouchMove).
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
     document.addEventListener("touchend", onTouchEnd, { passive: true });
     document.addEventListener("touchcancel", onTouchCancel, { passive: true });
     return () => {

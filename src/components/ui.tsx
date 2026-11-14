@@ -131,7 +131,7 @@ export function Switch({
       <span
         aria-hidden="true"
         className={cn(
-          "inline-block h-5 w-5 rounded-full bg-white shadow transition-transform",
+          "inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-(--duration-medium) ease-[cubic-bezier(.3,1.4,.5,1)] motion-reduce:transition-none",
           checked ? "translate-x-6" : "translate-x-1",
         )}
       />
@@ -154,12 +154,25 @@ export function SegmentedControl<Value extends string>({
   onChange: (value: Value) => void;
   className?: string;
 }) {
+  const selectedIndex = Math.max(
+    0,
+    options.findIndex((option) => option.value === value),
+  );
   return (
     <div
       role="radiogroup"
       aria-label={label}
-      className={cn("flex gap-0.5 rounded-xl border border-stone-200 bg-white p-0.5", className)}
+      className={cn("relative flex rounded-xl border border-stone-200 bg-white p-0.5", className)}
     >
+      {/* The dark fill slides to the picked option (segments share the width equally). */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-y-0.5 left-0.5 rounded-lg bg-stone-900 transition-transform duration-(--duration-medium) ease-stage motion-reduce:transition-none"
+        style={{
+          width: `calc((100% - 0.25rem) / ${options.length})`,
+          transform: `translateX(${selectedIndex * 100}%)`,
+        }}
+      />
       {options.map((option) => {
         const selected = option.value === value;
         return (
@@ -170,8 +183,8 @@ export function SegmentedControl<Value extends string>({
             aria-checked={selected}
             onClick={() => onChange(option.value)}
             className={cn(
-              "min-h-11 flex-1 rounded-lg px-3 text-sm font-medium whitespace-nowrap transition",
-              selected ? "bg-stone-900 text-white" : "text-stone-600 hover:bg-stone-100 hover:text-stone-900",
+              "relative min-h-11 flex-1 basis-0 rounded-lg px-3 text-sm font-medium whitespace-nowrap transition-colors duration-(--duration-medium)",
+              selected ? "text-white" : "text-stone-600 hover:text-stone-900",
             )}
           >
             {option.label}

@@ -18,9 +18,12 @@ import {
 } from "@/components/ui";
 import { useCreateSheet } from "@/lib/create-sheet";
 import type { LocationRecord } from "@/lib/locations";
+import { useNewlyAdded } from "@/lib/use-newly-added";
+import { cn } from "@/lib/utils";
 
 export function LocationsManager({ locations }: { locations: LocationRecord[] }) {
   const t = useTranslations("Components");
+  const freshIds = useNewlyAdded(locations.map((item) => item.id));
   const router = useRouter();
   const createSheet = useCreateSheet("location");
   const [name, setName] = useState("");
@@ -160,7 +163,7 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
         ) : (
           <ul className={SETTINGS_LIST_CLASS}>
             {locations.map((location) => (
-              <li key={location.id}>
+              <li key={location.id} className={cn(freshIds.has(location.id) && "row-new")}>
                 <ListRowButton
                   onClick={() => startRename(location)}
                   actionLabel={t("rename")}

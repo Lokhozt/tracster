@@ -66,6 +66,7 @@ import { aboveCardLink, cardLink, cn } from "@/lib/utils";
 import { WhatsAppLinkField } from "@/components/WhatsAppLink";
 import { useAppNavigation } from "@/lib/app-navigation";
 import { eventCardClassName } from "@/lib/event-category-filter";
+import { useNewlyAdded } from "@/lib/use-newly-added";
 
 type UserOption = { id: string; name: string; email: string; isCompetitor?: boolean };
 
@@ -952,6 +953,7 @@ export function EventParticipantsList({
 }) {
   const t = useTranslations("Components");
   const ordered = sortUsersByName(participants);
+  const freshIds = useNewlyAdded(participants.map((participant) => participant.id));
   return (
     <ul className="space-y-2">
       {ordered.length === 0 ? (
@@ -960,7 +962,10 @@ export function EventParticipantsList({
         ordered.map((participant) => (
           <li
             key={participant.id}
-            className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-stone-100 px-3 py-2"
+            className={cn(
+              "flex flex-wrap items-center justify-between gap-2 rounded-lg border border-stone-100 px-3 py-2",
+              freshIds.has(participant.id) && "row-new",
+            )}
           >
             <div>
               <p className="font-medium">{participant.name}</p>

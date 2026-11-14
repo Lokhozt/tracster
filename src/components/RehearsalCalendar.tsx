@@ -535,7 +535,11 @@ export function RehearsalCalendar({
   // The day view shows a week strip, so its arrows move by week, keeping the weekday.
   const periodName = view === "month" ? t("month") : t("week");
 
+  // Direction of the last period change, so the new week/month slides in from that side.
+  const [slide, setSlide] = useState<1 | -1 | 0>(0);
+
   function shiftFocus(direction: 1 | -1) {
+    setSlide(direction);
     setFocusDate((date) => (view === "month" ? addMonths(date, direction) : addWeeks(date, direction)));
   }
 
@@ -545,6 +549,7 @@ export function RehearsalCalendar({
   }
 
   function goToToday() {
+    setSlide(0);
     setFocusDate(new Date());
   }
 
@@ -626,7 +631,15 @@ export function RehearsalCalendar({
         </div>
       </div>
 
-      <div className={cn(fillHeight && "xl:flex xl:min-h-0 xl:flex-1 xl:flex-col xl:overflow-y-auto")}>
+      <div
+        // A new key per period remounts the grid, so its slide-in plays on each change.
+        key={`${view}-${periodLabel}`}
+        className={cn(
+          fillHeight && "xl:flex xl:min-h-0 xl:flex-1 xl:flex-col xl:overflow-y-auto",
+          slide === 1 && "slide-in-forward",
+          slide === -1 && "slide-in-back",
+        )}
+      >
         {view === "day" ? (
           <DayAgenda
             focusDate={focusDate}

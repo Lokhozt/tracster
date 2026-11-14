@@ -1,6 +1,8 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { browserJustAnimated } from "@/lib/ua-transition";
 import { cn } from "@/lib/utils";
 
 const SECTION_PARAM = "section";
@@ -69,11 +71,27 @@ export function ChoreographySections({ sections }: { sections: ChoreographySecti
   // client-side switches (e.g. when the browser restores the page on "back").
   const urlSectionId = searchParams.get(SECTION_PARAM);
   const activeId = (urlSectionId && ids.has(urlSectionId) && urlSectionId) || overviewId;
+  // Opening a section slides it in from the right; back to the overview from the left. Nothing
+  // plays on page load (no previous section yet).
+  const [previousId, setPreviousId] = useState(activeId);
+  const [motion, setMotion] = useState<"forward" | "back" | null>(null);
+  if (previousId !== activeId) {
+    setPreviousId(activeId);
+    // After the phone's own back/forward gesture animation, a second slide would look broken.
+    setMotion(browserJustAnimated() ? null : activeId === overviewId ? "back" : "forward");
+  }
 
   return (
     <div>
       {sections.map((section) => (
-        <div key={section.id} className={cn(section.id !== activeId && "hidden")}>
+        <div
+          key={section.id}
+          className={cn(
+            section.id !== activeId && "hidden",
+            section.id === activeId && motion === "forward" && "slide-in-forward",
+            section.id === activeId && motion === "back" && "slide-in-back",
+          )}
+        >
           {section.content}
         </div>
       ))}

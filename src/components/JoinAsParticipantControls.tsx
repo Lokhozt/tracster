@@ -102,7 +102,7 @@ export function JoinAsParticipantControls({
     pill = allowLeave ? (
       <button
         type="button"
-        className={cn(PILL, PILL_ON)}
+        className={cn(PILL, PILL_ON, "chip-pop")}
         disabled={loading}
         aria-label={t("notParticipatingAction")}
         title={t("notParticipatingAction")}
@@ -115,7 +115,7 @@ export function JoinAsParticipantControls({
         {loading ? t("leaving") : <>✓ {t("iAmParticipating")}</>}
       </button>
     ) : (
-      <span className={cn(PILL, PILL_ON)}>✓ {t("iAmParticipating")}</span>
+      <span className={cn(PILL, PILL_ON, "chip-pop")}>✓ {t("iAmParticipating")}</span>
     );
   } else if (hasPendingRequest) {
     pill = (
