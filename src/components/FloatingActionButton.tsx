@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
@@ -30,13 +31,48 @@ function subscribeNothing(): () => void {
 export function FloatingActionButton({
   actions,
   extraItems = [],
+  primary,
 }: {
   actions: FloatingAction[];
   /** Extra menu entries that are not links (e.g. a button running an action). */
   extraItems?: React.ReactNode[];
+  /** A single action run in one tap (e.g. opening a create sheet), instead of a menu. */
+  primary?: { label: string; onClick: () => void };
 }) {
   const isClient = useSyncExternalStore(subscribeNothing, () => true, () => false);
-  return isClient ? createPortal(<FloatingActionButtonContent actions={actions} extraItems={extraItems} />, document.body) : null;
+  return isClient
+    ? createPortal(
+        <FloatingActionButtonContent actions={actions} extraItems={extraItems} primary={primary} />,
+        document.body,
+      )
+    : null;
+}
+
+/**
+ * The "+" of one in-page section (`?section=<id>`, e.g. a settings category): sections all stay
+ * mounted, so it only shows while its section is the one open. One action: a link (`href`) or
+ * a callback (`onClick`, e.g. a create sheet).
+ */
+export function SectionFloatingAction({
+  sectionId,
+  label,
+  href,
+  onClick,
+}: {
+  sectionId: string;
+  label: string;
+  href?: string;
+  onClick?: () => void;
+}) {
+  const searchParams = useSearchParams();
+  if (searchParams.get("section") !== sectionId) {
+    return null;
+  }
+  return href ? (
+    <FloatingActionButton actions={[{ href, label }]} />
+  ) : (
+    <FloatingActionButton actions={[]} primary={onClick ? { label, onClick } : undefined} />
+  );
 }
 
 /**
@@ -46,9 +82,11 @@ export function FloatingActionButton({
 function FloatingActionButtonContent({
   actions,
   extraItems,
+  primary,
 }: {
   actions: FloatingAction[];
   extraItems: React.ReactNode[];
+  primary?: { label: string; onClick: () => void };
 }) {
   const t = useTranslations("Components");
   const [open, setOpen] = useState(false);
@@ -66,6 +104,21 @@ function FloatingActionButtonContent({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
+
+  if (primary && actions.length + extraItems.length === 0) {
+    return (
+      <button
+        type="button"
+        onClick={primary.onClick}
+        aria-label={primary.label}
+        title={primary.label}
+        data-fab=""
+        className={cn(FAB_POSITION, FAB_BUTTON)}
+      >
+        <PlusIcon />
+      </button>
+    );
+  }
 
   if (actions.length + extraItems.length === 0) {
     return null;

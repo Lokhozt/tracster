@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormSheet } from "@/components/Sheet";
 import { useCreateSheet } from "@/lib/create-sheet";
-import { FAB_MENU_ITEM_CLASS, FloatingActionButton } from "@/components/FloatingActionButton";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { Button, Card, FormActions, FormError, Input, Label } from "@/components/ui";
 import type { SerializedGroup } from "@/lib/groups";
 import { cn } from "@/lib/utils";
@@ -298,19 +298,10 @@ export function GroupsSection({
       </div>
 
       {showFloatingCreate && (
+          // One action: the "+" opens the create sheet directly (no one-item menu).
           <FloatingActionButton
             actions={[]}
-            extraItems={[
-              <button
-                key="new-group"
-                type="button"
-                data-fab-close=""
-                className={FAB_MENU_ITEM_CLASS}
-                onClick={createSheet.show}
-              >
-                {t("newGroup")}
-              </button>,
-            ]}
+            primary={{ label: t("newGroup"), onClick: createSheet.show }}
           />
       )}
 

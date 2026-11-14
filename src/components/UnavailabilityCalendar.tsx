@@ -21,6 +21,7 @@ import {
 import { enUS, fr } from "date-fns/locale";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DateTime24Input } from "@/components/DateTime24Input";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { FormSheet } from "@/components/Sheet";
 import { Button, Card, FormActions, FormError, Label, Select } from "@/components/ui";
 import { useCreateSheet } from "@/lib/create-sheet";
@@ -315,6 +316,10 @@ export function UnavailabilityCalendar({
     dateToDateTimeParts(setMinutes(setHours(new Date(), 22), 0)),
   );
   const [addError, setAddError] = useState<string | null>(null);
+  function openAddSheet() {
+    setAddError(null);
+    addSheet.show();
+  }
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -844,6 +849,8 @@ export function UnavailabilityCalendar({
   return (
     <div
       className={cn("space-y-4", selectedTimeframe && "pb-20 sm:pb-0")}
+      // Sized to the window (see useFittedSlotHeight): no extra room for the "+" (globals.css).
+      data-fit-window=""
       // Drawing or moving a period must not also swipe to another tab.
       data-swipe-lock={scrollLocked || pressing ? "" : undefined}
     >
@@ -935,20 +942,18 @@ export function UnavailabilityCalendar({
               </svg>
               <span className="max-sm:hidden">{t("today")}</span>
             </button>
+            {/* Desktop button; phones and tablets use the floating "+" (same as every page). */}
             <button
               type="button"
-              onClick={() => {
-                setAddError(null);
-                addSheet.show();
-              }}
+              onClick={openAddSheet}
               aria-label={t("addUnavailability")}
               title={t("addUnavailability")}
-              className="inline-flex items-center gap-1 rounded-lg bg-stone-900 px-2.5 py-1.5 text-sm font-medium text-white hover:bg-stone-700 sm:px-3"
+              className="hidden items-center gap-1 rounded-lg bg-stone-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-stone-700 lg:inline-flex"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                 <path d="M12 5v14M5 12h14" />
               </svg>
-              <span className="max-sm:hidden">{t("addUnavailability")}</span>
+              <span>{t("addUnavailability")}</span>
             </button>
           </div>
         </div>
@@ -1212,6 +1217,10 @@ export function UnavailabilityCalendar({
         </div>
       </Card>
 
+      <FloatingActionButton
+        actions={[]}
+        primary={{ label: t("addUnavailability"), onClick: openAddSheet }}
+      />
       <FormSheet open={addSheet.open} onClose={addSheet.close} title={t("addUnavailability")}>
         <form
           className="space-y-5"

@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { SectionFloatingAction } from "@/components/FloatingActionButton";
 import { FormSheet } from "@/components/Sheet";
 import {
   Button,
@@ -105,9 +106,13 @@ export function EventTypesManager({ eventTypes }: { eventTypes: SerializedEventT
     <Card className="max-w-xl">
       <div className="mb-2 flex items-start justify-between gap-3">
         <h2 className="max-lg:sr-only text-lg font-semibold">{t("eventTypes")}</h2>
-        <Button type="button" onClick={createSheet.show} className="shrink-0">
-          {t("addType")}
-        </Button>
+        {/* Desktop button; phones and tablets use the floating "+" below. */}
+        <span className="hidden shrink-0 lg:block">
+          <Button type="button" onClick={createSheet.show}>
+            {t("addType")}
+          </Button>
+        </span>
+        <SectionFloatingAction sectionId="event-types" label={t("addType")} onClick={createSheet.show} />
       </div>
       <p className="mb-4 text-sm text-stone-500">
         {t("eventTypesHelp")}

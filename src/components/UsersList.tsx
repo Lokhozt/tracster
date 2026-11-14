@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { SectionFloatingAction } from "@/components/FloatingActionButton";
 import { CompetitorBadge, RoleBadge } from "@/components/UserForms";
 import { Card, Input, Label, SETTINGS_LIST_CLASS, Select } from "@/components/ui";
 import type { UserRole } from "@/generated/prisma/client";
@@ -62,12 +63,14 @@ export function UsersList({ users }: { users: AdminUser[] }) {
             {t("usersHelp")}
           </p>
         </div>
+        {/* Desktop button; phones and tablets use the floating "+". */}
         <Link
           href="/users/new"
-          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
+          className="hidden min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 lg:inline-flex"
         >
           {t("newUser")}
         </Link>
+        <SectionFloatingAction sectionId="members" label={t("newUser")} href="/users/new" />
       </div>
 
       {/* Phones: search on its own row, the two filters side by side below it. */}

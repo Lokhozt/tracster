@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { SectionFloatingAction } from "@/components/FloatingActionButton";
 import { FormSheet } from "@/components/Sheet";
 import {
   Button,
@@ -118,9 +119,13 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
     <Card className="max-w-xl">
       <div className="mb-1 flex items-start justify-between gap-3">
         <h2 className="max-lg:sr-only text-lg font-semibold">{t("locations")}</h2>
-        <Button type="button" onClick={createSheet.show} className="shrink-0">
-          {t("addLocation")}
-        </Button>
+        {/* Desktop button; phones and tablets use the floating "+" below. */}
+        <span className="hidden shrink-0 lg:block">
+          <Button type="button" onClick={createSheet.show}>
+            {t("addLocation")}
+          </Button>
+        </span>
+        <SectionFloatingAction sectionId="locations" label={t("addLocation")} onClick={createSheet.show} />
       </div>
       <p className="mb-4 text-sm text-stone-500">
         {t("locationsHelp")} {t("locationsOneOffHint")}
