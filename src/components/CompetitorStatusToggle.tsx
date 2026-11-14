@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Card } from "@/components/ui";
+import { Card, Switch } from "@/components/ui";
 
 export function CompetitorStatusToggle({
   userId,
@@ -13,7 +13,8 @@ export function CompetitorStatusToggle({
 }: {
   userId: string;
   isCompetitor: boolean;
-  variant?: "card" | "plain";
+  /** "row": compact settings row with a switch (account page). */
+  variant?: "card" | "plain" | "row";
   forSelf?: boolean;
 }) {
   const router = useRouter();
@@ -44,6 +45,22 @@ export function CompetitorStatusToggle({
 
     setOn(data.isCompetitor ?? next);
     router.refresh();
+  }
+
+  if (variant === "row") {
+    const label = forSelf ? t("competitorStatusLabelSelf") : t("competitorStatusLabel");
+    return (
+      <div className="flex items-center justify-between gap-3 px-4 py-3">
+        <div className="min-w-0">
+          <p className="font-medium">{label}</p>
+          <p className="text-xs text-stone-500">
+            {on ? t("competitorStatusOn") : t("competitorStatusOff")}
+          </p>
+          {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+        </div>
+        <Switch checked={on} onChange={(next) => void toggle(next)} label={label} disabled={saving} />
+      </div>
+    );
   }
 
   const body = (

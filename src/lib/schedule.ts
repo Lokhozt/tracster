@@ -2,7 +2,8 @@ import { visibleEventWhere } from "@/lib/participation";
 import { prisma } from "@/lib/db";
 import { canEditEvent } from "@/lib/events";
 import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series";
-import { eventKindAllowsChoreographyLinks } from "@/lib/event-type-helpers";
+import { eventKindAllowsChoreographyLinks, isPartyEventKind } from "@/lib/event-type-helpers";
+import { isPartyBarSignupOpen } from "@/lib/party-bar-shared";
 import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { canManageAllEvents } from "@/lib/roles";
 import { scheduleEventEnd, type SerializedScheduleEvent } from "@/lib/schedule-filters";
@@ -56,6 +57,11 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
         select: {
           id: true,
           title: true,
+          createdById: true,
+          choreographers: {
+            where: { userId },
+            select: { userId: true },
+          },
           members: {
             select: {
               userId: true,
@@ -108,6 +114,11 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
         where: { userId },
         select: { status: true },
       },
+      partyBarSlots: {
+        where: { userId },
+        select: { userId: true },
+      },
+      _count: { select: { partyBarSlots: true } },
     },
     orderBy: { startsAt: "asc" },
   });
@@ -130,7 +141,16 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
       const isEventParticipant = event.participants.some(
         (participant) => participant.userId === userId,
       );
+      // Choreographers lead their rehearsals: they count as taking part ("Chorégraphe").
+      const isChoreographer =
+        kind === "REHEARSAL" &&
+        Boolean(
+          event.choreography &&
+            (event.choreography.createdById === userId ||
+              event.choreography.choreographers.length > 0),
+        );
       const isParticipating =
+        isChoreographer ||
         isEventParticipant ||
         (kind === "REHEARSAL" && rehearsalMember) ||
         (eventKindAllowsChoreographyLinks(kind) && involvedInLinkedChoreography);
@@ -175,6 +195,16 @@ export async function getUserScheduleEvents(userId: string, t?: ServerTranslator
         allowParticipantJoin: event.allowParticipantJoin,
         allowJoinRequests: event.allowJoinRequests,
         hasPendingJoinRequest: event.joinRequests.length > 0,
+        isBarVolunteer: event.partyBarSlots.length > 0,
+        isChoreographer,
+        barSlotsFilled:
+          isPartyEventKind(kind) && event.partyBarSlotsEnabled ? event._count.partyBarSlots : null,
+        hasFreeBarSlot:
+          isPartyEventKind(kind) &&
+          isPartyBarSignupOpen({
+            enabled: event.partyBarSlotsEnabled,
+            participantCount: event._count.partyBarSlots,
+          }),
         hasUpcomingSeriesEvents: hasUpcomingSeriesEvents(event, siblings),
         availabilityStatus:
           kind === "REHEARSAL" ? (event.availabilities[0]?.status ?? null) : null,

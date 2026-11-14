@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   useEffect,
   useRef,
@@ -15,12 +14,23 @@ import {
 import { DocumentTypeIcon } from "@/components/DocumentTypeIcon";
 import { OfficeFileViewer } from "@/components/OfficeFileViewer";
 import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
-import { SectionNav, type NavSection } from "@/components/SettingsSections";
+import { SectionNav } from "@/components/SettingsSections";
 import { documentDisplayType } from "@/lib/document-type";
-import { TracBarCategoryPanel } from "@/components/PartyBarSlots";
 import type { SerializedDocument, SerializedDocumentCategory } from "@/lib/documents";
-import { TRAC_BAR_DOCUMENTS_SECTION_ID, type PartyBarSlot } from "@/lib/party-bar-shared";
-import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
+import {
+  Button,
+  Card,
+  Field,
+  FormActions,
+  FormError,
+  Input,
+  Label,
+  SegmentedControl,
+  Select,
+  Textarea,
+} from "@/components/ui";
+import { useAppNavigation } from "@/lib/app-navigation";
+import { withUrlScheme } from "@/lib/utils";
 
 async function responseError(response: Response, fallback: string) {
   const body = await response.json().catch(() => null);
@@ -305,7 +315,7 @@ export function DocumentCard({
   canEdit: boolean;
 }) {
   const t = useTranslations("Components");
-  const router = useRouter();
+  const navigation = useAppNavigation();
   const displayType = documentDisplayType(document);
   const typeLabel = t(`documentTypes.${displayType}`);
   const [deleting, setDeleting] = useState(false);
@@ -321,7 +331,7 @@ export function DocumentCard({
       setError(await responseError(response, t("documentDeleteError")));
       return;
     }
-    router.push(`/documents?category=${encodeURIComponent(document.category.id)}`);
+    navigation.returnTo(`/documents?category=${encodeURIComponent(document.category.id)}`);
   }
 
   return (
@@ -363,10 +373,14 @@ export function DocumentCard({
       ) : (
         <FileDocument document={document} />
       )}
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
     </div>
   );
 }
+
+
+/** A failed file upload (shown with a translated message, not the raw status). */
+class UploadFailedError extends Error {}
 
 function uploadFile(
   uploadUrl: string,
@@ -383,16 +397,16 @@ function uploadFile(
     };
     request.onload = () => {
       if (request.status >= 200 && request.status < 300) resolve();
-      else reject(new Error(`Upload failed (${request.status}).`));
+      else reject(new UploadFailedError(`Upload failed (${request.status}).`));
     };
-    request.onerror = () => reject(new Error("Upload failed."));
+    request.onerror = () => reject(new UploadFailedError("Upload failed."));
     request.send(file);
   });
 }
 
 export function DocumentForm({ categories }: { categories: SerializedDocumentCategory[] }) {
   const t = useTranslations("Components");
-  const router = useRouter();
+  const navigation = useAppNavigation();
   const [kind, setKind] = useState<"LINK" | "FILE">("LINK");
   const [title, setTitle] = useState("");
   const [categoryChoice, setCategoryChoice] = useState(categories[0]?.id ?? "__new__");
@@ -421,14 +435,14 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title,
-            url,
+            url: withUrlScheme(url),
             description: description || undefined,
             ...category,
           }),
         });
         if (!response.ok) throw new Error(await responseError(response, t("documentCreateError")));
         const created = (await response.json()) as { document: SerializedDocument };
-        router.push(`/documents?category=${encodeURIComponent(created.document.category.id)}`);
+        navigation.returnTo(`/documents?category=${encodeURIComponent(created.document.category.id)}`);
         return;
       } else {
         if (!file) throw new Error(t("selectResourceFile"));
@@ -454,7 +468,7 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
         if (!complete.ok) throw new Error(await responseError(complete, t("documentUploadError")));
         const created = (await complete.json()) as { document: SerializedDocument };
         pendingDocumentId = null;
-        router.push(`/documents?category=${encodeURIComponent(created.document.category.id)}`);
+        navigation.returnTo(`/documents?category=${encodeURIComponent(created.document.category.id)}`);
         return;
       }
     } catch (reason) {
@@ -463,7 +477,13 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
           () => undefined,
         );
       }
-      setError(reason instanceof Error ? reason.message : t("documentCreateError"));
+      setError(
+        reason instanceof UploadFailedError
+          ? t("uploadFailed")
+          : reason instanceof Error
+            ? reason.message
+            : t("documentCreateError"),
+      );
     } finally {
       setSaving(false);
     }
@@ -471,7 +491,6 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
 
   return (
     <form onSubmit={submit}>
-      <h3 className="mb-4 font-semibold">{t("addDocument")}</h3>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <Label htmlFor="document-title">{t("documentTitle")}</Label>
@@ -484,16 +503,17 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
           />
         </div>
         <div>
-          <Label htmlFor="document-kind">{t("resourceType")}</Label>
-          <Select
-            id="document-kind"
-            className="w-full"
-            value={kind}
-            onChange={(event) => setKind(event.target.value as "LINK" | "FILE")}
-          >
-            <option value="LINK">{t("resourceLink")}</option>
-            <option value="FILE">{t("resourceFile")}</option>
-          </Select>
+          <Field label={t("resourceType")}>
+            <SegmentedControl
+              label={t("resourceType")}
+              value={kind}
+              onChange={setKind}
+              options={[
+                { value: "LINK", label: t("resourceLink") },
+                { value: "FILE", label: t("resourceFile") },
+              ]}
+            />
+          </Field>
         </div>
         <div>
           <Label htmlFor="document-category">{t("documentCategory")}</Label>
@@ -530,8 +550,11 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
               <Input
                 key="document-link"
                 id="document-url"
-                type="url"
+                type="text"
                 inputMode="url"
+                autoComplete="url"
+                autoCapitalize="none"
+                spellCheck={false}
                 required
                 value={url}
                 onChange={(event) => setUrl(event.target.value)}
@@ -567,15 +590,17 @@ export function DocumentForm({ categories }: { categories: SerializedDocumentCat
       {progress !== null && (
         <div className="mt-4">
           <p className="mb-1 text-sm text-stone-600">{t("uploadProgress", { progress })}</p>
-          <div className="h-2 overflow-hidden rounded bg-stone-200">
+          <div className="h-2 overflow-hidden rounded bg-stone-200" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
             <div className="h-full bg-stone-800 transition-[width]" style={{ width: `${progress}%` }} />
           </div>
         </div>
       )}
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-      <Button className="mt-4" type="submit" disabled={saving}>
-        {saving ? t("savingDocument") : t("addDocument")}
-      </Button>
+      <FormError>{error}</FormError>
+      <FormActions className="mt-4">
+        <Button type="submit" disabled={saving}>
+          {saving ? t("savingDocument") : t("addDocument")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -605,28 +630,10 @@ export function Documents({
   documents,
   categories,
   initialCategoryId,
-  tracBar,
 }: {
   documents: SerializedDocument[];
   categories: SerializedDocumentCategory[];
   initialCategoryId?: string;
-  tracBar?: {
-    parties: {
-      id: string;
-      displayTitle: string;
-      startsAt: string;
-      slots: PartyBarSlot[];
-    }[];
-    pastParties?: {
-      id: string;
-      displayTitle: string;
-      startsAt: string;
-      slots: PartyBarSlot[];
-    }[];
-    currentUserId: string;
-    canManage: boolean;
-    showPastSeason?: boolean;
-  };
 }) {
   const t = useTranslations("Components");
   const documentSections = categories.map((category) => {
@@ -652,35 +659,12 @@ export function Documents({
     };
   });
 
-  const tracBarSection: NavSection | null = tracBar
-    ? {
-        id: TRAC_BAR_DOCUMENTS_SECTION_ID,
-        label: t("tracBarTitle"),
-        content: (
-          <TracBarCategoryPanel
-            parties={tracBar.parties}
-            pastParties={tracBar.pastParties ?? []}
-            currentUserId={tracBar.currentUserId}
-            canManage={tracBar.canManage}
-            showPastSeason={tracBar.showPastSeason ?? false}
-          />
-        ),
-      }
-    : null;
-
-  const sections =
-    tracBarSection && documentSections.length > 0
-      ? [documentSections[0], tracBarSection, ...documentSections.slice(1)]
-      : tracBarSection
-        ? [tracBarSection]
-        : documentSections;
-
   return (
     <SectionNav
-      sections={sections}
+      sections={documentSections}
       initialSectionId={initialCategoryId}
+      sectionParam="category"
       categoriesLabel={t("documentCategories")}
-      backLabel={t("backToDocumentCategories")}
     />
   );
 }

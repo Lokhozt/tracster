@@ -3,9 +3,13 @@
 import { useTranslations } from "next-intl";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button, Card, Input, Label } from "@/components/ui";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormSheet } from "@/components/Sheet";
+import { useCreateSheet } from "@/lib/create-sheet";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
+import { Button, Card, FormActions, FormError, Input, Label } from "@/components/ui";
 import type { SerializedGroup } from "@/lib/groups";
+import { cn } from "@/lib/utils";
 import { UserSelectionMatrix } from "@/components/UserSelectionMatrix";
 
 type MemberOption = { id: string; name: string; email: string; firstName?: string; lastName?: string };
@@ -105,17 +109,17 @@ function CreateGroupForm({
           />
         </div>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={loading || !name.trim() || selectedMemberIds.length === 0}>
-          {loading ? t("creating") : t("createGroup")}
-        </Button>
+      <FormError>{error}</FormError>
+      <FormActions>
         {onCancel && (
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
             {t("cancel")}
           </Button>
         )}
-      </div>
+        <Button type="submit" disabled={loading || !name.trim() || selectedMemberIds.length === 0}>
+          {loading ? t("creating") : t("createGroup")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -193,15 +197,15 @@ function EditGroupForm({
           />
         </div>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={loading || !name.trim() || selectedMemberIds.length === 0}>
-          {loading ? t("saving") : t("saveGroup")}
-        </Button>
+      <FormError>{error}</FormError>
+      <FormActions>
         <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
           {t("cancel")}
         </Button>
-      </div>
+        <Button type="submit" disabled={loading || !name.trim() || selectedMemberIds.length === 0}>
+          {loading ? t("saving") : t("saveGroup")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -254,15 +258,25 @@ export function GroupsSection({
   canEdit,
   groups,
   members,
+  tabSectionId,
 }: {
   choreographyId: string;
   canEdit: boolean;
   groups: SerializedGroup[];
   members: MemberOption[];
+  /**
+   * When the section lives in a tab, its `?section=` id: phones/tablets then get a floating "+"
+   * (only while that tab is open) that opens the create form in a bottom sheet.
+   */
+  tabSectionId?: string;
 }) {
   const t = useTranslations("Components");
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const searchParams = useSearchParams();
+  const createSheet = useCreateSheet("group");
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const canCreate = canEdit && members.length > 0;
+  const showFloatingCreate =
+    canCreate && tabSectionId !== undefined && searchParams.get("section") === tabSectionId;
 
   return (
     <section>
@@ -273,30 +287,40 @@ export function GroupsSection({
             {t("groupsHelp")}
           </p>
         </div>
-        {canEdit && !showCreateForm && members.length > 0 && (
-          <Button type="button" onClick={() => setShowCreateForm(true)}>
-            {t("newGroup")}
-          </Button>
+        {canCreate && (
+          // With a floating "+" on phones/tablets, the inline button is for desktops only.
+          <span className={cn(tabSectionId !== undefined && "hidden lg:block")}>
+            <Button type="button" onClick={createSheet.show}>
+              {t("newGroup")}
+            </Button>
+          </span>
         )}
       </div>
 
-      {canEdit && showCreateForm && (
-        <Card className="mb-6">
-          <h3 className="mb-4 font-medium">{t("createGroup")}</h3>
+      {showFloatingCreate && (
+          // One action: the "+" opens the create sheet directly (no one-item menu).
+          <FloatingActionButton
+            actions={[]}
+            primary={{ label: t("newGroup"), onClick: createSheet.show }}
+          />
+      )}
+
+      {canCreate && (
+        <FormSheet open={createSheet.open} onClose={createSheet.close} title={t("createGroup")}>
           <CreateGroupForm
             choreographyId={choreographyId}
             members={members}
-            onSuccess={() => setShowCreateForm(false)}
-            onCancel={() => setShowCreateForm(false)}
+            onSuccess={createSheet.close}
+            onCancel={createSheet.close}
           />
-        </Card>
+        </FormSheet>
       )}
 
       {groups.length === 0 ? (
         <Card>
           <p className="text-stone-600">
             {canEdit
-              ? "No groups yet. Create groups to schedule rehearsals for a subset of participants."
+              ? t("noGroupsCanCreate")
               : t("noGroups")}
           </p>
         </Card>

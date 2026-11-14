@@ -4,9 +4,10 @@ import { useTranslations } from "next-intl";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button, Input, Label, Select } from "@/components/ui";
+import { Button, FormActions, FormError, Input, Label, Select } from "@/components/ui";
 import type { UserRole } from "@/generated/prisma/client";
 import { type AdminUser } from "@/lib/users";
+import { useAppNavigation } from "@/lib/app-navigation";
 
 export function EditUserForm({ user }: { user: AdminUser }) {
   const t = useTranslations("Components");
@@ -100,10 +101,12 @@ export function EditUserForm({ user }: { user: AdminUser }) {
           onChange={(event) => setDateOfBirth(event.target.value)}
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading}>
-        {loading ? t("saving") : t("saveChanges")}
-      </Button>
+      <FormError>{error}</FormError>
+      <FormActions>
+        <Button type="submit" disabled={loading}>
+          {loading ? t("saving") : t("saveChanges")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -185,10 +188,12 @@ export function UserRoleForm({
           </p>
         )}
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading || role === user.role}>
-        {loading ? t("updating") : t("updateRole")}
-      </Button>
+      <FormError>{error}</FormError>
+      <FormActions>
+        <Button type="submit" disabled={loading || role === user.role}>
+          {loading ? t("updating") : t("updateRole")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -202,6 +207,7 @@ export function TransferOwnershipForm({
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const navigation = useAppNavigation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const candidates = users.filter((user) => user.id !== currentUserId);
@@ -238,7 +244,7 @@ export function TransferOwnershipForm({
       return;
     }
 
-    router.push("/settings");
+    navigation.returnTo("/settings");
     router.refresh();
   }
 
@@ -266,10 +272,12 @@ export function TransferOwnershipForm({
           ))}
         </Select>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading || !userId} variant="secondary">
-        {loading ? t("transferring") : t("transferOwnership")}
-      </Button>
+      <FormError>{error}</FormError>
+      <FormActions>
+        <Button type="submit" disabled={loading || !userId} variant="secondary">
+          {loading ? t("transferring") : t("transferOwnership")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -305,6 +313,7 @@ export function CompetitorBadge() {
 export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const navigation = useAppNavigation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
@@ -344,7 +353,7 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
       return;
     }
 
-    router.push(`/users/${data.user.id}`);
+    navigation.replace(`/users/${data.user.id}`);
     router.refresh();
   }
 
@@ -443,10 +452,12 @@ export function CreateUserForm({ actorRole }: { actorRole: UserRole }) {
           <span className="mt-0.5 block text-stone-500">{t("competitorStatusHelp")}</span>
         </span>
       </label>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading}>
-        {loading ? t("creating") : t("createUser")}
-      </Button>
+      <FormError>{error}</FormError>
+      <FormActions>
+        <Button type="submit" disabled={loading}>
+          {loading ? t("creating") : t("createUser")}
+        </Button>
+      </FormActions>
     </form>
   );
 }

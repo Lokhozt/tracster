@@ -4,17 +4,19 @@ import { useTranslations } from "next-intl";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Input, Label, Textarea } from "@/components/ui";
+import { Button, FormActions, FormError, Input, Label, Textarea } from "@/components/ui";
 import { WhatsAppLinkField } from "@/components/WhatsAppLink";
 import { ParticipationSettingsFields } from "@/components/ParticipationSettingsFields";
 import {
   defaultParticipationSettings,
   type ParticipationSettings,
 } from "@/lib/participation";
+import { useAppNavigation } from "@/lib/app-navigation";
 
 export function CreateChoreographyForm() {
   const t = useTranslations("Components");
   const router = useRouter();
+  const navigation = useAppNavigation();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [participation, setParticipation] = useState<ParticipationSettings>(
@@ -46,7 +48,7 @@ export function CreateChoreographyForm() {
       return;
     }
 
-    router.push(`/choreographies/${data.choreography.id}`);
+    navigation.replace(`/choreographies/${data.choreography.id}`);
     router.refresh();
   }
 
@@ -71,10 +73,12 @@ export function CreateChoreographyForm() {
         value={participation}
         onChange={setParticipation}
       />
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading}>
-        {loading ? t("creating") : t("createChoreography")}
-      </Button>
+      <FormError>{error}</FormError>
+      <FormActions>
+        <Button type="submit" disabled={loading}>
+          {loading ? t("creating") : t("createChoreography")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -162,10 +166,12 @@ export function EditChoreographyForm({
         value={participation}
         onChange={setParticipation}
       />
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading}>
-        {loading ? t("saving") : t("saveChanges")}
-      </Button>
+      <FormError>{error}</FormError>
+      <FormActions>
+        <Button type="submit" disabled={loading}>
+          {loading ? t("saving") : t("saveChanges")}
+        </Button>
+      </FormActions>
     </form>
   );
 }

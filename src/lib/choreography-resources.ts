@@ -111,28 +111,6 @@ export async function getVisibleChoreographyResources(
   return visible.filter((resource) => resource !== null);
 }
 
-export async function getPinnedChoreographyResources(
-  choreographyId: string,
-  userId: string,
-) {
-  const resources = await prisma.choreographyResource.findMany({
-    where: { choreographyId, status: "ACTIVE", pinned: true },
-    orderBy: { createdAt: "desc" },
-  });
-  const visible = await Promise.all(
-    resources.map(async (resource) =>
-      (await canViewChoreographyResource(
-        choreographyId,
-        userId,
-        resource.visibility,
-      ))
-        ? serializeChoreographyResource(resource)
-        : null,
-    ),
-  );
-  return visible.filter((resource) => resource !== null);
-}
-
 export async function deleteChoreographyResourceFiles(choreographyId: string) {
   const resources = await prisma.choreographyResource.findMany({
     where: { choreographyId, storageKey: { not: null } },

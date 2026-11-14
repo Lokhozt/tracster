@@ -3,7 +3,7 @@ import { eventCardClassName } from "@/lib/event-category-filter";
 import { cn } from "@/lib/utils";
 
 /**
- * Card surface tinted by event type. It repeats `Card`'s shape instead of wrapping it
+ * Event row: neutral surface with the type as a coloured left edge. It repeats `Card`'s shape instead of wrapping it
  * because `cn` only concatenates, so `Card`'s own `bg-white` would win on CSS order.
  */
 export function EventCard({
@@ -14,7 +14,7 @@ export function EventCard({
   return (
     <div
       className={cn(
-        "rounded-xl border p-4 shadow-sm transition sm:p-5",
+        "rounded-lg border p-3 transition-shadow sm:p-4",
         eventCardClassName(kind),
         className,
       )}

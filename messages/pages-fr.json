@@ -1,5 +1,13 @@
 {
   "Pages": {
+    "NotFound": {
+      "title": "Page introuvable",
+      "body": "Cette page n’existe pas ou plus. Le lien est peut-être ancien.",
+      "backToPlanning": "Retour au planning",
+      "choreographyTitle": "Chorégraphie introuvable",
+      "choreographyBody": "Elle n’existe pas, a été archivée, ou vous n’en faites pas partie. Demandez au chorégraphe de vous ajouter si vous devriez y avoir accès.",
+      "backToChoreographies": "Retour aux chorégraphies"
+    },
     "Home": {
       "title": "Planning",
       "eyebrow": "Planification des répétitions",
@@ -61,18 +69,12 @@
       "newDocument": "Nouveau document"
     },
     "NewDocument": {
-      "title": "Nouveau document",
-      "backToDocuments": "← Retour aux documents"
-    },
-    "DocumentDetail": {
-      "backToCategory": "← Retour à {category}"
+      "title": "Nouveau document"
     },
     "NewEvent": {
       "title": "Nouvel événement"
     },
     "EventDetail": {
-      "backToEvents": "← Retour aux événements",
-      "openChoreography": "Voir la chorégraphie : {title}",
       "start": "Début",
       "end": "Fin",
       "location": "Lieu",
@@ -83,7 +85,7 @@
       "yourAvailability": "Votre disponibilité",
       "participantAvailability": "Disponibilité des participants",
       "manualAvailabilityCheck": "Vérification manuelle des disponibilités",
-      "manualAvailabilityChecking": "Vérification...",
+      "manualAvailabilityChecking": "Vérification…",
       "manualAvailabilityCheckError": "Impossible de mettre à jour les disponibilités.",
       "availableParticipantCount": "{available}/{total} participants disponibles",
       "noParticipantsAssigned": "Aucun participant n’est encore affecté.",
@@ -97,18 +99,17 @@
       "representationPieces": "Pièces interprétées lors de cette représentation.",
       "participants": "Participants",
       "partyBarSectionTitle": "Volontaires au bar",
+      "duplicateEvent": "Dupliquer",
       "editEvent": "Modifier l’événement",
       "openWhatsapp": "Ouvrir WhatsApp"
     },
     "EditEvent": {
-      "title": "Modifier l’événement",
-      "backToEvent": "← Retour à l’événement"
+      "title": "Modifier l’événement"
     },
     "Settings": {
       "title": "Paramètres",
       "intro": "Configurez les options de l’association, les lieux proposés, les étiquettes et les membres.",
-      "categories": "Catégories de paramètres",
-      "backToCategories": "Tous les paramètres"
+      "categories": "Catégories de paramètres"
     },
     "Choreographies": {
       "title": "Chorégraphies",
@@ -119,8 +120,7 @@
       "title": "Nouvelle chorégraphie"
     },
     "NewChoreographyResource": {
-      "title": "Nouvelle ressource",
-      "backToChoreography": "← Retour à la chorégraphie"
+      "title": "Nouvelle ressource"
     },
     "ChoreographyDetail": {
       "choreographers": "Chorégraphes",
@@ -129,13 +129,21 @@
       "editChoreography": "Modifier la chorégraphie",
       "overview": "Présentation",
       "demonstrations": "Démonstrations",
-      "categories": "Rubriques de la chorégraphie",
-      "backToSections": "Toutes les rubriques",
+      "nextRehearsal": "Prochaine répétition",
+      "noUpcomingRehearsal": "Aucune répétition prévue.",
+      "nextPerformance": "Prochaine date",
+      "people": "Équipe",
+      "participantCount": "{count, plural, =0 {Aucun participant} one {# participant} other {# participants}}",
+      "eventsTab": "Événements",
+      "youAreChoreographer": "Vous êtes chorégraphe",
+      "pinnedResources": "Ressources épinglées",
+      "openResource": "Ouvrir",
+      "demonstration": "Démonstration",
+      "upcomingEventCount": "{count, plural, =0 {Aucune date à venir} one {# date à venir} other {# dates à venir}}",
       "openWhatsapp": "Ouvrir WhatsApp"
     },
     "ChoreographyRehearsalStatistics": {
       "title": "Statistiques de répétitions",
-      "backToRehearsals": "← Retour aux répétitions",
       "rehearsalCountLabel": "Répétitions",
       "rehearsalHoursLabel": "Temps de répétition",
       "durationHours": "{hours} h",
@@ -148,11 +156,9 @@
       "attendanceRate": "{rate} %"
     },
     "NewUser": {
-      "title": "Nouvel utilisateur",
-      "backToSettings": "← Retour aux paramètres"
+      "title": "Nouvel utilisateur"
     },
     "UserDetail": {
-      "backToSettings": "← Retour aux paramètres",
       "profile": "Profil",
       "status": "Statut",
       "role": "Rôle",

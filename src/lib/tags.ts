@@ -41,7 +41,12 @@ export function tagTextColor(background: string): "#ffffff" | "#1c1917" {
   const g = Number.parseInt(hex.slice(2, 4), 16) / 255;
   const b = Number.parseInt(hex.slice(4, 6), 16) / 255;
   const luminance = 0.2126 * srgb(r) + 0.7152 * srgb(g) + 0.0722 * srgb(b);
-  return luminance > 0.55 ? "#1c1917" : "#ffffff";
+  // Whichever ink contrasts more with the chip (WCAG ratio), not a fixed brightness cut-off:
+  // mid-tone colours (orange, green, cyan) read better with dark text.
+  const darkInkLuminance = 0.0112; // #1c1917
+  const againstWhite = 1.05 / (luminance + 0.05);
+  const againstDark = (luminance + 0.05) / (darkInkLuminance + 0.05);
+  return againstDark > againstWhite ? "#1c1917" : "#ffffff";
 }
 
 function srgb(channel: number) {

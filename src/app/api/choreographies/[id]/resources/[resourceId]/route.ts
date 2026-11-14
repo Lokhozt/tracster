@@ -5,7 +5,7 @@ import { serializeChoreographyResource } from "@/lib/choreography-resources";
 import { prisma } from "@/lib/db";
 import { canEditChoreography } from "@/lib/permissions";
 import { deleteChoreographyResourceObjects } from "@/lib/s3";
-import { choreographyResourcePinSchema } from "@/lib/validations";
+import { choreographyResourceUpdateSchema } from "@/lib/validations";
 
 type RouteContext = {
   params: Promise<{ id: string; resourceId: string }>;
@@ -17,7 +17,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   const { id, resourceId } = await context.params;
   if (!(await canEditChoreography(id, user.id))) return forbidden();
 
-  const parsed = choreographyResourcePinSchema.safeParse(await request.json());
+  const parsed = choreographyResourceUpdateSchema.safeParse(await request.json());
   if (!parsed.success) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
@@ -27,9 +27,20 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   });
   if (!resource) return notFound("Resource");
 
+  const { pinned, description, visibility, url } = parsed.data;
+  if (url !== undefined && resource.type !== "LINK") {
+    return jsonError("Only link resources have a URL.");
+  }
+
   const updated = await prisma.choreographyResource.update({
     where: { id: resource.id },
-    data: { pinned: parsed.data.pinned },
+    data: {
+      ...(pinned !== undefined ? { pinned } : {}),
+      // An emptied description is stored as null, like on creation.
+      ...(description !== undefined ? { description: description || null } : {}),
+      ...(visibility !== undefined ? { visibility } : {}),
+      ...(url !== undefined ? { url } : {}),
+    },
   });
   return Response.json({ resource: serializeChoreographyResource(updated) });
 }

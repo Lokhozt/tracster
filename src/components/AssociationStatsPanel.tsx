@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, Card, Input, Label, Select } from "@/components/ui";
+import { Button, Card, Input, Label, Select, SegmentedControl } from "@/components/ui";
 import { formatDurationMinutes } from "@/lib/format-duration";
 import type {
   RepresentationParticipantLeaderboardEntry,
@@ -67,7 +67,7 @@ function LeaderboardSortHeader({
         type="button"
         onClick={() => onSort(column)}
         className={cn(
-          "inline-flex items-center gap-1 uppercase tracking-wide transition hover:text-stone-900",
+          "inline-flex items-center gap-1 transition hover:text-stone-900",
           active ? "text-stone-900" : "text-stone-600",
         )}
       >
@@ -111,7 +111,7 @@ function sortLeaderboard(
 function StatTile({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-lg border border-stone-200 bg-stone-50/80 px-3 py-2">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-500">{label}</p>
+      <p className="text-xs font-semibold text-stone-500">{label}</p>
       <p className="mt-0.5 text-lg font-semibold tabular-nums leading-tight text-stone-900">
         {value}
       </p>
@@ -291,32 +291,16 @@ export function AssociationStatsPanel({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setMode("representation")}
-          className={cn(
-            "rounded-lg px-3 py-1.5 text-sm font-medium transition",
-            mode === "representation"
-              ? "bg-stone-900 text-white"
-              : "bg-stone-100 text-stone-700 hover:bg-stone-200",
-          )}
-        >
-          {t("modeRepresentation")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("user")}
-          className={cn(
-            "rounded-lg px-3 py-1.5 text-sm font-medium transition",
-            mode === "user"
-              ? "bg-stone-900 text-white"
-              : "bg-stone-100 text-stone-700 hover:bg-stone-200",
-          )}
-        >
-          {t("modeUser")}
-        </button>
-      </div>
+      <SegmentedControl
+        className="max-w-md"
+        label={t("stats")}
+        value={mode}
+        onChange={setMode}
+        options={[
+          { value: "representation", label: t("modeRepresentation") },
+          { value: "user", label: t("modeUser") },
+        ]}
+      />
 
       {mode === "representation" ? (
         <div className="space-y-1">
@@ -409,6 +393,13 @@ export function AssociationStatsPanel({
       )}
 
       {loading && <p className="text-sm text-stone-500">{t("loading")}</p>}
+      {/* Nothing chosen yet: say what to do instead of an empty page. */}
+      {!loading &&
+        ((mode === "representation" && !representationId) || (mode === "user" && !userId)) && (
+          <p className="rounded-xl border border-dashed border-stone-300 px-4 py-6 text-center text-sm text-stone-500">
+            {mode === "representation" ? t("statsPickRepresentation") : t("statsPickUser")}
+          </p>
+        )}
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {mode === "representation" && representationStats && !loading && (
@@ -431,7 +422,7 @@ export function AssociationStatsPanel({
           {representationStats.choreographies.length > 0 && (
             <div className="overflow-hidden rounded-xl border border-stone-200">
               <table className="w-full text-left text-sm">
-                <thead className="bg-stone-100 text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                <thead className="bg-stone-100 text-xs font-semibold text-stone-600">
                   <tr>
                     <th className="px-3 py-2">{t("choreography")}</th>
                     <th className="hidden px-3 py-2 tabular-nums sm:table-cell">{t("rehearsals")}</th>
@@ -477,7 +468,7 @@ export function AssociationStatsPanel({
               <h3 className="text-sm font-semibold text-stone-900">{t("participantLeaderboard")}</h3>
               <div className="overflow-hidden rounded-xl border border-stone-200">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-stone-100 text-[11px] font-semibold uppercase tracking-wide text-stone-600">
+                  <thead className="bg-stone-100 text-xs font-semibold text-stone-600">
                     <tr>
                       <th className="w-8 px-2 py-2 tabular-nums">#</th>
                       <LeaderboardSortHeader
@@ -580,7 +571,7 @@ export function AssociationStatsPanel({
           </div>
           {userStats.choreographies.length > 0 && (
             <Card className="p-3">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-stone-500">
+              <p className="mb-2 text-xs font-semibold text-stone-500">
                 {t("memberChoreographies")}
               </p>
               <ul className="flex flex-wrap gap-1.5">

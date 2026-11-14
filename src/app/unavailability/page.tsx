@@ -2,6 +2,7 @@ import { addDays, format, startOfWeek } from "date-fns";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
+import { HelpButton } from "@/components/HelpButton";
 import { UnavailabilityCalendar } from "@/components/UnavailabilityCalendar";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -14,9 +15,10 @@ import { formatUserName, userNameOrderBy } from "@/lib/users";
 import { getSiteSettings } from "@/lib/site-settings";
 
 export default async function UnavailabilityPage() {
-  const [user, t] = await Promise.all([
+  const [user, t, tComponents] = await Promise.all([
     getCurrentUser(),
     getTranslations("Pages.Unavailability"),
+    getTranslations("Components"),
   ]);
   if (!user) {
     redirect("/login");
@@ -47,8 +49,19 @@ export default async function UnavailabilityPage() {
   }
 
   return (
-    <AppShell title={t("title")}>
-      <p className="mb-6 text-stone-600">
+    <AppShell
+      title={
+        <>
+          {t("title")}
+          {/* Phones: the instructions live behind "?" so the calendar starts higher. */}
+          <HelpButton title={t("title")} className="sm:hidden">
+            <p>{admin ? t("adminIntro") : t("intro")}</p>
+            <p>{tComponents("unavailabilityHelp")}</p>
+          </HelpButton>
+        </>
+      }
+    >
+      <p className="mb-6 max-w-prose hidden text-stone-600 sm:block">
         {admin ? t("adminIntro") : t("intro")}
       </p>
       <UnavailabilityCalendar

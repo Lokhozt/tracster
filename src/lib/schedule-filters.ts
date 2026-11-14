@@ -22,6 +22,14 @@ export type SerializedScheduleEvent = {
   allowParticipantJoin: boolean;
   allowJoinRequests: boolean;
   hasPendingJoinRequest: boolean;
+  /** The viewer holds one of this party's bar slots. */
+  isBarVolunteer: boolean;
+  /** A party whose bar still has a free slot. */
+  hasFreeBarSlot: boolean;
+  /** Bar slots taken at a party with bar slots (null otherwise). */
+  barSlotsFilled: number | null;
+  /** A rehearsal of a choreography the viewer leads. */
+  isChoreographer: boolean;
   hasUpcomingSeriesEvents: boolean;
   availabilityStatus: "AVAILABLE" | "UNAVAILABLE" | "MAYBE" | null;
   href: string;

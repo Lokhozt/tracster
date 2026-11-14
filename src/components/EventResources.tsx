@@ -2,7 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FilterSheet } from "@/components/FilterSheet";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
 import {
   useEffect,
   useRef,
@@ -18,7 +20,20 @@ import type {
 } from "@/lib/choreography-resources";
 import { OfficeFileViewer } from "@/components/OfficeFileViewer";
 import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
-import { Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
+import {
+  Button,
+  Card,
+  Field,
+  FormActions,
+  FormError,
+  Input,
+  Label,
+  SegmentedControl,
+  Select,
+  Textarea,
+} from "@/components/ui";
+import { useAppNavigation } from "@/lib/app-navigation";
+import { cn, withUrlScheme } from "@/lib/utils";
 
 async function responseError(response: Response, fallback: string) {
   const body = await response.json().catch(() => null);
@@ -377,6 +392,93 @@ function PinResourceButton({
   );
 }
 
+/** Edit a published resource: description, visibility and, for links, the URL. */
+function EditResourceForm({
+  choreographyId,
+  resource,
+  onSaved,
+}: {
+  choreographyId: string;
+  resource: SerializedChoreographyResource;
+  onSaved: () => void;
+}) {
+  const t = useTranslations("Components");
+  const router = useRouter();
+  const [description, setDescription] = useState(resource.description ?? "");
+  const [visibility, setVisibility] = useState(resource.visibility);
+  const [url, setUrl] = useState(resource.url ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const isLink = resource.type === "LINK";
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    setSaving(true);
+    setError(null);
+    const response = await fetch(`/api/choreographies/${choreographyId}/resources/${resource.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ description, visibility, ...(isLink ? { url: withUrlScheme(url) } : {}) }),
+    });
+    setSaving(false);
+    if (!response.ok) {
+      setError(await responseError(response, t("resourceUpdateError")));
+      return;
+    }
+    router.refresh();
+    onSaved();
+  }
+
+  return (
+    <form onSubmit={save} className="space-y-4">
+      {isLink && (
+        <div>
+          <Label htmlFor={`resource-url-${resource.id}`}>{t("resourceUrl")}</Label>
+          <Input
+            id={`resource-url-${resource.id}`}
+            type="text"
+            inputMode="url"
+            autoComplete="url"
+            autoCapitalize="none"
+            spellCheck={false}
+            required
+            value={url}
+            onChange={(event) => setUrl(event.target.value)}
+          />
+        </div>
+      )}
+      <div>
+        <Label htmlFor={`resource-description-${resource.id}`}>{t("description")}</Label>
+        <Textarea
+          id={`resource-description-${resource.id}`}
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          placeholder={t("resourceDescriptionPlaceholder")}
+        />
+      </div>
+      <div>
+        <Label htmlFor={`resource-visibility-${resource.id}`}>{t("visibility")}</Label>
+        <Select
+          id={`resource-visibility-${resource.id}`}
+          className="w-full"
+          value={visibility}
+          onChange={(event) => setVisibility(event.target.value as typeof visibility)}
+        >
+          <option value="ALL">{t("resourceVisibility.ALL")}</option>
+          <option value="PARTICIPANT">{t("resourceVisibility.PARTICIPANT")}</option>
+          <option value="CHOREOGRAPHER">{t("resourceVisibility.CHOREOGRAPHER")}</option>
+        </Select>
+      </div>
+      <FormError>{error}</FormError>
+      <FormActions>
+        <Button type="submit" disabled={saving}>
+          {saving ? t("saving") : t("save")}
+        </Button>
+      </FormActions>
+    </form>
+  );
+}
+
 function ResourceCard({
   choreographyId,
   resource,
@@ -389,6 +491,7 @@ function ResourceCard({
   const t = useTranslations("Components");
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function remove() {
@@ -407,7 +510,7 @@ function ResourceCard({
   }
 
   return (
-    <div className="rounded-lg border border-stone-200 p-4">
+    <Card>
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-stone-100 px-2 py-1 text-xs font-medium text-stone-700">
@@ -429,25 +532,56 @@ function ResourceCard({
           {canEdit && (
             <button
               type="button"
-              className="text-sm text-red-700 hover:text-red-900 disabled:opacity-50"
+              onClick={() => setEditing(true)}
+              aria-label={t("editResource")}
+              title={t("editResource")}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-stone-300 text-stone-600 transition hover:bg-stone-100 hover:text-stone-900"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+      {canEdit && (
+        <FilterSheet open={editing} onClose={() => setEditing(false)} title={t("editResource")}>
+          <EditResourceForm
+            choreographyId={choreographyId}
+            resource={resource}
+            onSaved={() => setEditing(false)}
+          />
+          {/* Deleting lives here so the card only shows one management action. */}
+          <div className="mt-6 border-t border-stone-100 pt-4">
+            <button
+              type="button"
+              className="text-sm font-medium text-red-700 hover:text-red-900 disabled:opacity-50"
               disabled={deleting}
               onClick={remove}
             >
               {deleting ? t("deleting") : t("delete")}
             </button>
-          )}
-        </div>
-      </div>
-      {resource.description && <p className="mb-3 whitespace-pre-wrap text-sm text-stone-600">{resource.description}</p>}
+            <FormError>{error}</FormError>
+          </div>
+        </FilterSheet>
+      )}
+      {/* A plain link uses its description as link text (see ResourceLink): not shown twice. */}
+      {resource.description && !(resource.type === "LINK" && resource.url && !resource.embed) && (
+        <p className="mb-3 whitespace-pre-wrap text-sm text-stone-600">{resource.description}</p>
+      )}
       {resource.type === "LINK" && resource.url ? (
         <ResourceLink url={resource.url} embed={resource.embed} title={resource.description} />
       ) : (
         <FileResource choreographyId={choreographyId} resource={resource} />
       )}
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-    </div>
+    </Card>
   );
 }
+
+
+/** A failed file upload (shown with a translated message, not the raw status). */
+class UploadFailedError extends Error {}
 
 function uploadFile(
   uploadUrl: string,
@@ -464,16 +598,16 @@ function uploadFile(
     };
     request.onload = () => {
       if (request.status >= 200 && request.status < 300) resolve();
-      else reject(new Error(`Upload failed (${request.status}).`));
+      else reject(new UploadFailedError(`Upload failed (${request.status}).`));
     };
-    request.onerror = () => reject(new Error("Upload failed."));
+    request.onerror = () => reject(new UploadFailedError("Upload failed."));
     request.send(file);
   });
 }
 
 export function ResourceForm({ choreographyId }: { choreographyId: string }) {
   const t = useTranslations("Components");
-  const router = useRouter();
+  const navigation = useAppNavigation();
   const [kind, setKind] = useState<"LINK" | "FILE">("LINK");
   const [visibility, setVisibility] = useState<ChoreographyResourceVisibility>("ALL");
   const [description, setDescription] = useState("");
@@ -494,10 +628,10 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
         const response = await fetch(`/api/choreographies/${choreographyId}/resources`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, description: description || undefined, visibility }),
+          body: JSON.stringify({ url: withUrlScheme(url), description: description || undefined, visibility }),
         });
         if (!response.ok) throw new Error(await responseError(response, t("resourceCreateError")));
-        router.push(`/choreographies/${choreographyId}?section=resources`);
+        navigation.returnTo(`/choreographies/${choreographyId}?section=resources`);
         return;
       } else {
         if (!file) throw new Error(t("selectResourceFile"));
@@ -522,7 +656,7 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
         );
         if (!complete.ok) throw new Error(await responseError(complete, t("resourceUploadError")));
         pendingResourceId = null;
-        router.push(`/choreographies/${choreographyId}?section=resources`);
+        navigation.returnTo(`/choreographies/${choreographyId}?section=resources`);
         return;
       }
     } catch (reason) {
@@ -531,7 +665,13 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
           method: "DELETE",
         }).catch(() => undefined);
       }
-      setError(reason instanceof Error ? reason.message : t("resourceCreateError"));
+      setError(
+        reason instanceof UploadFailedError
+          ? t("uploadFailed")
+          : reason instanceof Error
+            ? reason.message
+            : t("resourceCreateError"),
+      );
     } finally {
       setSaving(false);
     }
@@ -539,14 +679,19 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
 
   return (
     <form onSubmit={submit}>
-      <h3 className="mb-4 font-semibold">{t("addResource")}</h3>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor={`resource-kind-${choreographyId}`}>{t("resourceType")}</Label>
-          <Select id={`resource-kind-${choreographyId}`} className="w-full" value={kind} onChange={(event) => setKind(event.target.value as "LINK" | "FILE")}>
-            <option value="LINK">{t("resourceLink")}</option>
-            <option value="FILE">{t("resourceFile")}</option>
-          </Select>
+          <Field label={t("resourceType")}>
+            <SegmentedControl
+              label={t("resourceType")}
+              value={kind}
+              onChange={setKind}
+              options={[
+                { value: "LINK", label: t("resourceLink") },
+                { value: "FILE", label: t("resourceFile") },
+              ]}
+            />
+          </Field>
         </div>
         <div>
           <Label htmlFor={`resource-visibility-${choreographyId}`}>{t("visibility")}</Label>
@@ -560,7 +705,7 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
           {kind === "LINK" ? (
             <>
               <Label htmlFor={`resource-url-${choreographyId}`}>{t("resourceUrl")}</Label>
-              <Input key="resource-link" id={`resource-url-${choreographyId}`} type="url" inputMode="url" required value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://…" />
+              <Input key="resource-link" id={`resource-url-${choreographyId}`} type="text" inputMode="url" autoComplete="url" autoCapitalize="none" spellCheck={false} required value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://…" />
             </>
           ) : (
             <>
@@ -585,42 +730,18 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
       {progress !== null && (
         <div className="mt-4">
           <p className="mb-1 text-sm text-stone-600">{t("uploadProgress", { progress })}</p>
-          <div className="h-2 overflow-hidden rounded bg-stone-200">
+          <div className="h-2 overflow-hidden rounded bg-stone-200" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
             <div className="h-full bg-stone-800 transition-[width]" style={{ width: `${progress}%` }} />
           </div>
         </div>
       )}
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-      <Button className="mt-4" type="submit" disabled={saving}>
-        {saving ? t("savingResource") : t("addResource")}
-      </Button>
+      <FormError>{error}</FormError>
+      <FormActions className="mt-4">
+        <Button type="submit" disabled={saving}>
+          {saving ? t("savingResource") : t("addResource")}
+        </Button>
+      </FormActions>
     </form>
-  );
-}
-
-export function PinnedChoreographyResources({
-  choreographyId,
-  resources,
-}: {
-  choreographyId: string;
-  resources: SerializedChoreographyResource[];
-}) {
-  const t = useTranslations("Components");
-  if (resources.length === 0) return null;
-  return (
-    <Card className="mb-6">
-      <h2 className="mb-4 text-lg font-semibold">{t("pinnedChoreographyResources")}</h2>
-      <div className="space-y-4">
-        {resources.map((resource) => (
-          <ResourceCard
-            key={resource.id}
-            choreographyId={choreographyId}
-            resource={resource}
-            canEdit={false}
-          />
-        ))}
-      </div>
-    </Card>
   );
 }
 
@@ -628,34 +749,53 @@ export function ChoreographyResources({
   choreographyId,
   resources,
   canEdit,
+  tabSectionId,
 }: {
   choreographyId: string;
   resources: SerializedChoreographyResource[];
   canEdit: boolean;
+  /**
+   * When the section lives in a tab, its `?section=` id: phones/tablets then get the "add"
+   * action in the floating "+" (only while that tab is open) instead of the inline button.
+   */
+  tabSectionId?: string;
 }) {
   const t = useTranslations("Components");
+  const searchParams = useSearchParams();
+  const addHref = `/choreographies/${choreographyId}/resources/new`;
+  const showFloatingAdd =
+    canEdit && tabSectionId !== undefined && searchParams.get("section") === tabSectionId;
+  // Same layout as the events sections: a plain heading row, then one card per resource.
   return (
-    <Card>
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-semibold">{t("choreographyResources")}</h2>
+    <section>
+      {showFloatingAdd && (
+        <FloatingActionButton actions={[{ href: addHref, label: t("addResource") }]} />
+      )}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold">{t("choreographyResources")}</h2>
         {canEdit && (
           <Link
-            href={`/choreographies/${choreographyId}/resources/new`}
-            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
+            href={addHref}
+            className={cn(
+              "min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700",
+              tabSectionId !== undefined ? "hidden lg:inline-flex" : "inline-flex",
+            )}
           >
             {t("addResource")}
           </Link>
         )}
       </div>
       {resources.length === 0 ? (
-        <p className="text-sm text-stone-600">{t("noChoreographyResources")}</p>
+        <Card>
+          <p className="text-stone-600">{t("noChoreographyResources")}</p>
+        </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="grid gap-4">
           {resources.map((resource) => (
             <ResourceCard key={resource.id} choreographyId={choreographyId} resource={resource} canEdit={canEdit} />
           ))}
         </div>
       )}
-    </Card>
+    </section>
   );
 }

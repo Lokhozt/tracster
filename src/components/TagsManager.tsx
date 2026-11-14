@@ -3,7 +3,21 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, Input, Label } from "@/components/ui";
+import { SectionFloatingAction } from "@/components/FloatingActionButton";
+import { FormSheet } from "@/components/Sheet";
+import {
+  Button,
+  Card,
+  Field,
+  FormActions,
+  FormError,
+  Input,
+  Label,
+  ListRowButton,
+  SETTINGS_LIST_CLASS,
+  ToggleRow,
+} from "@/components/ui";
+import { useCreateSheet } from "@/lib/create-sheet";
 import { TagBubble } from "@/components/TagBubbles";
 import {
   DEFAULT_TAG_COLOR,
@@ -21,6 +35,7 @@ export function TagsManager({
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const createSheet = useCreateSheet("tag");
   const [name, setName] = useState("");
   const [color, setColor] = useState(DEFAULT_TAG_COLOR);
   const [creating, setCreating] = useState(false);
@@ -54,8 +69,11 @@ export function TagsManager({
 
     setName("");
     setColor(DEFAULT_TAG_COLOR);
+    createSheet.close();
     router.refresh();
   }
+
+  const editing = tags.find((tag) => tag.id === editingId);
 
   function startEdit(tag: TagRecord) {
     setEditingId(tag.id);
@@ -143,113 +161,109 @@ export function TagsManager({
 
   return (
     <Card className="max-w-xl">
-      <h2 className="mb-2 text-lg font-semibold">{t("tags")}</h2>
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <h2 className="max-lg:sr-only text-lg font-semibold">{t("tags")}</h2>
+        {/* Desktop button; phones and tablets use the floating "+" below. */}
+        <span className="hidden shrink-0 lg:block">
+          <Button type="button" onClick={createSheet.show}>
+            {t("addTag")}
+          </Button>
+        </span>
+        <SectionFloatingAction sectionId="tags" label={t("addTag")} onClick={createSheet.show} />
+      </div>
       <p className="mb-4 text-sm text-stone-500">{t("tagsHelp")}</p>
 
-      <label className="mb-6 flex cursor-pointer items-start gap-2 text-sm text-stone-700">
-        <input
-          type="checkbox"
+      <div className="mb-6">
+        <ToggleRow
+          label={t("showChoreographyTags")}
+          hint={t("showChoreographyTagsHelp")}
           checked={showTags}
-          onChange={(event) => void handleVisibilityChange(event.target.checked)}
+          onChange={(checked) => void handleVisibilityChange(checked)}
           disabled={visibilitySaving}
-          className="mt-0.5 rounded border-stone-300"
         />
-        <span>
-          <span className="font-medium">{t("showChoreographyTags")}</span>
-          <span className="mt-0.5 block text-stone-500">
-            {t("showChoreographyTagsHelp")}
-          </span>
-        </span>
-      </label>
+      </div>
       {visibilityError && <p className="mb-4 text-sm text-red-600">{visibilityError}</p>}
 
-      <form onSubmit={handleCreate} className="space-y-3">
-        <div>
-          <Label htmlFor="new-tag-name">{t("name")}</Label>
-          <Input
-            id="new-tag-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder={t("tagPlaceholder")}
-            required
+      <FormSheet open={createSheet.open} onClose={createSheet.close} title={t("addTag")}>
+        <form onSubmit={handleCreate} className="space-y-4">
+          <Field label={t("name")} htmlFor="new-tag-name">
+            <Input
+              id="new-tag-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder={t("tagPlaceholder")}
+              required
+            />
+          </Field>
+          <ColorField
+            id="new-tag-color"
+            label={t("tagColor")}
+            value={color}
+            onChange={setColor}
           />
-        </div>
-        <ColorField
-          id="new-tag-color"
-          label={t("tagColor")}
-          value={color}
-          onChange={setColor}
-        />
-        {createError && <p className="text-sm text-red-600">{createError}</p>}
-        <Button type="submit" disabled={creating || !name.trim()}>
-          {creating ? t("adding") : t("addTag")}
-        </Button>
-      </form>
+          <FormError>{createError}</FormError>
+          <FormActions>
+            <Button type="button" variant="secondary" onClick={createSheet.close}>
+              {t("cancel")}
+            </Button>
+            <Button type="submit" disabled={creating || !name.trim()}>
+              {creating ? t("adding") : t("addTag")}
+            </Button>
+          </FormActions>
+        </form>
+      </FormSheet>
 
-      <div className="mt-6 border-t border-stone-100 pt-4">
+      <div className="border-t border-stone-100 pt-4">
         {tags.length === 0 ? (
           <p className="text-sm text-stone-600">{t("noTags")}</p>
         ) : (
-          <ul className="space-y-3">
+          <ul className={SETTINGS_LIST_CLASS}>
             {tags.map((tag) => (
-              <li key={tag.id} className="rounded-lg border border-stone-100 px-3 py-3">
-                {editingId === tag.id ? (
-                  <form onSubmit={handleSave} className="space-y-3">
-                    <Input
-                      value={editingName}
-                      onChange={(event) => setEditingName(event.target.value)}
-                      required
-                      autoFocus
-                    />
-                    <ColorField
-                      id={`edit-tag-color-${tag.id}`}
-                      label={t("tagColor")}
-                      value={editingColor}
-                      onChange={setEditingColor}
-                    />
-                    <div className="flex flex-wrap gap-2">
-                      <Button type="submit" disabled={savingId === tag.id}>
-                        {savingId === tag.id ? t("saving") : t("save")}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => setEditingId(null)}
-                        disabled={savingId === tag.id}
-                      >
-                        {t("cancel")}
-                      </Button>
-                    </div>
-                  </form>
-                ) : (
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <TagBubble tag={tag} />
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => startEdit(tag)}
-                        disabled={savingId === tag.id}
-                      >
-                        {t("edit")}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="danger"
-                        onClick={() => void handleDelete(tag)}
-                        disabled={savingId === tag.id}
-                      >
-                        {t("delete")}
-                      </Button>
-                    </div>
-                  </div>
-                )}
+              <li key={tag.id}>
+                <ListRowButton
+                  onClick={() => startEdit(tag)}
+                  actionLabel={t("edit")}
+                  disabled={savingId === tag.id}
+                >
+                  <TagBubble tag={tag} />
+                </ListRowButton>
               </li>
             ))}
           </ul>
         )}
         {rowError && <p className="mt-3 text-sm text-red-600">{rowError}</p>}
       </div>
+      {/* Rename, recolour or delete a tag, in the same sheet as every other form. */}
+      <FormSheet open={editing !== undefined} onClose={() => setEditingId(null)} title={editing?.name ?? ""}>
+        <form onSubmit={handleSave} className="space-y-4">
+          <Field label={t("name")} htmlFor="edit-tag-name">
+            <Input
+              id="edit-tag-name"
+              value={editingName}
+              onChange={(event) => setEditingName(event.target.value)}
+              required
+            />
+          </Field>
+          <ColorField id="edit-tag-color" label={t("tagColor")} value={editingColor} onChange={setEditingColor} />
+          <button
+            type="button"
+            onClick={() => editing && void handleDelete(editing)}
+            disabled={savingId !== null}
+            className="min-h-10 text-sm font-medium text-red-700 hover:underline disabled:opacity-50"
+          >
+            {t("delete")}
+          </button>
+          <FormError>{rowError}</FormError>
+          <FormActions>
+            <Button type="button" variant="secondary" onClick={() => setEditingId(null)}>
+              {t("cancel")}
+            </Button>
+            <Button type="submit" disabled={savingId !== null || !editingName.trim()}>
+              {savingId !== null ? t("saving") : t("save")}
+            </Button>
+          </FormActions>
+        </form>
+      </FormSheet>
     </Card>
   );
 }

@@ -4,12 +4,25 @@ import { useTranslations } from "next-intl";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, Input, Label } from "@/components/ui";
+import { SectionFloatingAction } from "@/components/FloatingActionButton";
+import { FormSheet } from "@/components/Sheet";
+import {
+  Button,
+  Card,
+  Field,
+  FormActions,
+  FormError,
+  Input,
+  ListRowButton,
+  SETTINGS_LIST_CLASS,
+} from "@/components/ui";
+import { useCreateSheet } from "@/lib/create-sheet";
 import type { LocationRecord } from "@/lib/locations";
 
 export function LocationsManager({ locations }: { locations: LocationRecord[] }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const createSheet = useCreateSheet("location");
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -37,8 +50,11 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
     }
 
     setName("");
+    createSheet.close();
     router.refresh();
   }
+
+  const editing = locations.find((location) => location.id === editingId);
 
   function startRename(location: LocationRecord) {
     setEditingId(location.id);
@@ -74,9 +90,7 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
 
   async function handleDelete(location: LocationRecord) {
     if (
-      !window.confirm(
-        `Delete “${location.name}”? Existing rehearsals and events will keep this as a unique location.`,
-      )
+      !window.confirm(t("locationDeleteConfirm", { name: location.name }))
     ) {
       return;
     }
@@ -103,90 +117,93 @@ export function LocationsManager({ locations }: { locations: LocationRecord[] })
 
   return (
     <Card className="max-w-xl">
-      <h2 className="mb-1 text-lg font-semibold">{t("locations")}</h2>
+      <div className="mb-1 flex items-start justify-between gap-3">
+        <h2 className="max-lg:sr-only text-lg font-semibold">{t("locations")}</h2>
+        {/* Desktop button; phones and tablets use the floating "+" below. */}
+        <span className="hidden shrink-0 lg:block">
+          <Button type="button" onClick={createSheet.show}>
+            {t("addLocation")}
+          </Button>
+        </span>
+        <SectionFloatingAction sectionId="locations" label={t("addLocation")} onClick={createSheet.show} />
+      </div>
       <p className="mb-4 text-sm text-stone-500">
-        {t("locationsHelp")}
-        A unique location can still be entered when scheduling.
+        {t("locationsHelp")} {t("locationsOneOffHint")}
       </p>
 
-      <form onSubmit={handleCreate} className="space-y-3">
-        <div>
-          <Label htmlFor="new-location-name">{t("name")}</Label>
-          <Input
-            id="new-location-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder={t("studioPlaceholder")}
-            required
-          />
-        </div>
-        {createError && <p className="text-sm text-red-600">{createError}</p>}
-        <Button type="submit" disabled={creating || !name.trim()}>
-          {creating ? t("adding") : t("addLocation")}
-        </Button>
-      </form>
+      <FormSheet open={createSheet.open} onClose={createSheet.close} title={t("addLocation")}>
+        <form onSubmit={handleCreate} className="space-y-4">
+          <Field label={t("name")} htmlFor="new-location-name">
+            <Input
+              id="new-location-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder={t("studioPlaceholder")}
+              required
+            />
+          </Field>
+          <FormError>{createError}</FormError>
+          <FormActions>
+            <Button type="button" variant="secondary" onClick={createSheet.close}>
+              {t("cancel")}
+            </Button>
+            <Button type="submit" disabled={creating || !name.trim()}>
+              {creating ? t("adding") : t("addLocation")}
+            </Button>
+          </FormActions>
+        </form>
+      </FormSheet>
 
-      <div className="mt-6 border-t border-stone-100 pt-4">
+      <div className="border-t border-stone-100 pt-4">
         {locations.length === 0 ? (
           <p className="text-sm text-stone-600">{t("noLocations")}</p>
         ) : (
-          <ul className="space-y-3">
+          <ul className={SETTINGS_LIST_CLASS}>
             {locations.map((location) => (
-              <li
-                key={location.id}
-                className="rounded-lg border border-stone-100 px-3 py-3"
-              >
-                {editingId === location.id ? (
-                  <form onSubmit={handleRename} className="space-y-3">
-                    <Input
-                      value={editingName}
-                      onChange={(event) => setEditingName(event.target.value)}
-                      required
-                      autoFocus
-                    />
-                    <div className="flex flex-wrap gap-2">
-                      <Button type="submit" disabled={savingId === location.id}>
-                        {savingId === location.id ? t("saving") : t("save")}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => setEditingId(null)}
-                        disabled={savingId === location.id}
-                      >
-                        {t("cancel")}
-                      </Button>
-                    </div>
-                  </form>
-                ) : (
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-medium">{location.name}</p>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => startRename(location)}
-                        disabled={savingId === location.id}
-                      >
-                        {t("rename")}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="danger"
-                        onClick={() => handleDelete(location)}
-                        disabled={savingId === location.id}
-                      >
-                        {t("delete")}
-                      </Button>
-                    </div>
-                  </div>
-                )}
+              <li key={location.id}>
+                <ListRowButton
+                  onClick={() => startRename(location)}
+                  actionLabel={t("rename")}
+                  disabled={savingId === location.id}
+                >
+                  <span className="font-medium">{location.name}</span>
+                </ListRowButton>
               </li>
             ))}
           </ul>
         )}
         {rowError && <p className="mt-3 text-sm text-red-600">{rowError}</p>}
       </div>
+      {/* Rename or delete a place, in the same sheet as every other form. */}
+      <FormSheet open={editing !== undefined} onClose={() => setEditingId(null)} title={editing?.name ?? ""}>
+        <form onSubmit={handleRename} className="space-y-4">
+          <Field label={t("name")} htmlFor="edit-location-name">
+            <Input
+              id="edit-location-name"
+              value={editingName}
+              onChange={(event) => setEditingName(event.target.value)}
+              required
+            />
+          </Field>
+          <button
+            type="button"
+            onClick={() => editing && void handleDelete(editing)}
+            disabled={savingId !== null}
+            className="min-h-10 text-sm font-medium text-red-700 hover:underline disabled:opacity-50"
+          >
+            {t("delete")}
+          </button>
+          <FormError>{rowError}</FormError>
+          <FormActions>
+            <Button type="button" variant="secondary" onClick={() => setEditingId(null)}>
+              {t("cancel")}
+            </Button>
+            <Button type="submit" disabled={savingId !== null || !editingName.trim()}>
+              {savingId !== null ? t("saving") : t("save")}
+            </Button>
+          </FormActions>
+        </form>
+      </FormSheet>
     </Card>
   );
 }

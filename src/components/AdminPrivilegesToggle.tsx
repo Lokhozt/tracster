@@ -3,10 +3,17 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Card } from "@/components/ui";
+import { Card, Switch } from "@/components/ui";
 import { getAppName } from "@/lib/app-name";
 
-export function AdminPrivilegesToggle({ enabled }: { enabled: boolean }) {
+export function AdminPrivilegesToggle({
+  enabled,
+  variant = "card",
+}: {
+  enabled: boolean;
+  /** "row": compact settings row with a switch (account page). */
+  variant?: "card" | "row";
+}) {
   const router = useRouter();
   const t = useTranslations("Account");
   const [on, setOn] = useState(enabled);
@@ -35,6 +42,26 @@ export function AdminPrivilegesToggle({ enabled }: { enabled: boolean }) {
 
     setOn(data.adminPrivilegesEnabled ?? next);
     router.refresh();
+  }
+
+  if (variant === "row") {
+    return (
+      <div className="flex items-center justify-between gap-3 px-4 py-3">
+        <div className="min-w-0">
+          <p className="font-medium">{t("adminPrivilegesLabel")}</p>
+          <p className="text-xs text-stone-500">
+            {on ? t("adminPrivilegesOn") : t("adminPrivilegesOff")}
+          </p>
+          {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+        </div>
+        <Switch
+          checked={on}
+          onChange={(next) => void toggle(next)}
+          label={t("adminPrivilegesLabel")}
+          disabled={saving}
+        />
+      </div>
+    );
   }
 
   return (

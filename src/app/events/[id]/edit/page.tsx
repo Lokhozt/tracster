@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
@@ -96,11 +95,6 @@ export default async function EditEventPage({ params }: PageProps) {
 
   return (
     <AppShell title={t("title")}>
-      <div className="mb-6">
-        <Link href={`/events/${id}`} className="text-sm text-stone-600 hover:text-stone-900">
-          {t("backToEvent")}
-        </Link>
-      </div>
       <Card className="max-w-xl">
         <EditEventForm
           event={event}

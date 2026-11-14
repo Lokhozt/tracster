@@ -5,12 +5,13 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChoreographerBadge } from "@/components/CrownIcon";
-import { Card, Input, Label, Select } from "@/components/ui";
+import { Card, Label, SearchInput, Select, SegmentedControl } from "@/components/ui";
 import { useLocale } from "next-intl";
 
 import { persistChoreographyRepresentationFilter } from "@/lib/choreography-list-filter";
 import { TagBubbles } from "@/components/TagBubbles";
 import { matchesSearch } from "@/lib/search";
+import { cn } from "@/lib/utils";
 import type { TagRecord } from "@/lib/tags";
 
 export type ChoreographyListItem = {
@@ -93,21 +94,24 @@ export function ChoreographiesList({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 sm:items-end">
+      <div className="grid gap-2 sm:grid-cols-2 sm:items-end sm:gap-3">
         <div>
-          <Label htmlFor="choreography-search">{t("search")}</Label>
-          <Input
+          {/* Labels stay for screen readers; on phones the placeholder and icon say enough. */}
+          <Label htmlFor="choreography-search" className="max-sm:sr-only">
+            {t("search")}
+          </Label>
+          <SearchInput
             id="choreography-search"
-            type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={t("choreographySearchPlaceholder")}
-            autoComplete="off"
           />
         </div>
         {representations.length > 0 && (
           <div>
-            <Label htmlFor="representation-filter">{t("filterByRepresentation")}</Label>
+            <Label htmlFor="representation-filter" className="max-sm:sr-only">
+              {t("filterByRepresentation")}
+            </Label>
             <Select
               id="representation-filter"
               className="w-full"
@@ -125,17 +129,16 @@ export function ChoreographiesList({
         )}
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-700">
-          <input
-            type="checkbox"
-            checked={showAll}
-            onChange={(event) => setShowAll(event.target.checked)}
-            className="rounded border-stone-300"
-          />
-          {t("displayAllChoreographies")}
-        </label>
-      </div>
+      <SegmentedControl
+        className="sm:max-w-sm"
+        label={t("choreographyScope")}
+        value={showAll ? "all" : "mine"}
+        onChange={(value) => setShowAll(value === "all")}
+        options={[
+          { value: "mine", label: t("myChoreographies") },
+          { value: "all", label: t("allChoreographies") },
+        ]}
+      />
 
       {visible.length === 0 ? (
         <Card>
@@ -152,28 +155,40 @@ export function ChoreographiesList({
           </p>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3 md:grid-cols-2 md:gap-4">
           {visible.map((choreography) => (
             <Link key={choreography.id} href={`/choreographies/${choreography.id}`}>
-              <Card className="transition hover:border-stone-400">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <Card className="h-full p-3 transition hover:border-stone-400 sm:p-5">
+                <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="flex items-center gap-2 font-display text-xl sm:text-2xl">
                       {choreography.isChoreographer && <ChoreographerBadge />}
                       <span>{choreography.title}</span>
                     </h2>
                     {choreography.description && (
-                      <p className="mt-1 text-sm text-stone-600">{choreography.description}</p>
+                      <p className="mt-1 line-clamp-2 text-sm text-stone-600 sm:line-clamp-none">
+                        {choreography.description}
+                      </p>
                     )}
                     {tagsVisible && (
                       <TagBubbles tags={choreography.tags} className="mt-2" />
                     )}
-                    <p className="mt-3 text-xs text-stone-500">
+                    <p className="mt-2 text-xs text-stone-500 sm:mt-3">
                       {t("choreographyBy", {
                         names: choreography.choreographerNames.join(", "),
                       })}
+                      <span className="sm:hidden">
+                        {" · "}
+                        {t("participantCount", { count: choreography.memberCount })}
+                      </span>
                     </p>
-                    <p className="mt-1 text-xs text-stone-500">
+                    {/* The next rehearsal is what dancers look for: it reads first among the details. */}
+                    <p
+                      className={cn(
+                        "mt-1 text-sm",
+                        choreography.nextRehearsalAt ? "font-medium text-stone-900" : "text-stone-500",
+                      )}
+                    >
                       {choreography.nextRehearsalAt
                         ? t("nextRehearsal", {
                             date: dateFormatter.format(new Date(choreography.nextRehearsalAt)),
@@ -186,7 +201,7 @@ export function ChoreographiesList({
                       </p>
                     )}
                   </div>
-                  <div className="shrink-0 text-sm text-stone-600 sm:text-right">
+                  <div className="hidden shrink-0 text-sm text-stone-600 sm:block sm:text-right">
                     <p>{t("participantCount", {count: choreography.memberCount})}</p>
                   </div>
                 </div>

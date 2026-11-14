@@ -1,5 +1,13 @@
 {
   "Pages": {
+    "NotFound": {
+      "title": "Page not found",
+      "body": "This page doesn’t exist (anymore). The link may be old.",
+      "backToPlanning": "Back to the planning",
+      "choreographyTitle": "Choreography not found",
+      "choreographyBody": "It doesn’t exist, was archived, or you are not part of it. Ask the choreographer to add you if you should have access.",
+      "backToChoreographies": "Back to choreographies"
+    },
     "Home": {
       "title": "Schedule",
       "eyebrow": "Rehearsal planning",
@@ -61,18 +69,12 @@
       "newDocument": "New document"
     },
     "NewDocument": {
-      "title": "New document",
-      "backToDocuments": "← Back to documents"
-    },
-    "DocumentDetail": {
-      "backToCategory": "← Back to {category}"
+      "title": "New document"
     },
     "NewEvent": {
       "title": "New event"
     },
     "EventDetail": {
-      "backToEvents": "← Back to events",
-      "openChoreography": "View choreography: {title}",
       "start": "Start",
       "end": "End",
       "location": "Location",
@@ -83,7 +85,7 @@
       "yourAvailability": "Your availability",
       "participantAvailability": "Participant availability",
       "manualAvailabilityCheck": "Manual Availability check",
-      "manualAvailabilityChecking": "Checking...",
+      "manualAvailabilityChecking": "Checking…",
       "manualAvailabilityCheckError": "Unable to update availability.",
       "availableParticipantCount": "{available}/{total} participants available",
       "noParticipantsAssigned": "No participants assigned yet.",
@@ -97,18 +99,17 @@
       "representationPieces": "Pieces performed in this representation.",
       "participants": "Participants",
       "partyBarSectionTitle": "Bar volunteers",
+      "duplicateEvent": "Duplicate",
       "editEvent": "Edit event",
       "openWhatsapp": "Open WhatsApp"
     },
     "EditEvent": {
-      "title": "Edit event",
-      "backToEvent": "← Back to event"
+      "title": "Edit event"
     },
     "Settings": {
       "title": "Settings",
       "intro": "Configure association-wide options, listed locations, tags, and members.",
-      "categories": "Setting categories",
-      "backToCategories": "All settings"
+      "categories": "Setting categories"
     },
     "Choreographies": {
       "title": "Choreographies",
@@ -119,8 +120,7 @@
       "title": "New choreography"
     },
     "NewChoreographyResource": {
-      "title": "New resource",
-      "backToChoreography": "← Back to choreography"
+      "title": "New resource"
     },
     "ChoreographyDetail": {
       "choreographers": "Choreographers",
@@ -129,13 +129,21 @@
       "editChoreography": "Edit choreography",
       "overview": "Overview",
       "demonstrations": "Demonstrations",
-      "categories": "Choreography sections",
-      "backToSections": "All sections",
+      "nextRehearsal": "Next rehearsal",
+      "noUpcomingRehearsal": "No rehearsal scheduled.",
+      "nextPerformance": "Next date",
+      "people": "Team",
+      "participantCount": "{count, plural, =0 {No participants} one {# participant} other {# participants}}",
+      "eventsTab": "Events",
+      "youAreChoreographer": "You are a choreographer",
+      "pinnedResources": "Pinned resources",
+      "openResource": "Open",
+      "demonstration": "Demonstration",
+      "upcomingEventCount": "{count, plural, =0 {No upcoming dates} one {# upcoming date} other {# upcoming dates}}",
       "openWhatsapp": "Open WhatsApp"
     },
     "ChoreographyRehearsalStatistics": {
       "title": "Rehearsal statistics",
-      "backToRehearsals": "← Back to rehearsals",
       "rehearsalCountLabel": "Rehearsals",
       "rehearsalHoursLabel": "Rehearsal time",
       "durationHours": "{hours} h",
@@ -148,11 +156,9 @@
       "attendanceRate": "{rate}%"
     },
     "NewUser": {
-      "title": "New user",
-      "backToSettings": "← Back to settings"
+      "title": "New user"
     },
     "UserDetail": {
-      "backToSettings": "← Back to settings",
       "profile": "Profile",
       "status": "Status",
       "role": "Role",

@@ -1,25 +1,17 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { SectionFloatingAction } from "@/components/FloatingActionButton";
 import { CompetitorBadge, RoleBadge } from "@/components/UserForms";
-import { Card, Input, Label, Select } from "@/components/ui";
+import { Card, Input, Label, SETTINGS_LIST_CLASS, Select } from "@/components/ui";
 import type { UserRole } from "@/generated/prisma/client";
 import { type AdminUser, compareUsersByName } from "@/lib/users";
+import { ChevronRightIcon } from "@/components/icons";
 
 
-function formatDateOfBirth(value: string | null, locale: string): string {
-  if (!value) {
-    return "—";
-  }
-  return new Date(value).toLocaleDateString(locale, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 function matchesSearch(user: AdminUser, query: string): boolean {
   const normalized = query.trim().toLowerCase();
@@ -43,8 +35,6 @@ function matchesSearch(user: AdminUser, query: string): boolean {
 export function UsersList({ users }: { users: AdminUser[] }) {
   const t = useTranslations("Components");
   const [search, setSearch] = useState("");
-  const locale = useLocale();
-  const dateTimeFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
   const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
   const [competitorFilter, setCompetitorFilter] = useState<"ALL" | "YES" | "NO">("ALL");
 
@@ -69,21 +59,24 @@ export function UsersList({ users }: { users: AdminUser[] }) {
     <Card>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold">{t("users")}</h2>
+          <h2 className="max-lg:sr-only text-lg font-semibold">{t("users")}</h2>
           <p className="mt-1 text-sm text-stone-500">
             {t("usersHelp")}
           </p>
         </div>
+        {/* Desktop button; phones and tablets use the floating "+". */}
         <Link
           href="/users/new"
-          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
+          className="hidden min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 lg:inline-flex"
         >
           {t("newUser")}
         </Link>
+        <SectionFloatingAction sectionId="members" label={t("newUser")} href="/users/new" />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-[1fr_180px_180px]">
-        <div>
+      {/* Phones: search on its own row, the two filters side by side below it. */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-[1fr_180px_180px] sm:gap-4">
+        <div className="col-span-2 sm:col-span-1">
           <Label htmlFor="user-search">{t("search")}</Label>
           <Input
             id="user-search"
@@ -131,34 +124,27 @@ export function UsersList({ users }: { users: AdminUser[] }) {
         {t("usersShown", {shown: filteredUsers.length, total: users.length})}
       </p>
 
-      <div className="mt-4 border-t border-stone-100 pt-4">
+      <div className="mt-3">
         {filteredUsers.length === 0 ? (
           <p className="text-sm text-stone-600">{t("noMatchingUsers")}</p>
         ) : (
-          <ul className="space-y-3">
+          // One line per member (name, role, competition, e-mail): details are on their page.
+          <ul className={SETTINGS_LIST_CLASS}>
             {filteredUsers.map((entry) => (
               <li key={entry.id}>
                 <Link
                   href={`/users/${entry.id}`}
-                  className="block rounded-lg border border-stone-100 px-3 py-3 transition hover:border-stone-300"
+                  className="flex min-h-12 items-center justify-between gap-3 px-3 py-2 transition hover:bg-stone-50"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium">{entry.name}</p>
-                        <RoleBadge role={entry.role} />
-                        {entry.isCompetitor && <CompetitorBadge />}
-                      </div>
-                      <p className="mt-1 text-sm text-stone-600">{entry.email}</p>
-                      {entry.phone && (
-                        <p className="mt-1 text-sm text-stone-500">{entry.phone}</p>
-                      )}
-                    </div>
-                    <div className="text-sm text-stone-500 sm:text-right">
-                      <p>{t("bornDate", {date: formatDateOfBirth(entry.dateOfBirth, locale)})}</p>
-                      <p className="mt-1">{t("updatedDate", {date: dateTimeFormatter.format(new Date(entry.updatedAt))})}</p>
-                    </div>
-                  </div>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="font-medium">{entry.name}</span>
+                      {entry.role !== "USER" && <RoleBadge role={entry.role} />}
+                      {entry.isCompetitor && <CompetitorBadge />}
+                    </span>
+                    <span className="block truncate text-xs text-stone-500">{entry.email}</span>
+                  </span>
+                  <ChevronRightIcon />
                 </Link>
               </li>
             ))}

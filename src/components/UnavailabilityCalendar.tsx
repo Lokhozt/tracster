@@ -9,6 +9,7 @@ import {
   differenceInCalendarDays,
   differenceInMinutes,
   format,
+  isSameMonth,
   isToday,
   parseISO,
   setHours,
@@ -19,26 +20,39 @@ import {
 } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Card, Label, Select } from "@/components/ui";
-import { formatTime } from "@/lib/datetime";
+import { DateTime24Input } from "@/components/DateTime24Input";
+import { FloatingActionButton } from "@/components/FloatingActionButton";
+import { FormSheet } from "@/components/Sheet";
+import { Button, Card, FormActions, FormError, Label, Select } from "@/components/ui";
+import { useCreateSheet } from "@/lib/create-sheet";
+import {
+  type DateTimeParts,
+  dateTimePartsToDate,
+  dateToDateTimeParts,
+  formatTime,
+} from "@/lib/datetime";
 import type { SerializedUnavailability } from "@/lib/unavailability";
 import { cn } from "@/lib/utils";
+import { ArrowLeftIcon, ArrowRightIcon } from "@/components/icons";
 
 const SLOT_MINUTES = 30;
 const END_HOUR = 24;
-const SLOT_HEIGHT_PX = 24;
+// Half-hour rows shrink so the whole day fits on screen without vertical scrolling.
+const MAX_SLOT_HEIGHT_PX = 24;
+const MIN_SLOT_HEIGHT_PX = 8;
+/** Space kept under the grid (card padding and a little air) when fitting it on screen. */
 const RESIZE_HANDLE_PX = 6;
 const LONG_PRESS_MS = 400;
 // Long enough that a tap or the start of a swipe never shows the hint.
 const LONG_PRESS_HINT_MS = 180;
 // A finger is never perfectly still; anything beyond this is a scroll, not a press.
 const LONG_PRESS_TOLERANCE_PX = 10;
-// The hour ruler stays pinned to the left edge while the week scrolls sideways on
-// narrow screens. Sticky needs room to move, so the ruler sits next to the day
+// The hour ruler stays pinned to the left edge if the week ever scrolls sideways
+// (phones fit the whole week to the screen width). Sticky needs room to move, so the ruler sits next to the day
 // grid rather than inside it. The shadow draws the separator that would otherwise
 // scroll away with the first day column.
 const HOUR_COLUMN_CLASS =
-  "sticky left-0 z-30 w-14 shrink-0 bg-white shadow-[1px_0_0_0_var(--color-stone-200)]";
+  "sticky left-0 z-30 w-10 shrink-0 sm:w-14 bg-white shadow-[1px_0_0_0_var(--color-stone-200)]";
 
 type Interaction =
   | {
@@ -121,18 +135,59 @@ function normalizeSlotRange(startSlot: number, endSlot: number): [number, number
   return [start, Math.max(start + 1, end + 1)];
 }
 
-function blockStyle(startSlot: number, endSlot: number) {
+function blockStyle(startSlot: number, endSlot: number, slotHeightPx: number) {
   if (endSlot <= startSlot) {
     return {
-      top: startSlot * SLOT_HEIGHT_PX,
+      top: startSlot * slotHeightPx,
       height: 2,
     };
   }
 
   return {
-    top: startSlot * SLOT_HEIGHT_PX,
-    height: (endSlot - startSlot) * SLOT_HEIGHT_PX,
+    top: startSlot * slotHeightPx,
+    height: (endSlot - startSlot) * slotHeightPx,
   };
+}
+
+/**
+ * Row height that makes the whole page fit the window (no page scroll), between MIN and MAX.
+ * Measured from the slots row and the space under it, so everything around the grid counts.
+ */
+function useFittedSlotHeight(
+  slotsRowRef: React.RefObject<HTMLDivElement | null>,
+  slotsPerDay: number,
+): number {
+  const [slotHeightPx, setSlotHeightPx] = useState(MAX_SLOT_HEIGHT_PX);
+
+  useEffect(() => {
+    let frame = 0;
+    function measure() {
+      const slotsRow = slotsRowRef.current;
+      if (!slotsRow) {
+        return;
+      }
+      const rect = slotsRow.getBoundingClientRect();
+      const top = rect.top + window.scrollY;
+      // Everything under the grid (card padding, the page's room for the bottom tab bar…), so
+      // the whole page fits the window instead of scrolling by a few pixels.
+      const belowGrid = document.documentElement.scrollHeight - (rect.bottom + window.scrollY);
+      const available = window.innerHeight - top - belowGrid;
+      const fitted = Math.floor(available / slotsPerDay);
+      setSlotHeightPx(Math.max(MIN_SLOT_HEIGHT_PX, Math.min(MAX_SLOT_HEIGHT_PX, fitted)));
+    }
+    function scheduleMeasure() {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    }
+    scheduleMeasure();
+    window.addEventListener("resize", scheduleMeasure);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", scheduleMeasure);
+    };
+  }, [slotsRowRef, slotsPerDay]);
+
+  return slotHeightPx;
 }
 
 function isZeroDuration(startsAt: Date, endsAt: Date) {
@@ -231,7 +286,9 @@ export function UnavailabilityCalendar({
     timeStyle: "short",
   });
   const grid = dayGrid(startOfDayHour);
-  const gridHeightPx = grid.slotsPerDay * SLOT_HEIGHT_PX;
+  const slotsRowRef = useRef<HTMLDivElement>(null);
+  const slotHeightPx = useFittedSlotHeight(slotsRowRef, grid.slotsPerDay);
+  const gridHeightPx = grid.slotsPerDay * slotHeightPx;
   // Earliest week the user can reach: unavailability is only useful going forward.
   const firstWeekStart = useMemo(
     () => startOfWeek(parseISO(initialWeekStart), { weekStartsOn: 1 }),
@@ -242,6 +299,28 @@ export function UnavailabilityCalendar({
   const [timeframes, setTimeframes] = useState(initialTimeframes);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [interaction, setInteraction] = useState<Interaction | null>(null);
+  // "Annuler" right after a new period is saved (drawn, typed or a whole day).
+  const [undoId, setUndoId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!undoId) {
+      return;
+    }
+    const timer = window.setTimeout(() => setUndoId(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [undoId]);
+  // Typing a period instead of drawing it (keyboard, screen readers, precise times).
+  const addSheet = useCreateSheet("unavailability");
+  const [addStart, setAddStart] = useState<DateTimeParts>(() =>
+    dateToDateTimeParts(setMinutes(setHours(new Date(), 18), 0)),
+  );
+  const [addEnd, setAddEnd] = useState<DateTimeParts>(() =>
+    dateToDateTimeParts(setMinutes(setHours(new Date(), 22), 0)),
+  );
+  const [addError, setAddError] = useState<string | null>(null);
+  function openAddSheet() {
+    setAddError(null);
+    addSheet.show();
+  }
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -316,7 +395,7 @@ export function UnavailabilityCalendar({
 
     const rect = column.getBoundingClientRect();
     const y = clientY - rect.top;
-    const slot = Math.floor(y / SLOT_HEIGHT_PX);
+    const slot = Math.floor(y / slotHeightPx);
     return Math.max(0, Math.min(grid.slotsPerDay - 1, slot));
   }
 
@@ -428,6 +507,13 @@ export function UnavailabilityCalendar({
     });
 
     if (covering) {
+      // A longer period (e.g. a week away) would vanish with one tap on a date: confirm first.
+      const coversMoreThanThisDay =
+        new Date(covering.startsAt).getTime() < startsAt.getTime() ||
+        new Date(covering.endsAt).getTime() > endsAt.getTime();
+      if (coversMoreThanThisDay && !window.confirm(t("unavailabilityDeleteConfirm"))) {
+        return;
+      }
       await removeTimeframe(covering.id);
       return;
     }
@@ -459,16 +545,24 @@ export function UnavailabilityCalendar({
       endsAt: endsAt.toISOString(),
     };
 
-    const response = await fetch(
-      id ? `/api/unavailability/${id}` : `/api/users/${viewingUserId}/unavailability`,
-      {
-        method: id ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      },
-    );
-
-    const data = await response.json();
+    let response: Response;
+    let data: { error?: string; timeframe?: unknown; deletedIds?: unknown };
+    try {
+      response = await fetch(
+        id ? `/api/unavailability/${id}` : `/api/users/${viewingUserId}/unavailability`,
+        {
+          method: id ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+      data = await response.json().catch(() => ({}));
+    } catch {
+      // Network failure: never leave the calendar stuck in "saving".
+      setSaving(false);
+      setError(t("unavailabilitySaveError"));
+      return null;
+    }
     setSaving(false);
 
     if (!response.ok) {
@@ -493,6 +587,10 @@ export function UnavailabilityCalendar({
     );
     if (select) {
       setSelectedId(saved.id);
+    }
+    // Undoing a save that merged neighbouring periods would delete them too: no undo then.
+    if (!id && deletedIds.size === 0) {
+      setUndoId(saved.id);
     }
     return saved;
   }
@@ -673,7 +771,8 @@ export function UnavailabilityCalendar({
       }
 
       event.preventDefault();
-      void removeTimeframe(selectedId);
+      // Same confirmation as the "Supprimer" button.
+      void deleteSelected();
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -690,8 +789,8 @@ export function UnavailabilityCalendar({
         interaction.anchorSlot,
         interaction.currentSlot,
       );
-      const style = blockStyle(startSlot, endSlot);
-      return [{ dayIndex: interaction.dayIndex, ...style, draft: true }];
+      const style = blockStyle(startSlot, endSlot, slotHeightPx);
+      return [{ dayIndex: interaction.dayIndex, ...style, draft: true, startSlot, endSlot }];
     }
 
     const existing = timeframes.find((entry) => entry.id === interaction.id);
@@ -711,8 +810,10 @@ export function UnavailabilityCalendar({
       return [
         {
           dayIndex: interaction.dayIndex,
-          ...blockStyle(startSlot, endSlot),
+          ...blockStyle(startSlot, endSlot, slotHeightPx),
           draft: true,
+          startSlot,
+          endSlot,
         },
       ];
     }
@@ -721,8 +822,10 @@ export function UnavailabilityCalendar({
       return [
         {
           dayIndex: interaction.dayIndex,
-          ...blockStyle(interaction.currentSlot, interaction.endSlot),
+          ...blockStyle(interaction.currentSlot, interaction.endSlot, slotHeightPx),
           draft: true,
+          startSlot: interaction.currentSlot,
+          endSlot: interaction.endSlot,
         },
       ];
     }
@@ -730,20 +833,35 @@ export function UnavailabilityCalendar({
     return [
       {
         dayIndex: interaction.dayIndex,
-        ...blockStyle(interaction.startSlot, interaction.currentSlot + 1),
+        ...blockStyle(interaction.startSlot, interaction.currentSlot + 1, slotHeightPx),
         draft: true,
+        startSlot: interaction.startSlot,
+        endSlot: interaction.currentSlot + 1,
       },
     ];
-  }, [interaction, timeframes, weekStart, grid]);
+  }, [interaction, timeframes, weekStart, grid, slotHeightPx]);
 
   const periodLabel = `${format(weekDays[0], "d MMM", {locale: dateLocale})} – ${format(weekDays[6], "d MMM yyyy", {locale: dateLocale})}`;
+  // Phones: "9 – 15 nov." (or "30 nov. – 6 déc.") so the toolbar stays on one line.
+  const shortPeriodLabel = isSameMonth(weekDays[0], weekDays[6])
+    ? `${format(weekDays[0], "d", { locale: dateLocale })} – ${format(weekDays[6], "d MMM", { locale: dateLocale })}`
+    : `${format(weekDays[0], "d MMM", { locale: dateLocale })} – ${format(weekDays[6], "d MMM", { locale: dateLocale })}`;
 
   return (
-    <div className={cn("space-y-4", selectedTimeframe && "pb-24 sm:pb-0")}>
+    <div
+      className={cn("space-y-4", selectedTimeframe && "pb-20 sm:pb-0")}
+      // Sized to the window (see useFittedSlotHeight): no extra room for the "+" (globals.css).
+      data-fit-window=""
+      // Drawing or moving a period must not also swipe to another tab.
+      data-swipe-lock={scrollLocked || pressing ? "" : undefined}
+    >
       <Card>
         {users && users.length > 0 && (
-          <div className="mb-4 max-w-md">
-            <Label htmlFor="unavailability-user">{t("unavailabilityUser")}</Label>
+          <div className="mb-3 max-w-md sm:mb-4">
+            {/* Phones: the select already shows whose calendar this is. */}
+            <Label htmlFor="unavailability-user" className="max-sm:sr-only">
+              {t("unavailabilityUser")}
+            </Label>
             <Select
               id="unavailability-user"
               className="w-full"
@@ -767,33 +885,30 @@ export function UnavailabilityCalendar({
             </Select>
           </div>
         )}
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold">{t("weekView")}</h2>
-            <p className="mt-1 text-sm text-stone-500">
-              {t("unavailabilityHelp")}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="mb-3 flex flex-wrap items-center justify-end gap-3 sm:mb-4">
+          {/* Instructions: the page intro (desktop) and its "?" help (phones), not repeated here. */}
+          <h2 className="sr-only">{t("weekView")}</h2>
+          <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-wrap">
             <button
               type="button"
               onClick={() => setWeekStart((date) => subWeeks(date, 1))}
               disabled={!canGoBack}
-              className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
               aria-label={t("previousWeek")}
             >
-              ←
+              <ArrowLeftIcon />
             </button>
-            <span className="min-w-0 flex-1 text-center text-sm font-medium sm:min-w-44 sm:flex-none">
-              {periodLabel}
+            <span className="min-w-0 flex-1 text-center text-sm font-medium whitespace-nowrap sm:min-w-44 sm:flex-none">
+              <span className="sm:hidden">{shortPeriodLabel}</span>
+              <span className="max-sm:hidden">{periodLabel}</span>
             </span>
             <button
               type="button"
               onClick={() => setWeekStart((date) => addWeeks(date, 1))}
-              className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 hover:bg-stone-100"
               aria-label={t("nextWeek")}
             >
-              →
+              <ArrowRightIcon />
             </button>
             <button
               type="button"
@@ -803,25 +918,65 @@ export function UnavailabilityCalendar({
                   current.getTime() < firstWeekStart.getTime() ? firstWeekStart : current,
                 );
               }}
-              className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
+              aria-label={t("today")}
+              title={t("today")}
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 px-2.5 text-sm hover:bg-stone-100 sm:px-3"
             >
-              {t("today")}
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5 sm:hidden"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="4" y="5" width="16" height="15" rx="2" />
+                <path d="M8 3v4M16 3v4M4 10h16" />
+                <circle cx="12" cy="15" r="1.25" fill="currentColor" stroke="none" />
+              </svg>
+              <span className="max-sm:hidden">{t("today")}</span>
+            </button>
+            {/* Desktop button; phones and tablets use the floating "+" (same as every page). */}
+            <button
+              type="button"
+              onClick={openAddSheet}
+              aria-label={t("addUnavailability")}
+              title={t("addUnavailability")}
+              className="hidden min-h-11 items-center gap-1 rounded-lg bg-stone-900 px-3 text-sm font-medium text-white hover:bg-stone-700 lg:inline-flex"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              <span>{t("addUnavailability")}</span>
             </button>
           </div>
         </div>
 
-        {(loading || saving) && (
-          <p className="mb-3 text-sm text-stone-500">{saving ? t("saving") : t("loading")}</p>
+        {/* Announced to screen readers as they change. */}
+        <div role="status" aria-live="polite">
+          {(loading || saving) && (
+            <p className="mb-3 text-sm text-stone-500">{saving ? t("saving") : t("loading")}</p>
+          )}
+        </div>
+        {error && (
+          <p role="alert" className="mb-3 text-sm text-red-600">
+            {error}
+          </p>
         )}
-        {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
         <div
           className={cn(
-            "-mx-4 px-4 sm:mx-0 sm:px-0",
+            // No left padding on phones: the sticky hours column must reach the card edge,
+            // otherwise days scrolling underneath show through the padding gutter.
+            "-mx-4 pr-4 sm:mx-0 sm:pr-0",
             scrollLocked ? "overflow-hidden" : "overflow-x-auto",
           )}
         >
-          <div className="min-w-[640px] sm:min-w-[760px]">
+          {/* Phones: the whole week fits the width, so nothing scrolls sideways and the page
+              swipe still changes tabs. */}
+          <div className="sm:min-w-[760px]">
             <div className="flex border-b border-stone-200">
               <div className={HOUR_COLUMN_CLASS} />
               <div className="grid flex-1 grid-cols-7">
@@ -832,7 +987,7 @@ export function UnavailabilityCalendar({
                   >
                     <button
                       type="button"
-                      className="w-full px-2 py-2 hover:bg-stone-100"
+                      className="w-full px-0.5 py-2 hover:bg-stone-100 sm:px-2"
                       disabled={saving}
                       aria-label={
                         fullDayIndexes.has(dayIndex)
@@ -844,10 +999,13 @@ export function UnavailabilityCalendar({
                       <span
                         className={cn(
                           isToday(day) &&
-                            "inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-stone-900 px-2 text-white",
+                            "font-bold whitespace-nowrap underline decoration-spotlight decoration-4 underline-offset-4 sm:inline-flex sm:h-7 sm:min-w-7 sm:items-center sm:justify-center sm:rounded-full sm:bg-stone-900 sm:px-2 sm:text-white sm:no-underline",
                         )}
                       >
-                        {format(day, "EEE d", {locale: dateLocale})}
+                        <span className="sm:hidden">
+                          {format(day, "EEEEE", {locale: dateLocale})} {format(day, "d")}
+                        </span>
+                        <span className="max-sm:hidden">{format(day, "EEE d", {locale: dateLocale})}</span>
                       </span>
                     </button>
                   </div>
@@ -855,14 +1013,14 @@ export function UnavailabilityCalendar({
               </div>
             </div>
 
-            <div className="flex">
+            <div ref={slotsRowRef} className="flex">
               <div className={HOUR_COLUMN_CLASS} style={{ height: gridHeightPx }}>
                 {Array.from({ length: grid.slotsPerDay }, (_, slotIndex) =>
                   slotIndex % 2 === 0 ? (
                     <div
                       key={slotIndex}
-                      className="absolute right-2 -translate-y-1/2 text-xs text-stone-400"
-                      style={{ top: slotIndex * SLOT_HEIGHT_PX }}
+                      className="absolute right-1 -translate-y-1/2 text-xs text-stone-500 sm:right-2"
+                      style={{ top: slotIndex * slotHeightPx }}
                     >
                       {format(
                         slotToDate(weekStart, 0, slotIndex, grid),
@@ -921,14 +1079,14 @@ export function UnavailabilityCalendar({
                             slotIndex % 2 === 0 && "border-stone-200",
                           )}
                           style={{
-                            top: slotIndex * SLOT_HEIGHT_PX,
-                            height: SLOT_HEIGHT_PX,
+                            top: slotIndex * slotHeightPx,
+                            height: slotHeightPx,
                           }}
                         />
                       ))}
 
                       {dayBlocks.map(({ entry, position }) => {
-                        const style = blockStyle(position.startSlot, position.endSlot);
+                        const style = blockStyle(position.startSlot, position.endSlot, slotHeightPx);
                         const durationSlots = Math.max(1, position.endSlot - position.startSlot);
                         const isSelected = selectedId === entry.id;
                         const isDragging =
@@ -949,7 +1107,7 @@ export function UnavailabilityCalendar({
                             key={`${entry.id}-${dayIndex}`}
                             data-block
                             className={cn(
-                              "absolute inset-x-1 z-10 overflow-hidden rounded-md border border-red-300 bg-red-200/90 text-xs text-red-950 shadow-sm",
+                              "absolute inset-x-0.5 z-10 overflow-hidden rounded-md sm:inset-x-1 border border-red-300 bg-red-200/90 text-xs text-red-950 shadow-sm",
                               isSelected && "ring-2 ring-red-500",
                             )}
                             style={style}
@@ -1009,7 +1167,7 @@ export function UnavailabilityCalendar({
                                 style={{ height: handleHeight }}
                               />
                             )}
-                            <div className="pointer-events-none px-2 py-1">
+                            <div className="pointer-events-none px-1 py-0.5 sm:px-2 sm:py-1">
                               <p className="font-medium">
                                 {isFullDay
                                   ? t("allDay")
@@ -1032,7 +1190,19 @@ export function UnavailabilityCalendar({
                           key={`draft-${index}`}
                           className="pointer-events-none absolute inset-x-1 z-20 rounded-md border border-dashed border-red-400 bg-red-100/80"
                           style={{ top: block.top, height: block.height }}
-                        />
+                        >
+                          {/* Live times while drawing or moving (wider than a phone column). */}
+                          <span
+                            className={cn(
+                              "absolute -top-7 z-30 rounded-full bg-stone-900 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-white tabular-nums shadow",
+                              dayIndex === 0 ? "left-0" : dayIndex === 6 ? "right-0" : "left-1/2 -translate-x-1/2",
+                            )}
+                          >
+                            {format(slotToDate(weekStart, dayIndex, block.startSlot, grid), "HH:mm")}
+                            {" → "}
+                            {format(slotToDate(weekStart, dayIndex, block.endSlot, grid), "HH:mm")}
+                          </span>
+                        </div>
                       ))}
                     </div>
                   );
@@ -1043,13 +1213,90 @@ export function UnavailabilityCalendar({
         </div>
       </Card>
 
+      <FloatingActionButton
+        actions={[]}
+        primary={{ label: t("addUnavailability"), onClick: openAddSheet }}
+      />
+      <FormSheet open={addSheet.open} onClose={addSheet.close} title={t("addUnavailability")}>
+        <form
+          className="space-y-5"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const startsAt = dateTimePartsToDate(addStart);
+            const endsAt = dateTimePartsToDate(addEnd);
+            if (!startsAt || !endsAt || endsAt <= startsAt) {
+              setAddError(t("endAfterStart"));
+              return;
+            }
+            const saved = await persistTimeframe(null, startsAt, endsAt, { select: false });
+            if (saved) {
+              setWeekStart(startOfWeek(startsAt, { weekStartsOn: 1 }));
+              addSheet.close();
+            }
+          }}
+        >
+          <DateTime24Input
+            name="unavailabilityStart"
+            label={t("start")}
+            value={addStart}
+            onChange={(next) => {
+              setAddStart(next);
+              const nextStart = dateTimePartsToDate(next);
+              const currentEnd = dateTimePartsToDate(addEnd);
+              // Keep the end after the start (same length as before).
+              if (nextStart && currentEnd && currentEnd <= nextStart) {
+                setAddEnd(dateToDateTimeParts(addMinutes(nextStart, 240)));
+              }
+            }}
+          />
+          <DateTime24Input name="unavailabilityEnd" label={t("end")} value={addEnd} onChange={setAddEnd} />
+          <FormError>{addError ?? error}</FormError>
+          <FormActions>
+            <Button type="button" variant="secondary" onClick={addSheet.close}>
+              {t("cancel")}
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? t("saving") : t("addUnavailability")}
+            </Button>
+          </FormActions>
+        </form>
+      </FormSheet>
+
+      {undoId && (
+        <div
+          role="status"
+          className={cn(
+            "fixed inset-x-3 z-40 mx-auto flex max-w-md items-center justify-between gap-3 rounded-xl bg-stone-900 px-4 py-3 text-sm text-white shadow-lg",
+            "lg:right-6 lg:bottom-6 lg:left-auto",
+            // Above the selection panel when one is open.
+            selectedTimeframe
+              ? "bottom-[calc(11rem+env(safe-area-inset-bottom))]"
+              : "bottom-[calc(5.5rem+env(safe-area-inset-bottom))]",
+          )}
+        >
+          <span>{t("unavailabilitySaved")}</span>
+          <button
+            type="button"
+            className="min-h-10 rounded-lg px-3 font-semibold text-spotlight hover:bg-white/10"
+            onClick={() => {
+              const id = undoId;
+              setUndoId(null);
+              void removeTimeframe(id);
+            }}
+          >
+            {t("undo")}
+          </button>
+        </div>
+      )}
+
       {selectedTimeframe && (
         <Card
           data-allow-scroll
-          className="fixed inset-x-0 bottom-0 z-30 rounded-none border-x-0 border-b-0 sm:static sm:rounded-xl sm:border"
+          // Phones: floats just above the bottom tab bar (and its raised Planning button).
+          className="fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 p-3 shadow-lg sm:static sm:p-5 sm:shadow-sm"
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
               <h3 className="text-sm font-semibold sm:text-lg">{t("selectedPeriod")}</h3>
               <p className="mt-1 text-sm text-stone-600">
                 {dateTimeFormatter.format(new Date(selectedTimeframe.startsAt))} –{" "}
@@ -1071,7 +1318,7 @@ export function UnavailabilityCalendar({
       {pressing && (
         <p
           aria-hidden
-          className="pointer-events-none fixed inset-x-0 bottom-6 z-50 mx-auto w-fit rounded-full bg-stone-900/90 px-4 py-2 text-sm text-white"
+          className="pointer-events-none fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 lg:bottom-6 mx-auto w-fit rounded-full bg-stone-900/90 px-4 py-2 text-sm text-white"
         >
           {t("holdToDraw")}
         </p>

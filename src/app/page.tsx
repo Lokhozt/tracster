@@ -9,20 +9,18 @@ import { associationCalendarFollowUrl } from "@/lib/google-calendar";
 import {
   EVENT_TYPE_FILTER_COOKIE,
   HIDE_NON_PARTICIPATING_COOKIE,
-  PLANNING_FILTERS_COLLAPSED_COOKIE,
   parseHiddenEventTypeIds,
   parseHideNonParticipating,
-  parsePlanningFiltersCollapsed,
 } from "@/lib/event-category-filter";
 import { getEventTypes } from "@/lib/event-types";
 import { listPartyBarPlanningReminders } from "@/lib/party-bar";
-import { getUpcomingScheduleEvents, getUserScheduleEvents } from "@/lib/schedule";
+import { getUserScheduleEvents } from "@/lib/schedule";
 import { planningBirthdayEvents } from "@/lib/schedule-birthdays";
 import { filterEventTypesForViewer } from "@/lib/event-type-helpers";
-import { canManageAllEvents, isAdmin } from "@/lib/roles";
+import { canManageAllEvents, hasGlobalAccess, isAdmin } from "@/lib/roles";
 import { formatUserName, userNameOrderBy } from "@/lib/users";
 import { getAppLogoSrc } from "@/lib/s3";
-import { getSiteSettings } from "@/lib/site-settings";
+import { canCreateEvent, getSiteSettings } from "@/lib/site-settings";
 import { formatBirthdayGreeting, isBirthdayOnDate } from "@/lib/users";
 
 async function getUsersWithBirthdays() {
@@ -127,15 +125,26 @@ export default async function HomePage() {
   ];
 
   if (user) {
-    const [scheduleEvents, birthdayUsers, eventTypes, seesAllEvents, settings, admin, partyBarReminders] =
-      await Promise.all([
+    const [
+      scheduleEvents,
+      birthdayUsers,
+      eventTypes,
+      seesAllEvents,
+      settings,
+      admin,
+      partyBarReminders,
+      globalAccess,
+      canCreate,
+    ] = await Promise.all([
         getUserScheduleEvents(user.id),
         getUsersWithBirthdays(),
         getEventTypes(),
         canManageAllEvents(user.id),
         getSiteSettings(),
         isAdmin(user.id),
-        listPartyBarPlanningReminders(),
+        listPartyBarPlanningReminders(new Date(), user.id),
+        hasGlobalAccess(user.id),
+        canCreateEvent(user.id),
       ]);
     const [planningLocations, planningUsers] = admin
       ? await Promise.all([
@@ -156,16 +165,16 @@ export default async function HomePage() {
       isCompetitor: user.isCompetitor,
       seesAllEvents,
     });
-    const upcoming = getUpcomingScheduleEvents(scheduleEvents);
     const hiddenTypeIds = parseHiddenEventTypeIds(
       cookieStore.get(EVENT_TYPE_FILTER_COOKIE)?.value,
     );
-    const hideNonParticipating = parseHideNonParticipating(
-      cookieStore.get(HIDE_NON_PARTICIPATING_COOKIE)?.value,
-    );
-    const planningFiltersCollapsed = parsePlanningFiltersCollapsed(
-      cookieStore.get(PLANNING_FILTERS_COLLAPSED_COOKIE)?.value,
-    );
+    // Members start on "Les miens" (their own events); admins on everything. A choice made
+    // with the toggle is remembered in the cookie.
+    const hideNonParticipatingCookie = cookieStore.get(HIDE_NON_PARTICIPATING_COOKIE)?.value;
+    const hideNonParticipating =
+      hideNonParticipatingCookie === undefined
+        ? !admin
+        : parseHideNonParticipating(hideNonParticipatingCookie);
     const birthdayGreeting = settings.showBirthdaysOnPlanning
       ? formatBirthdayGreeting(
           birthdayUsers.filter((birthdayUser) => isBirthdayOnDate(birthdayUser.dateOfBirth, new Date())),
@@ -174,7 +183,7 @@ export default async function HomePage() {
     const associationCalendarUrl = associationCalendarFollowUrl();
 
     return (
-      <AppShell>
+      <AppShell fillHeight>
         {birthdayGreeting && (
           <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950">
             {birthdayGreeting}
@@ -182,11 +191,9 @@ export default async function HomePage() {
         )}
         <ScheduleOverview
           events={events}
-          upcoming={upcoming}
           eventTypes={visibleEventTypes}
           initialHiddenTypeIds={hiddenTypeIds}
           initialHideNonParticipating={hideNonParticipating}
-          initialPlanningFiltersCollapsed={planningFiltersCollapsed}
           associationCalendarUrl={associationCalendarUrl}
           startOfDayHour={settings.startOfDayHour}
           canEditPlanning={admin}
@@ -196,6 +203,12 @@ export default async function HomePage() {
             name: formatUserName(entry),
           }))}
           partyBarReminders={partyBarReminders}
+          createActions={[
+            ...(canCreate ? [{ href: "/events/new", label: tComponents("newEvent") }] : []),
+            ...(globalAccess
+              ? [{ href: "/scheduling", label: tComponents("scheduleRehearsals") }]
+              : []),
+          ]}
         />
       </AppShell>
     );
@@ -203,7 +216,7 @@ export default async function HomePage() {
 
   return (
     <AppShell>
-      <section className="mx-auto max-w-4xl py-10 text-center sm:py-16">
+      <section className="mx-auto max-w-4xl py-4 text-center sm:py-16">
         <h1 className="mb-4 flex items-center justify-center gap-3 text-3xl font-semibold tracking-tight sm:text-4xl">
           {logoSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -215,16 +228,31 @@ export default async function HomePage() {
           ) : null}
           {tCommon("appName")}
         </h1>
-        <p className="mb-3 text-sm font-medium uppercase tracking-wide text-stone-500">
+        <p className="mb-3 text-sm font-medium text-stone-500">
           {t("eyebrow")}
         </p>
         <p className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">
           {t("heading")}
         </p>
-        <p className="mx-auto mb-8 max-w-2xl text-base text-stone-600 sm:text-lg">
+        <p className="mx-auto mb-6 max-w-2xl text-base text-stone-600 sm:text-lg">
           {t("intro")}
         </p>
-        <ul className="mb-10 grid gap-4 text-left sm:grid-cols-2">
+        {/* Right under the intro so phones see it without scrolling; members sign in first. */}
+        <div className="mb-10 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link
+            href="/login"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-stone-900 px-5 py-3 text-sm font-medium text-white hover:bg-stone-700"
+          >
+            {t("signIn")}
+          </Link>
+          <Link
+            href="/register"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-5 py-3 text-sm font-medium hover:bg-stone-100"
+          >
+            {t("getStarted")}
+          </Link>
+        </div>
+        <ul className="grid gap-4 text-left sm:grid-cols-2">
           {features.map((feature) => (
             <li
               key={feature.title}
@@ -247,20 +275,6 @@ export default async function HomePage() {
             </li>
           ))}
         </ul>
-        <div className="flex flex-col justify-center gap-3 sm:flex-row">
-          <Link
-            href="/register"
-            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-stone-900 px-5 py-3 text-sm font-medium text-white hover:bg-stone-700"
-          >
-            {t("getStarted")}
-          </Link>
-          <Link
-            href="/login"
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 px-5 py-3 text-sm font-medium hover:bg-stone-100"
-          >
-            {t("signIn")}
-          </Link>
-        </div>
       </section>
     </AppShell>
   );

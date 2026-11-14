@@ -32,7 +32,7 @@ export function RehearsalEventCard({
   const locale = useLocale();
   const dateFormatter = new Intl.DateTimeFormat(locale, {dateStyle: "medium", timeStyle: "short"});
   return (
-    <Card className="relative transition hover:border-stone-400">
+    <Card className={cn("relative border-l-4 border-l-stone-500 transition-shadow hover:shadow-md")}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h3 className="font-semibold">

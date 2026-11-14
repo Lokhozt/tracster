@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button, Input, Label } from "@/components/ui";
+import { Button, FormError, Input, Label } from "@/components/ui";
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const t = useTranslations("Components");
@@ -67,7 +67,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           autoComplete="new-password"
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      <FormError>{error}</FormError>
       <Button type="submit" disabled={loading} className="w-full">
         {loading ? t("saving") : t("passwordResetSubmit")}
       </Button>

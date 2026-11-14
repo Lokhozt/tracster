@@ -5,11 +5,8 @@ import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { AuthNav } from "@/components/AuthNav";
-import { MainNav, type NavItem, getNavItems } from "@/components/MainNav";
 import { FooterContent } from "@/components/SiteFooter";
-import { RoleBadge } from "@/components/UserForms";
 import type { UserRole } from "@/generated/prisma/client";
-import { hasAdminPrivileges } from "@/lib/privileges";
 import { getAppName } from "@/lib/app-name";
 import type { SeasonalTheme } from "@/lib/festive-season";
 import { cn } from "@/lib/utils";
@@ -33,8 +30,13 @@ export function HeaderBar({
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
-  const showAdminNav = user ? hasAdminPrivileges(user) : false;
-  const navItems = user ? getNavItems(showAdminNav) : [];
+
+  // Any navigation (menu link, bottom tab bar, swipe) closes the menu.
+  const [menuPathname, setMenuPathname] = useState(pathname);
+  if (menuPathname !== pathname) {
+    setMenuPathname(pathname);
+    setMenuOpen(false);
+  }
 
   useEffect(() => {
     if (!menuOpen) {
@@ -47,83 +49,81 @@ export function HeaderBar({
       }
     }
 
-    document.body.style.overflow = "hidden";
+    // Lock the viewport scroller (<html>), not <body>: <html> has `overflow-x: clip`, so an
+    // overflow on <body> would not propagate and would turn <body> into the sticky header's
+    // scroll container, letting the header scroll away while the menu is open.
+    const rootStyle = document.documentElement.style;
+    rootStyle.overflow = "hidden";
     window.addEventListener("keydown", onKeyDown);
 
     return () => {
-      document.body.style.overflow = "";
+      rootStyle.overflow = "";
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [menuOpen]);
 
   return (
-    <header
-      className={cn(
-        "border-b pt-[env(safe-area-inset-top)] backdrop-blur",
-        seasonalTheme === "christmas" && "festive-header border-red-200/80",
-        seasonalTheme === "autumn" && "autumn-header border-amber-300/80",
-        !seasonalTheme && "border-stone-200 bg-white/95",
+    <>
+      {menuOpen && (
+        // Dims the page behind the open menu; tapping it closes the menu.
+        // Rendered outside <header>: its backdrop-filter would contain a fixed child.
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 -z-10 bg-black/50"
+          onClick={() => setMenuOpen(false)}
+        />
       )}
-    >
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
-        <BrandLink logoSrc={logoSrc} />
+      <header
+        className={cn(
+          "border-b pt-[env(safe-area-inset-top)] backdrop-blur",
+          seasonalTheme === "christmas" && "festive-header border-red-200/80",
+          seasonalTheme === "autumn" && "autumn-header border-amber-300/80",
+          !seasonalTheme && "border-stone-200 bg-white/95",
+        )}
+      >
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
+          <BrandLink logoSrc={logoSrc} />
 
-        {user ? (
-          <div className="hidden min-w-0 items-center justify-between gap-4 lg:flex lg:flex-1">
-            <MainNav showAdminNav={showAdminNav} />
-            <UserCluster user={user} />
-          </div>
-        ) : (
-          <div className="hidden sm:block">
-            <AuthNav />
+          {!user && (
+            <div className="hidden sm:block">
+              <AuthNav />
+            </div>
+          )}
+
+          {/* Signed-in phones/tablets use the bottom tab bar (incl. Compte); this menu is for visitors. */}
+          {!user && (
+            <button
+              type="button"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-stone-200 text-stone-800 sm:hidden"
+              aria-expanded={menuOpen}
+              aria-controls={menuId}
+              aria-label={menuOpen ? t("closeMenu") : t("openMenu")}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              <MenuIcon open={menuOpen} />
+            </button>
+          )}
+        </div>
+
+        {menuOpen && !user && (
+          <div
+            id={menuId}
+            className={cn(
+              "max-h-[calc(100dvh-5rem-env(safe-area-inset-top))] overflow-y-auto overscroll-contain border-t px-4 py-4 sm:hidden",
+              seasonalTheme === "christmas" && "festive-header border-red-200/60",
+              seasonalTheme === "autumn" && "autumn-header border-amber-300/60",
+              !seasonalTheme && "border-stone-200 bg-white",
+            )}
+          >
+            <AuthNav stacked />
+            <FooterContent
+              className="mt-4 border-t border-stone-200 pt-4"
+              onNavigate={() => setMenuOpen(false)}
+            />
           </div>
         )}
-
-        <button
-          type="button"
-          className={cn(
-            "inline-flex h-11 w-11 items-center justify-center rounded-lg border border-stone-200 text-stone-800",
-            user ? "lg:hidden" : "sm:hidden",
-          )}
-          aria-expanded={menuOpen}
-          aria-controls={menuId}
-          aria-label={menuOpen ? t("closeMenu") : t("openMenu")}
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          <MenuIcon open={menuOpen} />
-        </button>
-      </div>
-
-      {menuOpen && (
-        <div
-          id={menuId}
-          className={cn(
-            "border-t px-4 py-4 sm:px-6",
-            seasonalTheme === "christmas" && "festive-header border-red-200/60",
-            seasonalTheme === "autumn" && "autumn-header border-amber-300/60",
-            !seasonalTheme && "border-stone-200 bg-white",
-            user ? "lg:hidden" : "sm:hidden",
-          )}
-        >
-          {user ? (
-            <div className="space-y-4">
-              <UserCluster user={user} />
-              <MobileNav
-                items={navItems}
-                pathname={pathname}
-                onNavigate={() => setMenuOpen(false)}
-              />
-            </div>
-          ) : (
-            <AuthNav stacked />
-          )}
-          <FooterContent
-            className="mt-4 border-t border-stone-200 pt-4"
-            onNavigate={() => setMenuOpen(false)}
-          />
-        </div>
-      )}
-    </header>
+      </header>
+    </>
   );
 }
 
@@ -148,57 +148,6 @@ function BrandLink({ logoSrc }: { logoSrc?: string | null }) {
       ) : null}
       {appName}
     </Link>
-  );
-}
-
-function UserCluster({ user }: { user: HeaderUser }) {
-  return (
-    <div className="flex items-center gap-3 text-sm">
-      <div className="flex min-w-0 items-center gap-2">
-        <Link href="/account" className="truncate text-stone-600 hover:text-stone-900">
-          {user.name}
-        </Link>
-        {hasAdminPrivileges(user) && (
-          <RoleBadge role={user.role} />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function MobileNav({
-  items,
-  pathname,
-  onNavigate,
-}: {
-  items: NavItem[];
-  pathname: string;
-  onNavigate: () => void;
-}) {
-  const t = useTranslations("Navigation");
-  return (
-    <nav className="flex flex-col gap-1">
-      {items.map((item) => {
-        const isActive = item.match(pathname);
-
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            aria-current={isActive ? "page" : undefined}
-            className={cn(
-              "rounded-lg px-3 py-3 text-base font-medium transition",
-              isActive
-                ? "bg-stone-900 text-white"
-                : "text-stone-700 hover:bg-stone-100 hover:text-stone-900",
-            )}
-          >
-            {t(item.label)}
-          </Link>
-        );
-      })}
-    </nav>
   );
 }
 

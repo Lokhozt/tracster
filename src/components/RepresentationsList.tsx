@@ -41,7 +41,7 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+      <div className="rounded-xl border border-stone-200 bg-white p-4">
         <div>
           <Label htmlFor="representation-search">{t("search")}</Label>
           <Input
@@ -63,12 +63,12 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
           <p className="text-stone-600">{t("noMatchingRepresentations")}</p>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 md:grid-cols-2">
           {filteredItems.map(({ representation, canEdit }) => (
             <Card key={representation.id} className="relative transition hover:border-stone-400">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium uppercase tracking-wide text-amber-800">
+                  <p className="text-xs font-medium text-amber-800">
                     {t("representation")}
                   </p>
                   <Link
@@ -98,7 +98,7 @@ export function RepresentationsList({ items }: { items: RepresentationListItem[]
               </div>
 
               <div className="mt-4 border-t border-stone-100 pt-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
+                <p className="text-xs font-medium text-stone-500">
                   {t("choreographies")}
                 </p>
                 {representation.choreographies.length === 0 ? (

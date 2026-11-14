@@ -5,7 +5,7 @@
     "french": "French",
     "language": "Display language",
     "save": "Save",
-    "saving": "Saving...",
+    "saving": "Saving…",
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
@@ -13,7 +13,7 @@
     "create": "Create",
     "update": "Update",
     "close": "Close",
-    "loading": "Loading...",
+    "loading": "Loading…",
     "yes": "Yes",
     "no": "No"
   },
@@ -30,12 +30,19 @@
     "register": "Register",
     "signOut": "Sign out",
     "openMenu": "Open menu",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "administration": "Administration",
+    "collapseSidebar": "Collapse menu",
+    "expandSidebar": "Expand menu",
+    "mainNavLabel": "Main navigation",
+    "choreographiesShort": "Choreos",
+    "unavailabilityShort": "Away"
   },
   "Metadata": {
     "description": "Plan rehearsals and track participant availability for your association."
   },
   "Account": {
+    "editProfile": "Edit profile",
     "title": "Account",
     "intro": "Update your contact details, competitor status, display language, seasonal display preferences, and personal Google Calendar connection.",
     "profile": "Profile",
@@ -54,8 +61,6 @@
     "adminPrivilegesLabel": "Use admin privileges",
     "adminPrivilegesOn": "Scheduling, settings, and other admin tools are available.",
     "adminPrivilegesOff": "You currently have the same access as a regular member.",
-    "adminPrivilegesError": "Unable to update admin privileges.",
-    "session": "Session",
-    "signOutHelp": "Sign out of {appName} on this device."
+    "adminPrivilegesError": "Unable to update admin privileges."
   }
 }

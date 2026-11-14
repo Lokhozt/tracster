@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, Label, Select } from "@/components/ui";
+import { Button, Card, FormActions, FormError, Label, Select, ToggleRow } from "@/components/ui";
 import { HOURS_24 } from "@/lib/datetime";
 import type { SiteSettingsRecord } from "@/lib/site-settings";
 
@@ -56,36 +56,20 @@ export function SiteSettingsForm({ settings }: { settings: SiteSettingsRecord })
 
   return (
     <Card className="max-w-xl">
-      <h2 className="mb-4 text-lg font-semibold">{t("siteSettings")}</h2>
+      <h2 className="max-lg:sr-only mb-4 text-lg font-semibold">{t("siteSettings")}</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
-          <input
-            type="checkbox"
-            checked={allowUserCreateChoreographies}
-            onChange={(event) => setAllowUserCreateChoreographies(event.target.checked)}
-            className="mt-0.5 rounded border-stone-300"
-          />
-          <span>
-            <span className="font-medium">{t("allowCreateChoreographies")}</span>
-            <span className="mt-0.5 block text-stone-500">
-              {t("createChoreographiesHelp")}
-            </span>
-          </span>
-        </label>
-        <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
-          <input
-            type="checkbox"
-            checked={allowUserCreateEvents}
-            onChange={(event) => setAllowUserCreateEvents(event.target.checked)}
-            className="mt-0.5 rounded border-stone-300"
-          />
-          <span>
-            <span className="font-medium">{t("allowCreateEvents")}</span>
-            <span className="mt-0.5 block text-stone-500">
-              {t("createEventsHelp")}
-            </span>
-          </span>
-        </label>
+        <ToggleRow
+          label={t("allowCreateChoreographies")}
+          hint={t("createChoreographiesHelp")}
+          checked={allowUserCreateChoreographies}
+          onChange={setAllowUserCreateChoreographies}
+        />
+        <ToggleRow
+          label={t("allowCreateEvents")}
+          hint={t("createEventsHelp")}
+          checked={allowUserCreateEvents}
+          onChange={setAllowUserCreateEvents}
+        />
         <div>
           <Label htmlFor="start-of-day-hour">{t("startOfDay")}</Label>
           <Select
@@ -104,25 +88,19 @@ export function SiteSettingsForm({ settings }: { settings: SiteSettingsRecord })
             {t("startDayHelp")}
           </p>
         </div>
-        <label className="flex cursor-pointer items-start gap-2 text-sm text-stone-700">
-          <input
-            type="checkbox"
-            checked={showBirthdaysOnPlanning}
-            onChange={(event) => setShowBirthdaysOnPlanning(event.target.checked)}
-            className="mt-0.5 rounded border-stone-300"
-          />
-          <span>
-            <span className="font-medium">{t("showBirthdaysOnPlanning")}</span>
-            <span className="mt-0.5 block text-stone-500">
-              {t("showBirthdaysOnPlanningHelp")}
-            </span>
-          </span>
-        </label>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        <ToggleRow
+          label={t("showBirthdaysOnPlanning")}
+          hint={t("showBirthdaysOnPlanningHelp")}
+          checked={showBirthdaysOnPlanning}
+          onChange={setShowBirthdaysOnPlanning}
+        />
+        <FormError>{error}</FormError>
         {saved && !error && <p className="text-sm text-stone-600">{t("settingsSaved")}</p>}
-        <Button type="submit" disabled={saving}>
-          {saving ? t("saving") : t("saveSettings")}
-        </Button>
+        <FormActions>
+          <Button type="submit" disabled={saving}>
+            {saving ? t("saving") : t("saveSettings")}
+          </Button>
+        </FormActions>
       </form>
     </Card>
   );

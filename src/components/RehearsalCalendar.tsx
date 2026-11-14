@@ -20,7 +20,7 @@ import {
   startOfWeek,
 } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
-import { Card } from "@/components/ui";
+import { Card, SegmentedControl } from "@/components/ui";
 import { eventScheduleKindClassName } from "@/lib/event-category-filter";
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/datetime";
@@ -31,24 +31,26 @@ import {
   type SerializedScheduleEvent,
 } from "@/lib/schedule-filters";
 import { isBirthdayScheduleEvent } from "@/lib/schedule-birthdays";
+import { ArrowLeftIcon, ArrowRightIcon } from "@/components/icons";
 
-type CalendarView = "month" | "week";
+type CalendarView = "day" | "week" | "month";
+type DateLocale = typeof fr;
 
-const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const MAX_DAY_DOTS = 3;
 
 // Matches the Tailwind `md` breakpoint used for the grid layout below.
 const smallScreenQuery = "(max-width: 767px)";
+// Phones and tablets (below Tailwind `lg`, where the bottom tab bar shows) open on the day view.
+const dayViewDefaultQuery = "(max-width: 1023px)";
 
-function subscribeToSmallScreen(onChange: () => void) {
-  const query = window.matchMedia(smallScreenQuery);
-  query.addEventListener("change", onChange);
-  return () => query.removeEventListener("change", onChange);
-}
-
-function useIsSmallScreen() {
+function useMediaQuery(query: string): boolean {
   return useSyncExternalStore(
-    subscribeToSmallScreen,
-    () => window.matchMedia(smallScreenQuery).matches,
+    (onChange) => {
+      const mediaQuery = window.matchMedia(query);
+      mediaQuery.addEventListener("change", onChange);
+      return () => mediaQuery.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia(query).matches,
     () => false,
   );
 }
@@ -128,6 +130,45 @@ function eventCellClassName(event: SerializedScheduleEvent): string {
     return "bg-pink-100 text-pink-900";
   }
   return eventScheduleKindClassName(event.typeKind, { hover: true });
+}
+
+/** Solid version of the event-kind hue, for the small dots in the day strip and compact month. */
+function eventDotClassName(event: SerializedScheduleEvent): string {
+  if (isBirthdayScheduleEvent(event)) {
+    return "bg-pink-400";
+  }
+  switch (event.typeKind) {
+    case "REHEARSAL":
+      return "bg-stone-500";
+    case "REPRESENTATION":
+      return "bg-amber-500";
+    case "COMPETITION":
+      return "bg-violet-500";
+    case "DEMONSTRATION":
+      return "bg-teal-500";
+    case "FESTIVAL":
+      return "bg-rose-500";
+    case "TRAINING":
+      return "bg-orange-500";
+    case "PARTY":
+      return "bg-fuchsia-500";
+    default:
+      return "bg-sky-500";
+  }
+}
+
+/** Like `eventTimeLabel`, but shows the full "18:00 – 19:30" range for same-day events. */
+function agendaTimeLabel(
+  event: SerializedScheduleEvent,
+  day: Date,
+  allDayLabel: string,
+): string {
+  const label = eventTimeLabel(event, day, allDayLabel);
+  const startLabel = formatTime(new Date(event.startsAt));
+  if (label !== startLabel || !event.endsAt) {
+    return label;
+  }
+  return `${startLabel} – ${formatTime(new Date(event.endsAt))}`;
 }
 
 function smallScreenCellFrame(index: number, lastVisibleIndex: number, header: boolean) {
@@ -243,7 +284,8 @@ function DayCell({
         {events.map((event) => {
           const hasGroupLine = event.typeKind === "REHEARSAL" && Boolean(event.groupName);
           const className = cn(
-            "rounded px-1.5 py-0.5 text-xs break-words",
+            // Hyphenate (page language) rather than split a word anywhere ("Assem-blée", not "Assembl/ée").
+            "rounded px-1.5 py-0.5 text-xs break-words hyphens-auto",
             wrapLabels ? "block" : hasGroupLine ? "line-clamp-4" : "line-clamp-2",
             hasGroupLine && "min-h-[3.25rem]",
             eventCellClassName(event),
@@ -283,30 +325,182 @@ function DayCell({
   );
 }
 
+function DayDotsButton({
+  day,
+  events,
+  dateLocale,
+  onSelect,
+  selected = false,
+  muted = false,
+  weekdayLabel,
+}: {
+  day: Date;
+  events: SerializedScheduleEvent[];
+  dateLocale: DateLocale;
+  onSelect: (day: Date) => void;
+  selected?: boolean;
+  muted?: boolean;
+  weekdayLabel?: string;
+}) {
+  const t = useTranslations("Components");
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(day)}
+      aria-pressed={selected}
+      aria-label={t("dayEventCount", {
+        date: format(day, "EEEE d MMMM", { locale: dateLocale }),
+        count: events.length,
+      })}
+      className={cn(
+        "flex min-w-0 flex-col items-center gap-1 rounded-lg py-1.5 transition",
+        selected ? "bg-stone-900 text-white" : "hover:bg-stone-900/5",
+        muted && !selected && "text-stone-400",
+      )}
+    >
+      {weekdayLabel && <span className="text-[11px] leading-none opacity-80">{weekdayLabel}</span>}
+      <span
+        className={cn(
+          "flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium",
+          isToday(day) && !selected && "ring-2 ring-stone-900",
+        )}
+      >
+        {format(day, "d")}
+      </span>
+      <span className="flex h-1.5 items-center gap-0.5" aria-hidden="true">
+        {events.slice(0, MAX_DAY_DOTS).map((event) => (
+          <span key={event.id} className={cn("h-1.5 w-1.5 rounded-full", eventDotClassName(event))} />
+        ))}
+        {events.length > MAX_DAY_DOTS && <span className="text-[9px] leading-none">+</span>}
+      </span>
+    </button>
+  );
+}
+
+function AgendaEvent({ event, day }: { event: SerializedScheduleEvent; day: Date }) {
+  const t = useTranslations("Components");
+  const isBirthday = isBirthdayScheduleEvent(event);
+  const details = [
+    event.typeName,
+    event.typeKind === "REHEARSAL" ? event.groupName : null,
+    event.location,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const className = cn(
+    "block rounded-lg px-3 py-2.5 text-sm",
+    eventCellClassName(event),
+    event.href && "hover:opacity-90",
+  );
+  const content = (
+    <>
+      {!isBirthday && (
+        <span className="block text-xs font-medium opacity-80">
+          {agendaTimeLabel(event, day, t("allDay"))}
+        </span>
+      )}
+      <span className="block font-semibold leading-snug">{eventCellLabel(event)}</span>
+      {!isBirthday && details && <span className="mt-0.5 block text-xs opacity-80">{details}</span>}
+    </>
+  );
+
+  if (!event.href) {
+    return (
+      <div className={className} title={eventCellTitle(event)}>
+        {content}
+      </div>
+    );
+  }
+  return (
+    <Link href={event.href} className={className} title={eventCellTitle(event)}>
+      {content}
+    </Link>
+  );
+}
+
+/** Week strip with event dots, then the selected day's events at full width. */
+function DayAgenda({
+  focusDate,
+  weekDays,
+  eventsByDay,
+  dateLocale,
+  onSelectDay,
+}: {
+  focusDate: Date;
+  weekDays: Date[];
+  eventsByDay: Map<string, SerializedScheduleEvent[]>;
+  dateLocale: DateLocale;
+  onSelectDay: (day: Date) => void;
+}) {
+  const t = useTranslations("Components");
+  const dayEvents = eventsByDay.get(format(focusDate, "yyyy-MM-dd")) ?? [];
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-7 gap-1">
+        {weekDays.map((day) => (
+          <DayDotsButton
+            key={format(day, "yyyy-MM-dd")}
+            day={day}
+            events={eventsByDay.get(format(day, "yyyy-MM-dd")) ?? []}
+            dateLocale={dateLocale}
+            onSelect={onSelectDay}
+            selected={isSameDay(day, focusDate)}
+            weekdayLabel={format(day, "EEE", { locale: dateLocale })}
+          />
+        ))}
+      </div>
+      <div>
+        <h3 className="mb-2 text-sm font-semibold text-stone-700 first-letter:uppercase">
+          {format(focusDate, "EEEE d MMMM", { locale: dateLocale })}
+        </h3>
+        {dayEvents.length === 0 ? (
+          <p className="rounded-lg bg-white/60 px-3 py-6 text-center text-sm text-stone-500">
+            {t("noEventsOnDay")}
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {dayEvents.map((event) => (
+              <li key={event.id}>
+                <AgendaEvent event={event} day={focusDate} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function RehearsalCalendar({
   events,
   titleActions,
+  fillHeight = false,
 }: {
   events: SerializedScheduleEvent[];
   titleActions?: React.ReactNode;
+  /** Wide screens (xl+): stretch to the parent's height; rows share it, the body scrolls if needed. */
+  fillHeight?: boolean;
 }) {
   const t = useTranslations("Components");
-  const isSmallScreen = useIsSmallScreen();
+  const isSmallScreen = useMediaQuery(smallScreenQuery);
+  const prefersDayView = useMediaQuery(dayViewDefaultQuery);
   const locale = useLocale();
   const dateLocale = locale === "fr" ? fr : enUS;
-  const [largeScreenView, setLargeScreenView] = useState<CalendarView>("month");
+  // null until the user picks a view: phones and tablets default to the day agenda, desktop to the week.
+  const [chosenView, setChosenView] = useState<CalendarView | null>(null);
   const [focusDate, setFocusDate] = useState(() => new Date());
 
-  const view = isSmallScreen ? "week" : largeScreenView;
+  const view: CalendarView = chosenView ?? (prefersDayView ? "day" : "week");
   const viewOptions: Array<{ value: CalendarView; label: string }> = [
-    { value: "month", label: t("month") },
+    { value: "day", label: t("day") },
     { value: "week", label: t("week") },
+    { value: "month", label: t("month") },
   ];
 
   const eventsByDay = useMemo(() => buildEventsByDay(events), [events]);
 
   const calendarDays = useMemo(() => {
-    if (view === "week") {
+    if (view === "day" || view === "week") {
       const weekStart = startOfWeek(focusDate, { weekStartsOn: 1 });
       const weekEnd = endOfWeek(focusDate, { weekStartsOn: 1 });
       return eachDayOfInterval({ start: weekStart, end: weekEnd });
@@ -330,10 +524,16 @@ export function RehearsalCalendar({
     return `${format(first, "d MMM", {locale: dateLocale})} – ${format(last, "d MMM yyyy", {locale: dateLocale})}`;
   }, [calendarDays, dateLocale, focusDate, view]);
 
-  const periodName = view === "week" ? t("week") : t("month");
+  // The day view shows a week strip, so its arrows move by week, keeping the weekday.
+  const periodName = view === "month" ? t("month") : t("week");
 
   function shiftFocus(direction: 1 | -1) {
-    setFocusDate((date) => (view === "week" ? addWeeks(date, direction) : addMonths(date, direction)));
+    setFocusDate((date) => (view === "month" ? addMonths(date, direction) : addWeeks(date, direction)));
+  }
+
+  function openDay(day: Date) {
+    setFocusDate(day);
+    setChosenView("day");
   }
 
   function goToToday() {
@@ -347,34 +547,35 @@ export function RehearsalCalendar({
     [eventsByDay, weekRows],
   );
 
+  const viewSwitch = (
+    <SegmentedControl
+      className="sm:min-w-64"
+      label={t("calendarView")}
+      value={view}
+      onChange={setChosenView}
+      options={viewOptions}
+    />
+  );
+
   return (
-    <Card className="planning-calendar mb-8 [overflow-anchor:none]">
+    <Card
+      className={cn(
+        "planning-calendar mb-8 [overflow-anchor:none]",
+        fillHeight && "xl:mb-0 xl:flex xl:min-h-0 xl:flex-col",
+      )}
+    >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        {/* Export/edit at the top: below the calendar they sat under the phone's floating "+". */}
+        {titleActions && <div className="flex shrink-0 gap-2">{titleActions}</div>}
         <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           {!isSmallScreen && (
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex rounded-lg border border-stone-300 p-0.5">
-                {viewOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setLargeScreenView(option.value)}
-                    className={cn(
-                      "rounded-md px-3 py-1.5 text-sm font-medium transition",
-                      view === option.value
-                        ? "bg-stone-900 text-white"
-                        : "text-stone-600 hover:bg-stone-100",
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+              {viewSwitch}
 
               <button
                 type="button"
                 onClick={goToToday}
-                className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-100"
+                className="min-h-11 rounded-lg border border-stone-300 px-3 text-sm hover:bg-stone-100"
               >
                 {t("today")}
               </button>
@@ -396,10 +597,10 @@ export function RehearsalCalendar({
             <button
               type="button"
               onClick={() => shiftFocus(-1)}
-              className="rounded-lg border border-stone-300 px-3 py-2.5 text-sm hover:bg-stone-100 sm:py-1.5"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 hover:bg-stone-100"
               aria-label={t("previousPeriod", {period: periodName})}
             >
-              ←
+              <ArrowLeftIcon />
             </button>
             <span className="min-w-0 flex-1 text-center text-sm font-medium sm:min-w-40 sm:flex-none">
               {periodLabel}
@@ -407,116 +608,165 @@ export function RehearsalCalendar({
             <button
               type="button"
               onClick={() => shiftFocus(1)}
-              className="rounded-lg border border-stone-300 px-3 py-2.5 text-sm hover:bg-stone-100 sm:py-1.5"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 hover:bg-stone-100"
               aria-label={t("nextPeriod", {period: periodName})}
             >
-              →
+              <ArrowRightIcon />
             </button>
           </div>
+          {isSmallScreen && viewSwitch}
         </div>
       </div>
 
-      {isSmallScreen ? (
-        <div className="space-y-3">
-          {[calendarDays.slice(0, 4), calendarDays.slice(4)].map((days) => {
-            const rowEventCount = rowMaxEventCount(days, eventsByDay);
-            const columns: Array<Date | null> = days.length === 4 ? days : [...days, null];
-            const lastVisibleIndex = columns.reduce(
-              (last, day, index) => (day ? index : last),
-              0,
-            );
-            const showsSpacer = lastVisibleIndex < columns.length - 1;
-            return (
-              <div
-                key={format(days[0], "yyyy-MM-dd")}
-                className={cn(
-                  "grid grid-cols-4 items-stretch",
-                  !showsSpacer &&
-                    "planning-calendar-grid gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200",
-                )}
-              >
-                {columns.map((day, index) =>
-                  day ? (
-                    <div
-                      key={`header-${format(day, "yyyy-MM-dd")}`}
-                      className={cn(
-                        "planning-calendar-day-header bg-stone-100 px-1 py-2 text-center text-xs font-medium text-stone-600",
-                        isToday(day) && "text-stone-900",
-                        showsSpacer && smallScreenCellFrame(index, lastVisibleIndex, true),
-                      )}
-                    >
-                      {format(day, "EEE", { locale: dateLocale })}
-                    </div>
-                  ) : (
-                    <div key="header-empty" aria-hidden="true" />
-                  ),
-                )}
-                {columns.map((day, index) => {
-                  if (!day) {
-                    return <div key="day-empty" aria-hidden="true" />;
-                  }
-                  const dayKey = format(day, "yyyy-MM-dd");
-                  return (
-                    <div
-                      key={dayKey}
-                      className={cn(
-                        "flex min-h-0 flex-col",
-                        showsSpacer ? smallScreenCellFrame(index, lastVisibleIndex, false) : "h-full",
-                      )}
-                    >
-                      <DayCell
-                        day={day}
-                        events={eventsByDay.get(dayKey) ?? []}
-                        rowEventCount={rowEventCount}
-                        tall
-                        wrapLabels
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <div className="min-w-[640px] space-y-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200">
-            <div className="planning-calendar-grid grid grid-cols-7 gap-px bg-stone-200">
-              {weekdays.map((day) => (
+      <div className={cn(fillHeight && "xl:flex xl:min-h-0 xl:flex-1 xl:flex-col xl:overflow-y-auto")}>
+        {view === "day" ? (
+          <DayAgenda
+            focusDate={focusDate}
+            weekDays={calendarDays}
+            eventsByDay={eventsByDay}
+            dateLocale={dateLocale}
+            onSelectDay={setFocusDate}
+          />
+        ) : isSmallScreen && view === "month" ? (
+          <div className="space-y-1">
+            <div className="grid grid-cols-7 gap-1">
+              {weekRows[0].map((day) => (
                 <div
-                  key={day}
-                  className="planning-calendar-day-header bg-stone-100 px-2 py-2 text-center text-xs font-medium text-stone-600"
+                  key={format(day, "yyyy-MM-dd")}
+                  className="text-center text-[11px] font-medium text-stone-500"
                 >
-                  {day}
+                  {format(day, "EEEEE", { locale: dateLocale })}
                 </div>
               ))}
             </div>
-            {weekRows.map((row, rowIndex) => (
-              <div
-                key={format(row[0], "yyyy-MM-dd")}
-                className="planning-calendar-grid grid grid-cols-7 items-stretch gap-px bg-stone-200"
-              >
-                {row.map((day) => {
-                  const dayKey = format(day, "yyyy-MM-dd");
-                  const dayEvents = eventsByDay.get(dayKey) ?? [];
-
-                  return (
-                    <DayCell
-                      key={dayKey}
-                      day={day}
-                      events={dayEvents}
-                      rowEventCount={rowEventCounts[rowIndex] ?? 0}
-                      muted={view === "month" && !isSameMonth(day, currentMonth)}
-                      tall={view !== "month"}
-                    />
-                  );
-                })}
-              </div>
-            ))}
+            <div className="grid grid-cols-7 gap-1">
+              {calendarDays.map((day) => (
+                <DayDotsButton
+                  key={format(day, "yyyy-MM-dd")}
+                  day={day}
+                  events={eventsByDay.get(format(day, "yyyy-MM-dd")) ?? []}
+                  dateLocale={dateLocale}
+                  onSelect={openDay}
+                  muted={!isSameMonth(day, currentMonth)}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-      {titleActions && <div className="mt-3 flex justify-end gap-2">{titleActions}</div>}
+        ) : isSmallScreen ? (
+          <div className="space-y-3">
+            {[calendarDays.slice(0, 4), calendarDays.slice(4)].map((days) => {
+              const rowEventCount = rowMaxEventCount(days, eventsByDay);
+              const columns: Array<Date | null> = days.length === 4 ? days : [...days, null];
+              const lastVisibleIndex = columns.reduce(
+                (last, day, index) => (day ? index : last),
+                0,
+              );
+              const showsSpacer = lastVisibleIndex < columns.length - 1;
+              return (
+                <div
+                  key={format(days[0], "yyyy-MM-dd")}
+                  className={cn(
+                    "grid grid-cols-4 items-stretch",
+                    !showsSpacer &&
+                      "planning-calendar-grid gap-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200",
+                  )}
+                >
+                  {columns.map((day, index) =>
+                    day ? (
+                      <div
+                        key={`header-${format(day, "yyyy-MM-dd")}`}
+                        className={cn(
+                          "planning-calendar-day-header bg-stone-100 px-1 py-2 text-center text-xs font-medium text-stone-600",
+                          isToday(day) && "text-stone-900",
+                          showsSpacer && smallScreenCellFrame(index, lastVisibleIndex, true),
+                        )}
+                      >
+                        {format(day, "EEE", { locale: dateLocale })}
+                      </div>
+                    ) : (
+                      <div key="header-empty" aria-hidden="true" />
+                    ),
+                  )}
+                  {columns.map((day, index) => {
+                    if (!day) {
+                      return <div key="day-empty" aria-hidden="true" />;
+                    }
+                    const dayKey = format(day, "yyyy-MM-dd");
+                    return (
+                      <div
+                        key={dayKey}
+                        className={cn(
+                          "flex min-h-0 flex-col",
+                          showsSpacer ? smallScreenCellFrame(index, lastVisibleIndex, false) : "h-full",
+                        )}
+                      >
+                        <DayCell
+                          day={day}
+                          events={eventsByDay.get(dayKey) ?? []}
+                          rowEventCount={rowEventCount}
+                          tall
+                          wrapLabels
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className={cn("overflow-x-auto", fillHeight && "xl:flex xl:flex-1 xl:flex-col")}>
+            <div
+              className={cn(
+                "min-w-[640px] space-y-px overflow-hidden rounded-lg border border-stone-200 bg-stone-200",
+                // Next to the event list the card can be narrower than 640px: fit it instead of scrolling.
+                fillHeight && "xl:flex xl:min-w-0 xl:flex-1 xl:flex-col",
+              )}
+            >
+              <div className="planning-calendar-grid grid grid-cols-7 gap-px bg-stone-200">
+                {weekRows[0].map((day) => (
+                  <div
+                    key={format(day, "yyyy-MM-dd")}
+                    className="planning-calendar-day-header bg-stone-100 px-2 py-2 text-center text-xs font-medium text-stone-600"
+                  >
+                    {format(day, "EEE", { locale: dateLocale })}
+                  </div>
+                ))}
+              </div>
+              {weekRows.map((row, rowIndex) => (
+                <div
+                  key={format(row[0], "yyyy-MM-dd")}
+                  className={cn(
+                    "planning-calendar-grid grid grid-cols-7 items-stretch gap-px bg-stone-200",
+                    // Computers: a real planner height instead of a thin strip.
+                    view === "week" && "lg:min-h-[26rem]",
+                    view === "month" && "lg:min-h-[7rem]",
+                    // Rows share the available height when the calendar fills the window.
+                    fillHeight && "xl:min-h-0 xl:flex-1",
+                  )}
+                >
+                  {row.map((day) => {
+                    const dayKey = format(day, "yyyy-MM-dd");
+                    const dayEvents = eventsByDay.get(dayKey) ?? [];
+
+                    return (
+                      <DayCell
+                        key={dayKey}
+                        day={day}
+                        events={dayEvents}
+                        rowEventCount={rowEventCounts[rowIndex] ?? 0}
+                        muted={view === "month" && !isSameMonth(day, currentMonth)}
+                        tall={view !== "month"}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
     </Card>
   );
 }

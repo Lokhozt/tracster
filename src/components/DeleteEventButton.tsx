@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAppNavigation } from "@/lib/app-navigation";
 
 function TrashIcon({ className }: { className?: string }) {
   return (
@@ -47,6 +48,7 @@ export function DeleteEventButton({
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
+  const navigation = useAppNavigation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,7 +83,7 @@ export function DeleteEventButton({
     }
 
     if (redirectTo) {
-      router.push(redirectTo);
+      navigation.returnTo(redirectTo);
     } else {
       router.refresh();
     }

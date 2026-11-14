@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui";
 import { sortUsersByName } from "@/lib/users";
 import { cn } from "@/lib/utils";
+import { matchesSearch } from "@/lib/search";
 
 export type AssignUserOption = {
   id: string;
@@ -41,15 +42,8 @@ export function UserSelectionMatrix({
   );
 
   const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) {
-      return available;
-    }
-    return available.filter(
-      (user) =>
-        user.name.toLowerCase().includes(query) ||
-        (user.email?.toLowerCase().includes(query) ?? false),
-    );
+    // Same matching as the other searches ("helene" finds "Hélène").
+    return available.filter((user) => matchesSearch(search, user.name, user.email));
   }, [available, search]);
 
   function toggle(userId: string) {
@@ -95,6 +89,7 @@ export function UserSelectionMatrix({
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder={t("assignUsersSearchPlaceholder")}
+          aria-label={t("search")}
           className="min-w-[12rem] flex-1"
           autoComplete="off"
         />

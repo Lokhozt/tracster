@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { DateTime24Input } from "@/components/DateTime24Input";
 import { DeleteEventButton } from "@/components/DeleteEventButton";
 import { StatisticsIconLink } from "@/components/StatisticsIconLink";
+import { FormSheet } from "@/components/Sheet";
+import { useCreateSheet } from "@/lib/create-sheet";
 import {
   RehearsalEventCard,
   type RehearsalListItem,
@@ -17,10 +19,11 @@ import {
   selectionFromRecord,
 } from "@/components/LocationPicker";
 import { AssignUsersMatrixForm } from "@/components/AssignUsersMatrixForm";
-import { Button, Card, Input, Label, Textarea } from "@/components/ui";
+import { Button, Card, FormActions, FormError, Input, Label, Textarea } from "@/components/ui";
 import { type GroupOption } from "@/components/GroupForms";
 import { CreateEventForm } from "@/components/EventForms";
 import { matchesSearch } from "@/lib/search";
+import { cn } from "@/lib/utils";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
 import { compareUsersByName, sortUsersByName } from "@/lib/users";
 import {
@@ -130,10 +133,12 @@ export function AssignChoreographerForm({
           ))}
         </select>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading || !userId} variant="secondary">
-        {loading ? t("adding") : t("addChoreographer")}
-      </Button>
+      <FormError>{error}</FormError>
+      <FormActions>
+        <Button type="submit" disabled={loading || !userId} variant="secondary">
+          {loading ? t("adding") : t("addChoreographer")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -161,23 +166,17 @@ export function CreateRehearsalForm({
   }
 
   return (
-    <div className="space-y-3">
-      <CreateEventForm
-        eventTypes={eventTypes}
-        defaultTypeId={rehearsalType.id}
-        lockType
-        defaultChoreographyId={choreographyId}
-        lockChoreography
-        groups={groups}
-        choreographyOptions={[{ id: choreographyId, title: choreographyTitle }]}
-        onSuccess={() => onSuccess?.()}
-      />
-      {onCancel && (
-        <Button type="button" variant="secondary" onClick={onCancel}>
-          {t("cancel")}
-        </Button>
-      )}
-    </div>
+    <CreateEventForm
+      eventTypes={eventTypes}
+      defaultTypeId={rehearsalType.id}
+      lockType
+      defaultChoreographyId={choreographyId}
+      lockChoreography
+      groups={groups}
+      choreographyOptions={[{ id: choreographyId, title: choreographyTitle }]}
+      onSuccess={() => onSuccess?.()}
+      onCancel={onCancel}
+    />
   );
 }
 
@@ -293,10 +292,12 @@ export function EditRehearsalForm({ rehearsal }: { rehearsal: RehearsalDetailIte
           rows={3}
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading}>
-        {loading ? t("saving") : t("saveChanges")}
-      </Button>
+      <FormError>{error}</FormError>
+      <FormActions>
+        <Button type="submit" disabled={loading}>
+          {loading ? t("saving") : t("saveChanges")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
@@ -308,6 +309,8 @@ export function RehearsalsSection({
   groups = [],
   rehearsals,
   eventTypes,
+  actionsInFloatingMenu = false,
+  canViewStatistics = false,
 }: {
   choreographyId: string;
   choreographyTitle: string;
@@ -315,9 +318,13 @@ export function RehearsalsSection({
   groups?: GroupOption[];
   rehearsals: RehearsalListItem[];
   eventTypes: SerializedEventType[];
+  /** Phones/tablets: the add button lives in the floating "+" menu (ChoreographyEventActions). */
+  actionsInFloatingMenu?: boolean;
+  /** Rehearsal statistics: admins and the choreography's owner. */
+  canViewStatistics?: boolean;
 }) {
   const t = useTranslations("Components");
-  const [showAddForm, setShowAddForm] = useState(false);
+  const addSheet = useCreateSheet("rehearsal");
   const [search, setSearch] = useState("");
 
   const filteredRehearsals = useMemo(() => {
@@ -338,17 +345,23 @@ export function RehearsalsSection({
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">{t("rehearsals")}</h2>
         <div className="flex flex-wrap items-center gap-2">
-          <StatisticsIconLink href={`/choreographies/${choreographyId}/rehearsals/statistics`} />
-          {canEdit && !showAddForm && (
-            <Button type="button" onClick={() => setShowAddForm(true)}>
-              {t("scheduleRehearsal")}
-            </Button>
+          {canViewStatistics && (
+            <span className={cn(actionsInFloatingMenu && "hidden lg:inline")}>
+              <StatisticsIconLink href={`/choreographies/${choreographyId}/rehearsals/statistics`} />
+            </span>
+          )}
+          {canEdit && (
+            <span className={cn(actionsInFloatingMenu && "hidden lg:inline")}>
+              <Button type="button" onClick={addSheet.show}>
+                {t("scheduleRehearsal")}
+              </Button>
+            </span>
           )}
         </div>
       </div>
 
       {rehearsals.length > 0 && (
-        <div className="mb-4 rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+        <div className="mb-4 rounded-xl border border-stone-200 bg-white p-4">
           <Label htmlFor="rehearsal-search">{t("search")}</Label>
           <Input
             id="rehearsal-search"
@@ -360,23 +373,22 @@ export function RehearsalsSection({
             className="mt-1"
           />
           <p className="mt-2 text-sm text-stone-500">
-            {filteredRehearsals.length} of {rehearsals.length} rehearsals
+            {t("rehearsalCountSummary", { shown: filteredRehearsals.length, total: rehearsals.length })}
           </p>
         </div>
       )}
 
-      {canEdit && showAddForm && (
-        <Card className="mb-6">
-          <h3 className="mb-4 font-medium">{t("scheduleRehearsal")}</h3>
+      {canEdit && (
+        <FormSheet open={addSheet.open} onClose={addSheet.close} title={t("scheduleRehearsal")}>
           <CreateRehearsalForm
             choreographyId={choreographyId}
             choreographyTitle={choreographyTitle}
             groups={groups}
             eventTypes={eventTypes}
-            onSuccess={() => setShowAddForm(false)}
-            onCancel={() => setShowAddForm(false)}
+            onSuccess={addSheet.close}
+            onCancel={addSheet.close}
           />
-        </Card>
+        </FormSheet>
       )}
 
       {rehearsals.length === 0 ? (
@@ -556,10 +568,12 @@ export function TransferChoreographyOwnershipForm({
           ))}
         </select>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={loading || !userId} variant="secondary">
-        {loading ? t("transferring") : t("transferOwnership")}
-      </Button>
+      <FormError>{error}</FormError>
+      <FormActions>
+        <Button type="submit" disabled={loading || !userId} variant="secondary">
+          {loading ? t("transferring") : t("transferOwnership")}
+        </Button>
+      </FormActions>
     </form>
   );
 }
