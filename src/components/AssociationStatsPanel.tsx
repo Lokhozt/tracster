@@ -127,6 +127,8 @@ export function AssociationStatsPanel({
   users: UserOption[];
 }) {
   const t = useTranslations("Components.associationStats");
+  // The mode switch label and empty-state hints live at the Components level.
+  const tComponents = useTranslations("Components");
   const locale = useLocale();
   const dateFormatter = useMemo(
     () => new Intl.DateTimeFormat(locale, { dateStyle: "medium" }),
@@ -293,7 +295,7 @@ export function AssociationStatsPanel({
     <div className="space-y-4">
       <SegmentedControl
         className="max-w-md"
-        label={t("stats")}
+        label={tComponents("stats")}
         value={mode}
         onChange={setMode}
         options={[
@@ -397,7 +399,9 @@ export function AssociationStatsPanel({
       {!loading &&
         ((mode === "representation" && !representationId) || (mode === "user" && !userId)) && (
           <p className="rounded-xl border border-dashed border-stone-300 px-4 py-6 text-center text-sm text-stone-500">
-            {mode === "representation" ? t("statsPickRepresentation") : t("statsPickUser")}
+            {mode === "representation"
+              ? tComponents("statsPickRepresentation")
+              : tComponents("statsPickUser")}
           </p>
         )}
       {error && <p className="text-sm text-red-600">{error}</p>}
