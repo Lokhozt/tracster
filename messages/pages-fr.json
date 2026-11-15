@@ -210,7 +210,6 @@
       "copy": "Copier le lien",
       "copied": "Lien copié",
       "addToGoogle": "Ajouter à Google Agenda",
-      "openInCalendar": "Ouvrir dans mon agenda",
       "nothingSelected": "Choisissez au moins un type d’événement.",
       "noteOneWay": "Sens unique : ce que vous modifiez dans votre agenda ne revient pas dans l’app.",
       "noteDelay": "Votre agenda relit le lien régulièrement : Apple et DigiCal toutes les 15 min à 1 h, Outlook toutes les quelques heures, Google toutes les 12 à 24 h.",
@@ -221,7 +220,10 @@
       "disableConfirm": "Désactiver le lien ? Les agendas abonnés ne seront plus mis à jour.",
       "error": "L’opération a échoué. Réessayez.",
       "copyError": "Copie impossible : sélectionnez le lien et copiez-le.",
-      "androidDigiCal": "DigiCal ou autre agenda Android : ajoutez un agenda par abonnement (URL) et collez le lien."
+      "androidDigiCal": "Sur Android (DigiCal…) : utilisez « Ajouter à Google Agenda » ci-dessus, ou l’app ICSx⁵ (collez-y le lien). Le calendrier apparaît ensuite dans votre app d’agenda.",
+      "addToOutlook": "Ajouter à Outlook",
+      "addToApple": "Ajouter au Calendrier Apple",
+      "otherCalendars": "Autres agendas"
     }
   }
 }

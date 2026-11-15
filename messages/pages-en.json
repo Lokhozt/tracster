@@ -210,7 +210,6 @@
       "copy": "Copy link",
       "copied": "Link copied",
       "addToGoogle": "Add to Google Calendar",
-      "openInCalendar": "Open in my calendar",
       "nothingSelected": "Pick at least one event type.",
       "noteOneWay": "One way: changes made in your calendar do not come back to the app.",
       "noteDelay": "Your calendar re-reads the link regularly: Apple and DigiCal every 15 min to 1 h, Outlook every few hours, Google every 12 to 24 h.",
@@ -221,7 +220,10 @@
       "disableConfirm": "Turn the link off? Subscribed calendars will stop updating.",
       "error": "That did not work. Try again.",
       "copyError": "Could not copy: select the link and copy it.",
-      "androidDigiCal": "DigiCal or another Android calendar: add a calendar subscription (URL) and paste the link."
+      "androidDigiCal": "On Android (DigiCal…): use “Add to Google Calendar” above, or the ICSx⁵ app (paste the link there). The calendar then shows in your calendar app.",
+      "addToOutlook": "Add to Outlook",
+      "addToApple": "Add to Apple Calendar",
+      "otherCalendars": "Other calendars"
     }
   }
 }

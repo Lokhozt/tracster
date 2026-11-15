@@ -170,3 +170,44 @@ export function buildIcsCalendar({
   lines.push("END:VCALENDAR");
   return lines.map(foldLine).join("\r\n") + "\r\n";
 }
+
+export type CalendarProvider = "google" | "outlook" | "apple";
+
+const PROVIDER_EMAIL_DOMAINS: Record<CalendarProvider, RegExp> = {
+  google: /^(gmail|googlemail)\.com$/,
+  outlook: /^(outlook|hotmail|live|msn|windowslive)\.[a-z.]+$/,
+  apple: /^(icloud|me|mac)\.com$/,
+};
+
+/**
+ * Best guess of the member's calendar, to suggest one button first: the email domain, then the
+ * device (Apple devices have Apple Calendar). Browsers cannot see which calendar apps exist,
+ * so this is only a guess and the other buttons stay available.
+ */
+export function guessCalendarProvider(email: string, userAgent: string): CalendarProvider | null {
+  const domain = email.split("@")[1]?.toLowerCase() ?? "";
+  const isAndroid = /android/i.test(userAgent);
+  for (const provider of ["google", "outlook", "apple"] as const) {
+    if (PROVIDER_EMAIL_DOMAINS[provider].test(domain)) {
+      // Apple Calendar is not on Android: no useful suggestion there.
+      return provider === "apple" && isAndroid ? null : provider;
+    }
+  }
+  if (!isAndroid && /iphone|ipad|macintosh/i.test(userAgent)) {
+    return "apple";
+  }
+  return null;
+}
+
+/** One-tap "add by link" pages (each asks to confirm in the calendar's own site). */
+export function calendarProviderAddUrl(provider: CalendarProvider, feedUrl: string, name: string): string {
+  const webcalUrl = feedUrl.replace(/^https?:\/\//, "webcal://");
+  if (provider === "google") {
+    return `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`;
+  }
+  if (provider === "outlook") {
+    const params = new URLSearchParams({ url: feedUrl, name });
+    return `https://outlook.live.com/calendar/0/addfromweb?${params}`;
+  }
+  return webcalUrl;
+}

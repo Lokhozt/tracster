@@ -3,7 +3,14 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { Button, Card, FormError, SegmentedControl } from "@/components/ui";
-import { feedSelectionQuery, type FeedSelection, type FeedTypeChoice } from "@/lib/calendar-feed";
+import {
+  calendarProviderAddUrl,
+  feedSelectionQuery,
+  guessCalendarProvider,
+  type CalendarProvider,
+  type FeedSelection,
+  type FeedTypeChoice,
+} from "@/lib/calendar-feed";
 import { eventCategoryClassName } from "@/lib/event-category-filter";
 import type { EventKind } from "@/lib/event-type-helpers";
 import { cn } from "@/lib/utils";
@@ -12,6 +19,22 @@ import { cn } from "@/lib/utils";
 const SELECTION_STORAGE_KEY = "tracster.calendarFeedSelection";
 
 type FeedEventType = { id: string; name: string; kind: EventKind | null };
+
+const PROVIDER_LABEL_KEYS = {
+  google: "addToGoogle",
+  outlook: "addToOutlook",
+  apple: "addToApple",
+} as const satisfies Record<CalendarProvider, string>;
+
+const PRIMARY_LINK_CLASS =
+  "inline-flex min-h-11 items-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700";
+const SECONDARY_LINK_CLASS =
+  "inline-flex min-h-11 items-center rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-900 hover:bg-stone-100";
+
+/** Google and Outlook open their site in a new tab; webcal:// hands over to the calendar app. */
+function providerLinkTarget(provider: CalendarProvider) {
+  return provider === "apple" ? {} : { target: "_blank", rel: "noopener noreferrer" };
+}
 
 function readStoredSelection(): FeedSelection | null {
   try {
@@ -34,11 +57,17 @@ export function CalendarFeedSettings({
   initialToken,
   appUrl,
   eventTypes,
+  email,
+  calendarName,
 }: {
   initialToken: string | null;
   /** The app's public address; the browser's own origin when not configured. */
   appUrl: string | null;
   eventTypes: FeedEventType[];
+  /** The member's email: its domain hints at their calendar (gmail → Google…). */
+  email: string;
+  /** Name given to the subscribed calendar where the provider asks for one (Outlook). */
+  calendarName: string;
 }) {
   const t = useTranslations("Pages.CalendarFeed");
   const [token, setToken] = useState(initialToken);
@@ -49,8 +78,11 @@ export function CalendarFeedSettings({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  // Android has no handler for webcal:// links: "Ouvrir dans mon agenda" would do nothing there.
   const [isAndroid, setIsAndroid] = useState(false);
+  // The Apple button (webcal://) only makes sense where Apple Calendar is: Android has no
+  // handler at all, and Windows would hand the link to Outlook.
+  const [isAppleDevice, setIsAppleDevice] = useState(false);
+  const [suggested, setSuggested] = useState<CalendarProvider | null>(null);
 
   // Browser-only values (origin, remembered choice) are read after mount.
   useEffect(() => {
@@ -58,6 +90,8 @@ export function CalendarFeedSettings({
     const timer = window.setTimeout(() => {
       if (!appUrl) setOrigin(window.location.origin);
       setIsAndroid(/android/i.test(navigator.userAgent));
+      setIsAppleDevice(/iphone|ipad|macintosh/i.test(navigator.userAgent));
+      setSuggested(guessCalendarProvider(email, navigator.userAgent));
       if (stored) {
         setSelection((current) =>
           Object.fromEntries(Object.keys(current).map((id) => [id, stored[id] ?? current[id]])),
@@ -65,16 +99,15 @@ export function CalendarFeedSettings({
       }
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [appUrl]);
+  }, [appUrl, email]);
 
   const feedUrl = useMemo(() => {
     if (!token || !origin) return null;
     return `${origin.replace(/\/$/, "")}/api/calendar/${token}.ics?${feedSelectionQuery(selection)}`;
   }, [origin, selection, token]);
-  const webcalUrl = feedUrl?.replace(/^https?:\/\//, "webcal://") ?? null;
-  const googleUrl = webcalUrl
-    ? `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`
-    : null;
+  const otherProviders = (["google", "outlook", "apple"] as const).filter(
+    (provider) => provider !== suggested && (provider !== "apple" || isAppleDevice),
+  );
   const nothingSelected = Object.values(selection).every((choice) => choice === "off");
 
   function choose(typeId: string, choice: FeedTypeChoice) {
@@ -170,32 +203,38 @@ export function CalendarFeedSettings({
                 className="min-h-11 w-full truncate rounded-lg border border-stone-300 bg-stone-50 px-3 font-mono text-xs text-stone-700"
               />
               <div className="flex flex-wrap gap-2">
-                <Button type="button" onClick={() => void copy()}>
+                {suggested && (
+                  <a
+                    href={calendarProviderAddUrl(suggested, feedUrl ?? "", calendarName)}
+                    {...providerLinkTarget(suggested)}
+                    className={PRIMARY_LINK_CLASS}
+                  >
+                    {t(PROVIDER_LABEL_KEYS[suggested])}
+                  </a>
+                )}
+                <Button type="button" variant={suggested ? "secondary" : "primary"} onClick={() => void copy()}>
                   {copied ? t("copied") : t("copy")}
                 </Button>
-                {googleUrl && (
-                  <a
-                    href={googleUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex min-h-11 items-center rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-900 hover:bg-stone-100"
-                  >
-                    {t("addToGoogle")}
-                  </a>
-                )}
-                {webcalUrl && !isAndroid && (
-                  <a
-                    href={webcalUrl}
-                    className="inline-flex min-h-11 items-center rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-900 hover:bg-stone-100"
-                  >
-                    {t("openInCalendar")}
-                  </a>
-                )}
               </div>
-              {isAndroid && (
-                <div className="space-y-1 rounded-lg bg-stone-100 px-3 py-2 text-sm text-stone-700">
-                  <p>{t("androidDigiCal")}</p>
+              {otherProviders.length > 0 && (
+                <div>
+                  {suggested && <p className="mb-2 text-xs font-semibold text-stone-500">{t("otherCalendars")}</p>}
+                  <div className="flex flex-wrap gap-2">
+                    {otherProviders.map((provider) => (
+                      <a
+                        key={provider}
+                        href={calendarProviderAddUrl(provider, feedUrl ?? "", calendarName)}
+                        {...providerLinkTarget(provider)}
+                        className={SECONDARY_LINK_CLASS}
+                      >
+                        {t(PROVIDER_LABEL_KEYS[provider])}
+                      </a>
+                    ))}
+                  </div>
                 </div>
+              )}
+              {isAndroid && (
+                <p className="rounded-lg bg-stone-100 px-3 py-2 text-sm text-stone-700">{t("androidDigiCal")}</p>
               )}
             </>
           )}

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { CalendarFeedSettings } from "@/components/CalendarFeedSettings";
+import { getAppName } from "@/lib/app-name";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { filterEventTypesForViewer } from "@/lib/event-type-helpers";
@@ -31,6 +32,8 @@ export default async function CalendarFeedPage() {
       <CalendarFeedSettings
         initialToken={feed?.calendarFeedToken ?? null}
         appUrl={process.env.NEXT_PUBLIC_APP_URL || null}
+        email={user.email}
+        calendarName={getAppName()}
         eventTypes={visibleTypes.map((type) => ({ id: type.id, name: type.name, kind: type.kind }))}
       />
     </AppShell>

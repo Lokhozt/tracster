@@ -3,6 +3,8 @@ import test from "node:test";
 
 import {
   buildIcsCalendar,
+  calendarProviderAddUrl,
+  guessCalendarProvider,
   feedSelectionQuery,
   parseFeedSelection,
   selectFeedEvents,
@@ -110,4 +112,26 @@ test("buildIcsCalendar writes UTC times, escapes text and folds long lines", () 
   for (const line of ics.split("\r\n")) {
     assert.ok(encoder.encode(line).length <= 75, `line too long: ${line}`);
   }
+});
+
+test("guessCalendarProvider reads the email domain, then the device", () => {
+  const android = "Mozilla/5.0 (Linux; Android 15; Pixel 8) Chrome/130.0 Mobile";
+  const iphone = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1";
+  const windows = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0";
+  assert.equal(guessCalendarProvider("a@gmail.com", iphone), "google");
+  assert.equal(guessCalendarProvider("a@hotmail.fr", android), "outlook");
+  assert.equal(guessCalendarProvider("a@outlook.com", windows), "outlook");
+  assert.equal(guessCalendarProvider("a@icloud.com", android), null);
+  assert.equal(guessCalendarProvider("a@club.fr", iphone), "apple");
+  assert.equal(guessCalendarProvider("a@club.fr", windows), null);
+});
+
+test("calendarProviderAddUrl builds each provider's add-by-link address", () => {
+  const feed = "https://app.example/api/calendar/t.ics?mine=a";
+  assert.equal(
+    calendarProviderAddUrl("google", feed, "X"),
+    "https://calendar.google.com/calendar/r?cid=webcal%3A%2F%2Fapp.example%2Fapi%2Fcalendar%2Ft.ics%3Fmine%3Da",
+  );
+  assert.ok(calendarProviderAddUrl("outlook", feed, "X").startsWith("https://outlook.live.com/calendar/0/addfromweb?url=https%3A%2F%2F"));
+  assert.equal(calendarProviderAddUrl("apple", feed, "X"), "webcal://app.example/api/calendar/t.ics?mine=a");
 });
