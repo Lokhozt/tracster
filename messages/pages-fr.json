@@ -221,8 +221,7 @@
       "disableConfirm": "Désactiver le lien ? Les agendas abonnés ne seront plus mis à jour.",
       "error": "L’opération a échoué. Réessayez.",
       "copyError": "Copie impossible : sélectionnez le lien et copiez-le.",
-      "androidDigiCal": "DigiCal ou autre agenda Android : ajoutez un agenda par abonnement (URL) et collez le lien.",
-      "androidGoogle": "Google Agenda : sur un ordinateur, calendar.google.com → Autres agendas → + → À partir de l’URL. Il apparaît ensuite dans l’app Google Agenda du téléphone."
+      "androidDigiCal": "DigiCal ou autre agenda Android : ajoutez un agenda par abonnement (URL) et collez le lien."
     }
   }
 }

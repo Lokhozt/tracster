@@ -221,8 +221,7 @@
       "disableConfirm": "Turn the link off? Subscribed calendars will stop updating.",
       "error": "That did not work. Try again.",
       "copyError": "Could not copy: select the link and copy it.",
-      "androidDigiCal": "DigiCal or another Android calendar: add a calendar subscription (URL) and paste the link.",
-      "androidGoogle": "Google Calendar: on a computer, calendar.google.com → Other calendars → + → From URL. It then shows in the Google Calendar app on your phone."
+      "androidDigiCal": "DigiCal or another Android calendar: add a calendar subscription (URL) and paste the link."
     }
   }
 }

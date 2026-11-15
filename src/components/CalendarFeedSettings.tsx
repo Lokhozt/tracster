@@ -49,8 +49,7 @@ export function CalendarFeedSettings({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  // Android has no handler for webcal:// links, and Google only adds a calendar by URL from a
-  // computer: there, copying the link is the way.
+  // Android has no handler for webcal:// links: "Ouvrir dans mon agenda" would do nothing there.
   const [isAndroid, setIsAndroid] = useState(false);
 
   // Browser-only values (origin, remembered choice) are read after mount.
@@ -174,7 +173,7 @@ export function CalendarFeedSettings({
                 <Button type="button" onClick={() => void copy()}>
                   {copied ? t("copied") : t("copy")}
                 </Button>
-                {googleUrl && !isAndroid && (
+                {googleUrl && (
                   <a
                     href={googleUrl}
                     target="_blank"
@@ -196,7 +195,6 @@ export function CalendarFeedSettings({
               {isAndroid && (
                 <div className="space-y-1 rounded-lg bg-stone-100 px-3 py-2 text-sm text-stone-700">
                   <p>{t("androidDigiCal")}</p>
-                  <p>{t("androidGoogle")}</p>
                 </div>
               )}
             </>
