@@ -7,7 +7,6 @@ import { FormSheet } from "@/components/Sheet";
 import { NavIcon } from "@/components/NavIcon";
 import { RoleBadge } from "@/components/UserForms";
 import type { UserRole } from "@/generated/prisma/client";
-import type { Language } from "@/i18n/config";
 
 /**
  * Top of the account page: who you are (name, contact, role) at a glance, with the profile
@@ -20,7 +19,6 @@ export function AccountIdentityCard({
   role,
   showRole,
   profile,
-  seasonalStyleLockedByEnv,
 }: {
   name: string;
   email: string;
@@ -32,10 +30,7 @@ export function AccountIdentityCard({
     firstName: string;
     lastName: string;
     phone: string | null;
-    displayLanguage: Language;
-    disableSeasonalStyle: boolean;
   };
-  seasonalStyleLockedByEnv: boolean;
 }) {
   const t = useTranslations("Account");
   const [editing, setEditing] = useState(false);
@@ -70,7 +65,6 @@ export function AccountIdentityCard({
       <FormSheet open={editing} onClose={() => setEditing(false)} title={t("editProfile")}>
         <AccountProfileForm
           user={profile}
-          seasonalStyleLockedByEnv={seasonalStyleLockedByEnv}
           bare
           onSaved={() => setEditing(false)}
         />

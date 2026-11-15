@@ -65,6 +65,7 @@
     "adminPrivilegesOff": "Vous avez actuellement le même accès qu’un membre.",
     "adminPrivilegesError": "Impossible de mettre à jour les privilèges d’administration.",
     "preferences": "Préférences",
-    "information": "Informations"
+    "information": "Informations",
+    "languageShort": "Langue"
   }
 }

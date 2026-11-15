@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
 import { AccountIdentityCard } from "@/components/AccountIdentityCard";
+import {
+  LanguagePreferenceRow,
+  SeasonalStylePreferenceRow,
+} from "@/components/AccountPreferenceRows";
 import { AdminPrivilegesToggle } from "@/components/AdminPrivilegesToggle";
 import { CompetitorStatusToggle } from "@/components/CompetitorStatusToggle";
 import { GoogleCalendarConnectionCard } from "@/components/GoogleCalendarConnectionCard";
@@ -57,10 +61,7 @@ export default async function AccountPage({ searchParams }: PageProps) {
             firstName: user.firstName,
             lastName: user.lastName,
             phone: user.phone,
-            displayLanguage: locale === "en" ? "english" : "french",
-            disableSeasonalStyle: user.disableSeasonalStyle,
           }}
-          seasonalStyleLockedByEnv={isSeasonalStyleDisabledByEnv()}
         />
         {/* Preferences as compact rows. */}
         <section className="max-w-xl">
@@ -70,6 +71,11 @@ export default async function AccountPage({ searchParams }: PageProps) {
               <span className="font-medium">{tComponents("themeTitle")}</span>
               <ThemeToggle initialPreference={themePreference} />
             </div>
+            <LanguagePreferenceRow initial={locale === "en" ? "english" : "french"} />
+            <SeasonalStylePreferenceRow
+              initialDisabled={user.disableSeasonalStyle}
+              lockedByEnv={isSeasonalStyleDisabledByEnv()}
+            />
             <CompetitorStatusToggle userId={user.id} isCompetitor={user.isCompetitor} forSelf variant="row" />
             {canHoldAdminPrivileges(user.role) && (
               <AdminPrivilegesToggle enabled={user.adminPrivilegesEnabled} variant="row" />
@@ -82,8 +88,9 @@ export default async function AccountPage({ searchParams }: PageProps) {
             )}
           </div>
         </section>
-        {/* Members can't act on a missing server configuration; only admins need to see it. */}
-        {(isGoogleCalendarConfigured() || canHoldAdminPrivileges(user.role)) && (
+        {/* Personal sync only. A missing server setup is an admin matter, shown in
+            Paramètres → Google Agenda de l'association, not here. */}
+        {isGoogleCalendarConfigured() && (
           <GoogleCalendarConnectionCard
             kind="user"
             connection={serializeGoogleConnection(connection)}

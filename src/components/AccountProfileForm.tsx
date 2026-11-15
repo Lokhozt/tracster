@@ -4,24 +4,19 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Button, Card, FormActions, FormError, Input, Label } from "@/components/ui";
-import type { Language } from "@/i18n/config";
 
 type ProfileFields = {
   firstName: string;
   lastName: string;
   phone: string | null;
-  displayLanguage: Language;
-  disableSeasonalStyle: boolean;
 };
 
 export function AccountProfileForm({
   user,
-  seasonalStyleLockedByEnv,
   bare = false,
   onSaved,
 }: {
   user: ProfileFields;
-  seasonalStyleLockedByEnv: boolean;
   /** Without its card and heading (e.g. inside a sheet). */
   bare?: boolean;
   onSaved?: () => void;
@@ -32,8 +27,6 @@ export function AccountProfileForm({
   const [firstName, setFirstName] = useState(user.firstName);
   const [lastName, setLastName] = useState(user.lastName);
   const [phone, setPhone] = useState(user.phone ?? "");
-  const [displayLanguage, setDisplayLanguage] = useState(user.displayLanguage);
-  const [disableSeasonalStyle, setDisableSeasonalStyle] = useState(user.disableSeasonalStyle);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -51,8 +44,6 @@ export function AccountProfileForm({
         firstName,
         lastName,
         phone: phone || undefined,
-        displayLanguage,
-        disableSeasonalStyle,
       }),
     });
     const data = (await response.json()) as { error?: string };
@@ -102,37 +93,6 @@ export function AccountProfileForm({
           autoComplete="tel"
           placeholder="+33 6 12 34 56 78"
         />
-      </div>
-      <div>
-        <Label htmlFor="account-language">{common("language")}</Label>
-        <select
-          id="account-language"
-          value={displayLanguage}
-          onChange={(event) => setDisplayLanguage(event.target.value as Language)}
-          className="mt-1 min-h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-stone-900"
-        >
-          <option value="french">{common("french")}</option>
-          <option value="english">{common("english")}</option>
-        </select>
-      </div>
-      <div>
-        <p className="text-sm font-medium text-stone-900">{t("seasonalStyle")}</p>
-        {seasonalStyleLockedByEnv ? (
-          <p className="mt-1 text-sm text-stone-600">{t("seasonalStyleDisabledBySite")}</p>
-        ) : (
-          <label className="mt-2 flex cursor-pointer items-start gap-2 text-sm text-stone-700">
-            <input
-              type="checkbox"
-              checked={disableSeasonalStyle}
-              onChange={(event) => setDisableSeasonalStyle(event.target.checked)}
-              className="mt-0.5 rounded border-stone-300"
-            />
-            <span>
-              <span className="font-medium">{t("disableSeasonalStyle")}</span>
-              <span className="mt-0.5 block text-stone-500">{t("disableSeasonalStyleHelp")}</span>
-            </span>
-          </label>
-        )}
       </div>
       <FormError>{error}</FormError>
       {saved && !error && <p className="text-sm text-stone-600">{t("saved")}</p>}

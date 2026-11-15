@@ -1,14 +1,9 @@
-import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { jsonError, unauthorized } from "@/lib/api";
 import { updateOwnProfileSchema } from "@/lib/validations";
 import { formatUserName } from "@/lib/users";
-import {
-  LANGUAGE_COOKIE,
-  preferenceFromLanguage,
-} from "@/i18n/config";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -37,10 +32,6 @@ export async function PATCH(request: NextRequest) {
       firstName: parsed.data.firstName,
       lastName: parsed.data.lastName,
       phone: parsed.data.phone || null,
-      displayLanguage: preferenceFromLanguage(parsed.data.displayLanguage),
-      ...(parsed.data.disableSeasonalStyle !== undefined
-        ? { disableSeasonalStyle: parsed.data.disableSeasonalStyle }
-        : {}),
     },
     select: {
       id: true,
@@ -54,15 +45,6 @@ export async function PATCH(request: NextRequest) {
       disableSeasonalStyle: true,
       isCompetitor: true,
     },
-  });
-
-  const cookieStore = await cookies();
-  cookieStore.set(LANGUAGE_COOKIE, parsed.data.displayLanguage, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 24 * 365,
-    path: "/",
   });
 
   return Response.json({

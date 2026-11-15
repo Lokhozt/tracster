@@ -65,6 +65,7 @@
     "adminPrivilegesOff": "You currently have the same access as a regular member.",
     "adminPrivilegesError": "Unable to update admin privileges.",
     "preferences": "Preferences",
-    "information": "Information"
+    "information": "Information",
+    "languageShort": "Language"
   }
 }

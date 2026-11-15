@@ -40,7 +40,11 @@ export const updateOwnProfileSchema = z.object({
   firstName: z.string().trim().min(1).max(50),
   lastName: z.string().trim().min(1).max(50),
   phone: z.string().trim().max(30).optional(),
-  displayLanguage: z.enum(["english", "french"]),
+});
+
+/** Account preferences saved one at a time from the Compte page. */
+export const updateOwnPreferencesSchema = z.object({
+  displayLanguage: z.enum(["english", "french"]).optional(),
   disableSeasonalStyle: z.boolean().optional(),
 });
 
