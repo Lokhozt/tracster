@@ -10,7 +10,8 @@ export type NavItem = {
     | "unavailability"
     | "scheduling"
     | "settings"
-    | "account";
+    | "account"
+    | "more";
   match: (pathname: string) => boolean;
 };
 
@@ -76,3 +77,16 @@ export const accountNavItem: NavItem = {
 export function getNavItems(showAdminNav = false): NavItem[] {
   return showAdminNav ? [...baseNavItems, ...adminNavItems] : baseNavItems;
 }
+
+/**
+ * "Plus" tab (phones): a menu of the pages without a tab of their own. It stays lit on them.
+ * Desktop reaches those pages from the sidebar instead.
+ */
+export const MORE_MENU_PATHS = ["/account", "/documents", "/settings", "/users", "/scheduling"];
+
+export const moreNavItem: NavItem = {
+  href: "/more",
+  label: "more",
+  match: (pathname) =>
+    pathname.startsWith("/more") || MORE_MENU_PATHS.some((path) => pathname.startsWith(path)),
+};

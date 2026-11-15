@@ -672,6 +672,8 @@ export function Documents({
       categoriesLabel={t("documentCategories")}
       title={title}
       titleActions={titleActions}
+      // Phones open the documents from the "Plus" menu.
+      backHref="/more"
     />
   );
 }

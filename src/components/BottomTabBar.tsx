@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { type NavItem, accountNavItem, getNavItems } from "@/components/MainNav";
+import { type NavItem, getNavItems, moreNavItem } from "@/components/MainNav";
 import { NavIcon } from "@/components/NavIcon";
 import type { SeasonalTheme } from "@/lib/festive-season";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,7 @@ const TAB_ORDER: TabLabel[] = [
   "activity",
   "schedule",
   "choreographies",
-  "account",
+  "more",
 ];
 
 const SHORT_LABEL_KEYS: Partial<Record<TabLabel, "choreographiesShort" | "unavailabilityShort">> = {
@@ -36,7 +36,7 @@ const SWIPE_AXIS_LOCK_PX = 10;
 const SWIPE_EDGE_GUARD_PX = 24;
 
 const TAB_ITEMS: NavItem[] = TAB_ORDER.map((label) =>
-  [...getNavItems(false), accountNavItem].find((item) => item.label === label),
+  [...getNavItems(false), moreNavItem].find((item) => item.label === label),
 ).filter((item): item is NavItem => item !== undefined);
 
 
@@ -83,10 +83,7 @@ export function BottomTabBar({ seasonalTheme = null }: { seasonalTheme?: Seasona
     >
       <ul className="mx-auto grid h-16 max-w-xl grid-cols-5 items-end">
         {TAB_ITEMS.map((item, itemIndex) => {
-          // On phones the documents are reached from Compte, so Compte stays lit there.
-          const isActive =
-            item.match(pathname) ||
-            (item.label === "account" && pathname.startsWith("/documents"));
+          const isActive = item.match(pathname);
           const shortLabelKey = SHORT_LABEL_KEYS[item.label];
           const label = t(shortLabelKey ?? item.label);
 

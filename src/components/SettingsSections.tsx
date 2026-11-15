@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { previousAppPath, replaceUrlInPlace } from "@/lib/app-navigation";
+import { previousAppPath, replaceUrlInPlace, useAppNavigation } from "@/lib/app-navigation";
 import { browserJustAnimated } from "@/lib/ua-transition";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +41,7 @@ export function SectionNav({
   categoriesLabel,
   title,
   titleActions,
+  backHref,
 }: {
   sections: NavSection[];
   intro?: string;
@@ -55,7 +56,11 @@ export function SectionNav({
   title?: string;
   /** Buttons at the end of the title row. */
   titleActions?: React.ReactNode;
+  /** Phones: where the list's back arrow leads (the "Plus" menu). Without it, no arrow. */
+  backHref?: string;
 }) {
+  const navigation = useAppNavigation();
+  const tBack = useTranslations("Components");
   const searchParams = useSearchParams();
   const urlSectionId = validSectionId(sections, searchParams.get(sectionParam));
   // `initialSectionId` only applies until the user picks or closes a section.
@@ -115,12 +120,12 @@ export function SectionNav({
     <div>
       {title && (
         <div className="mb-6 flex items-center gap-3">
-          {mobileOpen && (
+          {(mobileOpen || backHref) && (
             <button
               type="button"
-              onClick={closeSection}
-              aria-label={categoriesLabel}
-              title={categoriesLabel}
+              onClick={mobileOpen ? closeSection : () => navigation.back(backHref ?? "/")}
+              aria-label={mobileOpen ? categoriesLabel : tBack("back")}
+              title={mobileOpen ? categoriesLabel : tBack("back")}
               className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-100 hover:text-stone-900 lg:hidden"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -223,6 +228,8 @@ export function SettingsSections({
       initialSectionId={initialSectionId}
       categoriesLabel={t("categories")}
       title={title}
+      // Phones open Paramètres from the "Plus" menu.
+      backHref="/more"
     />
   );
 }

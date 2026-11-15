@@ -3,23 +3,24 @@
 import { useTranslations } from "next-intl";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useAppNavigation } from "@/lib/app-navigation";
+import { cn } from "@/lib/utils";
 
 /** Pages reached from the navigation itself: no back arrow there. */
 const TOP_LEVEL_PATHS = new Set([
   "/",
   "/activity",
   "/choreographies",
-  "/documents",
   "/unavailability",
-  "/scheduling",
-  "/settings",
-  "/account",
+  "/more",
   "/login",
   "/register",
   "/reset-password",
   "/privacy",
   "/terms",
 ]);
+
+/** Opened from the "Plus" menu on phones (back returns there); top level in the desktop sidebar. */
+const MORE_MENU_PAGES = new Set(["/account", "/documents", "/scheduling", "/settings"]);
 
 /** In-page drill-down params (e.g. a choreography's `?section=`): back closes them first. */
 const DRILL_DOWN_PARAMS = ["section"];
@@ -64,14 +65,17 @@ export function PageBackButton() {
   if (TOP_LEVEL_PATHS.has(pathname)) {
     return null;
   }
+  const morePage = MORE_MENU_PAGES.has(pathname);
 
   return (
     <button
       type="button"
-      onClick={() => navigation.back(parentHref(pathname, new URLSearchParams(searchParams)))}
+      onClick={() =>
+        navigation.back(morePage ? "/more" : parentHref(pathname, new URLSearchParams(searchParams)))
+      }
       aria-label={t("back")}
       title={t("back")}
-      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-100 hover:text-stone-900"
+      className={cn(morePage && "lg:hidden", "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-700 transition hover:bg-stone-100 hover:text-stone-900")}
     >
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M19 12H5M11 6l-6 6 6 6" />

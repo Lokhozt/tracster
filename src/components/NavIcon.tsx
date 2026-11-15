@@ -64,6 +64,7 @@ export function NavIcon({ label, className }: { label: NavIconName; className?: 
         </>
       )}
       {label === "add" && <path d="M12 5v14M5 12h14" />}
+      {label === "more" && <path d="M4 6h16M4 12h16M4 18h16" />}
     </svg>
   );
 }

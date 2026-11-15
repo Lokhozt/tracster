@@ -7,14 +7,11 @@ import { AdminPrivilegesToggle } from "@/components/AdminPrivilegesToggle";
 import { CompetitorStatusToggle } from "@/components/CompetitorStatusToggle";
 import { GoogleCalendarConnectionCard } from "@/components/GoogleCalendarConnectionCard";
 import { LogoutButton } from "@/components/LogoutButton";
-import { FooterContent } from "@/components/SiteFooter";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { isSeasonalStyleDisabledByEnv } from "@/lib/festive-season";
 import { prisma } from "@/lib/db";
 import { canHoldAdminPrivileges, hasAdminPrivileges } from "@/lib/privileges";
-import { canManageAssociationGoogleCalendar } from "@/lib/roles";
 import { THEME_COOKIE, parseThemePreference } from "@/lib/theme";
 import { SEASON_PREVIEW_COOKIE, parseSeasonPreview } from "@/lib/season-preview";
 import { SeasonPreviewSetting } from "@/components/SeasonPreviewSetting";
@@ -24,8 +21,6 @@ import {
   isGoogleCalendarConfigured,
   serializeGoogleConnection,
 } from "@/lib/google-calendar";
-import { ChevronRightIcon } from "@/components/icons";
-import { listDocumentCategories } from "@/lib/documents";
 
 type PageProps = {
   searchParams: Promise<{ googleCalendar?: string }>;
@@ -37,7 +32,7 @@ export default async function AccountPage({ searchParams }: PageProps) {
     redirect("/login");
   }
 
-  const [connection, query, locale, t, cookieStore, tComponents, tNavigation, canManageAssociationCalendar, documentCategories] = await Promise.all([
+  const [connection, query, locale, t, cookieStore, tComponents] = await Promise.all([
     prisma.googleCalendarConnection.findUnique({
       where: { id: connectionIdFor("USER", user.id) },
     }),
@@ -46,20 +41,8 @@ export default async function AccountPage({ searchParams }: PageProps) {
     getTranslations("Account"),
     cookies(),
     getTranslations("Components"),
-    getTranslations("Navigation"),
-    canManageAssociationGoogleCalendar(user.id),
-    listDocumentCategories(),
   ]);
   const themePreference = parseThemePreference(cookieStore.get(THEME_COOKIE)?.value);
-  const settingsLinks = [
-    { section: "general", label: "siteSettings" },
-    ...(canManageAssociationCalendar ? [{ section: "calendar", label: "associationCalendar" }] : []),
-    { section: "event-types", label: "eventTypes" },
-    { section: "tags", label: "tags" },
-    { section: "locations", label: "locations" },
-    { section: "members", label: "users" },
-    { section: "stats", label: "stats" },
-  ] as const;
 
   return (
     <AppShell title={t("title")}>
@@ -79,54 +62,26 @@ export default async function AccountPage({ searchParams }: PageProps) {
           }}
           seasonalStyleLockedByEnv={isSeasonalStyleDisabledByEnv()}
         />
-        {/* Preferences and shortcuts as compact rows. */}
-        <div className="max-w-xl divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 bg-white">
-          <div className="flex items-center justify-between gap-3 px-4 py-3">
-            <span className="font-medium">{tComponents("themeTitle")}</span>
-            <ThemeToggle initialPreference={themePreference} />
-          </div>
-          <CompetitorStatusToggle userId={user.id} isCompetitor={user.isCompetitor} forSelf variant="row" />
-          {canHoldAdminPrivileges(user.role) && (
-            <AdminPrivilegesToggle enabled={user.adminPrivilegesEnabled} variant="row" />
-          )}
-        </div>
-        {/* The documents live here on phones (the tab bar has Activité instead). */}
+        {/* Preferences as compact rows. */}
         <section className="max-w-xl">
-          <h2 className="mb-2 px-1 text-xs font-semibold text-stone-500">
-            {tNavigation("documents")}
-          </h2>
+          <h2 className="mb-2 px-1 text-xs font-semibold text-stone-500">{t("preferences")}</h2>
           <div className="divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 bg-white">
-            {documentCategories.length === 0 ? (
-              <AccountLink href="/documents">{tNavigation("documents")}</AccountLink>
-            ) : (
-              documentCategories.map((category) => (
-                <AccountLink key={category.id} href={`/documents?category=${category.id}`}>
-                  {category.name}
-                </AccountLink>
-              ))
+            <div className="flex items-center justify-between gap-3 px-4 py-3">
+              <span className="font-medium">{tComponents("themeTitle")}</span>
+              <ThemeToggle initialPreference={themePreference} />
+            </div>
+            <CompetitorStatusToggle userId={user.id} isCompetitor={user.isCompetitor} forSelf variant="row" />
+            {canHoldAdminPrivileges(user.role) && (
+              <AdminPrivilegesToggle enabled={user.adminPrivilegesEnabled} variant="row" />
             )}
-          </div>
-        </section>
-        {hasAdminPrivileges(user) && (
-          <section className="max-w-xl">
-            <h2 className="mb-2 px-1 text-xs font-semibold text-stone-500">
-              {tNavigation("administration")}
-            </h2>
-            {/* Every settings category one tap away (opens /settings on that category). */}
-            <div className="divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 bg-white">
-              <AccountLink href="/scheduling">{tNavigation("scheduling")}</AccountLink>
-              {settingsLinks.map((link) => (
-                <AccountLink key={link.section} href={`/settings?section=${link.section}`}>
-                  {tComponents(link.label)}
-                </AccountLink>
-              ))}
-              {/* Admin only, this browser only: try a seasonal theme whatever the date. */}
+            {/* Admin only, this browser only: try a seasonal theme whatever the date. */}
+            {hasAdminPrivileges(user) && (
               <SeasonPreviewSetting
                 initial={parseSeasonPreview(cookieStore.get(SEASON_PREVIEW_COOKIE)?.value)}
               />
-            </div>
-          </section>
-        )}
+            )}
+          </div>
+        </section>
         {/* Members can't act on a missing server configuration; only admins need to see it. */}
         {(isGoogleCalendarConfigured() || canHoldAdminPrivileges(user.role)) && (
           <GoogleCalendarConnectionCard
@@ -140,21 +95,8 @@ export default async function AccountPage({ searchParams }: PageProps) {
         <div className="max-w-xl">
           <LogoutButton />
         </div>
-        {/* Desktop shows these in the sidebar. */}
-        <FooterContent className="lg:hidden" />
       </div>
     </AppShell>
   );
 }
 
-function AccountLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="flex min-h-12 items-center justify-between gap-3 px-4 py-3 font-medium transition hover:bg-stone-100"
-    >
-      {children}
-      <ChevronRightIcon />
-    </Link>
-  );
-}

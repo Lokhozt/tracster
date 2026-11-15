@@ -37,7 +37,8 @@
     "expandSidebar": "Expand menu",
     "mainNavLabel": "Main navigation",
     "choreographiesShort": "Choreos",
-    "unavailabilityShort": "Away"
+    "unavailabilityShort": "Away",
+    "more": "More"
   },
   "Metadata": {
     "description": "Plan rehearsals and track participant availability for your association."
@@ -62,6 +63,8 @@
     "adminPrivilegesLabel": "Use admin privileges",
     "adminPrivilegesOn": "Scheduling, settings, and other admin tools are available.",
     "adminPrivilegesOff": "You currently have the same access as a regular member.",
-    "adminPrivilegesError": "Unable to update admin privileges."
+    "adminPrivilegesError": "Unable to update admin privileges.",
+    "preferences": "Preferences",
+    "information": "Information"
   }
 }
