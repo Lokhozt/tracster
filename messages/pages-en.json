@@ -167,6 +167,35 @@
       "transferOwnershipIntro": "Transfer the owner role to another user. You will become a regular user. This is the only way to change who holds the owner role.",
       "deleteUser": "Delete user",
       "deleteUserIntro": "Remove this person from the association. They leave every event and choreography. Pieces and events they created are kept and reassigned to you when needed."
+    },
+    "Activity": {
+      "title": "My activity",
+      "periodLabel": "Period",
+      "periodSeason": "This season",
+      "periodAll": "All time",
+      "seasonSince": "Since {date}",
+      "allTime": "Since you joined",
+      "rehearsals": "Rehearsals",
+      "rehearsalsAttended": "attended",
+      "attendanceRate": "{rate}% declared attendance",
+      "rehearsalHours": "{hours} of rehearsal",
+      "rehearsalsMissed": "{count, plural, =0 {no absences} one {# absence} other {# absences}}",
+      "noRehearsals": "No past rehearsals in this period.",
+      "eventsTitle": "Events",
+      "barSlots": "Bar slots",
+      "monthsTitle": "By month",
+      "monthsCaption": "Rehearsals and events you took part in",
+      "monthBar": "{month}: {count}",
+      "monthColumn": "Month",
+      "countColumn": "Participations",
+      "choreographiesTitle": "Choreographies",
+      "dancing": "{count, plural, =0 {none danced} one {# danced} other {# danced}}",
+      "leading": "{count, plural, one {# led} other {# led}}",
+      "upcomingTitle": "Coming up",
+      "upcomingEmpty": "Nothing planned yet.",
+      "upcomingMore": "{count, plural, one {+ # more in the planning} other {+ # more in the planning}}",
+      "openPlanning": "Open the planning",
+      "declaredNote": "Based on your answers: the app does not record actual attendance."
     }
   }
 }

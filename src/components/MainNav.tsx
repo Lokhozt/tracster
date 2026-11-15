@@ -4,6 +4,7 @@ export type NavItem = {
   href: string;
   label:
     | "schedule"
+    | "activity"
     | "choreographies"
     | "documents"
     | "unavailability"
@@ -24,6 +25,11 @@ const baseNavItems: NavItem[] = [
       pathname.startsWith("/representations") ||
       pathname.startsWith("/rehearsals") ||
       pathname.startsWith("/repetitions"),
+  },
+  {
+    href: "/activity",
+    label: "activity",
+    match: (pathname) => pathname.startsWith("/activity"),
   },
   {
     href: "/choreographies",

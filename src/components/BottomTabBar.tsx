@@ -14,8 +14,8 @@ type TabLabel = NavItem["label"];
 
 /** Visual order of the bar; swiping follows the same order. Planning sits in the center. */
 const TAB_ORDER: TabLabel[] = [
-  "documents",
   "unavailability",
+  "activity",
   "schedule",
   "choreographies",
   "account",
@@ -83,7 +83,10 @@ export function BottomTabBar({ seasonalTheme = null }: { seasonalTheme?: Seasona
     >
       <ul className="mx-auto grid h-16 max-w-xl grid-cols-5 items-end">
         {TAB_ITEMS.map((item, itemIndex) => {
-          const isActive = item.match(pathname);
+          // On phones the documents are reached from Compte, so Compte stays lit there.
+          const isActive =
+            item.match(pathname) ||
+            (item.label === "account" && pathname.startsWith("/documents"));
           const shortLabelKey = SHORT_LABEL_KEYS[item.label];
           const label = t(shortLabelKey ?? item.label);
 

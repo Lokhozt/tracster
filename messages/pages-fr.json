@@ -167,6 +167,35 @@
       "transferOwnershipIntro": "Transférez le rôle de propriétaire à un autre utilisateur. Vous deviendrez un utilisateur standard. C’est la seule manière de changer de propriétaire.",
       "deleteUser": "Supprimer l’utilisateur",
       "deleteUserIntro": "Retirez cette personne de l’association. Elle quitte tous les événements et chorégraphies. Les pièces et événements qu’elle a créés sont conservés et vous sont réattribués si besoin."
+    },
+    "Activity": {
+      "title": "Mon activité",
+      "periodLabel": "Période",
+      "periodSeason": "Cette saison",
+      "periodAll": "Tout",
+      "seasonSince": "Depuis le {date}",
+      "allTime": "Depuis votre arrivée",
+      "rehearsals": "Répétitions",
+      "rehearsalsAttended": "{count, plural, one {suivie} other {suivies}}",
+      "attendanceRate": "{rate} % de présence déclarée",
+      "rehearsalHours": "{hours} de répétition",
+      "rehearsalsMissed": "{count, plural, =0 {aucune absence} one {# absence} other {# absences}}",
+      "noRehearsals": "Aucune répétition passée sur la période.",
+      "eventsTitle": "Événements",
+      "barSlots": "Créneaux au bar",
+      "monthsTitle": "Par mois",
+      "monthsCaption": "Répétitions et événements auxquels vous avez participé",
+      "monthBar": "{month} : {count}",
+      "monthColumn": "Mois",
+      "countColumn": "Participations",
+      "choreographiesTitle": "Chorégraphies",
+      "dancing": "{count, plural, =0 {aucune dansée} one {# dansée} other {# dansées}}",
+      "leading": "{count, plural, one {# chorégraphiée} other {# chorégraphiées}}",
+      "upcomingTitle": "À venir",
+      "upcomingEmpty": "Rien de prévu pour l’instant.",
+      "upcomingMore": "{count, plural, one {+ # autre dans le planning} other {+ # autres dans le planning}}",
+      "openPlanning": "Voir le planning",
+      "declaredNote": "Chiffres d’après vos réponses : l’app ne relève pas les présences réelles."
     }
   }
 }

@@ -7,6 +7,7 @@ import { useAppNavigation } from "@/lib/app-navigation";
 /** Pages reached from the navigation itself: no back arrow there. */
 const TOP_LEVEL_PATHS = new Set([
   "/",
+  "/activity",
   "/choreographies",
   "/documents",
   "/unavailability",

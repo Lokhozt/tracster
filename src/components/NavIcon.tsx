@@ -29,6 +29,7 @@ export function NavIcon({ label, className }: { label: NavIconName; className?: 
           <circle cx="18" cy="16" r="3" />
         </>
       )}
+      {label === "activity" && <path d="M22 12h-4l-3 9L9 3l-3 9H2" />}
       {label === "account" && (
         <>
           <circle cx="12" cy="8" r="4" />

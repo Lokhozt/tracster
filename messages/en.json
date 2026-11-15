@@ -18,6 +18,7 @@
     "no": "No"
   },
   "Navigation": {
+    "activity": "Activity",
     "schedule": "Schedule",
     "choreographies": "Choreographies",
     "events": "Events",
