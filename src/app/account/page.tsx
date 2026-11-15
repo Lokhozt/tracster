@@ -25,6 +25,7 @@ import {
   serializeGoogleConnection,
 } from "@/lib/google-calendar";
 import { ChevronRightIcon } from "@/components/icons";
+import { listDocumentCategories } from "@/lib/documents";
 
 type PageProps = {
   searchParams: Promise<{ googleCalendar?: string }>;
@@ -36,7 +37,7 @@ export default async function AccountPage({ searchParams }: PageProps) {
     redirect("/login");
   }
 
-  const [connection, query, locale, t, cookieStore, tComponents, tNavigation, canManageAssociationCalendar] = await Promise.all([
+  const [connection, query, locale, t, cookieStore, tComponents, tNavigation, canManageAssociationCalendar, documentCategories] = await Promise.all([
     prisma.googleCalendarConnection.findUnique({
       where: { id: connectionIdFor("USER", user.id) },
     }),
@@ -47,6 +48,7 @@ export default async function AccountPage({ searchParams }: PageProps) {
     getTranslations("Components"),
     getTranslations("Navigation"),
     canManageAssociationGoogleCalendar(user.id),
+    listDocumentCategories(),
   ]);
   const themePreference = parseThemePreference(cookieStore.get(THEME_COOKIE)?.value);
   const settingsLinks = [
@@ -88,6 +90,23 @@ export default async function AccountPage({ searchParams }: PageProps) {
             <AdminPrivilegesToggle enabled={user.adminPrivilegesEnabled} variant="row" />
           )}
         </div>
+        {/* The documents live here on phones (the tab bar has Activité instead). */}
+        <section className="max-w-xl">
+          <h2 className="mb-2 px-1 text-xs font-semibold text-stone-500">
+            {tNavigation("documents")}
+          </h2>
+          <div className="divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 bg-white">
+            {documentCategories.length === 0 ? (
+              <AccountLink href="/documents">{tNavigation("documents")}</AccountLink>
+            ) : (
+              documentCategories.map((category) => (
+                <AccountLink key={category.id} href={`/documents?category=${category.id}`}>
+                  {category.name}
+                </AccountLink>
+              ))
+            )}
+          </div>
+        </section>
         {hasAdminPrivileges(user) && (
           <section className="max-w-xl">
             <h2 className="mb-2 px-1 text-xs font-semibold text-stone-500">

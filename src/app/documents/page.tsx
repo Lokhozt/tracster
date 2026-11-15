@@ -38,18 +38,9 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
     : undefined;
 
   return (
-    <AppShell title={t("title")} wide>
+    // The title lives in Documents: phones show the open category's name there.
+    <AppShell wide>
       <div className="space-y-6">
-        {canEdit && (
-          <div className="hidden justify-end lg:flex">
-            <Link
-              href="/documents/new"
-              className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
-            >
-              {t("newDocument")}
-            </Link>
-          </div>
-        )}
         {canEdit && (
           <FloatingActionButton actions={[{ href: "/documents/new", label: t("newDocument") }]} />
         )}
@@ -57,6 +48,17 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
           documents={documents}
           categories={categories}
           initialCategoryId={selectedCategoryId}
+          title={t("title")}
+          titleActions={
+            canEdit && (
+              <Link
+                href="/documents/new"
+                className="hidden min-h-11 shrink-0 items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 lg:inline-flex"
+              >
+                {t("newDocument")}
+              </Link>
+            )
+          }
         />
       </div>
     </AppShell>

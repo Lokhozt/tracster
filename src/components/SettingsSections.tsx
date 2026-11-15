@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { replaceUrlInPlace } from "@/lib/app-navigation";
+import { previousAppPath, replaceUrlInPlace } from "@/lib/app-navigation";
 import { browserJustAnimated } from "@/lib/ua-transition";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +40,7 @@ export function SectionNav({
   sectionParam = "section",
   categoriesLabel,
   title,
+  titleActions,
 }: {
   sections: NavSection[];
   intro?: string;
@@ -52,6 +53,8 @@ export function SectionNav({
    * back arrow to the list). Without it, the page keeps its own title.
    */
   title?: string;
+  /** Buttons at the end of the title row. */
+  titleActions?: React.ReactNode;
 }) {
   const searchParams = useSearchParams();
   const urlSectionId = validSectionId(sections, searchParams.get(sectionParam));
@@ -92,11 +95,14 @@ export function SectionNav({
   }
 
   // Phones: back to the category list (history step when we opened it, else drop the param).
+  // A section opened straight from another page (e.g. Compte → a document category) goes
+  // back to that page instead.
   function closeSection() {
     setInitialConsumed(true);
     setMotion("back");
     const state: unknown = window.history.state;
-    if (urlSectionId && state && typeof state === "object" && "sectionNav" in state) {
+    const openedHere = Boolean(state && typeof state === "object" && "sectionNav" in state);
+    if (urlSectionId && (openedHere || previousAppPath())) {
       window.history.back();
     } else {
       replaceUrlInPlace(urlWithSection(sectionParam, null));
@@ -127,6 +133,7 @@ export function SectionNav({
             <span className="lg:hidden">{mobileOpen && activeLabel ? activeLabel : title}</span>
             <span className="max-lg:hidden">{title}</span>
           </h1>
+          {titleActions}
         </div>
       )}
       {intro && (

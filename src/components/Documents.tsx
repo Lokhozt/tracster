@@ -630,10 +630,15 @@ export function Documents({
   documents,
   categories,
   initialCategoryId,
+  title,
+  titleActions,
 }: {
   documents: SerializedDocument[];
   categories: SerializedDocumentCategory[];
   initialCategoryId?: string;
+  /** Page title; phones show the open category's name in its place (see SectionNav). */
+  title?: string;
+  titleActions?: React.ReactNode;
 }) {
   const t = useTranslations("Components");
   const documentSections = categories.map((category) => {
@@ -665,6 +670,8 @@ export function Documents({
       initialSectionId={initialCategoryId}
       sectionParam="category"
       categoriesLabel={t("documentCategories")}
+      title={title}
+      titleActions={titleActions}
     />
   );
 }
