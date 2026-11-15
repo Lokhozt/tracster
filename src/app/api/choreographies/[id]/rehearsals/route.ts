@@ -9,6 +9,7 @@ import { rehearsalSchema } from "@/lib/validations";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { getEventTypeByKind } from "@/lib/event-types";
 import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
+import { syncRehearsalAvailabilityFromUnavailability } from "@/lib/rehearsal-availability";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return jsonError("Rehearsal event type is not configured.");
   }
 
-  const rehearsal = await prisma.event.create({
+  const created = await prisma.event.create({
     data: {
       typeId: eventType.id,
       choreographyId: id,
@@ -65,6 +66,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
       location: location.location,
       notes: parsed.data.notes,
     },
+    select: { id: true },
+  });
+  // Members without an unavailability over the slot start as available.
+  await syncRehearsalAvailabilityFromUnavailability(created.id);
+  const rehearsal = await prisma.event.findUniqueOrThrow({
+    where: { id: created.id },
     include: {
       group: { select: { id: true, name: true } },
       availabilities: {

@@ -24,6 +24,7 @@ import { expandWeeklyOccurrences } from "@/lib/event-recurrence";
 import { resolveLocationFromParsed } from "@/lib/locations";
 import { canCreateEvent } from "@/lib/site-settings";
 import { syncGoogleEventBestEffort } from "@/lib/google-calendar";
+import { syncRehearsalAvailabilityFromUnavailability } from "@/lib/rehearsal-availability";
 import { getServerTranslator, localizeEventType } from "@/i18n/server";
 
 export async function GET() {
@@ -217,6 +218,12 @@ export async function POST(request: NextRequest) {
     return events;
   });
 
+  if (eventType.kind === "REHEARSAL") {
+    // Members without an unavailability over the slot start as available.
+    for (const event of created) {
+      await syncRehearsalAvailabilityFromUnavailability(event.id);
+    }
+  }
   await Promise.all(created.map((event) => syncGoogleEventBestEffort(event.id)));
 
   const translator = await getServerTranslator(user.displayLanguage);
