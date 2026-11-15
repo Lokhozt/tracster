@@ -81,20 +81,7 @@ export function BottomTabBar({ seasonalTheme = null }: { seasonalTheme?: Seasona
         !seasonalTheme && "border-stone-200 bg-white/95",
       )}
     >
-      <ul className="relative mx-auto grid h-16 max-w-xl grid-cols-5 items-end">
-        {/* One highlight for the active tab; during a swipe it slides toward the target tab
-            (--tab-indicator-shift, set by the swipe handler). Hidden on the centre tab. */}
-        {currentIndex !== -1 && TAB_ITEMS[currentIndex]?.label !== CENTER_TAB && (
-          <span
-            aria-hidden="true"
-            data-tab-indicator=""
-            className="pointer-events-none absolute top-2 h-8 w-12 rounded-full bg-stone-900/10"
-            style={{
-              left: `calc(${currentIndex} * 20% + 10% - 1.5rem)`,
-              transform: "translateX(var(--tab-indicator-shift, 0px))",
-            }}
-          />
-        )}
+      <ul className="mx-auto grid h-16 max-w-xl grid-cols-5 items-end">
         {TAB_ITEMS.map((item, itemIndex) => {
           const isActive = item.match(pathname);
           const shortLabelKey = SHORT_LABEL_KEYS[item.label];
@@ -148,7 +135,18 @@ export function BottomTabBar({ seasonalTheme = null }: { seasonalTheme?: Seasona
                     isActive ? "text-stone-900" : "text-stone-500",
                   )}
                 >
-                  <NavIcon label={item.label} className="h-5 w-5" />
+                  {/* The active highlight is drawn inside the icon, so it is centred on it by
+                      construction; during a swipe it slides toward the target tab
+                      (--tab-indicator-shift, set by the swipe handler). */}
+                  {isActive && (
+                    <span
+                      aria-hidden="true"
+                      data-tab-indicator=""
+                      className="absolute inset-0 rounded-full bg-stone-900/10"
+                      style={{ transform: "translateX(var(--tab-indicator-shift, 0px))" }}
+                    />
+                  )}
+                  <NavIcon label={item.label} className="relative h-5 w-5" />
                 </span>
                 <span
                   className={cn(
