@@ -22,6 +22,7 @@ import { formatUserName, userNameOrderBy } from "@/lib/users";
 import { getAppLogoSrc } from "@/lib/s3";
 import { canCreateEvent, getSiteSettings } from "@/lib/site-settings";
 import { formatBirthdayGreeting, isBirthdayOnDate } from "@/lib/users";
+import { getServerTranslator } from "@/i18n/server";
 
 async function getUsersWithBirthdays() {
   const users = await prisma.user.findMany({
@@ -178,6 +179,8 @@ export default async function HomePage() {
     const birthdayGreeting = settings.showBirthdaysOnPlanning
       ? formatBirthdayGreeting(
           birthdayUsers.filter((birthdayUser) => isBirthdayOnDate(birthdayUser.dateOfBirth, new Date())),
+          // Without a translator the greeting falls back to English.
+          await getServerTranslator(),
         )
       : null;
     const associationCalendarUrl = associationCalendarFollowUrl();
