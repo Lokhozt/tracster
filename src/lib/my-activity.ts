@@ -1,4 +1,4 @@
-import { isPartyEventKind } from "@/lib/event-type-helpers";
+import { attendsRehearsal, isOnUsersAgenda, takesPart } from "@/lib/agenda-rules";
 import { getUserScheduleEvents } from "@/lib/schedule";
 import { scheduleEventEnd, type SerializedScheduleEvent } from "@/lib/schedule-filters";
 import { defaultAssociationStatsPeriodStart } from "@/lib/stats-period";
@@ -28,31 +28,6 @@ export type MyActivity = {
 
 const UPCOMING_PREVIEW_COUNT = 3;
 const ALL_TIME_MONTHS = 12;
-
-/** A rehearsal the user leads, or answered "available" to. */
-function attendsRehearsal(event: SerializedScheduleEvent): boolean {
-  return event.isChoreographer || event.availabilityStatus === "AVAILABLE";
-}
-
-/** The user declared taking part (the app does not record actual attendance). */
-function takesPart(event: SerializedScheduleEvent): boolean {
-  if (event.typeKind === "REHEARSAL") {
-    return attendsRehearsal(event);
-  }
-  if (event.typeKind && isPartyEventKind(event.typeKind)) {
-    // Holding a bar slot counts as coming to the party.
-    return event.isEventParticipant || event.isBarVolunteer;
-  }
-  return event.isParticipating;
-}
-
-/** Upcoming events on the user's agenda: rehearsals they did not decline, the rest they joined. */
-function isUpcomingCommitment(event: SerializedScheduleEvent): boolean {
-  if (event.typeKind === "REHEARSAL") {
-    return (event.isMember || event.isChoreographer) && event.availabilityStatus !== "UNAVAILABLE";
-  }
-  return takesPart(event);
-}
 
 function monthStart(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -125,7 +100,7 @@ export async function loadMyActivity(
   }));
 
   const upcoming = events.filter(
-    (event) => scheduleEventEnd(event) > now && isUpcomingCommitment(event),
+    (event) => scheduleEventEnd(event) > now && isOnUsersAgenda(event),
   );
 
   return {
