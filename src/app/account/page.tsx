@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { AppShell } from "@/components/AppShell";
+import { MenuGroup, MenuRow } from "@/components/MenuList";
 import { AccountIdentityCard } from "@/components/AccountIdentityCard";
 import {
   LanguagePreferenceRow,
@@ -36,7 +37,7 @@ export default async function AccountPage({ searchParams }: PageProps) {
     redirect("/login");
   }
 
-  const [connection, query, locale, t, cookieStore, tComponents] = await Promise.all([
+  const [connection, query, locale, t, cookieStore, tComponents, tNavigation] = await Promise.all([
     prisma.googleCalendarConnection.findUnique({
       where: { id: connectionIdFor("USER", user.id) },
     }),
@@ -45,6 +46,7 @@ export default async function AccountPage({ searchParams }: PageProps) {
     getTranslations("Account"),
     cookies(),
     getTranslations("Components"),
+    getTranslations("Navigation"),
   ]);
   const themePreference = parseThemePreference(cookieStore.get(THEME_COOKIE)?.value);
 
@@ -99,6 +101,12 @@ export default async function AccountPage({ searchParams }: PageProps) {
             followUrl={associationCalendarFollowUrl()}
           />
         )}
+        {/* Desktop has no "Plus" menu: the calendar subscription is reached from here. */}
+        <div className="hidden lg:block">
+          <MenuGroup>
+            <MenuRow href="/calendar-feed" icon="calendar" label={tNavigation("calendarFeed")} />
+          </MenuGroup>
+        </div>
         <div className="max-w-xl">
           <LogoutButton />
         </div>

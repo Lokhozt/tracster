@@ -28,6 +28,7 @@ export default async function MorePage() {
         <MenuGroup>
           <MenuRow href="/account" icon="user" label={tNavigation("account")} detail={user.name} />
           <MenuRow href="/documents" icon="folder" label={tNavigation("documents")} />
+          <MenuRow href="/calendar-feed" icon="calendar" label={tNavigation("calendarFeed")} />
         </MenuGroup>
         {hasAdminPrivileges(user) && (
           <MenuGroup title={tNavigation("administration")}>

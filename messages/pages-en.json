@@ -196,6 +196,33 @@
       "upcomingMore": "{count, plural, one {+ # more in the planning} other {+ # more in the planning}}",
       "openPlanning": "Open the planning",
       "declaredNote": "Based on your answers: the app does not record actual attendance."
+    },
+    "CalendarFeed": {
+      "title": "Calendar subscription",
+      "intro": "Get your events in your calendar app: Google Calendar, Outlook, Apple Calendar, DigiCal… The link updates by itself when an event changes.",
+      "create": "Create my link",
+      "typesTitle": "Events to include",
+      "choiceOff": "No",
+      "choiceMine": "Mine",
+      "choiceAll": "All",
+      "typesHint": "“Mine”: rehearsals of your casts (except those you are unavailable for) and the events you take part in. Changing a choice changes the link: subscribe to the new one.",
+      "linkTitle": "Your link",
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "addToGoogle": "Add to Google Calendar",
+      "openInCalendar": "Open in my calendar",
+      "nothingSelected": "Pick at least one event type.",
+      "noteOneWay": "One way: changes made in your calendar do not come back to the app.",
+      "noteDelay": "Your calendar re-reads the link regularly: Apple and DigiCal every 15 min to 1 h, Outlook every few hours, Google every 12 to 24 h.",
+      "noteSecret": "This link gives access to your schedule: do not share it. If in doubt, regenerate it.",
+      "regenerate": "Regenerate link",
+      "regenerateConfirm": "Create a new link? Calendars subscribed to the old one will stop updating.",
+      "disable": "Turn off",
+      "disableConfirm": "Turn the link off? Subscribed calendars will stop updating.",
+      "error": "That did not work. Try again.",
+      "copyError": "Could not copy: select the link and copy it.",
+      "androidDigiCal": "DigiCal or another Android calendar: add a calendar subscription (URL) and paste the link.",
+      "androidGoogle": "Google Calendar: on a computer, calendar.google.com → Other calendars → + → From URL. It then shows in the Google Calendar app on your phone."
     }
   }
 }

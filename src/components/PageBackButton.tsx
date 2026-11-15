@@ -20,7 +20,13 @@ const TOP_LEVEL_PATHS = new Set([
 ]);
 
 /** Opened from the "Plus" menu on phones (back returns there); top level in the desktop sidebar. */
-const MORE_MENU_PAGES = new Set(["/account", "/documents", "/scheduling", "/settings"]);
+const MORE_MENU_PAGES = new Set([
+  "/account",
+  "/calendar-feed",
+  "/documents",
+  "/scheduling",
+  "/settings",
+]);
 
 /** In-page drill-down params (e.g. a choreography's `?section=`): back closes them first. */
 const DRILL_DOWN_PARAMS = ["section"];

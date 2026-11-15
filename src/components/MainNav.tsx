@@ -82,7 +82,14 @@ export function getNavItems(showAdminNav = false): NavItem[] {
  * "Plus" tab (phones): a menu of the pages without a tab of their own. It stays lit on them.
  * Desktop reaches those pages from the sidebar instead.
  */
-export const MORE_MENU_PATHS = ["/account", "/documents", "/settings", "/users", "/scheduling"];
+export const MORE_MENU_PATHS = [
+  "/account",
+  "/calendar-feed",
+  "/documents",
+  "/settings",
+  "/users",
+  "/scheduling",
+];
 
 export const moreNavItem: NavItem = {
   href: "/more",

@@ -4,7 +4,8 @@ export type MenuRowIconName =
   | "shield"
   | "scroll"
   | "user"
-  | "gear";
+  | "gear"
+  | "calendar";
 
 /** Line icon on a soft tile, at the start of a "Plus" menu row (rows that open a page). */
 export function MenuRowIcon({ name }: { name: MenuRowIconName }) {
@@ -29,6 +30,12 @@ export function MenuRowIcon({ name }: { name: MenuRowIconName }) {
           <>
             <path d="m15 4-1 2-2 1 2 1 1 2 1-2 2-1-2-1Z" />
             <path d="M5 21 15 11" />
+          </>
+        )}
+        {name === "calendar" && (
+          <>
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
           </>
         )}
         {name === "user" && (

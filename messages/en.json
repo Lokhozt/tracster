@@ -38,7 +38,8 @@
     "mainNavLabel": "Main navigation",
     "choreographiesShort": "Choreos",
     "unavailabilityShort": "Away",
-    "more": "More"
+    "more": "More",
+    "calendarFeed": "Calendar subscription"
   },
   "Metadata": {
     "description": "Plan rehearsals and track participant availability for your association."

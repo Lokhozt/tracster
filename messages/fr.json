@@ -38,7 +38,8 @@
     "mainNavLabel": "Navigation principale",
     "choreographiesShort": "Chorés",
     "unavailabilityShort": "Indispos",
-    "more": "Plus"
+    "more": "Plus",
+    "calendarFeed": "Abonnement agenda"
   },
   "Metadata": {
     "description": "Planifiez les répétitions et suivez les disponibilités des participants de votre association."
