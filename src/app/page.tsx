@@ -184,6 +184,9 @@ export default async function HomePage() {
 
     return (
       <AppShell fillHeight>
+        {/* The page's heading for screen readers (the phone header shows the app name, and the
+            planning needs no visible title). */}
+        <h1 className="sr-only">{t("title")}</h1>
         {birthdayGreeting && (
           <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950">
             {birthdayGreeting}
