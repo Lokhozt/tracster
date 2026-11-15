@@ -1086,8 +1086,35 @@ input[type="radio"] {
   animation: spotlight-sweep 1.6s var(--ease-stage) 0.5s both;
 }
 
+/* An event under way in the planning list: the same sweep, looping with a pause between passes. */
+@keyframes spotlight-sweep-loop {
+  0% {
+    transform: translateX(-100%);
+  }
+  45%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.happening-now::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in oklab, var(--color-spotlight) 28%, transparent) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  animation: spotlight-sweep-loop 3.6s var(--ease-stage) 0.5s infinite both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .next-up-today::after {
+  .next-up-today::after,
+  .happening-now::after {
     display: none;
   }
 }

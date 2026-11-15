@@ -341,7 +341,15 @@ export function UpcomingEventsList({
                 </div>
                 <div className="grid min-w-0 flex-1 gap-2 @2xl:has-[>:nth-child(2)]:grid-cols-2">
                   {group.events.map((event) => (
-              <EventCard key={event.id} kind={event.typeKind} className="relative">
+              <EventCard
+                key={event.id}
+                kind={event.typeKind}
+                className={cn(
+                  "relative",
+                  // Under way: the "Prochain rendez-vous" spotlight, sweeping in a loop.
+                  isScheduleEventHappeningNow(event, now) && "happening-now overflow-hidden",
+                )}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
