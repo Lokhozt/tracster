@@ -185,7 +185,8 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
   const upcomingRehearsals = choreography.rehearsals
     .filter((rehearsal) => (rehearsal.endsAt ?? rehearsal.startsAt) >= now)
     .sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime());
-  const nextRehearsal = upcomingRehearsals[0] ?? null;
+  // The highlighted rehearsal is the next one to start (not one already under way).
+  const nextRehearsal = upcomingRehearsals.find((rehearsal) => rehearsal.startsAt > now) ?? null;
   const userIsInNextRehearsal = nextRehearsal
     ? nextRehearsal.group
       ? nextRehearsal.group.members.some((member) => member.userId === user.id)

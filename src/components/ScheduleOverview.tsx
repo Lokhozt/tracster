@@ -26,7 +26,7 @@ import {
 } from "@/lib/event-category-filter";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
 import { isBirthdayScheduleEvent } from "@/lib/schedule-birthdays";
-import { scheduleEventEnd, scheduleEventLabel } from "@/lib/schedule-filters";
+import { scheduleEventLabel } from "@/lib/schedule-filters";
 import type { SerializedScheduleEvent } from "@/lib/schedule-filters";
 import { matchesSearch } from "@/lib/search";
 
@@ -121,13 +121,14 @@ export function ScheduleOverview({
     [events, barFilter, barMode, hidden, hideNonParticipating, search],
   );
   // "Next up": your next event (taking part or holding a bar slot), whatever the filters.
+  // An event already under way is skipped: the block always points to what comes next.
   const nextUp = useMemo(() => {
     const now = new Date();
     return events.find(
       (event) =>
         !isBirthdayScheduleEvent(event) &&
         (event.isParticipating || event.isBarVolunteer) &&
-        scheduleEventEnd(event) > now,
+        new Date(event.startsAt) > now,
     );
   }, [events]);
   const exportEvents = useMemo(
