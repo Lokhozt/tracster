@@ -1,18 +1,36 @@
 
 import { useTranslations } from "next-intl";
+import { FAB_MENU_ITEM_CLASS } from "@/components/FloatingActionButton";
 import { cn } from "@/lib/utils";
 
 export function FollowAssociationCalendarLink({
   href,
   className,
   iconOnly = false,
+  variant = "button",
 }: {
   href: string;
   className?: string;
   iconOnly?: boolean;
+  /** "menu": an entry of the "+" menu (phones). */
+  variant?: "button" | "menu";
 }) {
   const t = useTranslations("Components");
   const label = t("followAssociationCalendar");
+  if (variant === "menu") {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-fab-close=""
+        className={cn(FAB_MENU_ITEM_CLASS, "gap-2", className)}
+      >
+        <GoogleCalendarMark />
+        {label}
+      </a>
+    );
+  }
   return (
     <a
       href={href}

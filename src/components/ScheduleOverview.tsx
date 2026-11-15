@@ -231,13 +231,16 @@ export function ScheduleOverview({
       </div>
       {/* The most used filter, always in sight: my events or everyone's (paused by a bar choice). */}
       <div className="mb-4 lg:hidden">{scopeSwitch}</div>
-      {/* Phones/tablets: the calendar's export and edit tools live in the "+" menu. */}
+      {/* Phones/tablets: the calendar's export, edit and follow tools live in the "+" menu. */}
       <FloatingActionButton
         actions={createActions}
         extraItems={[
           <CreateSheetMenuItem key="export" kind="export-planning" label={t("exportPlanningImage")} />,
           ...(canEditPlanning && planningLocations && planningUsers
             ? [<CreateSheetMenuItem key="edit" kind="edit-rehearsals" label={t("editPlanningRehearsals")} />]
+            : []),
+          ...(associationCalendarUrl
+            ? [<FollowAssociationCalendarLink key="follow" href={associationCalendarUrl} variant="menu" />]
             : []),
         ]}
       />
@@ -287,7 +290,10 @@ export function ScheduleOverview({
           titleActions={
             <>
               {associationCalendarUrl && (
-                <FollowAssociationCalendarLink href={associationCalendarUrl} iconOnly />
+                // Desktop only: phones get it from the "+" menu.
+                <span className="hidden lg:contents">
+                  <FollowAssociationCalendarLink href={associationCalendarUrl} iconOnly />
+                </span>
               )}
               <PlanningImageExportButton
                 events={exportEvents}
