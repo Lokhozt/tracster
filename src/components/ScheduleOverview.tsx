@@ -312,7 +312,6 @@ export function ScheduleOverview({
         <div className="[overflow-anchor:none] xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain xl:pr-1">
           <UpcomingEventsList
             events={listEvents}
-            showBarSignup={freeBarSlots}
             includePast={showPast}
             categoriesFiltered={
               activeFilterCount - (showPast ? 1 : 0) > 0 || hideNonParticipating || search.trim() !== ""
