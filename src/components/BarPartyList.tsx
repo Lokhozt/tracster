@@ -43,7 +43,8 @@ export function BarPartyList({
   });
 
   return (
-    <div className="max-w-2xl space-y-4">
+    // Phones: one column. Computers: the cards flow into columns instead of a narrow strip.
+    <div className="max-w-2xl space-y-4 lg:max-w-none">
       <SegmentedControl
         label={t("filterLabel")}
         value={filter}
@@ -53,6 +54,7 @@ export function BarPartyList({
           { value: "mine", label: t("filterMine") },
         ]}
         onChange={setFilter}
+        className="max-w-xl"
       />
 
       {shown.length === 0 ? (
@@ -60,7 +62,7 @@ export function BarPartyList({
           {parties.length === 0 ? t("emptyAll") : filter === "mine" ? t("emptyMine") : t("emptyFree")}
         </p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
           {shown.map((party) => (
             <li key={party.id}>
               <BarPartyCard party={party} onOpen={() => setOpenId(party.id)} />
