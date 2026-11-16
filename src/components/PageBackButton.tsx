@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 /** Pages reached from the navigation itself: no back arrow there. */
 const TOP_LEVEL_PATHS = new Set([
   "/",
-  "/activity",
+  "/bar",
   "/choreographies",
   "/unavailability",
   "/more",
@@ -22,6 +22,7 @@ const TOP_LEVEL_PATHS = new Set([
 /** Opened from the "Plus" menu on phones (back returns there); top level in the desktop sidebar. */
 const MORE_MENU_PAGES = new Set([
   "/account",
+  "/activity",
   "/calendar-feed",
   "/documents",
   "/scheduling",

@@ -4,6 +4,7 @@ export type NavItem = {
   href: string;
   label:
     | "schedule"
+    | "bar"
     | "activity"
     | "choreographies"
     | "documents"
@@ -26,6 +27,11 @@ const baseNavItems: NavItem[] = [
       pathname.startsWith("/representations") ||
       pathname.startsWith("/rehearsals") ||
       pathname.startsWith("/repetitions"),
+  },
+  {
+    href: "/bar",
+    label: "bar",
+    match: (pathname) => pathname.startsWith("/bar"),
   },
   {
     href: "/activity",
@@ -84,6 +90,7 @@ export function getNavItems(showAdminNav = false): NavItem[] {
  */
 export const MORE_MENU_PATHS = [
   "/account",
+  "/activity",
   "/calendar-feed",
   "/documents",
   "/settings",

@@ -39,7 +39,8 @@
     "choreographiesShort": "Choreos",
     "unavailabilityShort": "Away",
     "more": "More",
-    "calendarFeed": "Calendar subscription"
+    "calendarFeed": "Calendar subscription",
+    "bar": "Bar"
   },
   "Metadata": {
     "description": "Plan rehearsals and track participant availability for your association."

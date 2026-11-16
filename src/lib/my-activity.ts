@@ -20,7 +20,6 @@ export type MyActivity = {
   };
   /** Past events taken part in, by event type id (rehearsals excluded). */
   countsByTypeId: Record<string, number>;
-  barSlotsHeld: number;
   months: ActivityMonth[];
   upcoming: SerializedScheduleEvent[];
   upcomingCount: number;
@@ -63,7 +62,6 @@ export async function loadMyActivity(
 
   const countsByTypeId: Record<string, number> = {};
   const rehearsals = { attended: 0, missed: 0, minutesAttended: 0 };
-  let barSlotsHeld = 0;
   const perMonth = new Map<string, number>();
 
   const pastEvents = events.filter(
@@ -82,9 +80,6 @@ export async function loadMyActivity(
       }
     } else if (takesPart(event)) {
       countsByTypeId[event.typeId] = (countsByTypeId[event.typeId] ?? 0) + 1;
-    }
-    if (event.isBarVolunteer) {
-      barSlotsHeld += 1;
     }
     if (takesPart(event)) {
       const key = monthKey(new Date(event.startsAt));
@@ -107,7 +102,6 @@ export async function loadMyActivity(
     periodStart: periodStart?.toISOString() ?? null,
     rehearsals,
     countsByTypeId,
-    barSlotsHeld,
     months,
     upcoming: upcoming.slice(0, UPCOMING_PREVIEW_COUNT),
     upcomingCount: upcoming.length,

@@ -15,7 +15,7 @@ type TabLabel = NavItem["label"];
 /** Visual order of the bar; swiping follows the same order. Planning sits in the center. */
 const TAB_ORDER: TabLabel[] = [
   "unavailability",
-  "activity",
+  "bar",
   "schedule",
   "choreographies",
   "more",

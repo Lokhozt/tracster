@@ -182,7 +182,6 @@
       "rehearsalsMissed": "{count, plural, =0 {aucune absence} one {# absence} other {# absences}}",
       "noRehearsals": "Aucune répétition passée sur la période.",
       "eventsTitle": "Événements",
-      "barSlots": "Créneaux au bar",
       "monthsTitle": "Par mois",
       "monthsCaption": "Répétitions et événements auxquels vous avez participé",
       "monthBar": "{month} : {count}",
@@ -224,6 +223,24 @@
       "addToOutlook": "Ajouter à Outlook",
       "addToApple": "Ajouter au Calendrier Apple",
       "otherCalendars": "Autres agendas"
+    },
+    "Bar": {
+      "title": "Bar",
+      "filterLabel": "Soirées à afficher",
+      "filterAll": "Toutes",
+      "filterFree": "Places libres",
+      "filterMine": "Mes créneaux",
+      "emptyAll": "Aucune soirée avec bar à venir.",
+      "emptyFree": "Toutes les soirées à venir ont leurs bénévoles bar.",
+      "emptyMine": "Vous ne tenez le bar à aucune soirée à venir.",
+      "badgeAtBar": "Au bar",
+      "badgeAttending": "Je viens",
+      "badgeFree": "{count, plural, one {# place} other {# places}}",
+      "badgeFull": "Complet",
+      "takeSlot": "Prendre un créneau bar à « {title} »",
+      "leaveSlot": "Quitter mon créneau bar à « {title} »",
+      "atTheBar": "Au bar",
+      "openParty": "Voir la soirée"
     }
   }
 }

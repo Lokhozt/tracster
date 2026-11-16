@@ -71,7 +71,6 @@ export default async function ActivityPage({ searchParams }: PageProps) {
         value: activity.countsByTypeId[type.id] ?? 0,
       }))
       .filter((tile) => tile.value > 0 || joinableTypeIds.has(tile.key)),
-    { key: "bar", label: t("barSlots"), kind: null, value: activity.barSlotsHeld },
   ];
 
   return (

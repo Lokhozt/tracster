@@ -182,7 +182,6 @@
       "rehearsalsMissed": "{count, plural, =0 {no absences} one {# absence} other {# absences}}",
       "noRehearsals": "No past rehearsals in this period.",
       "eventsTitle": "Events",
-      "barSlots": "Bar slots",
       "monthsTitle": "By month",
       "monthsCaption": "Rehearsals and events you took part in",
       "monthBar": "{month}: {count}",
@@ -224,6 +223,24 @@
       "addToOutlook": "Add to Outlook",
       "addToApple": "Add to Apple Calendar",
       "otherCalendars": "Other calendars"
+    },
+    "Bar": {
+      "title": "Bar",
+      "filterLabel": "Parties to show",
+      "filterAll": "All",
+      "filterFree": "Free slots",
+      "filterMine": "My slots",
+      "emptyAll": "No upcoming party with a bar.",
+      "emptyFree": "Every upcoming party has its bar volunteers.",
+      "emptyMine": "You are not at the bar for any upcoming party.",
+      "badgeAtBar": "At the bar",
+      "badgeAttending": "I'm coming",
+      "badgeFree": "{count, plural, one {# slot} other {# slots}}",
+      "badgeFull": "Full",
+      "takeSlot": "Take a bar slot at “{title}”",
+      "leaveSlot": "Leave my bar slot at “{title}”",
+      "atTheBar": "At the bar",
+      "openParty": "Open the party"
     }
   }
 }
