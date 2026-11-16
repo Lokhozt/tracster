@@ -781,6 +781,12 @@
     "locationsOneOffHint": "A one-off location can still be entered when scheduling.",
     "requestSent": "Request sent",
     "leaveParticipationConfirm": "Stop taking part in this event?",
-    "cancelRequestConfirm": "Cancel your participation request?"
+    "cancelRequestConfirm": "Cancel your participation request?",
+    "leaveParticipationBarConfirm": "Stop attending this party? Your bar slot will be freed.",
+    "statusShortAVAILABLE": "Yes",
+    "statusShortUNAVAILABLE": "No",
+    "statusShortMAYBE": "Maybe",
+    "availabilityGroupLabel": "My availability",
+    "barTakeSlotConfirm": "Take a bar slot at “{title}”? You will also be signed up for the party."
   }
 }

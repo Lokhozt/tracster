@@ -239,6 +239,7 @@ export default async function EventDetailPage({ params }: PageProps) {
             allowRequest={eventRecord.allowJoinRequests}
             allowLeave
             isParticipant={isParticipant}
+            holdsBarSlot={partyBarAssignedUserIds.includes(user.id)}
             hasPendingRequest={hasPendingRequest}
             hasUpcomingSeries={event.hasUpcomingSeriesEvents}
           />
@@ -293,6 +294,7 @@ export default async function EventDetailPage({ params }: PageProps) {
             allowRequest={eventRecord.allowJoinRequests}
             allowLeave
             isParticipant={isParticipant}
+            holdsBarSlot={partyBarAssignedUserIds.includes(user.id)}
             hasPendingRequest={hasPendingRequest}
             hasUpcomingSeries={event.hasUpcomingSeriesEvents}
           />

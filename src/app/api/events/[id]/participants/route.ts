@@ -89,12 +89,11 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     return jsonError(parsed.error.issues[0]?.message ?? "Invalid input.");
   }
 
-  await prisma.eventParticipant.deleteMany({
-    where: {
-      eventId: id,
-      userId: parsed.data.userId,
-    },
-  });
+  // A bar slot means coming to the party: removing the participant frees their slot too.
+  await prisma.$transaction([
+    prisma.eventParticipant.deleteMany({ where: { eventId: id, userId: parsed.data.userId } }),
+    prisma.eventPartyBarSlot.deleteMany({ where: { eventId: id, userId: parsed.data.userId } }),
+  ]);
 
   return Response.json({ ok: true });
 }

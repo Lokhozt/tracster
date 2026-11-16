@@ -24,6 +24,7 @@ export function JoinAsParticipantControls({
   isParticipant,
   hasPendingRequest,
   hasUpcomingSeries = false,
+  holdsBarSlot = false,
 }: {
   joinUrl: string;
   requestUrl: string;
@@ -33,6 +34,8 @@ export function JoinAsParticipantControls({
   isParticipant: boolean;
   hasPendingRequest: boolean;
   hasUpcomingSeries?: boolean;
+  /** The viewer holds a bar slot here: leaving frees it too, so the confirmation says so. */
+  holdsBarSlot?: boolean;
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
@@ -107,7 +110,7 @@ export function JoinAsParticipantControls({
         aria-label={t("notParticipatingAction")}
         title={t("notParticipatingAction")}
         onClick={() => {
-          if (confirm(t("leaveParticipationConfirm"))) {
+          if (confirm(t(holdsBarSlot ? "leaveParticipationBarConfirm" : "leaveParticipationConfirm"))) {
             startAction(joinUrl, "DELETE");
           }
         }}
