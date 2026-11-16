@@ -350,7 +350,7 @@ export function UpcomingEventsList({
                           className={cn("text-base font-semibold hover:underline", cardLink)}
                         >
                           {/* Same name as the event page title: it glides there when you open it. */}
-                          <ViewTransition name={`event-title-${event.id}`} share="title-morph">
+                          <ViewTransition name={`event-title-${event.id}`} share="title-morph" default="none">
                             <span>{defaultEventTitle(event)}</span>
                           </ViewTransition>
                         </Link>

@@ -750,7 +750,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
       narrow
       // Pairs with the card title in the choreography list (glides into place).
       title={
-        <ViewTransition name={`choreography-title-${choreography.id}`} share="title-morph">
+        <ViewTransition name={`choreography-title-${choreography.id}`} share="title-morph" default="none">
           <span>{choreography.title}</span>
         </ViewTransition>
       }

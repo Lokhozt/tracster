@@ -136,6 +136,7 @@ function FloatingActionButtonContent({
         aria-label={primary.label}
         title={primary.label}
         data-fab=""
+        style={{ viewTransitionName: "app-fab" }}
         className={cn(FAB_POSITION, FAB_BUTTON)}
       >
         <PlusIcon />
@@ -155,6 +156,7 @@ function FloatingActionButtonContent({
         aria-label={action.label}
         title={action.label}
         data-fab=""
+        style={{ viewTransitionName: "app-fab" }}
         className={cn(FAB_POSITION, FAB_BUTTON)}
       >
         <PlusIcon />
@@ -172,7 +174,12 @@ function FloatingActionButtonContent({
         />
       )}
       {/* Toggle first in the DOM so Tab moves from it into the opened menu; reversed visually. */}
-      <div data-fab="" className={cn(FAB_POSITION, "flex flex-col-reverse items-end gap-3")}>
+      {/* Named like the tab bar: kept out of page transitions, so it never blinks. */}
+      <div
+        data-fab=""
+        style={{ viewTransitionName: "app-fab" }}
+        className={cn(FAB_POSITION, "flex flex-col-reverse items-end gap-3")}
+      >
         <button
           type="button"
           aria-expanded={open}
