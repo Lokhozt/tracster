@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { getAppName } from "@/lib/app-name";
 import { AppFrame } from "@/components/AppShell";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { getAppLogoSrc } from "@/lib/s3";
 import { SIDEBAR_COOKIE, parseSidebarCollapsed } from "@/lib/sidebar";
 import {
@@ -89,6 +90,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider messages={messages}>
           <AppFrame>
+            <ServiceWorkerRegistration />
             {children}
             {modal}
           </AppFrame>

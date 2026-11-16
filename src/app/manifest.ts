@@ -18,6 +18,19 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     // with these fixed colours, whatever the page's light/dark theme. The app's aubergine ink
     // blends with dark mode and reads as a base strip under the tab bar in light mode; the top
     // status bar still follows the page's theme-color meta.
+    // Android's share sheet: "Share → TRACker" sends a video, photo, audio or link to /share
+    // (the service worker in public/sw.js keeps the file on the phone, see /share).
+    share_target: {
+      action: "/share-target",
+      method: "POST",
+      enctype: "multipart/form-data",
+      params: {
+        title: "title",
+        text: "text",
+        url: "url",
+        files: [{ name: "media", accept: ["video/*", "image/*", "audio/*"] }],
+      },
+    },
     background_color: "#231b33",
     theme_color: "#231b33",
     icons: [

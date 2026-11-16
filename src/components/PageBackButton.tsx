@@ -12,6 +12,8 @@ const TOP_LEVEL_PATHS = new Set([
   "/choreographies",
   "/unavailability",
   "/more",
+  // Reached from Android's share sheet, not from a page of the app.
+  "/share",
   "/login",
   "/register",
   "/reset-password",

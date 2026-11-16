@@ -224,6 +224,23 @@
       "addToOutlook": "Add to Outlook",
       "addToApple": "Add to Apple Calendar",
       "otherCalendars": "Other calendars"
+    },
+    "Share": {
+      "title": "Add a resource",
+      "loading": "Getting ready…",
+      "missed": "The share could not be received. Open TRACker once, then share again.",
+      "howTo": "From your gallery (Android): pick a video, tap Share, then TRACker. It lands here, ready to add to a choreography.",
+      "howToIphone": "On iPhone, add the video from the choreography: Resources → +.",
+      "noChoreography": "Only choreographers and admins can add resources to a choreography.",
+      "noStorage": "File uploads are not configured on this server.",
+      "tooBig": "This file is {size}; the limit is {max}. Shorten the video or film in 1080p.",
+      "choreography": "Choreography",
+      "descriptionPlaceholder": "E.g. Rehearsal of 16 November, full run",
+      "uploading": "Uploading",
+      "uploadingProgress": "Uploading: {progress}%",
+      "keepOpen": "keep this page open",
+      "submit": "Add to the choreography",
+      "discard": "Cancel"
     }
   }
 }
