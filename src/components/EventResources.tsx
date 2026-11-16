@@ -33,6 +33,11 @@ import {
   Textarea,
 } from "@/components/ui";
 import { useAppNavigation } from "@/lib/app-navigation";
+import {
+  createChoreographyFileResource,
+  createChoreographyLinkResource,
+  UploadFailedError,
+} from "@/lib/resource-upload";
 import { cn, withUrlScheme } from "@/lib/utils";
 
 async function responseError(response: Response, fallback: string) {
@@ -580,31 +585,6 @@ function ResourceCard({
 }
 
 
-/** A failed file upload (shown with a translated message, not the raw status). */
-class UploadFailedError extends Error {}
-
-function uploadFile(
-  uploadUrl: string,
-  file: File,
-  headers: Record<string, string>,
-  onProgress: (progress: number) => void,
-) {
-  return new Promise<void>((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open("PUT", uploadUrl);
-    Object.entries(headers).forEach(([name, value]) => request.setRequestHeader(name, value));
-    request.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
-    };
-    request.onload = () => {
-      if (request.status >= 200 && request.status < 300) resolve();
-      else reject(new UploadFailedError(`Upload failed (${request.status}).`));
-    };
-    request.onerror = () => reject(new UploadFailedError("Upload failed."));
-    request.send(file);
-  });
-}
-
 export function ResourceForm({ choreographyId }: { choreographyId: string }) {
   const t = useTranslations("Components");
   const navigation = useAppNavigation();
@@ -619,52 +599,29 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    let pendingResourceId: string | null = null;
     setSaving(true);
     setError(null);
     setProgress(null);
     try {
+      const details = { choreographyId, description, visibility };
       if (kind === "LINK") {
-        const response = await fetch(`/api/choreographies/${choreographyId}/resources`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: withUrlScheme(url), description: description || undefined, visibility }),
+        await createChoreographyLinkResource({
+          ...details,
+          url: withUrlScheme(url),
+          fallbackError: t("resourceCreateError"),
         });
-        if (!response.ok) throw new Error(await responseError(response, t("resourceCreateError")));
-        navigation.returnTo(`/choreographies/${choreographyId}?section=resources`);
-        return;
       } else {
         if (!file) throw new Error(t("selectResourceFile"));
-        const initiate = await fetch(`/api/choreographies/${choreographyId}/resources/uploads`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fileName: file.name,
-            mimeType: file.type || "application/octet-stream",
-            sizeBytes: file.size,
-            description: description || undefined,
-            visibility,
-          }),
+        await createChoreographyFileResource({
+          ...details,
+          file,
+          fileName: file.name,
+          fallbackError: t("resourceUploadError"),
+          onProgress: setProgress,
         });
-        if (!initiate.ok) throw new Error(await responseError(initiate, t("resourceUploadError")));
-        const upload = await initiate.json();
-        pendingResourceId = upload.resourceId;
-        await uploadFile(upload.uploadUrl, file, upload.headers, setProgress);
-        const complete = await fetch(
-          `/api/choreographies/${choreographyId}/resources/${upload.resourceId}/complete`,
-          { method: "POST" },
-        );
-        if (!complete.ok) throw new Error(await responseError(complete, t("resourceUploadError")));
-        pendingResourceId = null;
-        navigation.returnTo(`/choreographies/${choreographyId}?section=resources`);
-        return;
       }
+      navigation.returnTo(`/choreographies/${choreographyId}?section=resources`);
     } catch (reason) {
-      if (pendingResourceId) {
-        await fetch(`/api/choreographies/${choreographyId}/resources/${pendingResourceId}`, {
-          method: "DELETE",
-        }).catch(() => undefined);
-      }
       setError(
         reason instanceof UploadFailedError
           ? t("uploadFailed")
