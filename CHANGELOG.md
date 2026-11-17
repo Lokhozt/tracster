@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- **Bar** tab: organisers can fill a party's free bar slots from its sheet ("Ajouter des bénévoles").
+- **Indispos**: edit a period (pen) as well as delete it (bin), from one bar that opens as soon as a period is created or selected.
+
+### Changed
+- Planning on phones: "Prochain rendez-vous" is one short row, and "Les miens / Tous", search and filters share a single row, so the calendar shows on the first screen.
+- **Indispos** on phones: the "Indisponibilité enregistrée / Annuler" toast and the floating panel are replaced by that bar, which no longer overlaps the + button.
+- **Bar** and **Mon activité** use the full width on tablets.
+
+### Fixed
+- **Bar**: a party with a long name no longer pushes every card past the edge of the phone screen.
+
 ## 1.3.1 - 2026-11-17
 
 ### Added
