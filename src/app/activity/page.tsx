@@ -75,7 +75,7 @@ export default async function ActivityPage({ searchParams }: PageProps) {
 
   return (
     <AppShell title={t("title")}>
-      <div className="max-w-2xl space-y-4 lg:max-w-none">
+      <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <ActivityPeriodSwitch period={period} />
           <p className="text-sm text-stone-500">
@@ -86,7 +86,7 @@ export default async function ActivityPage({ searchParams }: PageProps) {
         </div>
 
         {/* Computers: two columns (your figures | the timeline) instead of one narrow strip. */}
-        <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
           <div className="space-y-4">
             <Card>
               <h2 className={SECTION_TITLE_CLASS}>{t("rehearsals")}</h2>
