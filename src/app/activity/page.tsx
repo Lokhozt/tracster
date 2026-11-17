@@ -71,12 +71,11 @@ export default async function ActivityPage({ searchParams }: PageProps) {
         value: activity.countsByTypeId[type.id] ?? 0,
       }))
       .filter((tile) => tile.value > 0 || joinableTypeIds.has(tile.key)),
-    { key: "bar", label: t("barSlots"), kind: null, value: activity.barSlotsHeld },
   ];
 
   return (
     <AppShell title={t("title")}>
-      <div className="max-w-2xl space-y-4">
+      <div className="max-w-2xl space-y-4 lg:max-w-none">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <ActivityPeriodSwitch period={period} />
           <p className="text-sm text-stone-500">
@@ -86,143 +85,149 @@ export default async function ActivityPage({ searchParams }: PageProps) {
           </p>
         </div>
 
-        <Card>
-          <h2 className={SECTION_TITLE_CLASS}>{t("rehearsals")}</h2>
-          {rehearsalsCounted === 0 ? (
-            <p className="text-stone-600">{t("noRehearsals")}</p>
-          ) : (
-            <>
-              <p className="flex items-baseline gap-2">
-                <span className="font-display text-5xl font-bold tabular-nums text-stone-900">
-                  {rehearsals.attended}
-                </span>
-                <span className="text-stone-600">
-                  {t("rehearsalsAttended", { count: rehearsals.attended })}
-                </span>
-              </p>
-              {attendanceRate !== null && (
-                <div className="mt-3">
-                  <div
-                    className="h-2 overflow-hidden rounded-full bg-stone-200"
-                    role="img"
-                    aria-label={t("attendanceRate", { rate: attendanceRate })}
-                  >
-                    <div
-                      className="h-full rounded-full bg-stone-900"
-                      style={{ width: `${attendanceRate}%` }}
-                    />
-                  </div>
-                  <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-stone-600">
-                    <span className="font-medium text-stone-900">
-                      {t("attendanceRate", { rate: attendanceRate })}
+        {/* Computers: two columns (your figures | the timeline) instead of one narrow strip. */}
+        <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+          <div className="space-y-4">
+            <Card>
+              <h2 className={SECTION_TITLE_CLASS}>{t("rehearsals")}</h2>
+              {rehearsalsCounted === 0 ? (
+                <p className="text-stone-600">{t("noRehearsals")}</p>
+              ) : (
+                <>
+                  <p className="flex items-baseline gap-2">
+                    <span className="font-display text-5xl font-bold tabular-nums text-stone-900">
+                      {rehearsals.attended}
                     </span>
-                    <span>
-                      {t("rehearsalHours", {
-                        hours: formatDurationMinutes(rehearsals.minutesAttended),
-                      })}
+                    <span className="text-stone-600">
+                      {t("rehearsalsAttended", { count: rehearsals.attended })}
                     </span>
-                    <span>{t("rehearsalsMissed", { count: rehearsals.missed })}</span>
                   </p>
-                </div>
-              )}
-            </>
-          )}
-        </Card>
-
-        <section aria-labelledby="activity-events">
-          <h2 id="activity-events" className={cn(SECTION_TITLE_CLASS, "px-1")}>
-            {t("eventsTitle")}
-          </h2>
-          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {tiles.map((tile) => (
-              <li
-                key={tile.key}
-                className="flex flex-col gap-1 rounded-xl border border-stone-200 bg-white px-4 py-3"
-              >
-                <span
-                  className={cn(
-                    "font-display text-3xl font-bold tabular-nums",
-                    tile.value === 0 ? "text-stone-400" : "text-stone-900",
+                  {attendanceRate !== null && (
+                    <div className="mt-3">
+                      <div
+                        className="h-2 overflow-hidden rounded-full bg-stone-200"
+                        role="img"
+                        aria-label={t("attendanceRate", { rate: attendanceRate })}
+                      >
+                        <div
+                          className="h-full rounded-full bg-stone-900"
+                          style={{ width: `${attendanceRate}%` }}
+                        />
+                      </div>
+                      <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-stone-600">
+                        <span className="font-medium text-stone-900">
+                          {t("attendanceRate", { rate: attendanceRate })}
+                        </span>
+                        <span>
+                          {t("rehearsalHours", {
+                            hours: formatDurationMinutes(rehearsals.minutesAttended),
+                          })}
+                        </span>
+                        <span>{t("rehearsalsMissed", { count: rehearsals.missed })}</span>
+                      </p>
+                    </div>
                   )}
-                >
-                  {tile.value}
-                </span>
-                {tile.kind ? (
-                  <span
-                    className={cn(
-                      "inline-flex max-w-full items-center gap-1.5 self-start rounded-full border px-2 py-0.5 text-xs font-medium",
-                      eventCategoryClassName(tile.kind),
-                    )}
+                </>
+              )}
+            </Card>
+
+            <section aria-labelledby="activity-events">
+              <h2 id="activity-events" className={cn(SECTION_TITLE_CLASS, "px-1")}>
+                {t("eventsTitle")}
+              </h2>
+              <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {tiles.map((tile) => (
+                  <li
+                    key={tile.key}
+                    className="flex flex-col gap-1 rounded-xl border border-stone-200 bg-white px-4 py-3"
                   >
-                    <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-current" />
-                    <span className="truncate">{tile.label}</span>
-                  </span>
-                ) : (
-                  <span className="text-sm text-stone-600">{tile.label}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <Card>
-          <h2 className="text-sm font-semibold text-stone-500">{t("monthsTitle")}</h2>
-          <p className="mb-4 text-sm text-stone-600">{t("monthsCaption")}</p>
-          <MonthChart months={activity.months} locale={locale} />
-        </Card>
-
-        <Card className="flex items-center justify-between gap-3 py-3 sm:py-3">
-          <div>
-            <h2 className="text-sm font-semibold text-stone-500">{t("choreographiesTitle")}</h2>
-            <p className="text-stone-900">
-              {t("dancing", { count: dancingCount })}
-              {leadingCount > 0 && <> · {t("leading", { count: leadingCount })}</>}
-            </p>
-          </div>
-          <Link
-            href="/choreographies"
-            aria-label={t("choreographiesTitle")}
-            className="-mr-2 flex size-11 shrink-0 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-100"
-          >
-            <ChevronRightIcon />
-          </Link>
-        </Card>
-
-        <Card>
-          <h2 className={SECTION_TITLE_CLASS}>{t("upcomingTitle")}</h2>
-          {activity.upcoming.length === 0 ? (
-            <p className="text-stone-600">{t("upcomingEmpty")}</p>
-          ) : (
-            <ul className="-mx-2 divide-y divide-stone-100">
-              {activity.upcoming.map((event) => (
-                <li key={event.id}>
-                  <Link
-                    href={event.href}
-                    className="flex min-h-12 items-center justify-between gap-3 rounded-lg px-2 py-2 transition hover:bg-stone-100"
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate font-medium text-stone-900">
-                        {event.title || event.choreographyTitle || event.typeName}
-                      </span>
-                      <span className="block text-sm text-stone-600">
-                        {event.typeName} · <LocalDateTime value={event.startsAt} />
-                      </span>
+                    <span
+                      className={cn(
+                        "font-display text-3xl font-bold tabular-nums",
+                        tile.value === 0 ? "text-stone-400" : "text-stone-900",
+                      )}
+                    >
+                      {tile.value}
                     </span>
-                    <ChevronRightIcon />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-          <Link
-            href="/"
-            className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-stone-900 underline-offset-4 hover:underline"
-          >
-            {activity.upcomingCount > activity.upcoming.length
-              ? t("upcomingMore", { count: activity.upcomingCount - activity.upcoming.length })
-              : t("openPlanning")}
-          </Link>
-        </Card>
+                    {tile.kind ? (
+                      <span
+                        className={cn(
+                          "inline-flex max-w-full items-center gap-1.5 self-start rounded-full border px-2 py-0.5 text-xs font-medium",
+                          eventCategoryClassName(tile.kind),
+                        )}
+                      >
+                        <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-current" />
+                        <span className="truncate">{tile.label}</span>
+                      </span>
+                    ) : (
+                      <span className="text-sm text-stone-600">{tile.label}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <Card className="flex items-center justify-between gap-3 py-3 sm:py-3">
+              <div>
+                <h2 className="text-sm font-semibold text-stone-500">{t("choreographiesTitle")}</h2>
+                <p className="text-stone-900">
+                  {t("dancing", { count: dancingCount })}
+                  {leadingCount > 0 && <> · {t("leading", { count: leadingCount })}</>}
+                </p>
+              </div>
+              <Link
+                href="/choreographies"
+                aria-label={t("choreographiesTitle")}
+                className="-mr-2 flex size-11 shrink-0 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-100"
+              >
+                <ChevronRightIcon />
+              </Link>
+            </Card>
+          </div>
+          <div className="space-y-4">
+            <Card>
+              <h2 className="text-sm font-semibold text-stone-500">{t("monthsTitle")}</h2>
+              <p className="mb-4 text-sm text-stone-600">{t("monthsCaption")}</p>
+              <MonthChart months={activity.months} locale={locale} />
+            </Card>
+
+            <Card>
+              <h2 className={SECTION_TITLE_CLASS}>{t("upcomingTitle")}</h2>
+              {activity.upcoming.length === 0 ? (
+                <p className="text-stone-600">{t("upcomingEmpty")}</p>
+              ) : (
+                <ul className="-mx-2 divide-y divide-stone-100">
+                  {activity.upcoming.map((event) => (
+                    <li key={event.id}>
+                      <Link
+                        href={event.href}
+                        className="flex min-h-12 items-center justify-between gap-3 rounded-lg px-2 py-2 transition hover:bg-stone-100"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate font-medium text-stone-900">
+                            {event.title || event.choreographyTitle || event.typeName}
+                          </span>
+                          <span className="block text-sm text-stone-600">
+                            {event.typeName} · <LocalDateTime value={event.startsAt} />
+                          </span>
+                        </span>
+                        <ChevronRightIcon />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <Link
+                href="/"
+                className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-stone-900 underline-offset-4 hover:underline"
+              >
+                {activity.upcomingCount > activity.upcoming.length
+                  ? t("upcomingMore", { count: activity.upcomingCount - activity.upcoming.length })
+                  : t("openPlanning")}
+              </Link>
+            </Card>
+          </div>
+        </div>
 
         <p className="px-1 text-xs text-stone-500">{t("declaredNote")}</p>
       </div>

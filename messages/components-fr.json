@@ -781,6 +781,12 @@
     "locationsOneOffHint": "Un lieu ponctuel peut toujours être saisi lors de la planification.",
     "requestSent": "Demande envoyée",
     "leaveParticipationConfirm": "Ne plus participer à cet événement ?",
-    "cancelRequestConfirm": "Annuler votre demande de participation ?"
+    "cancelRequestConfirm": "Annuler votre demande de participation ?",
+    "leaveParticipationBarConfirm": "Ne plus participer à cette soirée ? Votre créneau au bar sera libéré.",
+    "statusShortAVAILABLE": "Dispo",
+    "statusShortUNAVAILABLE": "Indispo",
+    "statusShortMAYBE": "Peut-être",
+    "availabilityGroupLabel": "Ma disponibilité",
+    "barTakeSlotConfirm": "Prendre un créneau bar à « {title} » ? Vous serez aussi inscrit à la soirée."
   }
 }

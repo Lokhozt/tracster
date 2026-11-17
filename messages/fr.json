@@ -39,7 +39,8 @@
     "choreographiesShort": "Chorés",
     "unavailabilityShort": "Indispos",
     "more": "Plus",
-    "calendarFeed": "Abonnement agenda"
+    "calendarFeed": "Abonnement agenda",
+    "bar": "Bar"
   },
   "Metadata": {
     "description": "Planifiez les répétitions et suivez les disponibilités des participants de votre association."

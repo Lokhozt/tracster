@@ -163,7 +163,7 @@ export function ChoreographiesList({
                   <div className="min-w-0 flex-1">
                     <h2 className="flex items-center gap-2 font-display text-xl sm:text-2xl">
                       {choreography.isChoreographer && <ChoreographerBadge />}
-                      <ViewTransition name={`choreography-title-${choreography.id}`} share="title-morph">
+                      <ViewTransition name={`choreography-title-${choreography.id}`} share="title-morph" default="none">
                         <span>{choreography.title}</span>
                       </ViewTransition>
                     </h2>

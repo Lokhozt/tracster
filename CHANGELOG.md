@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- **Bar** tab: the coming parties with bar slots, with your slots and free places at a glance; take or leave a slot with + / −, and tap a party to see who is at the bar.
+- Planning: take a bar slot straight from a party's "＋ Bar 2/3" chip.
+
+### Changed
+- **Mon activité** moves to the Plus menu; its bar slots tile is removed.
+- Planning: rehearsal availability is a compact Dispo / Indispo / Peut-être switch that answers at once; day blocks show the month.
+
+### Fixed
+- Leaving a party (or being removed by an organiser) now frees your bar slot.
+- Planning: the + button no longer blinks when an answer is saved.
+
 ## 1.3.0 - 2026-11-16
 
 ### Changed

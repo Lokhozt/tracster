@@ -26,6 +26,7 @@ function SlotChip({
   currentUserId,
   canManage,
   readOnly,
+  holdsAnotherSlot,
   onError,
 }: {
   index: number;
@@ -34,6 +35,8 @@ function SlotChip({
   currentUserId: string;
   canManage: boolean;
   readOnly: boolean;
+  /** The viewer already holds a slot at this party. */
+  holdsAnotherSlot: boolean;
   onError: (message: string | null) => void;
 }) {
   const t = useTranslations("Components");
@@ -63,7 +66,8 @@ function SlotChip({
   }
 
   if (!slot) {
-    if (readOnly) {
+    // One slot per person: someone already on this bar sees the others as just "Libre".
+    if (readOnly || holdsAnotherSlot) {
       return (
         <div className={cn(SLOT_CHIP, "border border-dashed border-stone-300 text-stone-400")} aria-label={`${slotLabel} : ${t("partyBarSlotEmpty")}`}>
           <span className="truncate">{t("partyBarSlotEmpty")}</span>
@@ -164,7 +168,6 @@ export function PartyBarEventCard({
   readOnly?: boolean;
 }) {
   const t = useTranslations("Components");
-  const [error, setError] = useState<string | null>(null);
   const isRegistered = slots.some((slot) => slot?.userId === currentUserId);
   const filledCount = slots.filter(Boolean).length;
 
@@ -206,6 +209,39 @@ export function PartyBarEventCard({
           </span>
         )}
       </div>
+      <PartyBarSlotList
+        eventId={eventId}
+        title={title}
+        slots={slots}
+        currentUserId={currentUserId}
+        canManage={canManage}
+        readOnly={readOnly}
+      />
+    </div>
+  );
+}
+
+/** The bar slots alone (who holds each, take / leave), e.g. in the Bar tab's party sheet. */
+export function PartyBarSlotList({
+  eventId,
+  title,
+  slots,
+  currentUserId,
+  canManage,
+  readOnly = false,
+}: {
+  eventId: string;
+  title: string;
+  slots: PartyBarSlot[];
+  currentUserId: string;
+  canManage: boolean;
+  readOnly?: boolean;
+}) {
+  const t = useTranslations("Components");
+  const [error, setError] = useState<string | null>(null);
+  const holdsSlot = slots.some((slot) => slot?.userId === currentUserId);
+  return (
+    <>
       <ul className="grid gap-1.5 sm:grid-cols-3 sm:gap-2" aria-label={t("partyBarSlotsAria", { title })}>
         {slots.map((slot, index) => (
           <li key={index} className="min-w-0">
@@ -216,12 +252,13 @@ export function PartyBarEventCard({
               currentUserId={currentUserId}
               canManage={canManage}
               readOnly={readOnly}
+              holdsAnotherSlot={holdsSlot}
               onError={setError}
             />
           </li>
         ))}
       </ul>
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
-    </div>
+    </>
   );
 }

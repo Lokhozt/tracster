@@ -16,10 +16,11 @@ export default async function MorePage() {
     redirect("/login");
   }
 
-  const [tNavigation, tAccount, tFooter] = await Promise.all([
+  const [tNavigation, tAccount, tFooter, tActivity] = await Promise.all([
     getTranslations("Navigation"),
     getTranslations("Account"),
     getTranslations("Footer"),
+    getTranslations("Pages.Activity"),
   ]);
 
   return (
@@ -27,6 +28,7 @@ export default async function MorePage() {
       <div className="space-y-5">
         <MenuGroup>
           <MenuRow href="/account" icon="user" label={tNavigation("account")} detail={user.name} />
+          <MenuRow href="/activity" icon="chart" label={tActivity("title")} />
           <MenuRow href="/documents" icon="folder" label={tNavigation("documents")} />
           <MenuRow href="/calendar-feed" icon="calendar" label={tNavigation("calendarFeed")} />
         </MenuGroup>

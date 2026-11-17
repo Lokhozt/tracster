@@ -217,7 +217,7 @@ export default async function EventDetailPage({ params }: PageProps) {
     <AppShell
       title={
         // Pairs with the title in the planning list: it glides into place on open and back.
-        <ViewTransition name={`event-title-${id}`} share="title-morph">
+        <ViewTransition name={`event-title-${id}`} share="title-morph" default="none">
           <span>{event.displayTitle}</span>
         </ViewTransition>
       }
@@ -239,6 +239,7 @@ export default async function EventDetailPage({ params }: PageProps) {
             allowRequest={eventRecord.allowJoinRequests}
             allowLeave
             isParticipant={isParticipant}
+            holdsBarSlot={partyBarAssignedUserIds.includes(user.id)}
             hasPendingRequest={hasPendingRequest}
             hasUpcomingSeries={event.hasUpcomingSeriesEvents}
           />
@@ -293,6 +294,7 @@ export default async function EventDetailPage({ params }: PageProps) {
             allowRequest={eventRecord.allowJoinRequests}
             allowLeave
             isParticipant={isParticipant}
+            holdsBarSlot={partyBarAssignedUserIds.includes(user.id)}
             hasPendingRequest={hasPendingRequest}
             hasUpcomingSeries={event.hasUpcomingSeriesEvents}
           />

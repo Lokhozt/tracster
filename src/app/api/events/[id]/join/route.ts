@@ -112,12 +112,12 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     return notFound("Event");
   }
 
-  const removed = await prisma.eventParticipant.deleteMany({
-    where: {
-      eventId: { in: targets.map((target) => target.id) },
-      userId: user.id,
-    },
-  });
+  const eventIds = targets.map((target) => target.id);
+  // A bar slot means coming to the party: leaving the party frees the slot too.
+  const [removed] = await prisma.$transaction([
+    prisma.eventParticipant.deleteMany({ where: { eventId: { in: eventIds }, userId: user.id } }),
+    prisma.eventPartyBarSlot.deleteMany({ where: { eventId: { in: eventIds }, userId: user.id } }),
+  ]);
 
   if (removed.count === 0) {
     return jsonError("You are not a participant of this event.");

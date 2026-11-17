@@ -28,54 +28,28 @@ import {
 
 
 
-function AvailabilityBadge({
-  status,
-}: {
-  status: SerializedScheduleEvent["availabilityStatus"];
-}) {
-  const t = useTranslations("Components");
-  if (!status) {
-    return (
-      <span className="rounded-full bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-600">
-        {t("noResponse")}
-      </span>
-    );
-  }
-
-  const styles = {
-    AVAILABLE: "bg-green-100 text-green-800",
-    UNAVAILABLE: "bg-red-100 text-red-800",
-    MAYBE: "bg-amber-100 text-amber-800",
-  };
-
-  return (
-    <span
-      className={`rounded-full px-2.5 py-1 text-xs font-medium ${styles[status]}`}
-    >
-      {t(`status${status}`)}
-    </span>
-  );
-}
-
 
 /**
- * Bar state of a party, on its row: "✓ Au bar" when you hold a slot, else "Bar 2/3" (amber
- * while a slot is free). With `showSignup` ("Places libres"), a button takes a slot directly,
- * so the bar sign-up is not confused with attending the party ("Participer").
+ * Bar status of a party. With a free slot the chip is itself the way in ("＋ Bar 2/3"): one tap
+ * (confirmed) takes a slot, which also counts as coming, as in the Bar tab.
  */
 function BarSlotRow({
   event,
-  showSignup,
+  canSignUp,
 }: {
   event: SerializedScheduleEvent;
-  showSignup: boolean;
+  canSignUp: boolean;
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const label = t("barChip", { filled: event.barSlotsFilled ?? 0, total: PARTY_BAR_SLOT_COUNT });
 
   async function takeSlot() {
+    if (!window.confirm(t("barTakeSlotConfirm", { title: scheduleEventLabel(event) }))) {
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -99,6 +73,16 @@ function BarSlotRow({
         <span className="chip-pop rounded-full bg-emerald-700 px-2.5 py-0.5 text-xs font-semibold text-white">
           {t("barChipMine")}
         </span>
+      ) : canSignUp && event.hasFreeBarSlot ? (
+        <button
+          type="button"
+          disabled={saving}
+          onClick={() => void takeSlot()}
+          aria-label={`${t("barTakeSlot")} (${label})`}
+          className="relative rounded-full bg-spotlight px-2.5 py-0.5 text-xs font-semibold tabular-nums text-spotlight-ink transition after:absolute after:-inset-x-1 after:-inset-y-3 hover:brightness-95 active:scale-95 disabled:opacity-60"
+        >
+          {saving ? t("saving") : <>＋ {label}</>}
+        </button>
       ) : (
         <span
           className={cn(
@@ -106,13 +90,8 @@ function BarSlotRow({
             event.hasFreeBarSlot ? "bg-spotlight text-spotlight-ink" : "bg-stone-100 text-stone-600",
           )}
         >
-          {t("barChip", { filled: event.barSlotsFilled ?? 0, total: PARTY_BAR_SLOT_COUNT })}
+          {label}
         </span>
-      )}
-      {showSignup && event.hasFreeBarSlot && !event.isBarVolunteer && (
-        <Button type="button" variant="secondary" disabled={saving} onClick={() => void takeSlot()}>
-          {saving ? t("saving") : t("barTakeSlot")}
-        </Button>
       )}
       {error && (
         <p role="alert" className="w-full text-sm text-red-600">
@@ -198,13 +177,11 @@ export function UpcomingEventsList({
   events,
   categoriesFiltered = false,
   includePast = false,
-  showBarSignup = false,
   mineOnly = false,
 }: {
   events: SerializedScheduleEvent[];
   categoriesFiltered?: boolean;
   /** "Places libres": a "take a slot" button right on the party rows. */
-  showBarSignup?: boolean;
   /** Only the viewer's events are shown (for the empty message). */
   mineOnly?: boolean;
   /** Also list finished events, most recent first, under a "past" heading. */
@@ -222,6 +199,7 @@ export function UpcomingEventsList({
   });
   const timeFormatter = new Intl.DateTimeFormat(locale, { timeStyle: "short" });
   const weekdayFormatter = new Intl.DateTimeFormat(locale, { weekday: "short" });
+  const monthFormatter = new Intl.DateTimeFormat(locale, { month: "short" });
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
@@ -338,6 +316,7 @@ export function UpcomingEventsList({
                   <p className="mt-1 text-xs font-medium text-stone-500">
                     {weekdayFormatter.format(group.day)}
                   </p>
+                  <p className="text-xs text-stone-500">{monthFormatter.format(group.day)}</p>
                 </div>
                 <div className="grid min-w-0 flex-1 gap-2 @2xl:has-[>:nth-child(2)]:grid-cols-2">
                   {group.events.map((event) => (
@@ -371,7 +350,7 @@ export function UpcomingEventsList({
                           className={cn("text-base font-semibold hover:underline", cardLink)}
                         >
                           {/* Same name as the event page title: it glides there when you open it. */}
-                          <ViewTransition name={`event-title-${event.id}`} share="title-morph">
+                          <ViewTransition name={`event-title-${event.id}`} share="title-morph" default="none">
                             <span>{defaultEventTitle(event)}</span>
                           </ViewTransition>
                         </Link>
@@ -393,11 +372,6 @@ export function UpcomingEventsList({
                       </p>
                     )}
                   </div>
-                  {isRehearsalScheduleEvent(event) && event.isMember && (
-                    <div className={cn("shrink-0", aboveCardLink)}>
-                      <AvailabilityBadge status={event.availabilityStatus} />
-                    </div>
-                  )}
                 </div>
 
                 {/* Bottom row: bar chip on the left, join/leave pill on the right. The pill lives
@@ -406,7 +380,7 @@ export function UpcomingEventsList({
                 {(event.barSlotsFilled !== null || (hasJoinPill(event) && !isFinished(event))) && (
                   <div className={cn("mt-2 flex flex-wrap items-center gap-2", aboveCardLink)}>
                     {event.barSlotsFilled !== null && (
-                      <BarSlotRow event={event} showSignup={showBarSignup && !isFinished(event)} />
+                      <BarSlotRow event={event} canSignUp={!isFinished(event)} />
                     )}
                     {hasJoinPill(event) && !isFinished(event) && (
                       <div className="ml-auto shrink-0">
@@ -419,16 +393,18 @@ export function UpcomingEventsList({
                           isParticipant={event.isEventParticipant}
                           hasPendingRequest={event.hasPendingJoinRequest}
                           hasUpcomingSeries={event.hasUpcomingSeriesEvents}
+                          holdsBarSlot={event.isBarVolunteer}
                         />
                       </div>
                     )}
                   </div>
                 )}
                 {isRehearsalScheduleEvent(event) && event.isMember && (
-                  <div className={cn("mt-3 border-t border-stone-100 pt-3", aboveCardLink)}>
+                  <div className={cn("mt-2", aboveCardLink)}>
                     <AvailabilityButtons
                       rehearsalId={event.id}
                       currentStatus={event.availabilityStatus}
+                      compact
                     />
                   </div>
                 )}
