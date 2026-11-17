@@ -270,6 +270,18 @@ export type UnavailabilityUserOption = {
   name: string;
 };
 
+/** "jeu. 19 nov. · 12:30 – 18:00", or both dates when the period spans several days. */
+function formatPeriod(startsAt: string, endsAt: string, locale: string): string {
+  const start = new Date(startsAt);
+  const end = new Date(endsAt);
+  const day = new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short" });
+  const time = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  if (day.format(start) === day.format(end)) {
+    return `${day.format(start)} · ${time.format(start)} – ${time.format(end)}`;
+  }
+  return `${day.format(start)} ${time.format(start)} – ${day.format(end)} ${time.format(end)}`;
+}
+
 export function UnavailabilityCalendar({
   currentUserId,
   users,
@@ -306,15 +318,6 @@ export function UnavailabilityCalendar({
   const [timeframes, setTimeframes] = useState(initialTimeframes);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [interaction, setInteraction] = useState<Interaction | null>(null);
-  // "Annuler" right after a new period is saved (drawn, typed or a whole day).
-  const [undoId, setUndoId] = useState<string | null>(null);
-  useEffect(() => {
-    if (!undoId) {
-      return;
-    }
-    const timer = window.setTimeout(() => setUndoId(null), 6000);
-    return () => window.clearTimeout(timer);
-  }, [undoId]);
   // Typing a period instead of drawing it (keyboard, screen readers, precise times).
   const addSheet = useCreateSheet("unavailability");
   const [addStart, setAddStart] = useState<DateTimeParts>(() =>
@@ -324,9 +327,28 @@ export function UnavailabilityCalendar({
     dateToDateTimeParts(setMinutes(setHours(new Date(), 22), 0)),
   );
   const [addError, setAddError] = useState<string | null>(null);
+  // The same sheet adds a period (+) or edits the selected one (✏️ in the action bar).
+  const [editingId, setEditingId] = useState<string | null>(null);
   function openAddSheet() {
+    if (editingId) {
+      // Coming from an edit: back to the usual suggestion (today, 18:00–22:00).
+      setAddStart(dateToDateTimeParts(setMinutes(setHours(new Date(), 18), 0)));
+      setAddEnd(dateToDateTimeParts(setMinutes(setHours(new Date(), 22), 0)));
+    }
+    setEditingId(null);
     setAddError(null);
     addSheet.show();
+  }
+  function openEditSheet(timeframe: { id: string; startsAt: string; endsAt: string }) {
+    setEditingId(timeframe.id);
+    setAddStart(dateToDateTimeParts(new Date(timeframe.startsAt)));
+    setAddEnd(dateToDateTimeParts(new Date(timeframe.endsAt)));
+    setAddError(null);
+    addSheet.show();
+  }
+  // A named handler: an inline arrow here made the React Compiler skip loadTimeframes.
+  function clearSelection() {
+    setSelectedId(null);
   }
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -592,12 +614,9 @@ export function UnavailabilityCalendar({
         (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
       ),
     );
-    if (select) {
+    // A new period is selected straight away: its action bar offers edit and delete.
+    if (select || !id) {
       setSelectedId(saved.id);
-    }
-    // Undoing a save that merged neighbouring periods would delete them too: no undo then.
-    if (!id && deletedIds.size === 0) {
-      setUndoId(saved.id);
     }
     return saved;
   }
@@ -1220,11 +1239,18 @@ export function UnavailabilityCalendar({
         </div>
       </Card>
 
-      <FloatingActionButton
-        actions={[]}
-        primary={{ label: t("addUnavailability"), onClick: openAddSheet }}
-      />
-      <FormSheet open={addSheet.open} onClose={addSheet.close} title={t("addUnavailability")}>
+      {/* Phones/tablets: the action bar below takes the + button's place while it is shown. */}
+      {!selectedTimeframe && (
+        <FloatingActionButton
+          actions={[]}
+          primary={{ label: t("addUnavailability"), onClick: openAddSheet }}
+        />
+      )}
+      <FormSheet
+        open={addSheet.open}
+        onClose={addSheet.close}
+        title={editingId ? t("editUnavailability") : t("addUnavailability")}
+      >
         <form
           className="space-y-5"
           onSubmit={async (event) => {
@@ -1235,7 +1261,8 @@ export function UnavailabilityCalendar({
               setAddError(t("endAfterStart"));
               return;
             }
-            const saved = await persistTimeframe(null, startsAt, endsAt, { select: false });
+            // The saved period stays (or becomes) selected, with its edit / delete bar.
+            const saved = await persistTimeframe(editingId, startsAt, endsAt);
             if (saved) {
               setWeekStart(startOfWeek(startsAt, { weekStartsOn: 1 }));
               addSheet.close();
@@ -1263,50 +1290,17 @@ export function UnavailabilityCalendar({
               {t("cancel")}
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? t("saving") : t("addUnavailability")}
+              {saving ? t("saving") : editingId ? t("save") : t("addUnavailability")}
             </Button>
           </FormActions>
         </form>
       </FormSheet>
 
-      {undoId && (
-        <div
-          role="status"
-          className={cn(
-            "fixed inset-x-3 z-40 mx-auto flex max-w-md items-center justify-between gap-3 overflow-hidden rounded-xl bg-stone-900 px-4 py-3 text-sm text-white shadow-lg",
-            "lg:right-6 lg:bottom-6 lg:left-auto",
-            // Above the selection panel when one is open.
-            selectedTimeframe
-              ? "bottom-[calc(11rem+env(safe-area-inset-bottom))]"
-              : "bottom-[calc(5.5rem+env(safe-area-inset-bottom))]",
-          )}
-        >
-          <span>{t("unavailabilitySaved")}</span>
-          {/* Time left to undo (same 6s as the toast). */}
-          <span
-            key={undoId}
-            aria-hidden="true"
-            className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-spotlight motion-safe:animate-[countdown_6s_linear_forwards]"
-          />
-          <button
-            type="button"
-            className="min-h-10 rounded-lg px-3 font-semibold text-spotlight hover:bg-white/10"
-            onClick={() => {
-              const id = undoId;
-              setUndoId(null);
-              void removeTimeframe(id);
-            }}
-          >
-            {t("undo")}
-          </button>
-        </div>
-      )}
-
       {selectedTimeframe && (
         <Card
           data-allow-scroll
-          // Phones: floats just above the bottom tab bar (and its raised Planning button).
-          className="fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 p-3 shadow-lg sm:static sm:p-5 sm:shadow-sm"
+          // Desktop only (phones and tablets use the action bar).
+          className="hidden lg:block"
         >
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -1316,16 +1310,75 @@ export function UnavailabilityCalendar({
                 {dateTimeFormatter.format(new Date(selectedTimeframe.endsAt))}
               </p>
             </div>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={saving}
-              onClick={() => void deleteSelected()}
-            >
-              {t("delete")}
-            </Button>
+            <div className="flex shrink-0 gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={saving}
+                onClick={() => openEditSheet(selectedTimeframe)}
+              >
+                {t("edit")}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={saving}
+                onClick={() => void deleteSelected()}
+              >
+                {t("delete")}
+              </Button>
+            </div>
           </div>
         </Card>
+      )}
+
+      {/* Phones and tablets: the selected period (a new one is selected at once) in one bar
+          above the tab bar, in the + button's place: edit, delete, deselect. */}
+      {selectedTimeframe && (
+        <div
+          data-allow-scroll
+          className="fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-xl items-center gap-2 rounded-2xl border border-stone-200 bg-white py-2 pr-2 pl-4 text-stone-900 shadow-lg lg:hidden"
+        >
+          <p className="min-w-0 flex-1 truncate text-sm font-medium">
+            {formatPeriod(selectedTimeframe.startsAt, selectedTimeframe.endsAt, locale)}
+          </p>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => openEditSheet(selectedTimeframe)}
+            aria-label={t("editPeriod")}
+            title={t("editPeriod")}
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-stone-100 hover:bg-stone-200 disabled:opacity-50"
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void deleteSelected()}
+            aria-label={t("delete")}
+            title={t("delete")}
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-red-700 hover:bg-red-50 disabled:opacity-50"
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={clearSelection}
+            aria-label={t("deselectPeriod")}
+            title={t("deselectPeriod")}
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-stone-500 hover:bg-stone-100"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M6 6l12 12M18 6 6 18" />
+            </svg>
+          </button>
+        </div>
       )}
 
       {pressing && (
