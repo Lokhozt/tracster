@@ -787,6 +787,10 @@
     "statusShortUNAVAILABLE": "Indispo",
     "statusShortMAYBE": "Peut-être",
     "availabilityGroupLabel": "Ma disponibilité",
-    "barTakeSlotConfirm": "Prendre un créneau bar à « {title} » ? Vous serez aussi inscrit à la soirée."
+    "barTakeSlotConfirm": "Prendre un créneau bar à « {title} » ? Vous serez aussi inscrit à la soirée.",
+    "closeSearch": "Fermer la recherche",
+    "deselectPeriod": "Désélectionner la période",
+    "editUnavailability": "Modifier l’indisponibilité",
+    "editPeriod": "Modifier la période"
   }
 }

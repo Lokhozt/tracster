@@ -29,6 +29,7 @@ export function NextUpCard({
   children,
   footer,
   layout = "block",
+  compactOnPhones = false,
 }: {
   label: string;
   href?: string;
@@ -44,6 +45,8 @@ export function NextUpCard({
   footer?: React.ReactNode;
   /** "strip": a single line on wide screens (xl+: Planning, event page). */
   layout?: "block" | "strip";
+  /** Phones and tablets: one short row (time | title), so the planning's calendar shows sooner. */
+  compactOnPhones?: boolean;
 }) {
   const t = useTranslations("Components");
   const locale = useLocale();
@@ -89,6 +92,7 @@ export function NextUpCard({
   // "strip" (desktop only): one line — time, then label/title/details, then the pill — so the
   // block does not push the calendar down. Phones always get the stacked block.
   const strip = layout === "strip";
+  const compact = compactOnPhones;
   return (
     <div className="space-y-2">
       <div
@@ -96,11 +100,12 @@ export function NextUpCard({
           "next-up-in relative isolate overflow-hidden rounded-2xl bg-stage p-5 text-[#fff] shadow-lg sm:p-6",
           isToday && "next-up-today",
           strip && "xl:flex xl:items-center xl:gap-8 xl:py-4",
+          compact && "max-lg:flex max-lg:items-center max-lg:gap-4 max-lg:p-3 max-lg:px-4",
         )}
       >
         {/* Seasonal illustration (autumn leaves, christmas snow), set by the frame's theme in CSS. */}
         <span aria-hidden="true" className="next-up-art" />
-        <div className={cn("flex items-center justify-between gap-3", strip && "xl:hidden")}>
+        <div className={cn("flex items-center justify-between gap-3", strip && "xl:hidden", compact && "max-lg:hidden")}>
           {href ? (
             <Link href={href} className={cn("text-sm font-semibold text-[#fff]/75", cardLink)}>
               {label}
@@ -114,14 +119,27 @@ export function NextUpCard({
             </span>
           )}
         </div>
-        <div className={cn("mt-3 flex items-end gap-3", strip && "xl:mt-0 xl:shrink-0")}>
+        <div
+          className={cn(
+            "mt-3 flex items-end gap-3",
+            strip && "xl:mt-0 xl:shrink-0",
+            compact && "max-lg:mt-0 max-lg:shrink-0 max-lg:flex-col max-lg:items-start max-lg:gap-1",
+          )}
+        >
           <span
-            className={cn("font-display text-6xl leading-[0.85] tabular-nums", strip && "xl:text-5xl")}
+            className={cn(
+              "font-display text-6xl leading-[0.85] tabular-nums",
+              strip && "xl:text-5xl",
+              compact && "max-lg:text-4xl",
+            )}
             suppressHydrationWarning
           >
             {now ? time.format(start) : "\u00a0"}
           </span>
-          <span className="pb-1 font-display text-xl text-[#fff]/80" suppressHydrationWarning>
+          <span
+            className={cn("pb-1 font-display text-xl text-[#fff]/80", compact && "max-lg:pb-0 max-lg:text-sm")}
+            suppressHydrationWarning
+          >
             {now ? day.format(start) : ""}
             {now && showEnd && end && (
               <span className="block text-base text-[#fff]/65">
@@ -133,27 +151,64 @@ export function NextUpCard({
             )}
           </span>
         </div>
-        <div className={cn(strip && "xl:min-w-0 xl:flex-1")}>
+        <div className={cn(strip && "xl:min-w-0 xl:flex-1", compact && "max-lg:min-w-0 max-lg:flex-1")}>
           {strip && (
-            <div className="hidden xl:block">
+            <div
+              className={cn(
+                "hidden xl:block",
+                // Phones: label and "Dans 3 jours" share one line above the title.
+                compact && "max-lg:flex max-lg:items-center max-lg:justify-between max-lg:gap-2",
+              )}
+            >
               {href ? (
-              <Link href={href} className={cn("text-sm font-semibold text-[#fff]/75", cardLink)}>
-                {label}
-              </Link>
-          ) : (
-              <p className="text-sm font-semibold text-[#fff]/75">{label}</p>
-            )}
+                <Link
+                  href={href}
+                  className={cn("text-sm font-semibold text-[#fff]/75", compact && "max-lg:truncate max-lg:text-xs", cardLink)}
+                >
+                  {label}
+                </Link>
+              ) : (
+                <p className={cn("text-sm font-semibold text-[#fff]/75", compact && "max-lg:truncate max-lg:text-xs")}>
+                  {label}
+                </p>
+              )}
+              {compact && relative && (
+                <span className="shrink-0 rounded-full bg-spotlight px-2 py-0.5 text-[0.6875rem] font-semibold whitespace-nowrap text-spotlight-ink lg:hidden">
+                  {relative}
+                </span>
+              )}
             </div>
           )}
-          {title && <p className={cn("mt-3 text-lg font-semibold", strip && "xl:mt-0.5 xl:truncate")}>{title}</p>}
+          {title && (
+            <p
+              className={cn(
+                "mt-3 text-lg font-semibold",
+                strip && "xl:mt-0.5 xl:truncate",
+                compact && "max-lg:mt-0.5 max-lg:truncate max-lg:text-base",
+              )}
+            >
+              {title}
+            </p>
+          )}
           {(subtitle || location) && (
-            <p className={cn("text-sm text-[#fff]/70", !title && "mt-3", strip && "xl:mt-0 xl:truncate")}>
+            <p
+              className={cn(
+                "text-sm text-[#fff]/70",
+                !title && "mt-3",
+                strip && "xl:mt-0 xl:truncate",
+                compact && "max-lg:mt-0 max-lg:truncate max-lg:text-xs",
+              )}
+            >
               {[subtitle, location].filter(Boolean).join(" · ")}
             </p>
           )}
         </div>
         {strip && relative && (
-          <span className="hidden shrink-0 self-start rounded-full bg-spotlight px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap text-spotlight-ink xl:inline-block">
+          <span
+            className={cn(
+              "hidden shrink-0 self-start rounded-full bg-spotlight px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap text-spotlight-ink xl:inline-block",
+            )}
+          >
             {relative}
           </span>
         )}

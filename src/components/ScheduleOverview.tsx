@@ -2,7 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { FollowAssociationCalendarLink } from "@/components/FollowAssociationCalendarLink";
 import { EventTypeFilter } from "@/components/EventTypeFilter";
 import { FilterButton, FilterCheckbox, FilterSheet } from "@/components/FilterSheet";
@@ -172,6 +173,10 @@ export function ScheduleOverview({
     return parts.join(" · ");
   }, [barFilter, freeBarSlots, hiddenTypeIds.length, showPast, t]);
 
+  // Phones: the search field opens from a button (and stays while it holds text).
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchShown = searchOpen || search !== "";
   const scopeSwitch = (
     <SegmentedControl
       className={cn(barMode && "pointer-events-none opacity-40")}
@@ -195,6 +200,7 @@ export function ScheduleOverview({
           {nextUp && (
             <NextUpCard
               layout="strip"
+              compactOnPhones
               label={t("nextUpTitle")}
               href={nextUp.href}
               startsAt={nextUp.startsAt}
@@ -216,21 +222,58 @@ export function ScheduleOverview({
           />
         </div>
       )}
-      <div className="mb-4 flex gap-2">
-        <div className="min-w-0 flex-1">
+      {/* One row. Phones: "Les miens / Tous", a search button and the filters; the search field
+          takes the row while open (or while it holds text). Desktop: field, switch, filters. */}
+      <div className="mb-4 flex items-center gap-2">
+        <div className={cn("min-w-0 flex-1", !searchShown && "max-lg:hidden")}>
           <SearchInput
             aria-label={t("search")}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={t("planningSearchPlaceholder")}
+            ref={searchInputRef}
           />
         </div>
+        {searchShown ? (
+          <button
+            type="button"
+            onClick={() => {
+              setSearch("");
+              setSearchOpen(false);
+            }}
+            aria-label={t("closeSearch")}
+            title={t("closeSearch")}
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-900 hover:bg-stone-100 lg:hidden"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M6 6l12 12M18 6 6 18" />
+            </svg>
+          </button>
+        ) : (
+          <>
+            <div className="min-w-0 flex-1 lg:hidden">{scopeSwitch}</div>
+            <button
+              type="button"
+              onClick={() => {
+                // Show the field, then focus it within the tap so the phone keyboard opens.
+                flushSync(() => setSearchOpen(true));
+                searchInputRef.current?.focus();
+              }}
+              aria-label={t("search")}
+              title={t("search")}
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-stone-300 bg-white text-stone-900 hover:bg-stone-100 lg:hidden"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+            </button>
+          </>
+        )}
         {/* Desktop: the "Les miens / Tous" switch shares the search row. */}
         <div className="hidden lg:block lg:w-64">{scopeSwitch}</div>
         <FilterButton activeFilterCount={activeFilterCount} onClick={() => setFilterSheetOpen(true)} />
       </div>
-      {/* The most used filter, always in sight: my events or everyone's (paused by a bar choice). */}
-      <div className="mb-4 lg:hidden">{scopeSwitch}</div>
       {/* Phones/tablets: the calendar's export, edit and follow tools live in the "+" menu. */}
       <FloatingActionButton
         actions={createActions}
