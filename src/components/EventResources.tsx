@@ -20,6 +20,7 @@ import type {
 } from "@/lib/choreography-resources";
 import { OfficeFileViewer } from "@/components/OfficeFileViewer";
 import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
+import { VideoGallery } from "@/components/VideoGallery";
 import {
   Button,
   Card,
@@ -38,6 +39,8 @@ import {
   createChoreographyLinkResource,
   UploadFailedError,
 } from "@/lib/resource-upload";
+import { isSpotifyResource, isVideoResource } from "@/lib/resource-media";
+import { useResourceFileUrl } from "@/lib/use-resource-file-url";
 import { cn, withUrlScheme } from "@/lib/utils";
 
 async function responseError(response: Response, fallback: string) {
@@ -241,30 +244,13 @@ function FileResource({
   resource: SerializedChoreographyResource;
 }) {
   const t = useTranslations("Components");
-  const [url, setUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
 
   const officeFile = resource.mediaKind === "docx" || resource.mediaKind === "xlsx";
-
-  useEffect(() => {
-    if (officeFile) return;
-    let cancelled = false;
-    fetch(`/api/choreographies/${choreographyId}/resources/${resource.id}/content`)
-      .then(async (response) => {
-        if (!response.ok) throw new Error(await responseError(response, t("resourceLoadError")));
-        return response.json();
-      })
-      .then((body) => {
-        if (!cancelled) setUrl(body.url);
-      })
-      .catch((reason) => {
-        if (!cancelled) setError(reason.message);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [choreographyId, officeFile, resource.id, t]);
+  const { url, error } = useResourceFileUrl(choreographyId, resource.id, {
+    enabled: !officeFile,
+    fallbackError: t("resourceLoadError"),
+  });
 
   const label = resource.fileName ?? t("resourceFile");
   if (resource.mediaKind === "docx" || resource.mediaKind === "xlsx") {
@@ -484,14 +470,17 @@ function EditResourceForm({
   );
 }
 
-function ResourceCard({
+/** Pin, download and edit (with delete inside the edit sheet) for one resource. */
+function ResourceActions({
   choreographyId,
   resource,
   canEdit,
+  pinnable = true,
 }: {
   choreographyId: string;
   resource: SerializedChoreographyResource;
   canEdit: boolean;
+  pinnable?: boolean;
 }) {
   const t = useTranslations("Components");
   const router = useRouter();
@@ -515,40 +504,32 @@ function ResourceCard({
   }
 
   return (
-    <Card>
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-stone-100 px-2 py-1 text-xs font-medium text-stone-700">
-            {t(`resourceVisibility.${resource.visibility}`)}
-          </span>
-          {resource.fileName && <span className="text-sm font-medium">{resource.fileName}</span>}
-        </div>
-        <div className="flex shrink-0 items-start gap-3">
-          {canEdit && (
-            <PinResourceButton
-              choreographyId={choreographyId}
-              resourceId={resource.id}
-              pinned={resource.pinned}
-            />
-          )}
-          {resource.type === "FILE" && (
-            <ResourceDownloadButton choreographyId={choreographyId} resource={resource} />
-          )}
-          {canEdit && (
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              aria-label={t("editResource")}
-              title={t("editResource")}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-stone-300 text-stone-600 transition hover:bg-stone-100 hover:text-stone-900"
-            >
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-              </svg>
-            </button>
-          )}
-        </div>
+    <>
+      <div className="flex shrink-0 items-start gap-3">
+        {canEdit && pinnable && (
+          <PinResourceButton
+            choreographyId={choreographyId}
+            resourceId={resource.id}
+            pinned={resource.pinned}
+          />
+        )}
+        {resource.type === "FILE" && (
+          <ResourceDownloadButton choreographyId={choreographyId} resource={resource} />
+        )}
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            aria-label={t("editResource")}
+            title={t("editResource")}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-stone-300 text-stone-600 transition hover:bg-stone-100 hover:text-stone-900"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+          </button>
+        )}
       </div>
       {canEdit && (
         <FilterSheet open={editing} onClose={() => setEditing(false)} title={t("editResource")}>
@@ -571,9 +552,34 @@ function ResourceCard({
           </div>
         </FilterSheet>
       )}
+    </>
+  );
+}
+
+function ResourceCard({
+  choreographyId,
+  resource,
+  canEdit,
+}: {
+  choreographyId: string;
+  resource: SerializedChoreographyResource;
+  canEdit: boolean;
+}) {
+  const t = useTranslations("Components");
+  return (
+    <Card>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="rounded-full bg-stone-100 px-2 py-1 text-xs font-medium text-stone-700">
+            {t(`resourceVisibility.${resource.visibility}`)}
+          </span>
+          {resource.fileName && <span className="min-w-0 text-sm font-medium break-all">{resource.fileName}</span>}
+        </div>
+        <ResourceActions choreographyId={choreographyId} resource={resource} canEdit={canEdit} />
+      </div>
       {/* A plain link uses its description as link text (see ResourceLink): not shown twice. */}
       {resource.description && !(resource.type === "LINK" && resource.url && !resource.embed) && (
-        <p className="mb-3 whitespace-pre-wrap text-sm text-stone-600">{resource.description}</p>
+        <p className="mb-3 whitespace-pre-wrap break-words text-sm text-stone-600">{resource.description}</p>
       )}
       {resource.type === "LINK" && resource.url ? (
         <ResourceLink url={resource.url} embed={resource.embed} title={resource.description} />
@@ -636,7 +642,7 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
 
   return (
     <form onSubmit={submit}>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <Field label={t("resourceType")}>
             <SegmentedControl
@@ -702,6 +708,55 @@ export function ResourceForm({ choreographyId }: { choreographyId: string }) {
   );
 }
 
+/** The choreography's song, almost only the player: Spotify's compact bar, management beside it. */
+function MusicResource({
+  choreographyId,
+  resource,
+  canEdit,
+}: {
+  choreographyId: string;
+  resource: SerializedChoreographyResource;
+  canEdit: boolean;
+}) {
+  const t = useTranslations("Components");
+  if (resource.embed?.provider !== "spotify") return null;
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <iframe
+        className="h-20 min-w-0 flex-1 rounded-xl"
+        src={resource.embed.src}
+        title={resource.description || t("spotifyPlayer")}
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+        loading="lazy"
+      />
+      {/* The song already leads the resources: pinning it would add nothing. */}
+      {canEdit && (
+        <ResourceActions choreographyId={choreographyId} resource={resource} canEdit pinnable={false} />
+      )}
+    </div>
+  );
+}
+
+function ResourceGroup({
+  title,
+  twoColumns = false,
+  children,
+}: {
+  title: string | null;
+  /** Large screens: two per row (cards, music); the video feed lays itself out. */
+  twoColumns?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      {title && <h3 className="mb-3 text-base font-semibold text-stone-900">{title}</h3>}
+      <div className={cn("grid grid-cols-1 gap-4", twoColumns && "lg:grid-cols-2 lg:items-start")}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function ChoreographyResources({
   choreographyId,
   resources,
@@ -722,6 +777,11 @@ export function ChoreographyResources({
   const addHref = `/choreographies/${choreographyId}/resources/new`;
   const showFloatingAdd =
     canEdit && tabSectionId !== undefined && searchParams.get("section") === tabSectionId;
+  const music = resources.filter(isSpotifyResource);
+  const videos = resources.filter(isVideoResource);
+  const others = resources.filter(
+    (resource) => !isSpotifyResource(resource) && !isVideoResource(resource),
+  );
   // Same layout as the events sections: a plain heading row, then one card per resource.
   return (
     <section>
@@ -747,10 +807,32 @@ export function ChoreographyResources({
           <p className="text-stone-600">{t("noChoreographyResources")}</p>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {resources.map((resource) => (
-            <ResourceCard key={resource.id} choreographyId={choreographyId} resource={resource} canEdit={canEdit} />
-          ))}
+        // The music first, then the videos as a player, then everything else.
+        <div className="space-y-8">
+          {music.length > 0 && (
+            <ResourceGroup title={t("choreographyMusic")} twoColumns>
+              {music.map((resource) => (
+                <MusicResource key={resource.id} choreographyId={choreographyId} resource={resource} canEdit={canEdit} />
+              ))}
+            </ResourceGroup>
+          )}
+          {videos.length > 0 && (
+            <ResourceGroup title={t("choreographyVideos")}>
+              <VideoGallery
+                videos={videos.map((resource) => ({ choreography: { id: choreographyId, title: "" }, resource }))}
+                renderActions={({ resource }) => (
+                  <ResourceActions choreographyId={choreographyId} resource={resource} canEdit={canEdit} />
+                )}
+              />
+            </ResourceGroup>
+          )}
+          {others.length > 0 && (
+            <ResourceGroup title={music.length > 0 || videos.length > 0 ? t("otherResources") : null} twoColumns>
+              {others.map((resource) => (
+                <ResourceCard key={resource.id} choreographyId={choreographyId} resource={resource} canEdit={canEdit} />
+              ))}
+            </ResourceGroup>
+          )}
         </div>
       )}
     </section>

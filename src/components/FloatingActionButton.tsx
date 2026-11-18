@@ -17,7 +17,8 @@ export type FloatingAction = {
 export const FAB_MENU_ITEM_CLASS =
   "inline-flex min-h-11 items-center rounded-full bg-white px-4 py-2 text-sm font-medium text-stone-900 shadow-lg ring-1 ring-stone-200";
 
-const FAB_POSITION = "fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 lg:hidden";
+// Moves up while the mini video player sits above the bottom bar (VideoPlayerProvider).
+const FAB_POSITION = "fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom)+var(--mini-player-space,0px))] z-30 lg:hidden";
 const FAB_BUTTON =
   "inline-flex h-14 w-14 items-center justify-center rounded-full bg-stage text-[#fff] shadow-lg ring-2 ring-spotlight/60 transition active:scale-95";
 

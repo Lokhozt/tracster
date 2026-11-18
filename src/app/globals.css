@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* A phone turned sideways (not a short desktop window): videos then fill the screen. */
+@custom-variant phone-landscape (@media (orientation: landscape) and (max-height: 32rem));
+
 :root {
   --background: oklch(97.2% 0.004 285);
   --foreground: oklch(22.9% 0.044 302);

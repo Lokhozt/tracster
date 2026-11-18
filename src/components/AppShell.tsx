@@ -146,7 +146,7 @@ export async function AppShell({
           "mx-auto w-full flex-1 px-4 pt-6 sm:px-6 sm:pt-8",
           // Leave room for the fixed bottom tab bar (phones/tablets) or the visitors' fixed footer.
           user
-            ? "pb-[calc(6rem+env(safe-area-inset-bottom))] lg:px-8 lg:pt-10 lg:pb-12"
+            ? "pb-[calc(6rem+env(safe-area-inset-bottom)+var(--mini-player-space,0px))] lg:px-8 lg:pt-10 lg:pb-12"
             : "pb-6 sm:pb-[calc(5rem+env(safe-area-inset-bottom))]",
           wide
             ? "max-w-screen-2xl"

@@ -64,6 +64,9 @@
       "emptyCreate": "Aucun événement pour le moment. Créez le premier.",
       "empty": "Aucun événement pour le moment."
     },
+    "Videos": {
+      "empty": "Aucune vidéo épinglée pour l’instant dans les chorégraphies auxquelles vous participez. Une vidéo apparaît ici dès qu’un chorégraphe l’épingle dans les ressources de la chorégraphie."
+    },
     "Documents": {
       "title": "Documents",
       "newDocument": "Nouveau document"
@@ -136,7 +139,7 @@
       "participantCount": "{count, plural, =0 {Aucun participant} one {# participant} other {# participants}}",
       "eventsTab": "Événements",
       "youAreChoreographer": "Vous êtes chorégraphe",
-      "pinnedResources": "Ressources épinglées",
+      "resourceCount": "{count, plural, =0 {Aucune ressource} one {# ressource} other {# ressources}}",
       "openResource": "Ouvrir",
       "demonstration": "Démonstration",
       "upcomingEventCount": "{count, plural, =0 {Aucune date à venir} one {# date à venir} other {# dates à venir}}",

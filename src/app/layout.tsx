@@ -6,6 +6,7 @@ import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { getAppName } from "@/lib/app-name";
 import { AppFrame } from "@/components/AppShell";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+import { VideoPlayerProvider } from "@/components/VideoPlayerProvider";
 import { getAppLogoSrc } from "@/lib/s3";
 import { SIDEBAR_COOKIE, parseSidebarCollapsed } from "@/lib/sidebar";
 import {
@@ -91,8 +92,11 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <AppFrame>
             <ServiceWorkerRegistration />
-            {children}
-            {modal}
+            {/* Above the pages, so a shrunk video keeps playing from one page to the next. */}
+            <VideoPlayerProvider>
+              {children}
+              {modal}
+            </VideoPlayerProvider>
           </AppFrame>
         </NextIntlClientProvider>
       </body>

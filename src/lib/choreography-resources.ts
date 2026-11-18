@@ -6,6 +6,7 @@ import {
 } from "@/lib/permissions";
 import {
   isAllowedResourceMimeType,
+  isVideoResource,
   MAX_RESOURCE_BYTES,
   resolveLinkPresentation,
   resourceMediaKind,
@@ -31,16 +32,44 @@ export type ChoreographyResourceVisibility =
   | "PARTICIPANT"
   | "ALL";
 
+type ChoreographyResourceViewer = {
+  canEdit: boolean;
+  canView: boolean;
+  isMember: boolean;
+};
+
+async function loadChoreographyResourceViewer(
+  choreographyId: string,
+  userId: string,
+): Promise<ChoreographyResourceViewer> {
+  const [canEdit, canView, isMember] = await Promise.all([
+    canEditChoreography(choreographyId, userId),
+    canViewChoreography(choreographyId, userId),
+    isChoreographyMember(choreographyId, userId),
+  ]);
+  return { canEdit, canView, isMember };
+}
+
+function isResourceVisibleTo(
+  visibility: ChoreographyResourceVisibility,
+  viewer: ChoreographyResourceViewer,
+) {
+  if (viewer.canEdit) return true;
+  if (visibility === "CHOREOGRAPHER") return false;
+  if (!viewer.canView) return false;
+  if (visibility === "ALL") return true;
+  return viewer.isMember;
+}
+
 export async function canViewChoreographyResource(
   choreographyId: string,
   userId: string,
   visibility: ChoreographyResourceVisibility,
 ) {
-  if (await canEditChoreography(choreographyId, userId)) return true;
-  if (visibility === "CHOREOGRAPHER") return false;
-  if (!(await canViewChoreography(choreographyId, userId))) return false;
-  if (visibility === "ALL") return true;
-  return isChoreographyMember(choreographyId, userId);
+  return isResourceVisibleTo(
+    visibility,
+    await loadChoreographyResourceViewer(choreographyId, userId),
+  );
 }
 
 export type SerializedChoreographyResource = {
@@ -93,22 +122,50 @@ export async function getVisibleChoreographyResources(
   choreographyId: string,
   userId: string,
 ) {
-  const resources = await prisma.choreographyResource.findMany({
-    where: { choreographyId, status: "ACTIVE" },
-    orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
+  const [resources, viewer] = await Promise.all([
+    prisma.choreographyResource.findMany({
+      where: { choreographyId, status: "ACTIVE" },
+      orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
+    }),
+    loadChoreographyResourceViewer(choreographyId, userId),
+  ]);
+  return resources
+    .filter((resource) => isResourceVisibleTo(resource.visibility, viewer))
+    .map(serializeChoreographyResource);
+}
+
+export type ChoreographyVideo = {
+  choreography: { id: string; title: string };
+  resource: SerializedChoreographyResource;
+};
+
+/**
+ * "My videos": the pinned videos of every choreography the user takes part in (creator,
+ * choreographer or participant), newest first. Choreographers pick them by pinning, which keeps
+ * the quick access short. Admins only get their own choreographies here too.
+ */
+export async function getMyChoreographyVideos(userId: string): Promise<ChoreographyVideo[]> {
+  const choreographies = await prisma.choreography.findMany({
+    where: {
+      archivedAt: null,
+      OR: [
+        { createdById: userId },
+        { choreographers: { some: { userId } } },
+        { members: { some: { userId } } },
+      ],
+    },
+    select: { id: true, title: true },
   });
-  const visible = await Promise.all(
-    resources.map(async (resource) =>
-      (await canViewChoreographyResource(
-        choreographyId,
-        userId,
-        resource.visibility,
-      ))
-        ? serializeChoreographyResource(resource)
-        : null,
+  const videosByChoreography = await Promise.all(
+    choreographies.map(async (choreography) =>
+      (await getVisibleChoreographyResources(choreography.id, userId))
+        .filter((resource) => resource.pinned && isVideoResource(resource))
+        .map((resource) => ({ choreography, resource })),
     ),
   );
-  return visible.filter((resource) => resource !== null);
+  return videosByChoreography
+    .flat()
+    .sort((left, right) => right.resource.createdAt.localeCompare(left.resource.createdAt));
 }
 
 export async function deleteChoreographyResourceFiles(choreographyId: string) {

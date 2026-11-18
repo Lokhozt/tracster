@@ -103,6 +103,7 @@
     "allChoreographies": "Toutes",
     "choreographyScope": "Chorégraphies affichées",
     "filterByRepresentation": "Représentation",
+    "clearRepresentationFilter": "Tout afficher",
     "allRepresentations": "Toutes les représentations",
     "noChoreographiesForRepresentation": "Aucune chorégraphie n’est liée à cette représentation.",
     "noChoreographiesCreate": "Aucune chorégraphie pour le moment. Créez la première.",
@@ -708,6 +709,18 @@
     "pinResource": "Épingler aux répétitions",
     "unpinResource": "Retirer l'épingle des répétitions",
     "resourcePinError": "Impossible de mettre à jour l'épingle.",
+    "choreographyMusic": "Musique",
+    "choreographyVideos": "Vidéos",
+    "otherResources": "Autres ressources",
+    "closeVideo": "Fermer la vidéo",
+    "playPauseVideo": "Lecture / pause",
+    "minimizeVideo": "Réduire la vidéo",
+    "expandVideo": "Agrandir la vidéo",
+    "allVideos": "Toutes les vidéos",
+    "upNextVideos": "À suivre",
+    "openOnYoutube": "Ouvrir sur YouTube",
+    "videosAllChoreographies": "Toutes les chorégraphies",
+    "videosChoreographyFilter": "Chorégraphie",
     "noChoreographyResources": "Aucune ressource n’a encore été ajoutée.",
     "addResource": "Ajouter une ressource",
     "resourceType": "Type de ressource",
@@ -787,6 +800,7 @@
     "statusShortUNAVAILABLE": "Indispo",
     "statusShortMAYBE": "Peut-être",
     "availabilityGroupLabel": "Ma disponibilité",
-    "barTakeSlotConfirm": "Prendre un créneau bar à « {title} » ? Vous serez aussi inscrit à la soirée."
+    "barTakeSlotConfirm": "Prendre un créneau bar à « {title} » ? Vous serez aussi inscrit à la soirée.",
+    "closeSearch": "Fermer la recherche"
   }
 }

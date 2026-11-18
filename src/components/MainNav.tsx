@@ -8,6 +8,7 @@ export type NavItem = {
     | "activity"
     | "choreographies"
     | "documents"
+    | "videos"
     | "unavailability"
     | "scheduling"
     | "settings"
@@ -47,6 +48,11 @@ const baseNavItems: NavItem[] = [
     href: "/documents",
     label: "documents",
     match: (pathname) => pathname.startsWith("/documents"),
+  },
+  {
+    href: "/videos",
+    label: "videos",
+    match: (pathname) => pathname.startsWith("/videos"),
   },
   {
     href: "/unavailability",
@@ -93,6 +99,7 @@ export const MORE_MENU_PATHS = [
   "/activity",
   "/calendar-feed",
   "/documents",
+  "/videos",
   "/settings",
   "/users",
   "/scheduling",

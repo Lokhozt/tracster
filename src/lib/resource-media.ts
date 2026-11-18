@@ -98,7 +98,7 @@ export function youtubeVideoId(url: string) {
 }
 
 export type LinkEmbed =
-  | { provider: "youtube"; src: string }
+  | { provider: "youtube"; src: string; thumbnailUrl: string }
   | { provider: "spotify"; src: string; height: number }
   | { provider: "google"; src: string }
   | { provider: "whatsapp" };
@@ -178,7 +178,11 @@ export function resolveLinkPresentation(url: string): LinkEmbed | null {
 
   const youtubeId = youtubeVideoId(url);
   if (youtubeId) {
-    return { provider: "youtube", src: `https://www.youtube-nocookie.com/embed/${youtubeId}` };
+    return {
+      provider: "youtube",
+      src: `https://www.youtube-nocookie.com/embed/${youtubeId}`,
+      thumbnailUrl: `https://i.ytimg.com/vi/${youtubeId}/mqdefault.jpg`,
+    };
   }
 
   try {
@@ -187,4 +191,23 @@ export function resolveLinkPresentation(url: string): LinkEmbed | null {
   } catch {
     return null;
   }
+}
+
+type PresentableResource = {
+  type: "LINK" | "FILE";
+  mediaKind: ResourceMediaKind;
+  embed: LinkEmbed | null;
+};
+
+/** Watched in the video player: YouTube links and uploaded video files. */
+export function isVideoResource(resource: PresentableResource) {
+  return (
+    resource.embed?.provider === "youtube" ||
+    (resource.type === "FILE" && resource.mediaKind === "video")
+  );
+}
+
+/** The choreography's music: shown first in its resources. */
+export function isSpotifyResource(resource: PresentableResource) {
+  return resource.embed?.provider === "spotify";
 }

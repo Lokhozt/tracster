@@ -103,6 +103,7 @@
     "allChoreographies": "All",
     "choreographyScope": "Choreographies shown",
     "filterByRepresentation": "Representation",
+    "clearRepresentationFilter": "Show all",
     "allRepresentations": "All representations",
     "noChoreographiesForRepresentation": "No choreographies are linked to this representation.",
     "noChoreographiesCreate": "No choreographies yet. Create your first one.",
@@ -708,6 +709,18 @@
     "pinResource": "Pin to rehearsals",
     "unpinResource": "Unpin from rehearsals",
     "resourcePinError": "Unable to update the pin.",
+    "choreographyMusic": "Music",
+    "choreographyVideos": "Videos",
+    "otherResources": "Other resources",
+    "closeVideo": "Close video",
+    "playPauseVideo": "Play / pause",
+    "minimizeVideo": "Minimize video",
+    "expandVideo": "Open video",
+    "allVideos": "All videos",
+    "upNextVideos": "Up next",
+    "openOnYoutube": "Open on YouTube",
+    "videosAllChoreographies": "All choreographies",
+    "videosChoreographyFilter": "Choreography",
     "noChoreographyResources": "No resources have been added yet.",
     "addResource": "Add resource",
     "resourceType": "Resource type",
@@ -787,6 +800,7 @@
     "statusShortUNAVAILABLE": "No",
     "statusShortMAYBE": "Maybe",
     "availabilityGroupLabel": "My availability",
-    "barTakeSlotConfirm": "Take a bar slot at “{title}”? You will also be signed up for the party."
+    "barTakeSlotConfirm": "Take a bar slot at “{title}”? You will also be signed up for the party.",
+    "closeSearch": "Close search"
   }
 }

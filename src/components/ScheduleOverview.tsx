@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FollowAssociationCalendarLink } from "@/components/FollowAssociationCalendarLink";
 import { EventTypeFilter } from "@/components/EventTypeFilter";
@@ -18,6 +17,7 @@ import { NextUpCard } from "@/components/NextUpCard";
 import { PartyBarPlanningReminders } from "@/components/PartyBarPlanningReminders";
 import { UpcomingEventsList } from "@/components/UpcomingEventsList";
 import { SearchInput, SegmentedControl } from "@/components/ui";
+import { useUrlFilter } from "@/lib/use-url-filter";
 import { cn } from "@/lib/utils";
 import type { PartyBarPlanningReminder } from "@/lib/party-bar";
 import {
@@ -76,18 +76,31 @@ export function ScheduleOverview({
   createActions?: FloatingAction[];
 }) {
   const t = useTranslations("Components");
-  const searchParams = useSearchParams();
-  const [hiddenTypeIds, setHiddenTypeIds] = useState(initialHiddenTypeIds);
-  const [hideNonParticipating, setHideNonParticipating] = useState(
-    initialHideNonParticipating,
+  // Filters live in the address too, so "back" from an event finds them (the cookies only give
+  // the starting choice of types and scope).
+  const [hiddenTypesParam, setHiddenTypesParam] = useUrlFilter(
+    "types",
+    initialHiddenTypeIds.join(","),
+    { keepEmpty: true },
+  );
+  const [scopeParam, setScopeParam] = useUrlFilter(
+    "scope",
+    initialHideNonParticipating ? "mine" : "all",
   );
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [showPast, setShowPast] = useState(false);
+  const [search, setSearch] = useUrlFilter("q", "");
+  const [pastParam, setPastParam] = useUrlFilter("past", "");
   // "?bar=free" (e.g. old links to the Trac bar page) opens on the free bar slots.
-  const [barFilter, setBarFilter] = useState<BarFilter>(() =>
-    searchParams.get("bar") === "free" ? "free" : "all",
+  const [barParam, setBarParam] = useUrlFilter("bar", "");
+  const hiddenTypeIds = useMemo(
+    () => (hiddenTypesParam ? hiddenTypesParam.split(",") : []),
+    [hiddenTypesParam],
   );
+  const hideNonParticipating = scopeParam === "mine";
+  const showPast = pastParam === "1";
+  const barFilter: BarFilter = barParam === "free" || barParam === "mine" ? barParam : "all";
+  const setShowPast = (value: boolean) => setPastParam(value ? "1" : "");
+  const setBarFilter = (value: BarFilter) => setBarParam(value === "all" ? "" : value);
   const hidden = useMemo(() => new Set(hiddenTypeIds), [hiddenTypeIds]);
   // A bar choice ("my shifts" / "free slots") is a list of its own: "only events I take part in"
   // and the type filters are paused meanwhile (greyed, values kept).
@@ -144,12 +157,12 @@ export function ScheduleOverview({
     (showPast ? 1 : 0);
 
   function updateHiddenTypeIds(ids: string[]) {
-    setHiddenTypeIds(ids);
+    setHiddenTypesParam(ids.join(","));
     persistHiddenEventTypeIds(ids);
   }
 
   function updateHideNonParticipating(value: boolean) {
-    setHideNonParticipating(value);
+    setScopeParam(value ? "mine" : "all");
     persistHideNonParticipating(value);
   }
 

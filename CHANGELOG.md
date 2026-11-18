@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- **Mes vidéos** (Plus menu, and the sidebar on desktops): the pinned videos of every choreography you take part in, in one place, with a filter per choreography.
+
+### Changed
+- Choreographies: one control row like the planning's (on phones Les miennes / Toutes, a search button and the filters; the representation filter moves to the filter sheet).
+- Choreography overview: the next rehearsal is the planning's compact card, with the planning's Dispo / Indispo / Peut-être switch inside it; the next performance moves to the Events card.
+- Choreography resources: the Spotify song comes first as a compact player (no pin button: it already leads the resources, and it no longer shows among pinned resources), then the videos, then the other resources (two per row on large screens).
+- Videos (choreography resources and **Mes vidéos**) work like a video site: a feed of large thumbnails; on phones a tap opens the video over the page with a close button and the next videos below, and turning the phone sideways plays it full screen. Swipe it down, on the video too (or tap the arrow, or Back), for a mini player above the bottom bar that keeps playing while you browse; tap it to open it again. A link with the video opens it.
+
+### Fixed
+- Planning and Choreographies: coming back from an event or a choreography keeps the filters (my / all, search, past events, bar, types, representation).
+- Choreography overview: the Resources card is always shown (with the number of resources), so participants can open the resources even when none is pinned.
+
 ## 1.3.1 - 2026-11-17
 
 ### Added

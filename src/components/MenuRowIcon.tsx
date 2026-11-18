@@ -1,5 +1,6 @@
 export type MenuRowIconName =
   | "folder"
+  | "video"
   | "wand"
   | "shield"
   | "scroll"
@@ -26,6 +27,12 @@ export function MenuRowIcon({ name }: { name: MenuRowIconName }) {
       >
         {name === "folder" && (
           <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+        )}
+        {name === "video" && (
+          <>
+            <rect x="2" y="5" width="15" height="14" rx="2" />
+            <path d="m17 10 5-3v10l-5-3" />
+          </>
         )}
         {name === "wand" && (
           <>

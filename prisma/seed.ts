@@ -119,6 +119,72 @@ async function main() {
     create: { choreographyId: choreography.id, tagId: showcaseTag.id },
   });
 
+  const discoChoreography = await prisma.choreography.upsert({
+    where: { id: "seed-choreography-2" },
+    update: {},
+    create: {
+      id: "seed-choreography-2",
+      title: "Disco Night",
+      description: "Closing number for the autumn party.",
+      createdById: bob.id,
+      choreographers: { create: [{ userId: bob.id }] },
+      members: { create: [{ userId: claire.id }] },
+    },
+  });
+
+  // Demo resources: a Spotify song (shown first), YouTube videos (the video player and
+  // "My videos") and a plain link.
+  const demoResources = [
+    {
+      id: "seed-resource-showcase-song",
+      choreographyId: choreography.id,
+      pinned: true,
+      description: "Uptown Funk – Mark Ronson ft. Bruno Mars",
+      url: "https://open.spotify.com/track/32OlwWuMpZ6b0aN2RZOeMS",
+    },
+    {
+      id: "seed-resource-showcase-clip",
+      choreographyId: choreography.id,
+      pinned: true,
+      description: "Official clip (style reference)",
+      url: "https://www.youtube.com/watch?v=OPf0YbXqDm0",
+    },
+    {
+      id: "seed-resource-showcase-warmup",
+      choreographyId: choreography.id,
+      visibility: "PARTICIPANT" as const,
+      description: "Warm-up routine",
+      url: "https://www.youtube.com/watch?v=9bZkp7q19f0",
+    },
+    {
+      id: "seed-resource-showcase-costumes",
+      choreographyId: choreography.id,
+      description: "Costume ideas",
+      url: "https://en.wikipedia.org/wiki/Funk",
+    },
+    {
+      id: "seed-resource-disco-song",
+      choreographyId: discoChoreography.id,
+      pinned: true,
+      description: "Get Lucky – Daft Punk",
+      url: "https://open.spotify.com/track/69kOkLUCkxIZYexIgSG8rq",
+    },
+    {
+      id: "seed-resource-disco-audio",
+      choreographyId: discoChoreography.id,
+      pinned: true,
+      description: "Get Lucky (official audio)",
+      url: "https://www.youtube.com/watch?v=5NV6Rdv1a3I",
+    },
+  ];
+  for (const resource of demoResources) {
+    await prisma.choreographyResource.upsert({
+      where: { id: resource.id },
+      update: {},
+      create: { ...resource, type: "LINK", uploadedById: alice.id },
+    });
+  }
+
   await prisma.siteSettings.upsert({
     where: { id: "default" },
     update: {},

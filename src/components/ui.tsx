@@ -34,7 +34,7 @@ export const FIELD_CONTROL_CLASS =
 export function Input({
   className,
   ...props
-}: React.InputHTMLAttributes<HTMLInputElement>) {
+}: React.ComponentProps<"input">) {
   return (
     <input
       className={cn(FIELD_CONTROL_CLASS, "min-h-11 w-full", className)}
@@ -47,7 +47,7 @@ export function Input({
 export function SearchInput({
   className,
   ...props
-}: Omit<React.InputHTMLAttributes<HTMLInputElement>, "type">) {
+}: Omit<React.ComponentProps<"input">, "type">) {
   return (
     <div className="relative">
       <svg

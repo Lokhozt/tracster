@@ -64,6 +64,9 @@
       "emptyCreate": "No events yet. Create your first one.",
       "empty": "No events yet."
     },
+    "Videos": {
+      "empty": "No pinned videos yet in the choreographies you take part in. A video appears here as soon as a choreographer pins it in the choreography's resources."
+    },
     "Documents": {
       "title": "Documents",
       "newDocument": "New document"
@@ -136,7 +139,7 @@
       "participantCount": "{count, plural, =0 {No participants} one {# participant} other {# participants}}",
       "eventsTab": "Events",
       "youAreChoreographer": "You are a choreographer",
-      "pinnedResources": "Pinned resources",
+      "resourceCount": "{count, plural, =0 {No resources} one {# resource} other {# resources}}",
       "openResource": "Open",
       "demonstration": "Demonstration",
       "upcomingEventCount": "{count, plural, =0 {No upcoming dates} one {# upcoming date} other {# upcoming dates}}",

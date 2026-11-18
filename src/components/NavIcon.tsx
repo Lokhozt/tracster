@@ -44,6 +44,12 @@ export function NavIcon({ label, className }: { label: NavIconName; className?: 
           <path d="M16 13H8M16 17H8M10 9H8" />
         </>
       )}
+      {label === "videos" && (
+        <>
+          <rect x="2" y="5" width="15" height="14" rx="2" />
+          <path d="m17 10 5-3v10l-5-3" />
+        </>
+      )}
       {label === "unavailability" && (
         <>
           <rect x="3" y="4" width="18" height="18" rx="2" />

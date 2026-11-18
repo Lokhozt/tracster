@@ -27,6 +27,7 @@ const MORE_MENU_PAGES = new Set([
   "/activity",
   "/calendar-feed",
   "/documents",
+  "/videos",
   "/scheduling",
   "/settings",
 ]);

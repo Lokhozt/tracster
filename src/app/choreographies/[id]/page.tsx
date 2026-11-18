@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ViewTransition } from "react";
@@ -42,6 +41,7 @@ import { displayLocation, listedLocationInclude } from "@/lib/locations";
 import { hasUpcomingSeriesEvents, loadSeriesSiblings } from "@/lib/event-series";
 import { basicUserSelect, formatUserName, nestedUserNameOrderBy, serializeBasicUser, userNameOrderBy } from "@/lib/users";
 import { getVisibleChoreographyResources } from "@/lib/choreography-resources";
+import { isSpotifyResource } from "@/lib/resource-media";
 import { getSiteSettings } from "@/lib/site-settings";
 import { serializeTag } from "@/lib/tags";
 import { isWhatsAppUrl } from "@/lib/whatsapp";
@@ -196,7 +196,11 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
     (link) => (link.event.endsAt ?? link.event.startsAt) >= now,
   );
   const nextPerformance = upcomingEventLinks[0] ?? null;
-  const pinnedResources = resources.filter((resource) => resource.pinned);
+  // Songs can no longer be pinned (they lead the resources); older pins stay out of the list.
+  const pinnedResources = resources.filter(
+    (resource) => resource.pinned && !isSpotifyResource(resource),
+  );
+  const showResources = canEdit || resources.length > 0;
   // Every upcoming date (rehearsals, representations, demonstrations), soonest first.
   const upcomingItems = [
     ...upcomingRehearsals.map((rehearsal) => ({
@@ -212,6 +216,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
         (link.event.type.kind === "DEMONSTRATION" ? t("demonstration") : tc("representation")),
     })),
   ].sort((left, right) => left.startsAt.localeCompare(right.startsAt));
+  const previewedItems = upcomingItems.slice(0, UPCOMING_PREVIEW_COUNT);
   const isChoreographer = choreographers.some((entry) => entry.id === user.id);
   // Rehearsal statistics: admins and the choreography's owner.
   const canViewStatistics = canManageLifecycle || choreography.createdById === user.id;
@@ -289,11 +294,13 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
       id: "overview",
       content: (
         // Overview first: next rehearsal, pinned resources, team, description (two per row on desktops).
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <ChoreographyOverviewActions actions={overviewAddActions} />
           {/* The page's one bold element: the next rehearsal, on the stage colour. */}
           {nextRehearsal ? (
             <NextUpCard
+              layout="strip"
+              compactOnPhones
               label={t("nextRehearsal")}
               href={`/events/${nextRehearsal.id}`}
               startsAt={nextRehearsal.startsAt.toISOString()}
@@ -301,35 +308,64 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
               title={nextRehearsal.title || tc("rehearsal")}
               subtitle={nextRehearsal.group?.name}
               location={displayLocation(nextRehearsal)}
-              footer={
-                nextPerformance && (
-                  <Link
-                    href={`/events/${nextPerformance.event.id}`}
-                    className="block px-1 text-sm hover:underline"
-                  >
-                    <span className="text-stone-500">{t("nextPerformance")} · </span>
-                    <span className="font-medium text-stone-900">
-                      {nextPerformance.event.title || tc("representation")}
-                    </span>
-                    <span className="text-stone-600">
-                      {" · "}
-                      <LocalDateTime value={nextPerformance.event.startsAt.toISOString()} />
-                    </span>
-                  </Link>
-                )
-              }
             >
+              {/* Inside the card: the answer is for this rehearsal. */}
               {userIsInNextRehearsal && (
-                <AvailabilityButtons
-                  rehearsalId={nextRehearsal.id}
-                  currentStatus={myNextRehearsalStatus}
-                />
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                  <span className="text-sm text-stone-600">{tc("availabilityGroupLabel")}</span>
+                  <AvailabilityButtons
+                    compact
+                    rehearsalId={nextRehearsal.id}
+                    currentStatus={myNextRehearsalStatus}
+                  />
+                </div>
               )}
             </NextUpCard>
           ) : (
             <Card>
               <h2 className="mb-1 text-base font-semibold">{t("nextRehearsal")}</h2>
               <p className="text-sm text-stone-600">{t("noUpcomingRehearsal")}</p>
+            </Card>
+          )}
+          {showResources && (
+            // Like the team card: the whole card opens the Resources tab (full previews live there);
+            // it is the only way there, so it shows even without pinned resources. Pinned web
+            // links can still be opened directly.
+            <Card className="relative transition hover:border-stone-400">
+              <h2 className="mb-2 text-base font-semibold text-stone-900">
+                <ChoreographyTabLink
+                  sectionId="resources"
+                  className={cn("flex items-center justify-between gap-3", cardLink)}
+                >
+                  {t("resources")}
+                  <ChevronRightIcon />
+                </ChoreographyTabLink>
+              </h2>
+              <p className="text-stone-900">{t("resourceCount", { count: resources.length })}</p>
+              {pinnedResources.length > 0 && (
+                <ul className="mt-1 divide-y divide-stone-100">
+                  {pinnedResources.map((resource) => (
+                    <li key={resource.id} className="flex min-h-11 items-center justify-between gap-3 py-1.5">
+                      <span className="min-w-0 truncate text-stone-900">
+                        {resource.description || resource.fileName || resource.url}
+                      </span>
+                      {resource.type === "LINK" && resource.url && (
+                        <a
+                          href={resource.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cn(
+                            "shrink-0 text-sm font-medium text-stone-600 hover:text-stone-900",
+                            aboveCardLink,
+                          )}
+                        >
+                          {t("openResource")} ↗
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Card>
           )}
           {/* All upcoming dates of the choreography; opens the full events section. */}
@@ -348,7 +384,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
             </p>
             {upcomingItems.length > 0 && (
               <ul className="mt-2 divide-y divide-stone-100">
-                {upcomingItems.slice(0, UPCOMING_PREVIEW_COUNT).map((item) => (
+                {previewedItems.map((item) => (
                   <li key={item.id} className="flex min-h-10 items-center justify-between gap-3 py-1.5">
                     <span className="min-w-0 truncate text-stone-900">{item.label}</span>
                     <span className="shrink-0 text-sm text-stone-500">
@@ -358,44 +394,20 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
                 ))}
               </ul>
             )}
+            {/* Rehearsals fill the preview: the next performance still shows here. */}
+            {nextPerformance && !previewedItems.some((item) => item.id === nextPerformance.event.id) && (
+              <p className="mt-2 border-t border-stone-100 pt-2 text-sm">
+                <span className="text-stone-500">{t("nextPerformance")} · </span>
+                <span className="font-medium text-stone-900">
+                  {nextPerformance.event.title || tc("representation")}
+                </span>
+                <span className="text-stone-600">
+                  {" · "}
+                  <LocalDateTime value={nextPerformance.event.startsAt.toISOString()} />
+                </span>
+              </p>
+            )}
           </Card>
-          {pinnedResources.length > 0 && (
-            // Like the team card: the whole card opens the Resources tab (full previews live there);
-            // web links can still be opened directly.
-            <Card className="relative transition hover:border-stone-400">
-              <h2 className="mb-2 text-base font-semibold text-stone-900">
-                <ChoreographyTabLink
-                  sectionId="resources"
-                  className={cn("flex items-center justify-between gap-3", cardLink)}
-                >
-                  {t("pinnedResources")}
-                  <ChevronRightIcon />
-                </ChoreographyTabLink>
-              </h2>
-              <ul className="divide-y divide-stone-100">
-                {pinnedResources.map((resource) => (
-                  <li key={resource.id} className="flex min-h-11 items-center justify-between gap-3 py-1.5">
-                    <span className="min-w-0 truncate text-stone-900">
-                      {resource.description || resource.fileName || resource.url}
-                    </span>
-                    {resource.type === "LINK" && resource.url && (
-                      <a
-                        href={resource.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={cn(
-                          "shrink-0 text-sm font-medium text-stone-600 hover:text-stone-900",
-                          aboveCardLink,
-                        )}
-                      >
-                        {t("openResource")} ↗
-                      </a>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
           {/* The whole card opens the team tab; the join controls stay clickable on their own. */}
           <Card className="relative transition hover:border-stone-400">
             <h2 className="mb-2 text-base font-semibold text-stone-900">
@@ -461,7 +473,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
               </h2>
               {settings.showChoreographyTags && <TagBubbles tags={assignedTags} />}
               {choreography.description && (
-                <p className="whitespace-pre-wrap text-stone-700">{choreography.description}</p>
+                <p className="whitespace-pre-wrap break-words text-stone-700">{choreography.description}</p>
               )}
             </Card>
           )}
@@ -500,7 +512,7 @@ export default async function ChoreographyDetailPage({ params }: PageProps) {
       id: "participants",
       content: (
         <div className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card>
               <h2 className="mb-4 text-lg font-semibold">{t("choreographers")}</h2>
               <ChoreographersList
