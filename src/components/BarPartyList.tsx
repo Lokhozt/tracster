@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PartyBarSlotList } from "@/components/PartyBarSlots";
 import { Sheet } from "@/components/Sheet";
-import { SegmentedControl } from "@/components/ui";
+import { AssignEventParticipantForm } from "@/components/EventForms";
+import { Button, SegmentedControl } from "@/components/ui";
 import type { BarParty } from "@/lib/party-bar";
 import { cn } from "@/lib/utils";
 
@@ -19,15 +20,20 @@ function hasFreeSlot(party: BarParty): boolean {
 export function BarPartyList({
   parties,
   currentUserId,
+  users,
 }: {
   parties: BarParty[];
   currentUserId: string;
+  /** Members an organiser can put on a bar slot (empty for everyone else). */
+  users: { id: string; name: string; email: string; isCompetitor?: boolean }[];
 }) {
   const t = useTranslations("Pages.Bar");
   const tc = useTranslations("Components");
   const locale = useLocale();
   const [filter, setFilter] = useState<BarFilter>("all");
   const [openId, setOpenId] = useState<string | null>(null);
+  // Organisers: the party sheet switches to the member picker to fill free slots.
+  const [adding, setAdding] = useState(false);
   const openParty = parties.find((party) => party.id === openId) ?? null;
 
   const shown = parties.filter((party) =>
@@ -43,8 +49,8 @@ export function BarPartyList({
   });
 
   return (
-    // Phones: one column. Computers: the cards flow into columns instead of a narrow strip.
-    <div className="max-w-2xl space-y-4 lg:max-w-none">
+    // Full width on every screen: one column on phones, two from tablets, three on wide screens.
+    <div className="space-y-4">
       <SegmentedControl
         label={t("filterLabel")}
         value={filter}
@@ -54,15 +60,17 @@ export function BarPartyList({
           { value: "mine", label: t("filterMine") },
         ]}
         onChange={setFilter}
-        className="max-w-xl"
+        className="lg:max-w-xl"
       />
 
+      {/* The list uses grid-cols-1 (minmax(0, 1fr)), not the implicit auto column: a long,
+          truncated title must not widen every card past the screen. */}
       {shown.length === 0 ? (
         <p className="rounded-xl border border-dashed border-stone-300 px-4 py-6 text-center text-stone-600">
           {parties.length === 0 ? t("emptyAll") : filter === "mine" ? t("emptyMine") : t("emptyFree")}
         </p>
       ) : (
-        <ul className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-2 md:grid-cols-2 2xl:grid-cols-3">
           {shown.map((party) => (
             <li key={party.id}>
               <BarPartyCard party={party} onOpen={() => setOpenId(party.id)} />
@@ -73,19 +81,36 @@ export function BarPartyList({
 
       <Sheet
         open={openParty !== null}
-        onClose={() => setOpenId(null)}
+        onClose={() => {
+          setOpenId(null);
+          setAdding(false);
+        }}
         title={openParty?.title ?? ""}
         headerAction={
           <button
             type="button"
-            onClick={() => setOpenId(null)}
+            onClick={() => {
+              setOpenId(null);
+              setAdding(false);
+            }}
             className="shrink-0 rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700"
           >
             {tc("close")}
           </button>
         }
       >
-        {openParty && (
+        {openParty && adding && (
+          <AssignEventParticipantForm
+            eventId={openParty.id}
+            users={users}
+            assignedUserIds={openParty.slots.flatMap((slot) => (slot ? [slot.userId] : []))}
+            assignUrl={`/api/events/${openParty.id}/bar-slots`}
+            maxSelection={openParty.slotCount - openParty.filledCount}
+            onDone={() => setAdding(false)}
+            onCancel={() => setAdding(false)}
+          />
+        )}
+        {openParty && !adding && (
           <div className="space-y-4">
             <p className="text-sm text-stone-600 first-letter:uppercase" suppressHydrationWarning>
               {dateTime.format(new Date(openParty.startsAt))}
@@ -100,6 +125,11 @@ export function BarPartyList({
                 currentUserId={currentUserId}
                 canManage={openParty.canManage}
               />
+              {openParty.canManage && openParty.filledCount < openParty.slotCount && users.length > 0 && (
+                <Button type="button" variant="secondary" className="mt-3" onClick={() => setAdding(true)}>
+                  {tc("addBarVolunteers")}
+                </Button>
+              )}
             </section>
             <Link
               href={`/events/${openParty.id}`}

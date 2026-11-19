@@ -801,6 +801,9 @@
     "statusShortMAYBE": "Maybe",
     "availabilityGroupLabel": "My availability",
     "barTakeSlotConfirm": "Take a bar slot at “{title}”? You will also be signed up for the party.",
-    "closeSearch": "Close search"
+    "closeSearch": "Close search",
+    "deselectPeriod": "Deselect the period",
+    "editUnavailability": "Edit unavailability",
+    "editPeriod": "Edit the period"
   }
 }

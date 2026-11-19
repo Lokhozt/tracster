@@ -8,16 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Mes vidéos** (Plus menu, and the sidebar on desktops): the pinned videos of every choreography you take part in, in one place, with a filter per choreography.
+- **Bar** tab: organisers can fill a party's free bar slots from its sheet ("Ajouter des bénévoles").
+- **Indispos**: edit a period (pen) as well as delete it (bin), from one bar that opens as soon as a period is created or selected.
 
 ### Changed
 - Choreographies: one control row like the planning's (on phones Les miennes / Toutes, a search button and the filters; the representation filter moves to the filter sheet).
 - Choreography overview: the next rehearsal is the planning's compact card, with the planning's Dispo / Indispo / Peut-être switch inside it; the next performance moves to the Events card.
 - Choreography resources: the Spotify song comes first as a compact player (no pin button: it already leads the resources, and it no longer shows among pinned resources), then the videos, then the other resources (two per row on large screens).
 - Videos (choreography resources and **Mes vidéos**) work like a video site: a feed of large thumbnails; on phones a tap opens the video over the page with a close button and the next videos below, and turning the phone sideways plays it full screen. Swipe it down, on the video too (or tap the arrow, or Back), for a mini player above the bottom bar that keeps playing while you browse; tap it to open it again. A link with the video opens it.
-
+- Planning on phones: "Prochain rendez-vous" is one short row, and "Les miens / Tous", search and filters share a single row, so the calendar shows on the first screen.
+- **Indispos** on phones: the "Indisponibilité enregistrée / Annuler" toast and the floating panel are replaced by that bar, which no longer overlaps the + button.
+- **Bar** and **Mon activité** use the full width on tablets.
+- 
 ### Fixed
 - Planning and Choreographies: coming back from an event or a choreography keeps the filters (my / all, search, past events, bar, types, representation).
 - Choreography overview: the Resources card is always shown (with the number of resources), so participants can open the resources even when none is pinned.
+- **Bar**: a party with a long name no longer pushes every card past the edge of the phone screen.
 
 ## 1.3.1 - 2026-11-17
 
