@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Bar** and **Mon activité** use the full width on tablets.
 - 
 ### Fixed
+- Image viewer (choreography resources, documents): opens over the whole screen on phones (it showed inside the page section, behind its buttons). Icon buttons that fit a phone, pinch and double tap to zoom, drag to move a zoomed image. Back (gesture or button) closes the image instead of leaving the page.
 - Planning and Choreographies: coming back from an event or a choreography keeps the filters (my / all, search, past events, bar, types, representation).
 - Choreography overview: the Resources card is always shown (with the number of resources), so participants can open the resources even when none is pinned.
 - **Bar**: a party with a long name no longer pushes every card past the edge of the phone screen.
