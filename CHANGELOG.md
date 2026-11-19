@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Storage: optional `AWS_PUBLIC_ENDPOINT_URL` for browser upload and playback links when the bucket is behind a proxy.
 - Personal Google Calendar: demonstration events sync for members linked via the demonstration’s choreographies (like rehearsals on your calendar).
 - Account: toggle whether your birthday appears on the planning (Compte → Préférences).
 - Planning filters: **Show birthdays** checkbox (remembered on your device).
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Bar** and **Mon activité** use the full width on tablets.
 - 
 ### Fixed
+- Videos: uploaded videos show a still of the video (as a phone gallery does) instead of a blank tile, which looked white in the dark theme.
 - Planning and Choreographies: coming back from an event or a choreography keeps the filters (my / all, search, past events, bar, types, representation).
 - Choreography overview: the Resources card is always shown (with the number of resources), so participants can open the resources even when none is pinned.
 - **Bar**: a party with a long name no longer pushes every card past the edge of the phone screen.

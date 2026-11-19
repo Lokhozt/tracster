@@ -87,6 +87,7 @@ function VideoFeed({
           >
             <VideoThumbnail
               resource={video.resource}
+              choreographyId={video.choreography.id}
               className="w-full rounded-xl transition group-hover:opacity-90"
             />
             <span className="mt-2 line-clamp-2 font-medium break-words text-stone-900">
