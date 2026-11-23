@@ -19,6 +19,7 @@ import { NextUpCard } from "@/components/NextUpCard";
 import { PartyBarPlanningReminders } from "@/components/PartyBarPlanningReminders";
 import { UpcomingEventsList } from "@/components/UpcomingEventsList";
 import { SearchInput, SegmentedControl } from "@/components/ui";
+import { useNow } from "@/lib/use-now";
 import { useUrlFilter } from "@/lib/use-url-filter";
 import { cn } from "@/lib/utils";
 import type { PartyBarPlanningReminder } from "@/lib/party-bar";
@@ -154,15 +155,18 @@ export function ScheduleOverview({
   );
   // "Next up": your next event (taking part or holding a bar slot), whatever the filters.
   // An event already under way is skipped: the block always points to what comes next.
+  // Follows the clock (useNow ticks every minute): an app left open in the background (installed
+  // PWA) would otherwise keep showing an event that has since started.
+  const liveNow = useNow();
   const nextUp = useMemo(() => {
-    const now = new Date();
+    const now = liveNow ?? Date.now();
     return events.find(
       (event) =>
         !isBirthdayScheduleEvent(event) &&
         (event.isParticipating || event.isBarVolunteer) &&
-        new Date(event.startsAt) > now,
+        new Date(event.startsAt).getTime() > now,
     );
-  }, [events]);
+  }, [events, liveNow]);
   const exportEvents = filteredEvents;
   const listEvents = filteredEvents;
   const activeFilterCount =
