@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { SerializedChoreographyResource } from "@/lib/choreography-resources";
 import type { LinkEmbed } from "@/lib/resource-media";
 import { useResourceFileUrl } from "@/lib/use-resource-file-url";
@@ -69,30 +69,86 @@ export function CloseIcon() {
 
 export function VideoThumbnail({
   resource,
+  choreographyId,
   className,
 }: {
   resource: SerializedChoreographyResource;
+  choreographyId: string;
   className?: string;
 }) {
+  const youtube = resource.embed?.provider === "youtube" ? resource.embed : null;
+  const uploaded = resource.type === "FILE" && resource.mediaKind === "video";
   return (
     <span
       className={cn(
-        "relative flex aspect-video shrink-0 items-center justify-center overflow-hidden bg-stone-900 text-white/80",
+        // A fixed dark tile (not the palette's stone, which the dark theme turns light).
+        "relative flex aspect-video shrink-0 items-center justify-center overflow-hidden bg-[#1c1622] text-white/85",
         className,
       )}
     >
-      {resource.embed?.provider === "youtube" ? (
+      {youtube ? (
         // A YouTube still: Next's image optimizer is not configured for remote hosts.
         // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={resource.embed.thumbnailUrl}
-          alt=""
-          loading="lazy"
-          className="h-full w-full object-cover"
-        />
+        <img src={youtube.thumbnailUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
       ) : (
-        // Uploaded files have no still without loading them: a plain tile.
-        <PlayIcon className="size-8" />
+        <>
+          {uploaded && <UploadedVideoFrame choreographyId={choreographyId} resourceId={resource.id} />}
+          <span className="relative flex size-11 items-center justify-center rounded-full bg-black/45">
+            <PlayIcon className="size-6" />
+          </span>
+        </>
+      )}
+    </span>
+  );
+}
+
+/**
+ * The browser's own still of an uploaded video, as a gallery shows: a muted video that never
+ * plays, asked for the frame at 1 s (Safari only shows one when given a time), loading just
+ * enough of the file for it. Only once the tile nears the screen; nothing is stored.
+ */
+function UploadedVideoFrame({ choreographyId, resourceId }: { choreographyId: string; resourceId: string }) {
+  const t = useTranslations("Components");
+  const holderRef = useRef<HTMLSpanElement>(null);
+  const [nearScreen, setNearScreen] = useState(false);
+  const [frameReady, setFrameReady] = useState(false);
+  const { url } = useResourceFileUrl(choreographyId, resourceId, {
+    enabled: nearScreen,
+    fallbackError: t("resourceLoadError"),
+  });
+
+  useEffect(() => {
+    const holder = holderRef.current;
+    if (!holder) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setNearScreen(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "300px" },
+    );
+    observer.observe(holder);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <span ref={holderRef} aria-hidden="true" className="absolute inset-0">
+      {url && (
+        <video
+          src={`${url}#t=1`}
+          muted
+          playsInline
+          preload="metadata"
+          disablePictureInPicture
+          tabIndex={-1}
+          onLoadedData={() => setFrameReady(true)}
+          className={cn(
+            "pointer-events-none h-full w-full object-cover transition-opacity duration-(--duration-medium)",
+            frameReady ? "opacity-100" : "opacity-0",
+          )}
+        />
       )}
     </span>
   );
@@ -312,7 +368,7 @@ export function UpNextList({
               onClick={() => onSelect(video)}
               className="flex w-full items-start gap-3 rounded-lg p-1.5 text-left transition hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:outline-none"
             >
-              <VideoThumbnail resource={video.resource} className="w-40 rounded-lg" />
+              <VideoThumbnail resource={video.resource} choreographyId={video.choreography.id} className="w-40 rounded-lg" />
               <span className="min-w-0 flex-1">
                 <span className="line-clamp-2 text-sm font-medium break-words text-stone-900">
                   {title(video.resource)}
