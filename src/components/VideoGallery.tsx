@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   AddedOn,
+  PinIcon,
   UpNextList,
   urlWithVideo,
   useVideoTitle,
@@ -69,12 +70,15 @@ function InlineWatch({
 function VideoFeed({
   videos,
   showChoreography,
+  showPinned,
   onOpen,
 }: {
   videos: GalleryVideo[];
   showChoreography: boolean;
+  showPinned: boolean;
   onOpen: (video: GalleryVideo) => void;
 }) {
+  const t = useTranslations("Components");
   const title = useVideoTitle();
   return (
     <ul className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -83,13 +87,19 @@ function VideoFeed({
           <button
             type="button"
             onClick={() => onOpen(video)}
-            className="group block w-full rounded-xl text-left focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-4 focus-visible:outline-none"
+            className="group relative block w-full rounded-xl text-left focus-visible:ring-2 focus-visible:ring-stone-500 focus-visible:ring-offset-4 focus-visible:outline-none"
           >
             <VideoThumbnail
               resource={video.resource}
               choreographyId={video.choreography.id}
               className="w-full rounded-xl transition group-hover:opacity-90"
             />
+            {showPinned && video.resource.pinned && (
+              <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-amber-400 px-2 py-0.5 text-xs font-semibold text-black shadow">
+                <PinIcon filled className="size-3.5" />
+                {t("pinnedVideo")}
+              </span>
+            )}
             <span className="mt-2 line-clamp-2 font-medium break-words text-stone-900">
               {title(video.resource)}
             </span>
@@ -112,11 +122,14 @@ function VideoFeed({
 export function VideoGallery({
   videos,
   showChoreography = false,
+  showPinned = false,
   renderActions,
 }: {
   videos: GalleryVideo[];
   /** Several choreographies at once ("My videos"): name each video's choreography. */
   showChoreography?: boolean;
+  /** Choreographers: mark the pinned videos on their thumbnails. */
+  showPinned?: boolean;
   /** Management buttons (pin, edit…) for the open video. */
   renderActions?: (video: GalleryVideo) => ReactNode;
 }) {
@@ -182,7 +195,7 @@ export function VideoGallery({
           onClose={close}
         />
       ) : (
-        <VideoFeed videos={videos} showChoreography={showChoreography} onOpen={openVideo} />
+        <VideoFeed videos={videos} showChoreography={showChoreography} showPinned={showPinned} onOpen={openVideo} />
       )}
     </div>
   );

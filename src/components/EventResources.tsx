@@ -14,6 +14,7 @@ import { ImageViewer } from "@/components/ImageViewer";
 import { OfficeFileViewer } from "@/components/OfficeFileViewer";
 import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
 import { VideoGallery } from "@/components/VideoGallery";
+import { PinIcon } from "@/components/VideoParts";
 import {
   Button,
   Card,
@@ -155,29 +156,6 @@ function FileResource({
     <a className="font-medium text-stone-800 underline hover:text-stone-600" href={url} target="_blank" rel="noreferrer">
       {label}
     </a>
-  );
-}
-
-function PinIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true" fill="none">
-      {filled ? (
-        <path
-          d="M14 4.5 9.5 9 5 7.5 4 8.5v11l5.5-3 5.5 3v-11l-1-1Z"
-          fill="currentColor"
-          stroke="currentColor"
-          strokeWidth="1.2"
-          strokeLinejoin="round"
-        />
-      ) : (
-        <path
-          d="M14 4.5 9.5 9 5 7.5 4 8.5v11l5.5-3 5.5 3v-11l-1-1Z"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinejoin="round"
-        />
-      )}
-    </svg>
   );
 }
 
@@ -673,6 +651,7 @@ export function ChoreographyResources({
             <ResourceGroup title={t("choreographyVideos")}>
               <VideoGallery
                 videos={videos.map((resource) => ({ choreography: { id: choreographyId, title: "" }, resource }))}
+                showPinned={canEdit}
                 renderActions={({ resource }) => (
                   <ResourceActions choreographyId={choreographyId} resource={resource} canEdit={canEdit} />
                 )}

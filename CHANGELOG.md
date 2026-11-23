@@ -32,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Planning and Choreographies: coming back from an event or a choreography keeps the filters (my / all, search, past events, bar, types, representation).
 - Choreography overview: the Resources card is always shown (with the number of resources), so participants can open the resources even when none is pinned.
 - **Bar**: a party with a long name no longer pushes every card past the edge of the phone screen.
+- Planning: "Prochain rendez-vous" moves on to the next event once one has started, also in an installed app left open (it kept showing the started event as "En ce moment").
+- Planning: coming back from an event keeps the calendar view (Jour / Semaine / Mois) and the week or month shown.
+- Coming back from an item keeps the filters on **Bar** (all / free slots / mine), **Membres** (search, role, competitor), a choreography's events (past events) and the statistics (mode and selection).
+- Choreography videos: a thumbtack icon for pinning, an "Épinglée" badge on pinned videos for choreographers, and on phones the pin button shows the new state right after a tap.
 
 ## 1.3.1 - 2026-11-17
 

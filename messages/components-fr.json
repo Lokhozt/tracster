@@ -711,6 +711,7 @@
     "removeMemberConfirm": "Retirer {name} de cette chorégraphie ?",
     "twentyFourHour": "24 h",
     "choreographyResources": "Ressources",
+    "pinnedVideo": "Épinglée",
     "pinResource": "Épingler aux répétitions",
     "unpinResource": "Retirer l'épingle des répétitions",
     "resourcePinError": "Impossible de mettre à jour l'épingle.",

@@ -16,6 +16,7 @@ import {
   formatDateInputValue,
 } from "@/lib/stats-period-client";
 import { cn } from "@/lib/utils";
+import { useUrlFilter } from "@/lib/use-url-filter";
 
 type RepresentationOption = {
   id: string;
@@ -135,9 +136,11 @@ export function AssociationStatsPanel({
     [locale],
   );
 
-  const [mode, setMode] = useState<"representation" | "user">("representation");
-  const [representationId, setRepresentationId] = useState("");
-  const [userId, setUserId] = useState("");
+  // In the address, so coming back from a choreography finds the same statistics.
+  const [modeParam, setMode] = useUrlFilter("stats", "representation");
+  const mode: "representation" | "user" = modeParam === "user" ? "user" : "representation";
+  const [representationId, setRepresentationId] = useUrlFilter("statsRepresentation", "");
+  const [userId, setUserId] = useUrlFilter("statsUser", "");
   const [userRepresentationId, setUserRepresentationId] = useState("");
   const [fromDate, setFromDate] = useState(() =>
     formatDateInputValue(defaultAssociationStatsPeriodStart()),
