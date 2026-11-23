@@ -85,8 +85,11 @@ export function VideoPlayerProvider({ children }: { children: ReactNode }) {
 
   const showFromUrl = useCallback<VideoPlayerControls["showFromUrl"]>((video, videos, options) => {
     setPlayer((current) => {
+      // Same video: keep playback state, but take the fresh data (e.g. after pinning it the page
+      // refreshes, and the pin button must show the new state).
       if (current?.video.resource.id === video.resource.id) {
-        return current.expanded ? current : { ...current, expanded: true };
+        const unchanged = current.expanded && current.video === video && current.videos === videos;
+        return unchanged ? current : { ...current, ...options, video, videos, expanded: true };
       }
       return { ...options, video, videos, autoPlay: false, expanded: true };
     });

@@ -67,6 +67,38 @@ export function CloseIcon() {
   );
 }
 
+/**
+ * A thumbtack leaning right, needle down-left: a spool-shaped head (two rims, the body widening
+ * toward the base). Outlined when free, filled when pinned.
+ */
+export function PinIcon({ filled, className = "size-5" }: { filled: boolean; className?: string }) {
+  const fill = filled ? "currentColor" : "none";
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {/* Drawn upright, then tilted 45° around the centre. */}
+      <g transform="rotate(45 12 12)">
+        <path d="M12 16.2V22" />
+        {filled ? (
+          <path d="M8 4.5 6.5 14.5h11L16 4.5Z" fill={fill} />
+        ) : (
+          <path d="M8 4.5 6.5 14.5M16 4.5l1.5 10" />
+        )}
+        <ellipse cx="12" cy="4.5" rx="4" ry="1.5" fill={fill} />
+        <ellipse cx="12" cy="14.5" rx="5.5" ry="1.7" fill={fill} />
+      </g>
+    </svg>
+  );
+}
+
 export function VideoThumbnail({
   resource,
   choreographyId,
