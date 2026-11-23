@@ -18,6 +18,8 @@ import {
   startOfDay,
   startOfMonth,
   startOfWeek,
+  isValid,
+  parse,
 } from "date-fns";
 import { enUS, fr } from "date-fns/locale";
 import { Card, SegmentedControl } from "@/components/ui";
@@ -33,6 +35,7 @@ import {
 import { isBirthdayScheduleEvent } from "@/lib/schedule-birthdays";
 import { ArrowLeftIcon, ArrowRightIcon } from "@/components/icons";
 import { useNow } from "@/lib/use-now";
+import { useUrlFilter } from "@/lib/use-url-filter";
 import { scheduleEventEnd } from "@/lib/schedule-filters";
 
 type CalendarView = "day" | "week" | "month";
@@ -44,6 +47,19 @@ const MAX_DAY_DOTS = 3;
 const smallScreenQuery = "(max-width: 767px)";
 // Phones and tablets (below Tailwind `lg`, where the bottom tab bar shows) open on the day view.
 const dayViewDefaultQuery = "(max-width: 1023px)";
+
+const FOCUS_DATE_FORMAT = "yyyy-MM-dd";
+
+function isCalendarView(value: string): value is CalendarView {
+  return value === "day" || value === "week" || value === "month";
+}
+
+/** The `?date=` of the address, or today when missing or invalid. */
+function parseFocusDate(value: string): Date {
+  if (!value) return new Date();
+  const date = parse(value, FOCUS_DATE_FORMAT, new Date());
+  return isValid(date) ? date : new Date();
+}
 
 function useMediaQuery(query: string): boolean {
   return useSyncExternalStore(
@@ -476,9 +492,22 @@ export function RehearsalCalendar({
   const prefersDayView = useMediaQuery(dayViewDefaultQuery);
   const locale = useLocale();
   const dateLocale = locale === "fr" ? fr : enUS;
-  // null until the user picks a view: phones and tablets default to the day agenda, desktop to the week.
-  const [chosenView, setChosenView] = useState<CalendarView | null>(null);
-  const [focusDate, setFocusDate] = useState(() => new Date());
+  // View and date live in the address (`?view=week&date=2026-11-21`), so coming back from an
+  // event finds the calendar as it was. No view in the address: phones and tablets default to
+  // the day agenda, desktop to the week. No date: today.
+  const [viewParam, setViewParam] = useUrlFilter("view", "");
+  const [dateParam, setDateParam] = useUrlFilter("date", "");
+  const chosenView = isCalendarView(viewParam) ? viewParam : null;
+  const focusDate = useMemo(() => parseFocusDate(dateParam), [dateParam]);
+
+  function setChosenView(next: CalendarView) {
+    setViewParam(next);
+  }
+
+  function setFocusDate(next: Date | ((current: Date) => Date)) {
+    const date = typeof next === "function" ? next(focusDate) : next;
+    setDateParam(isToday(date) ? "" : format(date, FOCUS_DATE_FORMAT));
+  }
 
   const view: CalendarView = chosenView ?? (prefersDayView ? "day" : "week");
   const viewOptions: Array<{ value: CalendarView; label: string }> = [

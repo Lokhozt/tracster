@@ -12,6 +12,7 @@ import { RepresentationsSection } from "@/components/RepresentationForms";
 import type { RehearsalListItem } from "@/components/RehearsalEventCard";
 import type { SerializedEventType } from "@/lib/event-type-helpers";
 import { isUpcomingScheduleEvent } from "@/lib/schedule-filters";
+import { useUrlFilter } from "@/lib/use-url-filter";
 
 type ParticipantOption = { id: string; name: string; email: string; firstName?: string; lastName?: string };
 
@@ -51,7 +52,10 @@ export function ChoreographyEventsSection({
   demonstrations: LinkedEventItem[];
 }) {
   const t = useTranslations("Components");
-  const [showPast, setShowPast] = useState(false);
+  // In the address, so coming back from an event keeps past events shown.
+  const [pastParam, setPastParam] = useUrlFilter("past", "");
+  const showPast = pastParam === "1";
+  const setShowPast = (value: boolean) => setPastParam(value ? "1" : "");
   const [now] = useState(() => new Date());
 
   const visibleRehearsals = useMemo(

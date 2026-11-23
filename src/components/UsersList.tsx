@@ -3,13 +3,14 @@
 import { useTranslations } from "next-intl";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { SectionFloatingAction } from "@/components/FloatingActionButton";
 import { CompetitorBadge, RoleBadge } from "@/components/UserForms";
 import { Card, Input, Label, SETTINGS_LIST_CLASS, Select } from "@/components/ui";
 import type { UserRole } from "@/generated/prisma/client";
 import { type AdminUser, compareUsersByName } from "@/lib/users";
 import { ChevronRightIcon } from "@/components/icons";
+import { useUrlFilter } from "@/lib/use-url-filter";
 
 
 
@@ -34,9 +35,13 @@ function matchesSearch(user: AdminUser, query: string): boolean {
 
 export function UsersList({ users }: { users: AdminUser[] }) {
   const t = useTranslations("Components");
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
-  const [competitorFilter, setCompetitorFilter] = useState<"ALL" | "YES" | "NO">("ALL");
+  // In the address, so coming back from a member's page finds the same list.
+  const [search, setSearch] = useUrlFilter("q", "");
+  const [roleParam, setRoleFilter] = useUrlFilter("role", "ALL");
+  const [competitorParam, setCompetitorFilter] = useUrlFilter("competitor", "ALL");
+  const roleFilter = roleParam as UserRole | "ALL";
+  const competitorFilter: "ALL" | "YES" | "NO" =
+    competitorParam === "YES" || competitorParam === "NO" ? competitorParam : "ALL";
 
   const filteredUsers = useMemo(() => {
     return users

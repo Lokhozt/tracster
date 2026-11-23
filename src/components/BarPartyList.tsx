@@ -10,6 +10,7 @@ import { AssignEventParticipantForm } from "@/components/EventForms";
 import { Button, SegmentedControl } from "@/components/ui";
 import type { BarParty } from "@/lib/party-bar";
 import { cn } from "@/lib/utils";
+import { useUrlFilter } from "@/lib/use-url-filter";
 
 type BarFilter = "all" | "free" | "mine";
 
@@ -30,7 +31,9 @@ export function BarPartyList({
   const t = useTranslations("Pages.Bar");
   const tc = useTranslations("Components");
   const locale = useLocale();
-  const [filter, setFilter] = useState<BarFilter>("all");
+  // In the address, so coming back from a party finds the same list.
+  const [filterParam, setFilter] = useUrlFilter("bar", "all");
+  const filter: BarFilter = filterParam === "free" || filterParam === "mine" ? filterParam : "all";
   const [openId, setOpenId] = useState<string | null>(null);
   // Organisers: the party sheet switches to the member picker to fill free slots.
   const [adding, setAdding] = useState(false);
