@@ -5,19 +5,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FilterSheet } from "@/components/FilterSheet";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
-import {
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-  type KeyboardEvent as ReactKeyboardEvent,
-  type PointerEvent as ReactPointerEvent,
-  type WheelEvent,
-} from "react";
+import { useState, type FormEvent } from "react";
 import type {
   ChoreographyResourceVisibility,
   SerializedChoreographyResource,
 } from "@/lib/choreography-resources";
+import { ImageViewer } from "@/components/ImageViewer";
 import { OfficeFileViewer } from "@/components/OfficeFileViewer";
 import { PdfViewer, ResourceLink } from "@/components/ResourceLink";
 import { VideoGallery } from "@/components/VideoGallery";
@@ -46,146 +39,6 @@ import { cn, withUrlScheme } from "@/lib/utils";
 async function responseError(response: Response, fallback: string) {
   const body = await response.json().catch(() => null);
   return body?.error ?? fallback;
-}
-
-function ImageViewer({
-  src,
-  alt,
-  onClose,
-}: {
-  src: string;
-  alt: string;
-  onClose: () => void;
-}) {
-  const t = useTranslations("Components");
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const dragRef = useRef<{ pointerId: number; x: number; y: number } | null>(null);
-  const [scale, setScale] = useState(1);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeRef.current?.focus();
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [onClose]);
-
-  function handleDialogKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
-    if (event.key === "Escape") {
-      onClose();
-      return;
-    }
-    if (event.key !== "Tab") return;
-    const buttons = Array.from(
-      dialogRef.current?.querySelectorAll<HTMLButtonElement>("button") ?? [],
-    );
-    if (buttons.length === 0) return;
-    const first = buttons[0];
-    const last = buttons[buttons.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
-
-  function zoom(next: number) {
-    setScale(Math.min(5, Math.max(0.5, next)));
-  }
-
-  function startDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    dragRef.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
-    setIsDragging(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-
-  function moveDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    setPosition((current) => ({
-      x: current.x + event.clientX - drag.x,
-      y: current.y + event.clientY - drag.y,
-    }));
-    dragRef.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
-  }
-
-  function stopDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (dragRef.current?.pointerId === event.pointerId) {
-      dragRef.current = null;
-      setIsDragging(false);
-    }
-  }
-
-  function handleWheel(event: WheelEvent<HTMLDivElement>) {
-    event.preventDefault();
-    zoom(scale + (event.deltaY < 0 ? 0.2 : -0.2));
-  }
-
-  return (
-    <div
-      ref={dialogRef}
-      className="fixed inset-0 z-50 flex flex-col bg-black/90"
-      role="dialog"
-      aria-modal="true"
-      aria-label={t("resourceImageViewer")}
-      onKeyDown={handleDialogKeyDown}
-    >
-      <div className="flex items-center justify-end gap-2 p-3">
-        <Button type="button" variant="secondary" onClick={() => zoom(scale - 0.25)}>
-          {t("zoomOut")}
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => {
-            setScale(1);
-            setPosition({ x: 0, y: 0 });
-          }}
-        >
-          {t("reset")}
-        </Button>
-        <Button type="button" variant="secondary" onClick={() => zoom(scale + 0.25)}>
-          {t("zoomIn")}
-        </Button>
-        <button
-          ref={closeRef}
-          type="button"
-          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-900 transition hover:bg-stone-100"
-          onClick={onClose}
-        >
-          {t("close")}
-        </button>
-      </div>
-      <div
-        className="relative flex min-h-0 flex-1 touch-none cursor-grab items-center justify-center overflow-hidden active:cursor-grabbing"
-        onPointerDown={startDrag}
-        onPointerMove={moveDrag}
-        onPointerUp={stopDrag}
-        onPointerCancel={stopDrag}
-        onWheel={handleWheel}
-      >
-        {/* The source is a short-lived, permission-checked S3 URL. */}
-        {/* Signed resource URLs are dynamic and cannot use Next's image optimizer. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={src}
-          alt={alt}
-          draggable={false}
-          className="max-h-[85vh] max-w-[90vw] select-none object-contain"
-          style={{
-            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-            transition: isDragging ? "none" : "transform 100ms ease-out",
-          }}
-        />
-      </div>
-    </div>
-  );
 }
 
 function ResourceDownloadButton({
