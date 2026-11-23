@@ -18,6 +18,12 @@ export type S3Config = {
   accessKeyId: string;
   secretAccessKey: string;
   forcePathStyle: boolean;
+  /**
+   * Address browsers use for signed links (uploads, playback), when it differs from the one
+   * the server uses: storage behind a proxy, or only reachable by the server under an internal
+   * name. Unset: the same endpoint for both.
+   */
+  publicEndpoint: string | null;
 };
 
 export function getS3Config(): S3Config | null {
@@ -38,6 +44,7 @@ export function getS3Config(): S3Config | null {
   const urlStyle = process.env.AWS_S3_URL_STYLE?.trim().toLowerCase();
   const forcePathStyle =
     process.env.AWS_S3_FORCE_PATH_STYLE === "true" || urlStyle === "path";
+  const publicEndpoint = process.env.AWS_PUBLIC_ENDPOINT_URL?.trim() || null;
 
   if (!accessKeyId || !secretAccessKey || !endpoint || !bucket) {
     return null;
@@ -50,6 +57,7 @@ export function getS3Config(): S3Config | null {
     accessKeyId,
     secretAccessKey,
     forcePathStyle,
+    publicEndpoint,
   };
 }
 
@@ -60,23 +68,43 @@ export function isS3Configured() {
 let client: S3Client | undefined;
 let clientSignature: string | undefined;
 
+function createS3Client(config: S3Config, endpoint: string) {
+  return new S3Client({
+    region: config.region,
+    endpoint,
+    credentials: {
+      accessKeyId: config.accessKeyId,
+      secretAccessKey: config.secretAccessKey,
+    },
+    forcePathStyle: config.forcePathStyle,
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
+  });
+}
+
 function getS3Client(config: S3Config) {
   const signature = JSON.stringify(config);
   if (!client || clientSignature !== signature) {
-    client = new S3Client({
-      region: config.region,
-      endpoint: config.endpoint,
-      credentials: {
-        accessKeyId: config.accessKeyId,
-        secretAccessKey: config.secretAccessKey,
-      },
-      forcePathStyle: config.forcePathStyle,
-      requestChecksumCalculation: "WHEN_REQUIRED",
-      responseChecksumValidation: "WHEN_REQUIRED",
-    });
+    client = createS3Client(config, config.endpoint);
     clientSignature = signature;
   }
   return client;
+}
+
+let presignClient: S3Client | undefined;
+let presignClientSignature: string | undefined;
+
+/** Signs links for browsers: on the public endpoint when one is configured. */
+function getPresignClient(config: S3Config) {
+  if (!config.publicEndpoint) {
+    return getS3Client(config);
+  }
+  const signature = JSON.stringify(config);
+  if (!presignClient || presignClientSignature !== signature) {
+    presignClient = createS3Client(config, config.publicEndpoint);
+    presignClientSignature = signature;
+  }
+  return presignClient;
 }
 
 function getConfiguredS3() {
@@ -84,7 +112,7 @@ function getConfiguredS3() {
   if (!config) {
     throw new Error("S3 storage is not configured.");
   }
-  return { config, client: getS3Client(config) };
+  return { config, client: getS3Client(config), presignClient: getPresignClient(config) };
 }
 
 export function staticObjectKey(path: string) {
@@ -153,9 +181,9 @@ export async function createChoreographyResourceUploadUrl(options: {
   mimeType: string;
   sizeBytes: number;
 }) {
-  const { config, client } = getConfiguredS3();
+  const { config, presignClient } = getConfiguredS3();
   return getSignedUrl(
-    client,
+    presignClient,
     new PutObjectCommand({
       Bucket: config.bucket,
       Key: options.key,
@@ -194,11 +222,11 @@ export async function createChoreographyResourceDownloadUrl(options: {
   mimeType: string;
   disposition?: "inline" | "attachment";
 }) {
-  const { config, client } = getConfiguredS3();
+  const { config, presignClient } = getConfiguredS3();
   const safeFileName = options.fileName.replace(/["\\]/g, "_");
   const disposition = options.disposition ?? "inline";
   return getSignedUrl(
-    client,
+    presignClient,
     new GetObjectCommand({
       Bucket: config.bucket,
       Key: options.key,

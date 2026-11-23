@@ -163,6 +163,11 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 On Railway, you can reference the bucket preset from the service variables tab instead of
 copying values manually.
 
+If browsers must reach the bucket at another address than the server (for example storage
+behind a reverse proxy, while the server talks to it on an internal network), set
+`AWS_PUBLIC_ENDPOINT_URL` to that address: the presigned upload and playback links use it, and
+everything else keeps `AWS_ENDPOINT_URL`.
+
 #### Bucket CORS (required for uploads)
 
 Railway buckets have no CORS settings in the dashboard. Browser uploads fail with a CORS error

@@ -4,9 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 1.3.2 - 2026-11-23
 
 ### Added
+- Storage: optional `AWS_PUBLIC_ENDPOINT_URL` for browser upload and playback links when the bucket is behind a proxy.
 - Personal Google Calendar: demonstration events sync for members linked via the demonstration’s choreographies (like rehearsals on your calendar).
 - Account: toggle whether your birthday appears on the planning (Compte → Préférences).
 - Planning filters: **Show birthdays** checkbox (remembered on your device).
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 
 ### Fixed
 - Image viewer (choreography resources, documents): opens over the whole screen on phones (it showed inside the page section, behind its buttons). Icon buttons that fit a phone, pinch and double tap to zoom, drag to move a zoomed image. Back (gesture or button) closes the image instead of leaving the page.
+- Videos: uploaded videos show a still of the video (as a phone gallery does) instead of a blank tile, which looked white in the dark theme.
 - Planning and Choreographies: coming back from an event or a choreography keeps the filters (my / all, search, past events, bar, types, representation).
 - Choreography overview: the Resources card is always shown (with the number of resources), so participants can open the resources even when none is pinned.
 - **Bar**: a party with a long name no longer pushes every card past the edge of the phone screen.
